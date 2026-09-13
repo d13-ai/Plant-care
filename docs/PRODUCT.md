@@ -1,6 +1,6 @@
-# Plant Passport — product brief
+# PlantParlour — product brief
 
-*Working name. "A CARFAX for plants" is the pitch; the name can change.*
+*"A CARFAX for plants" is the pitch. Named PlantParlour in September 2026 after a knockout trademark search: no live US registration, .app/.co/.io free.*
 
 ## The idea in one paragraph
 

@@ -1,4 +1,4 @@
-# Plant Passport
+# PlantParlour
 
 A CARFAX for plants. Photograph each plant you own, log what you do for it,
 see what it needs today, and hand its whole history to whoever you trade or

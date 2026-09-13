@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Plant Passport",
-    "slug": "plant-passport",
+    "name": "PlantParlour",
+    "slug": "plantparlour",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "plantpassport",
+    "scheme": "plantparlour",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
@@ -15,7 +15,7 @@
       }
     },
     "android": {
-      "package": "com.d13ai.plantpassport",
+      "package": "com.d13ai.plantparlour",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4EA",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
