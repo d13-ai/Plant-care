@@ -254,6 +254,11 @@ export interface NewPlant {
   acquiredFrom?: string | null;
   motherPlantId?: number | null;
   photoUri?: string | null;
+  /** Reminder cadences in days; the defaults apply where these are unset. */
+  waterEveryDays?: number | null;
+  fertilizeEveryDays?: number | null;
+  repotEveryDays?: number | null;
+  photoEveryDays?: number | null;
 }
 
 export async function createPlant(db: SQLiteDatabase, input: NewPlant): Promise<number> {
@@ -275,10 +280,10 @@ export async function createPlant(db: SQLiteDatabase, input: NewPlant): Promise<
         blank(input.location),
         acquiredAt,
         blank(input.acquiredFrom),
-        DEFAULT_CADENCE.waterEveryDays,
-        DEFAULT_CADENCE.fertilizeEveryDays,
-        DEFAULT_CADENCE.repotEveryDays,
-        DEFAULT_CADENCE.photoEveryDays,
+        input.waterEveryDays ?? DEFAULT_CADENCE.waterEveryDays,
+        input.fertilizeEveryDays ?? DEFAULT_CADENCE.fertilizeEveryDays,
+        input.repotEveryDays ?? DEFAULT_CADENCE.repotEveryDays,
+        input.photoEveryDays ?? DEFAULT_CADENCE.photoEveryDays,
         mother,
         mother ? acquiredAt : null,
         now,

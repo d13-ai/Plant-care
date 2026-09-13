@@ -8,7 +8,7 @@ import {
   markUnpublished,
   type Photo,
 } from "@/db";
-import { ensureSession, passportUrl, supabase, supabaseConfigured } from "./supabase";
+import { ensureSession, tagUrl, supabase, supabaseConfigured } from "./supabase";
 
 const KEEPER_NAME_KEY = "keeperName";
 
@@ -25,11 +25,11 @@ export async function setKeeperName(name: string): Promise<void> {
 }
 
 /**
- * Publish one plant as a passport: a snapshot of its record, events and
+ * Publish one plant as a tag: a snapshot of its record, events and
  * photos pushed to Supabase. Re-running replaces the snapshot; the phone's
  * database stays the source of truth. Returns the shareable URL.
  */
-export async function publishPassport(db: SQLiteDatabase, plantId: number): Promise<string> {
+export async function publishTag(db: SQLiteDatabase, plantId: number): Promise<string> {
   if (!supabaseConfigured) {
     throw new Error("Supabase isn't configured — set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_KEY.");
   }
@@ -114,16 +114,16 @@ export async function publishPassport(db: SQLiteDatabase, plantId: number): Prom
   }
 
   await markPublished(db, plant.id, remote.passport_token);
-  return passportUrl(remote.passport_token);
+  return tagUrl(remote.passport_token);
 }
 
 /**
- * Take the passport down. The local record is untouched. The photos come
- * down too: the bucket is public-read, so anyone who had the passport open
+ * Take the tag down. The local record is untouched. The photos come
+ * down too: the bucket is public-read, so anyone who had the tag open
  * could otherwise keep the image URLs working after the link goes dark. A
  * republish uploads them again.
  */
-export async function unpublishPassport(db: SQLiteDatabase, plantId: number): Promise<void> {
+export async function unpublishTag(db: SQLiteDatabase, plantId: number): Promise<void> {
   const session = await ensureSession();
   const keeperId = session.user.id;
 

@@ -17,9 +17,9 @@ import {
 } from "@/domain/care";
 import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
-import { getKeeperName, publishPassport, setKeeperName, unpublishPassport } from "@/lib/passport";
+import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
 import { capturePhoto } from "@/lib/photos";
-import { passportUrl, supabaseConfigured } from "@/lib/supabase";
+import { tagUrl, supabaseConfigured } from "@/lib/supabase";
 import { radius, space, useTheme, type Tone } from "@/theme";
 
 const toneFor: Record<DueState, Tone> = {
@@ -89,14 +89,14 @@ export default function PlantDetail() {
   // on web without navigator.share it rejects, and a dismissed sheet can too.
   // Neither is an error worth showing, least of all after a publish succeeded.
   const shareLink = (url: string) =>
-    Share.share({ message: `${plant.nickname}'s plant passport: ${url}`, url }).catch(() => {});
+    Share.share({ message: `${plant.nickname}'s plant tag: ${url}`, url }).catch(() => {});
 
   const publish = async () => {
     setPublishing(true);
     setPublishError(null);
     try {
       await setKeeperName(keeperName);
-      const url = await publishPassport(db, plantId);
+      const url = await publishTag(db, plantId);
       refresh();
       await shareLink(url);
     } catch (err) {
@@ -110,7 +110,7 @@ export default function PlantDetail() {
     setPublishing(true);
     setPublishError(null);
     try {
-      await unpublishPassport(db, plantId);
+      await unpublishTag(db, plantId);
       refresh();
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : String(err));
@@ -129,14 +129,14 @@ export default function PlantDetail() {
           text: "Remove",
           style: "destructive",
           onPress: async () => {
-            // A published plant's passport would otherwise stay live with no
+            // A published plant's tag would otherwise stay live with no
             // record left to take it down from.
             if (plant.passportToken) {
               try {
-                await unpublishPassport(db, plantId);
+                await unpublishTag(db, plantId);
               } catch (err) {
                 setPublishError(
-                  `Couldn't take the passport down, so the plant was kept: ${err instanceof Error ? err.message : String(err)}`,
+                  `Couldn't take the tag down, so the plant was kept: ${err instanceof Error ? err.message : String(err)}`,
                 );
                 return;
               }
@@ -207,7 +207,7 @@ export default function PlantDetail() {
       )}
 
       <Card>
-        <Heading>Passport</Heading>
+        <Heading>Tag</Heading>
         {plant.passportToken ? (
           <>
             <Body small muted>
@@ -215,7 +215,7 @@ export default function PlantDetail() {
               lineage, keepers, care record and photos — nothing else of yours.
             </Body>
             <Body small style={{ color: t.primary } as never}>
-              {passportUrl(plant.passportToken)}
+              {tagUrl(plant.passportToken)}
             </Body>
           </>
         ) : (
@@ -225,7 +225,7 @@ export default function PlantDetail() {
           </Body>
         )}
         <Field
-          label="Shown on passports as"
+          label="Shown on tags as"
           value={keeperName}
           onChangeText={setKeeperNameState}
           placeholder="Dana's greenhouse"
@@ -237,7 +237,7 @@ export default function PlantDetail() {
         ) : null}
         <Row>
           <Button
-            title={publishing ? "Working…" : plant.passportToken ? "Update & share" : "Publish passport"}
+            title={publishing ? "Working…" : plant.passportToken ? "Update & share" : "Publish tag"}
             variant="primary"
             small
             disabled={publishing || !supabaseConfigured}
@@ -249,7 +249,7 @@ export default function PlantDetail() {
                 title="Share link"
                 small
                 disabled={publishing}
-                onPress={() => shareLink(passportUrl(plant.passportToken!))}
+                onPress={() => shareLink(tagUrl(plant.passportToken!))}
               />
               <Button title="Unpublish" small disabled={publishing} onPress={unpublish} />
             </>

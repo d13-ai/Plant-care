@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
+import { SpeciesField } from "@/components/species-field";
 import { Body, Button, Card, Chips, Field, Heading } from "@/components/ui";
 import { getPlant, updatePlant, type Plant, type PlantStatus } from "@/db";
 import { SCHEDULED_CARE } from "@/domain/care";
@@ -76,7 +77,18 @@ export default function EditPlant() {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Card>
           <Field label="Name" value={nickname} onChangeText={setNickname} />
-          <Field label="Species" value={species} onChangeText={setSpecies} />
+          <SpeciesField
+            value={species}
+            onChangeText={setSpecies}
+            onPick={(entry) =>
+              setCadence((prev) => ({
+                ...prev,
+                waterEveryDays: String(entry.waterEveryDays),
+                fertilizeEveryDays: String(entry.fertilizeEveryDays),
+                repotEveryDays: String(entry.repotEveryDays),
+              }))
+            }
+          />
           <Field label="Where it lives" value={location} onChangeText={setLocation} />
           <Body small muted>
             Status

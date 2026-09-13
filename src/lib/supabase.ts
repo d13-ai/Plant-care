@@ -38,7 +38,7 @@ export async function ensureSession(): Promise<Session> {
   return anon.session;
 }
 
-/** Public URL of the passport page served by the `passport` Edge Function. */
-export function passportUrl(token: string): string {
-  return `${SUPABASE_URL}/functions/v1/passport?t=${token}`;
+/** Public URL of the tag page served by the `tag` Edge Function. */
+export function tagUrl(token: string): string {
+  return `${SUPABASE_URL}/functions/v1/tag?t=${token}`;
 }

@@ -91,7 +91,9 @@ try {
   await shot("04-cutting");
   await step("greenhouse lists both plants, needy one first", async () => {
     await page.goto(base + "/");
-    await page.getByText("2 plants").waitFor({ timeout: 20000 });
+    await page.getByText("Water due").waitFor({ timeout: 20000 });
+    await page.getByText("All plants").waitFor({ timeout: 20000 });
+    await page.getByText("1 needs attention").waitFor();
     const text = await page.locator("body").innerText();
     const i = text.indexOf("Big Monstera"), j = text.indexOf("Cutting #1");
     if (i < 0 || j < 0) throw new Error("missing plant in list");
@@ -102,7 +104,8 @@ try {
   await shot("05-list");
   await step("data survives a reload", async () => {
     await page.reload();
-    await page.getByText("2 plants").waitFor({ timeout: 20000 });
+    await page.getByText("All plants").waitFor({ timeout: 20000 });
+    await page.getByText("1 needs attention").waitFor();
   });
 } finally {
   await browser.close();

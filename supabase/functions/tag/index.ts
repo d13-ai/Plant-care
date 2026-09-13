@@ -1,6 +1,6 @@
-// Public plant passport page: GET /passport?t=<token>
+// Public plant tag page: GET /tag?t=<token>
 //
-// Anyone with the link can read it — that is the point of a passport — so
+// Anyone with the link can read it — that is the point of a tag — so
 // JWT verification is off. The only data access is the passport(token) RPC,
 // which is SECURITY DEFINER and returns one public plant or nothing; the
 // token is a 32-hex-char random string, so links are unlisted, not browsable.
@@ -12,7 +12,7 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 type Event = { type: string; notes: string | null; occurred_at: string; resolved_at: string | null };
 type Photo = { path: string; caption: string | null; taken_at: string };
-type Passport = {
+type Tag = {
   plant: {
     nickname: string; species: string | null; status: string; acquired_at: string;
     acquired_from: string | null; notes: string | null; propagated_at: string | null;
@@ -56,7 +56,7 @@ a{color:var(--green)}.hero{width:100%;aspect-ratio:4/3;object-fit:cover;border-r
   );
 }
 
-function render(p: Passport) {
+function render(p: Tag) {
   const { plant, keeper, mother, cuttings, events, photos } = p;
   const last = (type: string) => events.find((e) => e.type === type)?.occurred_at ?? null;
   const count = (type: string) => events.filter((e) => e.type === type).length;
@@ -88,19 +88,19 @@ ${hero ? `<img class="hero" src="${esc(photoUrl(hero.path))}" alt="${esc(plant.n
 </section>
 ${photos.length > 1 ? `<section class="card"><h2>Photos over time</h2><div class="photos">${photos.map((ph) => `<figure style="margin:0"><img src="${esc(photoUrl(ph.path))}" alt="" loading="lazy"><figcaption class="small muted">${day(ph.taken_at)}${ph.caption ? ` · ${esc(ph.caption)}` : ""}</figcaption></figure>`).join("")}</div></section>` : ""}
 ${plant.notes ? `<section class="card"><h2>Notes</h2><p>${esc(plant.notes)}</p></section>` : ""}
-<p class="small muted">Plant Passport · self-reported by the plant's keeper · published ${day(plant.published_at)}</p>`;
+<p class="small muted">Plant Tag · self-reported by the plant's keeper · published ${day(plant.published_at)}</p>`;
 }
 
 Deno.serve(async (req: Request) => {
   if (req.method !== "GET") return new Response("Method not allowed", { status: 405 });
   const token = new URL(req.url).searchParams.get("t")?.trim() ?? "";
-  if (!/^[a-f0-9]{32}$/.test(token)) return page("Plant Passport", `<section class="card"><h2>No passport here</h2><p class="muted">This link is missing its token.</p></section>`, 404);
+  if (!/^[a-f0-9]{32}$/.test(token)) return page("Plant Tag", `<section class="card"><h2>No tag here</h2><p class="muted">This link is missing its token.</p></section>`, 404);
 
   const supabase = createClient(SUPABASE_URL, ANON_KEY);
   const { data, error } = await supabase.rpc("passport", { token });
-  if (error) return page("Plant Passport", `<section class="card"><h2>Something went wrong</h2><p class="muted">${esc(error.message)}</p></section>`, 500);
-  if (!data) return page("Plant Passport", `<section class="card"><h2>No passport here</h2><p class="muted">This plant isn't published, or the link is wrong.</p></section>`, 404);
+  if (error) return page("Plant Tag", `<section class="card"><h2>Something went wrong</h2><p class="muted">${esc(error.message)}</p></section>`, 500);
+  if (!data) return page("Plant Tag", `<section class="card"><h2>No tag here</h2><p class="muted">This plant isn't published, or the link is wrong.</p></section>`, 404);
 
-  const passport = data as Passport;
-  return page(`${passport.plant.nickname} · Plant Passport`, render(passport));
+  const tag = data as Tag;
+  return page(`${tag.plant.nickname} · Plant Tag`, render(tag));
 });

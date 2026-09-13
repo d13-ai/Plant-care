@@ -1,10 +1,10 @@
 /**
- * Publish a demo passport to the Supabase project in .env, so there is a
+ * Publish a demo tag to the Supabase project in .env, so there is a
  * real link to show someone before they have the app.
  *
  * Seeds one plant with a year of history — waterings, feeds, a repot, an
  * issue and its treatment, photos over time — plus a cutting that links
- * back to it, under a fresh anonymous keeper. Prints both passport URLs and
+ * back to it, under a fresh anonymous keeper. Prints both tag URLs and
  * the keeper id (delete that auth user to take the demo down).
  *
  * The "photos" are drawn here and rendered with Playwright, so it needs a
@@ -141,6 +141,6 @@ const child = await publishPlant(
 );
 
 console.log(`keeper:  ${keeperId}`);
-console.log(`mother:  ${URL_}/functions/v1/passport?t=${mother.passport_token}`);
-console.log(`cutting: ${URL_}/functions/v1/passport?t=${child.passport_token}`);
+console.log(`mother:  ${URL_}/functions/v1/tag?t=${mother.passport_token}`);
+console.log(`cutting: ${URL_}/functions/v1/tag?t=${child.passport_token}`);
 await supabase.auth.signOut();

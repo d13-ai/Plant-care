@@ -39,10 +39,10 @@ The same person is often all three.
 | **Photo** | Dated image on the plant's timeline. The health record you can *see*. |
 | **Lineage** | A plant may have a mother plant (it was propagated from it). Chains back indefinitely. |
 | **Transfer** | An offer to hand a plant to another keeper. The plant — and all of the above — moves only when accepted. |
-| **Passport** | A plant's public record: lineage, keepers, care summary, issues & treatments, photos over time. Shareable by link. |
+| **Tag** | A plant's public record: lineage, keepers, care summary, issues & treatments, photos over time. Shareable by link. |
 
 The one rule that makes everything else work: **history belongs to the
-plant, not the keeper.** Trades, propagation and passports all fall out of
+plant, not the keeper.** Trades, propagation and tags all fall out of
 that.
 
 ## Features (from the original brainstorm, in the order they came up)
@@ -86,12 +86,12 @@ enough that people actually do it? Are the reminders right?*
 
 **v1 — Provenance.** ✅ shipped
 Propagate a cutting from a plant. Issues and treatments. Publish a plant's
-passport to Supabase and share it as a link (unlisted; anonymous sign-in
+tag to Supabase and share it as a link (unlisted; anonymous sign-in
 under the hood). *Tests: do
-propagators want this? Is the passport something they'd send a buyer?*
+propagators want this? Is the tag something they'd send a buyer?*
 
 **v2 — Accounts and sharing.**
-Sign in; greenhouse syncs to a backend; public greenhouse link; passport
+Sign in; greenhouse syncs to a backend; public greenhouse link; tag
 link. *Tests: will people make their greenhouse public? Do links get shared?*
 
 **v3 — Trades.**
@@ -101,14 +101,14 @@ swap plants (in person, at meetups, by mail)?*
 
 Later, in no particular order: species lookup / auto-ID from a photo,
 push notifications for due care, light/humidity notes per location,
-marketplace listings backed by passports, export/import.
+marketplace listings backed by tags, export/import.
 
 ## What already exists
 
 A first cut of all of the above was prototyped inside a Shopify app
 (`d13-ai/plant-compliance-app`, branch `claude/plant-care-tracking-xa0dnq`):
 data model, care-scheduling logic, lineage walk, keeper history, transfer
-flow, passport and public greenhouse pages. The **domain logic is plain
+flow, tag and public greenhouse pages. The **domain logic is plain
 TypeScript with no framework dependency** and ports directly:
 `app/utils/greenhouse.ts` there (care statuses, alerts, keeper history).
 The UI and the Shopify-shop-as-identity assumption do not carry over.
@@ -122,7 +122,7 @@ The UI and the Shopify-shop-as-identity assumption do not carry over.
 - Species data: free text is fine for v0; later, a species table lets the
   app suggest cadences ("succulents: water every 14 days") and power search
   in public greenhouses.
-- Does a *deceased* plant's passport stay public? (Probably yes — the
+- Does a *deceased* plant's tag stay public? (Probably yes — the
   record is the point — with a status badge.)
 - What does a trade look like when the recipient doesn't have the app yet?
-  (Likely: a passport link with a "claim this plant" button.)
+  (Likely: a tag link with a "claim this plant" button.)

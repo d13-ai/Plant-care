@@ -9,7 +9,7 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from "react-native";
-import { radius, space, useTheme, type Tone } from "@/theme";
+import { font, radius, space, useTheme, type Tone } from "@/theme";
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const t = useTheme();
@@ -20,9 +20,21 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
   );
 }
 
+/** Screen title — the big one at the top of the greenhouse. */
+export function Title({ children }: { children: ReactNode }) {
+  const t = useTheme();
+  return <Text style={[styles.title, { color: t.text }]}>{children}</Text>;
+}
+
 export function Heading({ children }: { children: ReactNode }) {
   const t = useTheme();
   return <Text style={[styles.heading, { color: t.text }]}>{children}</Text>;
+}
+
+/** Small uppercase label above a section or strip. */
+export function SectionLabel({ children }: { children: ReactNode }) {
+  const t = useTheme();
+  return <Text style={[styles.sectionLabel, { color: t.muted }]}>{children}</Text>;
 }
 
 export function Body({
@@ -44,11 +56,20 @@ export function Body({
   );
 }
 
-export function Badge({ label, tone = "neutral" }: { label: string; tone?: Tone }) {
+export function Badge({
+  label,
+  tone = "neutral",
+  icon,
+}: {
+  label: string;
+  tone?: Tone;
+  icon?: ReactNode;
+}) {
   const t = useTheme();
   const colors = t[tone];
   return (
     <View style={[styles.badge, { backgroundColor: colors.bg }]}>
+      {icon}
       <Text style={[styles.badgeText, { color: colors.fg }]}>{label}</Text>
     </View>
   );
@@ -83,6 +104,40 @@ export function Button({
       ]}
     >
       <Text style={[styles.buttonText, small && styles.buttonTextSmall, { color }]}>{title}</Text>
+    </Pressable>
+  );
+}
+
+/** A round 44px action: filled when it's the thing to do now, outlined otherwise. */
+export function IconButton({
+  children,
+  onPress,
+  filled,
+  label,
+  disabled,
+}: {
+  children: ReactNode;
+  onPress: () => void;
+  filled?: boolean;
+  label: string;
+  disabled?: boolean;
+}) {
+  const t = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityLabel={label}
+      hitSlop={4}
+      style={({ pressed }) => [
+        styles.iconButton,
+        filled
+          ? { backgroundColor: t.primary, borderColor: t.primary }
+          : { backgroundColor: t.card, borderColor: t.neutral.ring },
+        { opacity: disabled ? 0.4 : pressed ? 0.75 : 1 },
+      ]}
+    >
+      {children}
     </Pressable>
   );
 }
@@ -138,7 +193,7 @@ export function Chips<T extends string>({
               },
             ]}
           >
-            <Text style={[styles.badgeText, { color: selected ? t.onPrimary : t.text }]}>
+            <Text style={[styles.chipText, { color: selected ? t.onPrimary : t.text }]}>
               {option.label}
             </Text>
           </Pressable>
@@ -154,17 +209,32 @@ export function Row({ children, style }: { children: ReactNode; style?: StylePro
 
 const styles = StyleSheet.create({
   card: {
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     borderRadius: radius.lg,
     padding: space.lg,
     gap: space.md,
   },
-  heading: { fontSize: 17, fontWeight: "600" },
-  body: { fontSize: 15, lineHeight: 21 },
-  small: { fontSize: 13, lineHeight: 18 },
-  label: { fontSize: 13, fontWeight: "500" },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
-  badgeText: { fontSize: 12, fontWeight: "600" },
+  title: { fontSize: 28, lineHeight: 32, letterSpacing: -0.6, fontFamily: font.bold, fontWeight: "700" },
+  heading: { fontSize: 17, lineHeight: 21, fontFamily: font.bold, fontWeight: "700" },
+  sectionLabel: {
+    fontSize: 12,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    fontFamily: font.bold,
+    fontWeight: "700",
+  },
+  body: { fontSize: 15, lineHeight: 21, fontFamily: font.regular },
+  small: { fontSize: 13, lineHeight: 18, fontFamily: font.regular },
+  label: { fontSize: 13, fontFamily: font.medium, fontWeight: "500" },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.sm,
+  },
+  badgeText: { fontSize: 11, fontFamily: font.bold, fontWeight: "700" },
   button: {
     paddingHorizontal: space.lg,
     paddingVertical: 12,
@@ -172,16 +242,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonSmall: { paddingHorizontal: space.md, paddingVertical: 8 },
-  buttonText: { fontSize: 15, fontWeight: "600" },
+  buttonText: { fontSize: 15, fontFamily: font.bold, fontWeight: "700" },
   buttonTextSmall: { fontSize: 13 },
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   input: {
     borderWidth: 1,
-    borderRadius: radius.md,
+    borderRadius: 14,
     paddingHorizontal: space.md,
     paddingVertical: 10,
     fontSize: 15,
+    fontFamily: font.regular,
   },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   chip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, borderWidth: 1 },
+  chipText: { fontSize: 13, fontFamily: font.bold, fontWeight: "700" },
   row: { flexDirection: "row", flexWrap: "wrap", gap: space.sm, alignItems: "center" },
 });

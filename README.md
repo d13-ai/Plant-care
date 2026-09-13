@@ -6,13 +6,13 @@ sell it to. Cuttings trace back to their mother plant.
 
 The idea, personas, rules and roadmap are in [`docs/PRODUCT.md`](docs/PRODUCT.md).
 
-## Status: v1 — passports
+## Status: v1 — tags
 
 Local-first: your plants live in SQLite on the device. Publishing a plant's
-**passport** pushes a snapshot of that one plant (record, care events,
+**tag** pushes a snapshot of that one plant (record, care events,
 photos) to Supabase and gives you a link anyone can open:
 
-`https://ixagjvntbgyqemxxinqe.supabase.co/functions/v1/passport?t=<token>`
+`https://ixagjvntbgyqemxxinqe.supabase.co/functions/v1/tag?t=<token>`
 
 Links are unlisted (32-hex random token), read via a `SECURITY DEFINER`
 RPC — there is no anonymous read access to any table. Identity is a
@@ -28,7 +28,7 @@ to it later is a one-liner (`supabase.auth.updateUser`).
 - Photo timeline
 - Log a propagation → a new plant whose record links back to this one
 - Full per-plant history
-- **Publish / update / unpublish a passport**, share the link from the app
+- **Publish / update / unpublish a tag**, share the link from the app
 
 Not yet: accounts with email, full sync, public greenhouses, trades. See the roadmap.
 
@@ -41,7 +41,7 @@ URL and publishable key (safe to commit — RLS gates everything).
   `care_events`, `photos`; RLS (keepers touch only their own rows);
   public-read bucket `plant-photos` with per-keeper write folders;
   `passport(token)` RPC
-- `supabase/functions/passport/index.ts` — the public HTML passport page
+- `supabase/functions/tag/index.ts` — the public HTML tag page
   (deployed with JWT verification off; it only calls the RPC)
 
 **One-time setup in the Supabase dashboard:** Authentication → Sign In /
@@ -66,7 +66,7 @@ npm run web        # runs in the browser too
 npm test           # domain logic (care scheduling, alerts, keeper history)
 npm run typecheck
 npm run smoke      # exports the web build and drives it in headless Chromium
-npm run e2e        # publishes a real passport to Supabase and reads it back
+npm run e2e        # publishes a real tag to Supabase and reads it back
 ```
 
 The care rules live in `src/domain/care.ts` and are pure functions with no
@@ -81,13 +81,13 @@ Camera flows are checked on a device.
 
 `npm run e2e` is the v1 counterpart and hits the **real Supabase project** in
 `.env`: it builds a plant with a care history and a photo, calls the app's own
-`publishPassport`, then checks the snapshot landed, the photo is publicly
-readable, the passport page renders, republishing reuses the link, a cutting
+`publishTag`, then checks the snapshot landed, the photo is publicly
+readable, the tag page renders, republishing reuses the link, a cutting
 links back to its mother, the tables stay unreadable anonymously,
 unpublishing returns a 404 and takes the photos out of the public bucket, and
 republishing puts them back. It deletes everything it created afterwards.
 
-It drives `src/lib/passport.ts` and `src/db` directly under Node — SQLite is
+It drives `src/lib/tag.ts` and `src/db` directly under Node — SQLite is
 backed by `node:sqlite` and the two React-Native-only modules are stubbed
 (`e2e/stubs`, wired up in `vitest.e2e.config.ts`) — so the publish path under
 test is the one that ships. Identity comes from the app's anonymous sign-in,
@@ -106,13 +106,13 @@ src/domain/care.ts  care scheduling rules — the product's brain
 src/db/             SQLite schema and typed queries
 src/lib/            photos (camera/library → app storage), date parsing
 src/components/     small UI kit + plant card
-e2e/                live passport publish check (npm run e2e)
+e2e/                live tag publish check (npm run e2e)
 docs/PRODUCT.md     product brief and roadmap
 ```
 
 ## Where the idea came from
 
-A first cut of the whole thing — including sharing, passports and trades —
+A first cut of the whole thing — including sharing, tags and trades —
 was prototyped inside a Shopify app (`d13-ai/plant-compliance-app`, branch
 `claude/plant-care-tracking-xa0dnq`). The domain logic here is ported from
 it; the UI and the shop-as-identity assumption were left behind.

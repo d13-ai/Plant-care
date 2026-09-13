@@ -1,8 +1,8 @@
 /**
- * End-to-end check of publishing a passport against a real Supabase project.
+ * End-to-end check of publishing a tag against a real Supabase project.
  *
- * This drives the app's own code — `publishPassport` / `unpublishPassport`
- * from `src/lib/passport.ts`, on top of the real `src/db` layer — so the
+ * This drives the app's own code — `publishTag` / `unpublishTag`
+ * from `src/lib/tag.ts`, on top of the real `src/db` layer — so the
  * thing under test is the shipping publish path, not a re-implementation of
  * it. Only the device-side modules are swapped out: SQLite is backed by
  * node:sqlite and AsyncStorage by a Map (see `vitest.e2e.config.ts`).
@@ -16,12 +16,12 @@
  */
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { addPhoto, createPlant, getPlant, logCare, migrate, propagate, resolveIssue } from "@/db";
-import { publishPassport, setKeeperName, unpublishPassport } from "@/lib/passport";
-import { SUPABASE_URL, ensureSession, passportUrl, supabase, supabaseConfigured } from "@/lib/supabase";
+import { publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
+import { SUPABASE_URL, ensureSession, tagUrl, supabase, supabaseConfigured } from "@/lib/supabase";
 import { openTestDatabase, type TestDatabase } from "./node-sqlite";
 
-const KEEPER_NAME = "Passport e2e greenhouse";
-const TOKEN_IN_URL = /\/functions\/v1\/passport\?t=([0-9a-f]{32})$/;
+const KEEPER_NAME = "Tag e2e greenhouse";
+const TOKEN_IN_URL = /\/functions\/v1\/tag\?t=([0-9a-f]{32})$/;
 
 // Smallest valid JPEG, as the data: URL a web image picker would hand back.
 const PHOTO_DATA_URL =
@@ -33,8 +33,8 @@ const PHOTO_DATA_URL =
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
 
-/** GET the deployed passport Edge Function the way a browser with the link would. */
-async function fetchPassportPage(url: string) {
+/** GET the deployed tag Edge Function the way a browser with the link would. */
+async function fetchTagPage(url: string) {
   const response = await fetch(url);
   return { status: response.status, html: await response.text() };
 }
@@ -47,12 +47,12 @@ async function readAsAnon(table: string) {
   return { status: response.status, body: await response.text() };
 }
 
-describe("publishing a passport to Supabase", () => {
+describe("publishing a tag to Supabase", () => {
   let local: TestDatabase;
   let keeperId: string;
   let plantId: number;
   let cuttingId: number;
-  let passportLink: string;
+  let tagLink: string;
   let token: string;
 
   beforeAll(async () => {
@@ -80,7 +80,7 @@ describe("publishing a passport to Supabase", () => {
       species: "Ficus lyrata",
       location: "East window",
       acquiredAt: daysAgo(40),
-      acquiredFrom: "Passport end-to-end test",
+      acquiredFrom: "Tag end-to-end test",
     });
     await logCare(local.db, plantId, "WATER", { occurredAt: daysAgo(3) });
     await logCare(local.db, plantId, "FERTILIZE", { occurredAt: daysAgo(20) });
@@ -107,13 +107,13 @@ describe("publishing a passport to Supabase", () => {
     local?.close();
   });
 
-  test("publish returns a shareable passport link", async () => {
-    passportLink = await publishPassport(local.db, plantId);
+  test("publish returns a shareable tag link", async () => {
+    tagLink = await publishTag(local.db, plantId);
 
-    const match = passportLink.match(TOKEN_IN_URL);
-    expect(match, `unexpected passport URL: ${passportLink}`).not.toBeNull();
+    const match = tagLink.match(TOKEN_IN_URL);
+    expect(match, `unexpected tag URL: ${tagLink}`).not.toBeNull();
     token = match![1];
-    expect(passportLink).toBe(passportUrl(token));
+    expect(tagLink).toBe(tagUrl(token));
 
     // The local record now knows it is published.
     const after = await getPlant(local.db, plantId);
@@ -158,8 +158,8 @@ describe("publishing a passport to Supabase", () => {
     expect([bytes[0], bytes[1]]).toEqual([0xff, 0xd8]); // JPEG magic
   });
 
-  test("the passport page renders the plant's record", async () => {
-    const { status, html } = await fetchPassportPage(passportLink);
+  test("the tag page renders the plant's record", async () => {
+    const { status, html } = await fetchTagPage(tagLink);
     expect(status).toBe(200);
     expect(html).toContain("E2E Fiddle-leaf");
     expect(html).toContain("Ficus lyrata");
@@ -172,11 +172,11 @@ describe("publishing a passport to Supabase", () => {
 
   test("republishing replaces the snapshot and keeps the link", async () => {
     await logCare(local.db, plantId, "PRUNE", { notes: "Republish check" });
-    const again = await publishPassport(local.db, plantId);
-    expect(again).toBe(passportLink);
+    const again = await publishTag(local.db, plantId);
+    expect(again).toBe(tagLink);
 
     // The new event shows up on the already-shared link.
-    const { html } = await fetchPassportPage(passportLink);
+    const { html } = await fetchTagPage(tagLink);
     expect(html).toContain("Pruned");
     expect(html).toContain("Republish check");
 
@@ -196,18 +196,18 @@ describe("publishing a passport to Supabase", () => {
 
   test("a published cutting links back to its mother", async () => {
     cuttingId = await propagate(local.db, plantId, "E2E Cutting");
-    const cuttingLink = await publishPassport(local.db, cuttingId);
-    expect(cuttingLink).not.toBe(passportLink);
+    const cuttingLink = await publishTag(local.db, cuttingId);
+    expect(cuttingLink).not.toBe(tagLink);
 
-    // The cutting's own page names its mother and links to her passport.
-    const cutting = await fetchPassportPage(cuttingLink);
+    // The cutting's own page names its mother and links to her tag.
+    const cutting = await fetchTagPage(cuttingLink);
     expect(cutting.status).toBe(200);
     expect(cutting.html).toContain("E2E Cutting");
     expect(cutting.html).toContain("E2E Fiddle-leaf");
     expect(cutting.html).toContain(`?t=${token}`);
 
     // And the mother's page now lists the cutting.
-    const mother = await fetchPassportPage(passportLink);
+    const mother = await fetchTagPage(tagLink);
     expect(mother.html).toContain("E2E Cutting");
   });
 
@@ -218,13 +218,13 @@ describe("publishing a passport to Supabase", () => {
     }
   });
 
-  test("unpublishing takes the passport and its photos offline", async () => {
+  test("unpublishing takes the tag and its photos offline", async () => {
     const before = await getPlant(local.db, plantId);
     const photoPath = before!.photos[0].remotePath!;
 
-    await unpublishPassport(local.db, plantId);
+    await unpublishTag(local.db, plantId);
 
-    const { status, html } = await fetchPassportPage(passportLink);
+    const { status, html } = await fetchTagPage(tagLink);
     expect(status).toBe(404);
     expect(html).not.toContain("Ficus lyrata");
 
@@ -244,8 +244,8 @@ describe("publishing a passport to Supabase", () => {
   });
 
   test("republishing after that uploads the photos again", async () => {
-    const link = await publishPassport(local.db, plantId);
-    const { status, html } = await fetchPassportPage(link);
+    const link = await publishTag(local.db, plantId);
+    const { status, html } = await fetchTagPage(link);
     expect(status).toBe(200);
     expect(html).toContain("/storage/v1/object/public/plant-photos/");
 

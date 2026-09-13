@@ -1,0 +1,52 @@
+import { describe, expect, it } from "vitest";
+import { SPECIES, displayName, findSpecies, scientificName, searchSpecies } from "./species";
+
+describe("species catalogue", () => {
+  it("has no duplicate scientific names", () => {
+    const names = SPECIES.map(scientificName);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it("gives every entry sane cadences", () => {
+    for (const e of SPECIES) {
+      expect(e.waterEveryDays, scientificName(e)).toBeGreaterThan(0);
+      expect(e.fertilizeEveryDays, scientificName(e)).toBeGreaterThanOrEqual(e.waterEveryDays);
+      expect(e.repotEveryDays, scientificName(e)).toBeGreaterThanOrEqual(180);
+    }
+  });
+
+  it("suggests scientific names first for a genus prefix", () => {
+    const [first] = searchSpecies("mon");
+    expect(first.genus).toBe("Monstera");
+    expect(searchSpecies("mon").map(scientificName)).toContain("Monstera deliciosa");
+  });
+
+  it("finds by common name, any word", () => {
+    expect(searchSpecies("pothos").map(scientificName)).toContain("Epipremnum aureum");
+    expect(searchSpecies("snake")[0].common[0]).toBe("Snake plant");
+    expect(searchSpecies("fiddle")[0].species).toBe("lyrata");
+  });
+
+  it("ignores case, accents and apostrophes", () => {
+    expect(searchSpecies("MOTHER-IN-LAWS").length).toBeGreaterThan(0);
+    expect(searchSpecies("birds nest")[0].species).toBe("nidus");
+  });
+
+  it("needs two characters and caps results", () => {
+    expect(searchSpecies("m")).toEqual([]);
+    expect(searchSpecies("a", 100)).toEqual([]);
+    expect(searchSpecies("an", 3)).toHaveLength(3);
+  });
+
+  it("resolves a stored species string back to its entry", () => {
+    expect(findSpecies("Monstera deliciosa")?.waterEveryDays).toBe(7);
+    expect(findSpecies("swiss cheese plant")?.genus).toBe("Monstera");
+    expect(findSpecies("Something made up")).toBeNull();
+    expect(findSpecies("")).toBeNull();
+  });
+
+  it("shows the common name with the scientific one behind it", () => {
+    expect(displayName(findSpecies("Ficus lyrata")!)).toBe("Fiddle-leaf fig (Ficus lyrata)");
+    expect(displayName(findSpecies("Monstera obliqua")!)).toBe("Monstera obliqua");
+  });
+});

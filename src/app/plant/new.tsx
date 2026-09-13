@@ -3,8 +3,10 @@ import { useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
+import { SpeciesField } from "@/components/species-field";
 import { Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
 import { createPlant, listPlants, type Plant } from "@/db";
+import type { SpeciesEntry } from "@/domain/species";
 import { parseDate } from "@/lib/dates";
 import { capturePhoto } from "@/lib/photos";
 import { radius, space, useTheme } from "@/theme";
@@ -17,6 +19,7 @@ export default function NewPlant() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [nickname, setNickname] = useState("");
   const [species, setSpecies] = useState("");
+  const [picked, setPicked] = useState<SpeciesEntry | null>(null);
   const [location, setLocation] = useState("");
   const [acquiredFrom, setAcquiredFrom] = useState("");
   const [acquiredAt, setAcquiredAt] = useState("");
@@ -42,6 +45,9 @@ export default function NewPlant() {
       acquiredAt: acquiredIso,
       motherPlantId: motherId ? Number(motherId) : null,
       photoUri,
+      waterEveryDays: picked?.waterEveryDays,
+      fertilizeEveryDays: picked?.fertilizeEveryDays,
+      repotEveryDays: picked?.repotEveryDays,
     });
     router.replace({ pathname: "/plant/[id]", params: { id: String(id) } });
   };
@@ -67,7 +73,7 @@ export default function NewPlant() {
 
         <Card>
           <Field label="Name" value={nickname} onChangeText={setNickname} placeholder="Big Monstera" autoFocus />
-          <Field label="Species" value={species} onChangeText={setSpecies} placeholder="Monstera deliciosa" />
+          <SpeciesField value={species} onChangeText={(v) => { setSpecies(v); setPicked(null); }} onPick={setPicked} />
           <Field label="Where it lives" value={location} onChangeText={setLocation} placeholder="South window" />
           <Field label="Acquired from" value={acquiredFrom} onChangeText={setAcquiredFrom} placeholder="Local nursery, a friend, a trade" />
           <Field
@@ -84,7 +90,7 @@ export default function NewPlant() {
           <Card>
             <Heading>Propagated from</Heading>
             <Body small muted>
-              Pick a mother plant if this is a cutting. Its passport will trace back to it.
+              Pick a mother plant if this is a cutting. Its tag will trace back to it.
             </Body>
             <Chips
               options={[

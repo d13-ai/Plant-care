@@ -1,10 +1,11 @@
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
-import { Badge, Body, Button, Card, Heading, Row } from "@/components/ui";
+import { DropIcon, TagIcon } from "@/components/icons";
+import { Badge, Body, Card, Heading, IconButton } from "@/components/ui";
 import type { PlantWithHistory } from "@/db";
 import { careStatuses, openIssues, plantAlerts, relativeDays } from "@/domain/care";
-import { radius, space, useTheme } from "@/theme";
+import { space, useTheme } from "@/theme";
 
 export function summarize({ plant, events }: PlantWithHistory) {
   const statuses = careStatuses(plant, events);
@@ -19,7 +20,7 @@ export function summarize({ plant, events }: PlantWithHistory) {
       : alerts.length > 0
         ? 2
         : 3;
-  return { statuses, issues, alerts, rank, lastWatered: water?.daysSinceLast ?? null };
+  return { statuses, issues, alerts, rank, water, lastWatered: water?.daysSinceLast ?? null };
 }
 
 export function PlantCard({
@@ -31,43 +32,44 @@ export function PlantCard({
 }) {
   const t = useTheme();
   const { plant, photos } = item;
-  const { alerts, lastWatered } = summarize(item);
+  const { alerts, water, lastWatered } = summarize(item);
   const photo = photos[0];
+  const waterNow = water?.state === "OVERDUE";
 
   return (
     <Link href={{ pathname: "/plant/[id]", params: { id: String(plant.id) } }} asChild>
       <Pressable>
-        <Card>
-          <View style={styles.top}>
-            {photo ? (
-              <Image source={{ uri: photo.uri }} style={styles.thumb} contentFit="cover" />
-            ) : (
-              <View style={[styles.thumb, { backgroundColor: t.neutral.bg }]} />
-            )}
-            <View style={{ flex: 1, gap: 2 }}>
-              <Heading>{plant.nickname}</Heading>
-              <Body small muted>
-                {plant.species || "Species not set"}
-                {plant.location ? ` · ${plant.location}` : ""}
-              </Body>
-              <Body small muted>
-                {lastWatered === null ? "Never watered" : `Watered ${relativeDays(lastWatered)}`}
-              </Body>
+        <Card style={styles.card}>
+          {photo ? (
+            <Image source={{ uri: photo.uri }} style={styles.thumb} contentFit="cover" />
+          ) : (
+            <View style={[styles.thumb, { backgroundColor: t.neutral.bg }]} />
+          )}
+
+          <View style={styles.middle}>
+            <Heading>{plant.nickname}</Heading>
+            <Body small muted>
+              {plant.species || "Species not set"}
+              {plant.location ? ` · ${plant.location}` : ""}
+              {" · "}
+              {lastWatered === null ? "never watered" : `watered ${relativeDays(lastWatered)}`}
+            </Body>
+            <View style={styles.badges}>
+              {plant.status !== "ACTIVE" && <Badge label={plant.status.toLowerCase()} />}
+              {alerts.length === 0 ? (
+                <Badge label="All good" tone="success" />
+              ) : (
+                alerts.map((alert) => <Badge key={alert.label} label={alert.label} tone={alert.tone} />)
+              )}
+              {plant.passportToken ? (
+                <Badge label="Tagged" tone="success" icon={<TagIcon color={t.success.fg} />} />
+              ) : null}
             </View>
           </View>
 
-          <Row>
-            {plant.status !== "ACTIVE" && <Badge label={plant.status.toLowerCase()} />}
-            {alerts.length === 0 ? (
-              <Badge label="All good" tone="success" />
-            ) : (
-              alerts.map((alert) => <Badge key={alert.label} label={alert.label} tone={alert.tone} />)
-            )}
-          </Row>
-
-          <Row>
-            <Button title="Log water" small onPress={() => onLogWater(plant.id)} />
-          </Row>
+          <IconButton label="Log water" filled={waterNow} onPress={() => onLogWater(plant.id)}>
+            <DropIcon color={waterNow ? t.onPrimary : t.primary} strokeWidth={waterNow ? 2.2 : 2} />
+          </IconButton>
         </Card>
       </Pressable>
     </Link>
@@ -75,6 +77,8 @@ export function PlantCard({
 }
 
 const styles = StyleSheet.create({
-  top: { flexDirection: "row", gap: space.md, alignItems: "flex-start" },
-  thumb: { width: 72, height: 72, borderRadius: radius.md },
+  card: { flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md },
+  thumb: { width: 64, height: 64, borderRadius: 14 },
+  middle: { flex: 1, gap: 4, minWidth: 0 },
+  badges: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
 });
