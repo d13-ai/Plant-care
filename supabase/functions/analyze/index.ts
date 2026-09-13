@@ -119,7 +119,9 @@ Deno.serve(async (req: Request) => {
     });
     if (response.stop_reason === "refusal") return json({ error: "The photo couldn't be analysed." }, 422);
     if (!response.parsed_output) return json({ error: "No usable answer came back — try another photo." }, 502);
-    return json({ verdict: response.parsed_output, remaining: DAILY_CAP - used - 1, model: MODEL, effort: EFFORT });
+    // Token counts ride along so cost per photo is measured, not guessed.
+    const { input_tokens, output_tokens } = response.usage;
+    return json({ verdict: response.parsed_output, remaining: DAILY_CAP - used - 1, model: MODEL, effort: EFFORT, usage: { input_tokens, output_tokens } });
   } catch (err) {
     if (err instanceof Anthropic.AuthenticationError) return json({ error: "The AI key for this project isn't valid." }, 503);
     if (err instanceof Anthropic.RateLimitError) return json({ error: "The AI is busy — try again in a minute." }, 503);
