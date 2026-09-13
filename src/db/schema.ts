@@ -5,7 +5,22 @@
  * mother_plant_id already exists so propagation lineage doesn't need a
  * migration later; a mother is another local plant.
  */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
+
+/**
+ * Incremental migrations, keyed by the version they upgrade *to*. v1 is the
+ * base CREATE_TABLES; each later step is a list of statements.
+ */
+export const MIGRATIONS: Record<number, string[]> = {
+  2: [
+    // Passport bookkeeping: set once a plant is published to Supabase.
+    "ALTER TABLE plants ADD COLUMN passport_token TEXT",
+    "ALTER TABLE plants ADD COLUMN published_at TEXT",
+    // Storage object path once a photo has been uploaded, so republishing
+    // doesn't re-upload it.
+    "ALTER TABLE photos ADD COLUMN remote_path TEXT",
+  ],
+};
 
 export const CREATE_TABLES = `
 PRAGMA journal_mode = WAL;

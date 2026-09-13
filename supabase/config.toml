@@ -1,0 +1,8 @@
+# Supabase CLI config (https://supabase.com/docs/guides/local-development).
+# The hosted project is ixagjvntbgyqemxxinqe; `supabase link --project-ref ixagjvntbgyqemxxinqe`.
+project_id = "plant-care"
+
+[functions.passport]
+# Public passport page: anyone with the link may open it. The function only
+# calls the passport(token) RPC, which returns one public plant or nothing.
+verify_jwt = false

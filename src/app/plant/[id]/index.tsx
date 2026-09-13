@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
 import { addPhoto, deletePlant, getPlant, logCare, propagate, resolveIssue } from "@/db";
 import {
@@ -17,7 +17,9 @@ import {
 } from "@/domain/care";
 import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
+import { getKeeperName, publishPassport, setKeeperName, unpublishPassport } from "@/lib/passport";
 import { capturePhoto } from "@/lib/photos";
+import { passportUrl, supabaseConfigured } from "@/lib/supabase";
 import { radius, space, useTheme, type Tone } from "@/theme";
 
 const toneFor: Record<DueState, Tone> = {
@@ -38,6 +40,13 @@ export default function PlantDetail() {
   const [logNotes, setLogNotes] = useState("");
   const [logDaysAgo, setLogDaysAgo] = useState("");
   const [cuttingName, setCuttingName] = useState("");
+  const [keeperName, setKeeperNameState] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getKeeperName().then(setKeeperNameState);
+  }, []);
 
   const quickLog = useCallback(
     async (type: CareType) => {
@@ -74,6 +83,34 @@ export default function PlantDetail() {
     const childId = await propagate(db, plantId, cuttingName);
     setCuttingName("");
     router.push({ pathname: "/plant/[id]", params: { id: String(childId) } });
+  };
+
+  const publish = async () => {
+    setPublishing(true);
+    setPublishError(null);
+    try {
+      await setKeeperName(keeperName);
+      const url = await publishPassport(db, plantId);
+      refresh();
+      await Share.share({ message: `${plant.nickname}'s plant passport: ${url}`, url });
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const unpublish = async () => {
+    setPublishing(true);
+    setPublishError(null);
+    try {
+      await unpublishPassport(db, plantId);
+      refresh();
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const confirmDelete = () =>
@@ -150,6 +187,62 @@ export default function PlantDetail() {
           ))}
         </Card>
       )}
+
+      <Card>
+        <Heading>Passport</Heading>
+        {plant.passportToken ? (
+          <>
+            <Body small muted>
+              Published {formatDate(plant.publishedAt)}. Anyone with the link sees this plant's
+              lineage, keepers, care record and photos — nothing else of yours.
+            </Body>
+            <Body small style={{ color: t.primary } as never}>
+              {passportUrl(plant.passportToken)}
+            </Body>
+          </>
+        ) : (
+          <Body small muted>
+            Publish a shareable record of this plant — its lineage, care history, issues and what
+            fixed them — to send with a sale or trade.
+          </Body>
+        )}
+        <Field
+          label="Shown on passports as"
+          value={keeperName}
+          onChangeText={setKeeperNameState}
+          placeholder="Dana's greenhouse"
+        />
+        {publishError ? (
+          <Body small style={{ color: t.critical.fg } as never}>
+            {publishError}
+          </Body>
+        ) : null}
+        <Row>
+          <Button
+            title={publishing ? "Working…" : plant.passportToken ? "Update & share" : "Publish passport"}
+            variant="primary"
+            small
+            disabled={publishing || !supabaseConfigured}
+            onPress={publish}
+          />
+          {plant.passportToken ? (
+            <>
+              <Button
+                title="Share link"
+                small
+                disabled={publishing}
+                onPress={() =>
+                  Share.share({
+                    message: `${plant.nickname}'s plant passport: ${passportUrl(plant.passportToken!)}`,
+                    url: passportUrl(plant.passportToken!),
+                  })
+                }
+              />
+              <Button title="Unpublish" small disabled={publishing} onPress={unpublish} />
+            </>
+          ) : null}
+        </Row>
+      </Card>
 
       <Card>
         <Heading>Care schedule</Heading>

@@ -6,9 +6,18 @@ sell it to. Cuttings trace back to their mother plant.
 
 The idea, personas, rules and roadmap are in [`docs/PRODUCT.md`](docs/PRODUCT.md).
 
-## Status: v0 — "my plants, on my phone"
+## Status: v1 — passports
 
-Local-only. No account, no server. Everything lives in SQLite on the device.
+Local-first: your plants live in SQLite on the device. Publishing a plant's
+**passport** pushes a snapshot of that one plant (record, care events,
+photos) to Supabase and gives you a link anyone can open:
+
+`https://ixagjvntbgyqemxxinqe.supabase.co/functions/v1/passport?t=<token>`
+
+Links are unlisted (32-hex random token), read via a `SECURITY DEFINER`
+RPC — there is no anonymous read access to any table. Identity is a
+Supabase **anonymous sign-in** created on first publish; linking an email
+to it later is a one-liner (`supabase.auth.updateUser`).
 
 - Add plants with a camera or library photo
 - Per-plant reminders for watering, fertilizing, repotting and a fresh photo
@@ -19,8 +28,25 @@ Local-only. No account, no server. Everything lives in SQLite on the device.
 - Photo timeline
 - Log a propagation → a new plant whose record links back to this one
 - Full per-plant history
+- **Publish / update / unpublish a passport**, share the link from the app
 
-Not yet: accounts, sharing, public passports, trades. See the roadmap.
+Not yet: accounts with email, full sync, public greenhouses, trades. See the roadmap.
+
+## Supabase
+
+Project `plant-care` (`ixagjvntbgyqemxxinqe`, us-east-1). `.env` holds the
+URL and publishable key (safe to commit — RLS gates everything).
+
+- `supabase/migrations/…_plant_passports.sql` — tables `keepers`, `plants`,
+  `care_events`, `photos`; RLS (keepers touch only their own rows);
+  public-read bucket `plant-photos` with per-keeper write folders;
+  `passport(token)` RPC
+- `supabase/functions/passport/index.ts` — the public HTML passport page
+  (deployed with JWT verification off; it only calls the RPC)
+
+**One-time setup in the Supabase dashboard:** Authentication → Sign In /
+Providers → enable **Allow anonymous sign-ins**. Publishing fails with a
+clear message until that's on.
 
 ## Run it
 

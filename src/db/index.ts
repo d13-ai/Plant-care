@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 import type { CareType } from "@/domain/care";
-import { CREATE_TABLES, SCHEMA_VERSION } from "./schema";
+import { CREATE_TABLES, MIGRATIONS, SCHEMA_VERSION } from "./schema";
 
 // ---------------------------------------------------------------------------
 // Types the rest of the app sees. Column names are snake_case in SQLite and
@@ -24,6 +24,8 @@ export interface Plant {
   photoEveryDays: number | null;
   motherPlantId: number | null;
   propagatedAt: string | null;
+  passportToken: string | null;
+  publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +45,7 @@ export interface Photo {
   uri: string;
   caption: string | null;
   takenAt: string;
+  remotePath: string | null;
 }
 
 export const DEFAULT_CADENCE = {
@@ -67,6 +70,8 @@ type PlantRow = {
   photo_every_days: number | null;
   mother_plant_id: number | null;
   propagated_at: string | null;
+  passport_token: string | null;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -86,6 +91,7 @@ type PhotoRow = {
   uri: string;
   caption: string | null;
   taken_at: string;
+  remote_path: string | null;
 };
 
 const toPlant = (r: PlantRow): Plant => ({
@@ -103,6 +109,8 @@ const toPlant = (r: PlantRow): Plant => ({
   photoEveryDays: r.photo_every_days,
   motherPlantId: r.mother_plant_id,
   propagatedAt: r.propagated_at,
+  passportToken: r.passport_token,
+  publishedAt: r.published_at,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
 });
@@ -122,6 +130,7 @@ const toPhoto = (r: PhotoRow): Photo => ({
   uri: r.uri,
   caption: r.caption,
   takenAt: r.taken_at,
+  remotePath: r.remote_path,
 });
 
 const nowIso = () => new Date().toISOString();
@@ -136,12 +145,18 @@ const blank = (value: string | null | undefined) => {
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {
   const row = await db.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
-  const current = row?.user_version ?? 0;
-  if (current >= SCHEMA_VERSION) {
-    await db.execAsync("PRAGMA foreign_keys = ON;");
-    return;
+  let current = row?.user_version ?? 0;
+  await db.execAsync("PRAGMA foreign_keys = ON;");
+
+  if (current === 0) {
+    await db.execAsync(CREATE_TABLES);
+    current = 1;
   }
-  await db.execAsync(CREATE_TABLES);
+  for (let version = current + 1; version <= SCHEMA_VERSION; version++) {
+    for (const statement of MIGRATIONS[version] ?? []) {
+      await db.execAsync(statement);
+    }
+  }
   await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
 }
 
@@ -408,6 +423,23 @@ export async function propagate(
     occurredAt: when,
   });
   return childId;
+}
+
+/** Record that a plant has been published (or republished) as a passport. */
+export async function markPublished(db: SQLiteDatabase, id: number, passportToken: string): Promise<void> {
+  await db.runAsync("UPDATE plants SET passport_token = ?, published_at = ? WHERE id = ?", [
+    passportToken,
+    nowIso(),
+    id,
+  ]);
+}
+
+export async function markUnpublished(db: SQLiteDatabase, id: number): Promise<void> {
+  await db.runAsync("UPDATE plants SET passport_token = NULL, published_at = NULL WHERE id = ?", [id]);
+}
+
+export async function markPhotoUploaded(db: SQLiteDatabase, photoId: number, remotePath: string): Promise<void> {
+  await db.runAsync("UPDATE photos SET remote_path = ? WHERE id = ?", [remotePath, photoId]);
 }
 
 export async function deletePlant(db: SQLiteDatabase, id: number): Promise<void> {

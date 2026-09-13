@@ -79,14 +79,15 @@ that.
 Each slice is something you can hand to a friend with plants and ask "does
 this feel right?"
 
-**v0 — My plants, on my phone (no account, no server).**
+**v0 — My plants, on my phone (no account, no server).** ✅ shipped
 Add plants with a photo from the camera. Log care. See what's due. Photo
 timeline. Everything stored on-device. *Tests: is logging care low-friction
 enough that people actually do it? Are the reminders right?*
 
-**v1 — Provenance.**
-Propagate a cutting from a plant. Issues and treatments. The passport
-screen (still local, but exportable as a shareable page/image). *Tests: do
+**v1 — Provenance.** ✅ shipped
+Propagate a cutting from a plant. Issues and treatments. Publish a plant's
+passport to Supabase and share it as a link (unlisted; anonymous sign-in
+under the hood). *Tests: do
 propagators want this? Is the passport something they'd send a buyer?*
 
 **v2 — Accounts and sharing.**
