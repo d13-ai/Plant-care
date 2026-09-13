@@ -1,6 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { SQLiteDatabase } from "expo-sqlite";
-import { getPlant, markPhotoUploaded, markPublished, markUnpublished, type Photo } from "@/db";
+import {
+  clearPhotoUploads,
+  getPlant,
+  markPhotoUploaded,
+  markPublished,
+  markUnpublished,
+  type Photo,
+} from "@/db";
 import { ensureSession, passportUrl, supabase, supabaseConfigured } from "./supabase";
 
 const KEEPER_NAME_KEY = "keeperName";
@@ -110,15 +117,37 @@ export async function publishPassport(db: SQLiteDatabase, plantId: number): Prom
   return passportUrl(remote.passport_token);
 }
 
-/** Take the passport down. The local record is untouched; uploaded photos stay cached for a republish. */
+/**
+ * Take the passport down. The local record is untouched. The photos come
+ * down too: the bucket is public-read, so anyone who had the passport open
+ * could otherwise keep the image URLs working after the link goes dark. A
+ * republish uploads them again.
+ */
 export async function unpublishPassport(db: SQLiteDatabase, plantId: number): Promise<void> {
   const session = await ensureSession();
+  const keeperId = session.user.id;
+
+  // Page first, so the link stops resolving even if the rest fails and is retried.
   const { error } = await supabase
     .from("plants")
     .update({ is_public: false })
-    .eq("keeper_id", session.user.id)
+    .eq("keeper_id", keeperId)
     .eq("local_id", plantId);
   if (error) throw new Error(error.message);
+
+  // Everything in this plant's folder, not just what the local db remembers
+  // uploading — a reinstall may have forgotten photos that are still up.
+  const folder = `${keeperId}/${plantId}`;
+  const { data: objects, error: listError } = await supabase.storage.from("plant-photos").list(folder);
+  if (listError) throw new Error(`Photos: ${listError.message}`);
+  if (objects?.length) {
+    const { error: removeError } = await supabase.storage
+      .from("plant-photos")
+      .remove(objects.map((o) => `${folder}/${o.name}`));
+    if (removeError) throw new Error(`Photos: ${removeError.message}`);
+  }
+
+  await clearPhotoUploads(db, plantId);
   await markUnpublished(db, plantId);
 }
 

@@ -83,8 +83,9 @@ Camera flows are checked on a device.
 `.env`: it builds a plant with a care history and a photo, calls the app's own
 `publishPassport`, then checks the snapshot landed, the photo is publicly
 readable, the passport page renders, republishing reuses the link, a cutting
-links back to its mother, the tables stay unreadable anonymously, and
-unpublishing returns a 404. It deletes everything it created afterwards.
+links back to its mother, the tables stay unreadable anonymously,
+unpublishing returns a 404 and takes the photos out of the public bucket, and
+republishing puts them back. It deletes everything it created afterwards.
 
 It drives `src/lib/passport.ts` and `src/db` directly under Node — SQLite is
 backed by `node:sqlite` and the two React-Native-only modules are stubbed

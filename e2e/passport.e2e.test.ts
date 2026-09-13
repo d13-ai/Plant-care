@@ -218,14 +218,37 @@ describe("publishing a passport to Supabase", () => {
     }
   });
 
-  test("unpublishing takes the passport offline", async () => {
+  test("unpublishing takes the passport and its photos offline", async () => {
+    const before = await getPlant(local.db, plantId);
+    const photoPath = before!.photos[0].remotePath!;
+
     await unpublishPassport(local.db, plantId);
 
     const { status, html } = await fetchPassportPage(passportLink);
     expect(status).toBe(404);
     expect(html).not.toContain("Ficus lyrata");
 
+    // The bucket is public-read, so the image URL must stop working too.
+    const photo = await fetch(`${SUPABASE_URL}/storage/v1/object/public/plant-photos/${photoPath}`);
+    expect(photo.ok, "photo still publicly readable after unpublish").toBe(false);
+    const { data: left } = await supabase.storage.from("plant-photos").list(`${keeperId}/${plantId}`);
+    expect(left).toEqual([]);
+
     const after = await getPlant(local.db, plantId);
     expect(after!.plant.passportToken).toBeNull();
+    expect(after!.photos[0].remotePath, "local db must forget the upload").toBeNull();
+  });
+
+  test("republishing after that uploads the photos again", async () => {
+    const link = await publishPassport(local.db, plantId);
+    const { status, html } = await fetchPassportPage(link);
+    expect(status).toBe(200);
+    expect(html).toContain("/storage/v1/object/public/plant-photos/");
+
+    const after = await getPlant(local.db, plantId);
+    const photo = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/public/plant-photos/${after!.photos[0].remotePath}`,
+    );
+    expect(photo.status).toBe(200);
   });
 });

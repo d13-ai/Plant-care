@@ -442,6 +442,11 @@ export async function markPhotoUploaded(db: SQLiteDatabase, photoId: number, rem
   await db.runAsync("UPDATE photos SET remote_path = ? WHERE id = ?", [remotePath, photoId]);
 }
 
+/** Forget a plant's uploads — after unpublishing removes them, a republish must upload again. */
+export async function clearPhotoUploads(db: SQLiteDatabase, plantId: number): Promise<void> {
+  await db.runAsync("UPDATE photos SET remote_path = NULL WHERE plant_id = ?", [plantId]);
+}
+
 export async function deletePlant(db: SQLiteDatabase, id: number): Promise<void> {
   await db.runAsync("DELETE FROM plants WHERE id = ?", [id]);
 }
