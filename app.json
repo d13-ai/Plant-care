@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "Plant Passport",
+    "slug": "plant-passport",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "plantpassport",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Take photos of your plants for their care record.",
+        "NSPhotoLibraryUsageDescription": "Choose photos of your plants for their care record."
+      }
+    },
+    "android": {
+      "package": "com.d13ai.plantpassport",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4EA",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Take photos of your plants for their care record.",
+          "photosPermission": "Choose photos of your plants for their care record."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#2F6B3A",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

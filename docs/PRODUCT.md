@@ -1,0 +1,127 @@
+# Plant Passport — product brief
+
+*Working name. "A CARFAX for plants" is the pitch; the name can change.*
+
+## The idea in one paragraph
+
+You photograph each plant you own. The app tells you what each one needs
+right now — a little water-drop when it's thirsty, a flag when something's
+wrong — and keeps a record of everything you do for it: watered, fertilized,
+repotted, treated. Every few months it nudges you to take a fresh photo so
+the record shows how the plant actually fared. Your collection is a
+greenhouse you can share; friends can visit, and when you trade or sell a
+plant you hand over the plant *and its whole history*. Cuttings are linked
+to their mother plant, so any propagation traces back to where it came from.
+The result: for any plant, anyone can see who kept it, where it thrived,
+what went wrong, and what fixed it.
+
+## Who it's for
+
+- **Collectors** — the person with 40 plants and a spreadsheet they hate.
+  Cares about not killing things, and about showing off rare ones.
+- **Propagators / small sellers** — people who root cuttings and sell or
+  trade them. A traceable history is a selling point ("rooted from a
+  mother that's been thriving in my care since 2023").
+- **Traders** — people who swap plants in local groups and online. Want the
+  plant's record to move with it.
+
+The same person is often all three.
+
+## Core concepts
+
+| Concept | What it is |
+|---|---|
+| **Keeper** | A person with an account. Owns one greenhouse. |
+| **Greenhouse** | A keeper's collection. Private by default; can be public. |
+| **Plant** | One physical plant. Has a stable identity that survives changing hands. |
+| **Care event** | A dated entry in the plant's record: water, fertilize, repot, prune, photo, issue, treatment, note. |
+| **Issue** | A care event that stays *open* until resolved. An open issue = "special care needed". |
+| **Photo** | Dated image on the plant's timeline. The health record you can *see*. |
+| **Lineage** | A plant may have a mother plant (it was propagated from it). Chains back indefinitely. |
+| **Transfer** | An offer to hand a plant to another keeper. The plant — and all of the above — moves only when accepted. |
+| **Passport** | A plant's public record: lineage, keepers, care summary, issues & treatments, photos over time. Shareable by link. |
+
+The one rule that makes everything else work: **history belongs to the
+plant, not the keeper.** Trades, propagation and passports all fall out of
+that.
+
+## Features (from the original brainstorm, in the order they came up)
+
+1. **Photos of each plant** — the collection is visual from day one.
+2. **"It needs water" / "special care needed" indicators** on each plant.
+3. **Tap in → last watered, last fertilized, last repotted.**
+4. **Log watering, fertilizing, repotting** (and pruning, treatments, notes).
+5. **Photo reminders** — every ~6 months, "take a new picture to verify
+   its health."
+6. **Personal greenhouse you can share** and show off rare species.
+7. **Friends join / visit greenhouses.**
+8. **Trade a plant** → it appears in the other person's greenhouse.
+9. **Propagation** — a cutting traces back to its mom.
+10. **Full traceable history** for any plant: who owned it, where it
+    thrived, issues, fixes. Sellable provenance.
+
+## Care-reminder rules (already worked out and tested)
+
+- Each plant has a cadence, in days, per care type. Defaults: water 7,
+  fertilize 30, repot 365, photo 180. Blank = reminder off.
+- Due date = last logged event of that type + cadence.
+- Never logged? Count from the plant's acquisition date, not "overdue
+  immediately" — a plant you added this morning is not overdue for repotting.
+- "Due soon" = within 20% of the cadence, capped at 3 days (so an annual
+  repot doesn't nag for ten weeks).
+- An open issue outranks everything: the plant is flagged "special care
+  needed" until someone marks it resolved, and resolving writes a
+  *treatment* entry so the fix is on the record too.
+- Collection view sorts plants that need something to the top.
+
+## Testable versions, in order
+
+Each slice is something you can hand to a friend with plants and ask "does
+this feel right?"
+
+**v0 — My plants, on my phone (no account, no server).**
+Add plants with a photo from the camera. Log care. See what's due. Photo
+timeline. Everything stored on-device. *Tests: is logging care low-friction
+enough that people actually do it? Are the reminders right?*
+
+**v1 — Provenance.**
+Propagate a cutting from a plant. Issues and treatments. The passport
+screen (still local, but exportable as a shareable page/image). *Tests: do
+propagators want this? Is the passport something they'd send a buyer?*
+
+**v2 — Accounts and sharing.**
+Sign in; greenhouse syncs to a backend; public greenhouse link; passport
+link. *Tests: will people make their greenhouse public? Do links get shared?*
+
+**v3 — Trades.**
+Offer a plant to another keeper by handle; accept/decline; history moves.
+Friends/following. *Tests: does the trade flow match how people actually
+swap plants (in person, at meetups, by mail)?*
+
+Later, in no particular order: species lookup / auto-ID from a photo,
+push notifications for due care, light/humidity notes per location,
+marketplace listings backed by passports, export/import.
+
+## What already exists
+
+A first cut of all of the above was prototyped inside a Shopify app
+(`d13-ai/plant-compliance-app`, branch `claude/plant-care-tracking-xa0dnq`):
+data model, care-scheduling logic, lineage walk, keeper history, transfer
+flow, passport and public greenhouse pages. The **domain logic is plain
+TypeScript with no framework dependency** and ports directly:
+`app/utils/greenhouse.ts` there (care statuses, alerts, keeper history).
+The UI and the Shopify-shop-as-identity assumption do not carry over.
+
+## Open questions
+
+- Identity: email/passwordless? Social sign-in? Handles for trading
+  ("send to @dana")?
+- Photos: on-device only in v0; where do they live once synced (Supabase
+  storage? S3?), and what about people with 200 plants × 10 photos?
+- Species data: free text is fine for v0; later, a species table lets the
+  app suggest cadences ("succulents: water every 14 days") and power search
+  in public greenhouses.
+- Does a *deceased* plant's passport stay public? (Probably yes — the
+  record is the point — with a status badge.)
+- What does a trade look like when the recipient doesn't have the app yet?
+  (Likely: a passport link with a "claim this plant" button.)
