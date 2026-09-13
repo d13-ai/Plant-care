@@ -2,9 +2,10 @@
 //
 // Sends one plant photo to Claude and returns a typed verdict — what the
 // plant looks like, and what its health looks like. Only signed-in keepers
-// can call it (JWT verified at the gateway; anonymous sign-ins carry one),
-// and each keeper gets a daily cap so a single device can't run up the
-// bill. Needs ANTHROPIC_API_KEY set as a function secret.
+// can call it — the function checks the caller's session itself, since the
+// gateway lets publishable-key requests through — and each keeper gets a
+// daily cap so a single device can't run up the bill. Needs
+// ANTHROPIC_API_KEY set as a function secret.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk";
@@ -59,9 +60,6 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
-  if (!apiKey) return json({ error: "AI isn't set up for this project yet — add ANTHROPIC_API_KEY as a function secret." }, 503);
-
   // Who's asking: the keeper behind the JWT the gateway already verified.
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const asCaller = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
@@ -69,6 +67,10 @@ Deno.serve(async (req: Request) => {
   });
   const { data: { user } } = await asCaller.auth.getUser();
   if (!user) return json({ error: "Sign in first." }, 401);
+
+  // Only now say whether the AI is wired up — a stranger doesn't get to learn that.
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!apiKey) return json({ error: "AI isn't set up for this project yet — add ANTHROPIC_API_KEY as a function secret." }, 503);
 
   let body: { image?: string; media_type?: string; mode?: string; species_hint?: string };
   try { body = await req.json(); } catch { return json({ error: "Expected JSON." }, 400); }
