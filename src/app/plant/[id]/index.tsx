@@ -19,6 +19,7 @@ import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
 import { analyzePhoto, type Verdict } from "@/lib/ai";
+import { okToLog } from "@/lib/care-log";
 import { confirm } from "@/lib/confirm";
 import { capturePhoto } from "@/lib/photos";
 import { tagUrl, supabaseConfigured } from "@/lib/supabase";
@@ -55,10 +56,11 @@ export default function PlantDetail() {
 
   const quickLog = useCallback(
     async (type: CareType) => {
+      if (!(await okToLog(type, data?.events ?? []))) return;
       await logCare(db, plantId, type);
       refresh();
     },
-    [db, plantId, refresh],
+    [db, plantId, refresh, data],
   );
 
   if (!data) return <View style={{ flex: 1 }} />;
@@ -70,7 +72,9 @@ export default function PlantDetail() {
   const hero = photos[0];
 
   const submitLog = async () => {
-    await logCare(db, plantId, logType, { notes: logNotes, occurredAt: daysAgoIso(logDaysAgo) });
+    const occurredAt = daysAgoIso(logDaysAgo);
+    if (!(await okToLog(logType, events, occurredAt))) return;
+    await logCare(db, plantId, logType, { notes: logNotes, occurredAt });
     setLogNotes("");
     setLogDaysAgo("");
     refresh();

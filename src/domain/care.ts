@@ -152,6 +152,27 @@ export function careStatuses(
   });
 }
 
+/**
+ * Has this kind of care already been logged today (the keeper's local day)?
+ * A second tap on "water" the same day is usually a slip, so the app asks
+ * before logging it again — it never refuses.
+ */
+export function loggedToday(events: EventLike[], type: CareType, now: Date = new Date()): boolean {
+  return events.some((e) => {
+    if (e.type !== type) return false;
+    const d = toDate(e.occurredAt);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  });
+}
+
+/** The wording for that question, for the kinds of care where a repeat is worth asking about. */
+export const REPEAT_PROMPT: Partial<Record<CareType, { past: string; gerund: string }>> = {
+  WATER: { past: "watered", gerund: "watering" },
+  FERTILIZE: { past: "fertilized", gerund: "fertilizing" },
+  REPOT: { past: "repotted", gerund: "repotting" },
+  PRUNE: { past: "pruned", gerund: "pruning" },
+};
+
 /** Reported problems nobody has cleared yet — the "special care needed" flag. */
 export function openIssues<T extends EventLike>(events: T[]): T[] {
   return events

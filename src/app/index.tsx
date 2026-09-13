@@ -8,6 +8,7 @@ import { PlantCard, summarize } from "@/components/plant-card";
 import { Body, Button, Card, Heading, SectionLabel, Title } from "@/components/ui";
 import { listPlants, logCare, type PlantWithHistory } from "@/db";
 import { useQuery } from "@/hooks/use-query";
+import { okToLog } from "@/lib/care-log";
 import { space, useTheme, type Tone } from "@/theme";
 
 export default function Greenhouse() {
@@ -42,10 +43,12 @@ export default function Greenhouse() {
 
   const handleLogWater = useCallback(
     async (plantId: number) => {
+      const events = data?.find((item) => item.plant.id === plantId)?.events ?? [];
+      if (!(await okToLog("WATER", events))) return;
       await logCare(db, plantId, "WATER");
       refresh();
     },
-    [db, refresh],
+    [db, refresh, data],
   );
 
   const ringFor = (item: PlantWithHistory, water: NonNullable<ReturnType<typeof summarize>["water"]>) => {

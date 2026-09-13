@@ -5,6 +5,8 @@ import {
   openIssues,
   plantAlerts,
   relativeDays,
+  loggedToday,
+  REPEAT_PROMPT,
 } from "./care";
 
 const now = new Date("2026-09-13T12:00:00Z");
@@ -150,5 +152,21 @@ describe("relativeDays", () => {
     expect(relativeDays(0)).toBe("today");
     expect(relativeDays(1)).toBe("yesterday");
     expect(relativeDays(9)).toBe("9 days ago");
+  });
+});
+
+describe("loggedToday", () => {
+  const now = new Date("2026-09-13T15:00:00");
+  it("sees a watering earlier the same day, not one yesterday", () => {
+    expect(loggedToday([{ type: "WATER", occurredAt: "2026-09-13T08:00:00" }], "WATER", now)).toBe(true);
+    expect(loggedToday([{ type: "WATER", occurredAt: "2026-09-12T23:30:00" }], "WATER", now)).toBe(false);
+  });
+  it("only counts the same kind of care", () => {
+    expect(loggedToday([{ type: "FERTILIZE", occurredAt: "2026-09-13T08:00:00" }], "WATER", now)).toBe(false);
+  });
+  it("has wording for the care people double-log, and none for photos or notes", () => {
+    expect(REPEAT_PROMPT.WATER).toEqual({ past: "watered", gerund: "watering" });
+    expect(REPEAT_PROMPT.PHOTO).toBeUndefined();
+    expect(REPEAT_PROMPT.NOTE).toBeUndefined();
   });
 });

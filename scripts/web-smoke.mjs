@@ -84,6 +84,17 @@ try {
     await page.getByText("Watered", { exact: true }).first().waitFor();
     await page.waitForFunction(() => !document.body.innerText.includes("Needs water"));
   });
+  await step("watering again the same day asks first", async () => {
+    const watered = () => page.getByText("Watered", { exact: true }).count();
+    const before = await watered();
+    page.once("dialog", (d) => { if (!/already watered today/.test(d.message())) throw new Error("wrong prompt: " + d.message()); d.dismiss(); });
+    await page.getByText("Log", { exact: true }).first().click();
+    await page.waitForTimeout(300);
+    if ((await watered()) !== before) throw new Error("declined, but a watering was logged");
+    page.once("dialog", (d) => d.accept());
+    await page.getByText("Log", { exact: true }).first().click();
+    await page.waitForFunction((n) => document.body.innerText.split("Watered").length - 1 > n, before);
+  });
   await step("report an issue → special care needed", async () => {
     await page.getByText("Issue reported").first().click();
     await page.getByPlaceholder("Spider mites on new growth").fill("Spider mites");
