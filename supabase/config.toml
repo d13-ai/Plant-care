@@ -8,6 +8,8 @@ project_id = "plant-care"
 verify_jwt = false
 
 [functions.analyze]
-# AI photo analysis. Keepers only: the gateway checks the JWT, and the
-# function caps calls per keeper per day. Needs the ANTHROPIC_API_KEY secret.
-verify_jwt = true
+# AI photo analysis. Keepers only, but the function checks the session
+# itself (getUser) rather than the gateway — the gateway would reject the
+# browser's CORS preflight, which carries no JWT. Caps calls per keeper per
+# day. Needs the ANTHROPIC_API_KEY secret.
+verify_jwt = false
