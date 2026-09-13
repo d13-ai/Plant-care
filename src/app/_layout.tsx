@@ -28,8 +28,9 @@ export default function RootLayout() {
 
   if (!fontsLoaded) return null;
 
+  // The database file keeps its original name: renaming it would orphan every
+  // existing keeper's plants.
   return (
-    {/* The file keeps its original name: renaming it would orphan every existing keeper's plants. */}
     <SQLiteProvider databaseName="plant-passport.db" onInit={migrate}>
       <StatusBar style="auto" />
       <Stack
