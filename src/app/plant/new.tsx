@@ -114,14 +114,21 @@ export default function NewPlant() {
                 <>
                   <Body small muted>Looks like — tap one to use it:</Body>
                   <Row>
-                    {verdict.species.map((c) => (
-                      <Button
-                        key={`${c.genus}-${c.species}-${c.cultivar}`}
-                        small
-                        title={`${c.common_name || `${c.genus} ${c.species}`.trim()}${c.cultivar ? ` '${c.cultivar}'` : ""} · ${Math.round(c.confidence * 100)}%`}
-                        onPress={() => useCandidate(c)}
-                      />
-                    ))}
+                    {[...verdict.species]
+                      .sort((a, b) => b.confidence - a.confidence)
+                      .map((c) => {
+                        const latin = `${c.genus}${c.species ? ` ${c.species}` : ""}${c.cultivar ? ` '${c.cultivar}'` : ""}`;
+                        // Common name and the Latin one both: "Swiss cheese plant" alone reads like a guess.
+                        const label = c.common_name && c.common_name.toLowerCase() !== latin.toLowerCase() ? `${c.common_name} · ${latin}` : latin;
+                        return (
+                          <Button
+                            key={latin}
+                            small
+                            title={`${label} · ${Math.round(c.confidence * 100)}%`}
+                            onPress={() => useCandidate(c)}
+                          />
+                        );
+                      })}
                   </Row>
                   {verdict.health.findings.length > 0 ? (
                     <View style={{ gap: space.xs }}>

@@ -18,7 +18,8 @@ const DAILY_CAP = 20;
 // and AI_EFFORT (low | medium | high). Sonnet 5 is the default — about a
 // third of Opus's cost (roughly 1–1.5¢ a photo) and good at this; Opus is
 // the upgrade if cultivars or subtle health signs come back vague.
-const MODEL = Deno.env.get("AI_MODEL") || "claude-sonnet-5";
+const MODELS = ["claude-sonnet-5", "claude-opus-5", "claude-haiku-4-5"] as const;
+const DEFAULT_MODEL = MODELS.find((m) => m === Deno.env.get("AI_MODEL")) ?? "claude-sonnet-5";
 const EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
 const EFFORT = EFFORTS.find((e) => e === Deno.env.get("AI_EFFORT")) ?? "medium";
 
@@ -80,9 +81,12 @@ Deno.serve(async (req: Request) => {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) return json({ error: "AI isn't set up for this project yet — add ANTHROPIC_API_KEY as a function secret." }, 503);
 
-  let body: { image?: string; media_type?: string; mode?: string; species_hint?: string };
+  let body: { image?: string; media_type?: string; mode?: string; species_hint?: string; model?: string };
   try { body = await req.json(); } catch { return json({ error: "Expected JSON." }, 400); }
   const { image, media_type = "image/jpeg", mode = "both", species_hint } = body;
+  // A request may pick a model from the allow-list — for comparing answers on
+  // the same photo. The daily cap bounds what that can cost.
+  const MODEL = MODELS.find((m) => m === body.model) ?? DEFAULT_MODEL;
   if (!image || typeof image !== "string") return json({ error: "Missing image." }, 400);
   if (!["image/jpeg", "image/png", "image/webp"].includes(media_type)) return json({ error: "Unsupported image type." }, 400);
   if (image.length > 6_000_000) return json({ error: "Image too large — send it smaller." }, 413);
