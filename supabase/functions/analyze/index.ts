@@ -13,11 +13,12 @@ import { zodOutputFormat } from "npm:@anthropic-ai/sdk/helpers/zod";
 import { z } from "npm:zod";
 
 const DAILY_CAP = 20;
-// Model and effort are function secrets so cost can be tuned without a
-// redeploy: AI_MODEL (claude-opus-5 | claude-sonnet-5 | claude-haiku-4-5)
-// and AI_EFFORT (low | medium | high). A photo costs roughly 4¢ on Opus 5
-// at medium, 2¢ at low, 1.5¢ on Sonnet 5, under 1¢ on Haiku.
-const MODEL = Deno.env.get("AI_MODEL") || "claude-opus-5";
+// Model and effort can be overridden by function secrets without a
+// redeploy: AI_MODEL (claude-sonnet-5 | claude-opus-5 | claude-haiku-4-5)
+// and AI_EFFORT (low | medium | high). Sonnet 5 is the default — about a
+// third of Opus's cost (roughly 1–1.5¢ a photo) and good at this; Opus is
+// the upgrade if cultivars or subtle health signs come back vague.
+const MODEL = Deno.env.get("AI_MODEL") || "claude-sonnet-5";
 const EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
 const EFFORT = EFFORTS.find((e) => e === Deno.env.get("AI_EFFORT")) ?? "medium";
 

@@ -74,12 +74,13 @@ keeper gets 20 analyses a day (`ai_usage` table; the function alone writes
 it).
 
 Cost is a dial, set as function secrets with no redeploy: `AI_MODEL`
-(`claude-opus-5` default — best at telling cultivars and health signs apart;
-`claude-sonnet-5` at about a third of the cost; `claude-haiku-4-5` cheapest)
-and `AI_EFFORT` (`low` | `medium` default | `high`). Roughly: 4¢ a photo on
-Opus at medium, 2¢ at low, 1.5¢ on Sonnet, under 1¢ on Haiku — the image is
-most of it, so caching doesn't help. Each answer reports which model and
-effort produced it.
+(`claude-sonnet-5` default — about a third of Opus's cost and good at this;
+`claude-opus-5` is the upgrade if cultivars or subtle health signs come back
+vague; `claude-haiku-4-5` cheapest) and `AI_EFFORT` (`low` | `medium`
+default | `high`). Measured: a refusal on Opus cost 1.4¢; a full answer runs
+about 2–3¢ on Opus, 1–1.5¢ on Sonnet — the image is most of it, so caching
+doesn't help. Each answer reports which model and effort produced it and the
+tokens it used.
 
 **One-time setup:** add your Anthropic API key as a function secret —
 Supabase dashboard → Edge Functions → Secrets → `ANTHROPIC_API_KEY` (or
