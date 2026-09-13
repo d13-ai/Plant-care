@@ -115,10 +115,22 @@ try {
     await page.getByText("All good").first().waitFor();
   });
   await shot("05-list");
+  await step("remove a plant asks, then removes", async () => {
+    await page.getByText("Cutting #1").first().click();
+    await page.getByText("Remove plant").waitFor();
+    page.once("dialog", (d) => { if (!/Remove Cutting #1\?/.test(d.message())) throw new Error("wrong confirm text: " + d.message()); d.dismiss(); });
+    await page.getByText("Remove plant").click();
+    await page.getByText("Remove plant").waitFor(); // dismissed: still here
+    page.once("dialog", (d) => d.accept());
+    await page.getByText("Remove plant").click();
+    await page.getByText("All plants").waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => !document.body.innerText.includes("Cutting #1"));
+  });
   await step("data survives a reload", async () => {
     await page.reload();
     await page.getByText("All plants").waitFor({ timeout: 20000 });
-    await page.getByText("1 needs attention").waitFor();
+    await page.getByText("Big Monstera").waitFor();
+    if (await page.getByText("Cutting #1").count()) throw new Error("removed plant came back after reload");
   });
 } finally {
   await browser.close();

@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
 import { addPhoto, deletePlant, getPlant, logCare, propagate, resolveIssue } from "@/db";
 import {
@@ -19,6 +19,7 @@ import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
 import { analyzePhoto, type Verdict } from "@/lib/ai";
+import { confirm } from "@/lib/confirm";
 import { capturePhoto } from "@/lib/photos";
 import { tagUrl, supabaseConfigured } from "@/lib/supabase";
 import { radius, space, useTheme, type Tone } from "@/theme";
@@ -136,34 +137,28 @@ export default function PlantDetail() {
     }
   };
 
-  const confirmDelete = () =>
-    Alert.alert(
+  const confirmDelete = async () => {
+    const ok = await confirm(
       `Remove ${plant.nickname}?`,
       "Its whole history and photos go with it. Mark it Deceased instead if you want to keep the record.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            // A published plant's tag would otherwise stay live with no
-            // record left to take it down from.
-            if (plant.passportToken) {
-              try {
-                await unpublishTag(db, plantId);
-              } catch (err) {
-                setPublishError(
-                  `Couldn't take the tag down, so the plant was kept: ${err instanceof Error ? err.message : String(err)}`,
-                );
-                return;
-              }
-            }
-            await deletePlant(db, plantId);
-            router.back();
-          },
-        },
-      ],
+      { confirmText: "Remove", destructive: true },
     );
+    if (!ok) return;
+    // A published plant's tag would otherwise stay live with no record left
+    // to take it down from.
+    if (plant.passportToken) {
+      try {
+        await unpublishTag(db, plantId);
+      } catch (err) {
+        setPublishError(
+          `Couldn't take the tag down, so the plant was kept: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        return;
+      }
+    }
+    await deletePlant(db, plantId);
+    router.back();
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
