@@ -85,6 +85,12 @@ export default function PlantDetail() {
     router.push({ pathname: "/plant/[id]", params: { id: String(childId) } });
   };
 
+  // The share sheet is a convenience on top of the link already on screen:
+  // on web without navigator.share it rejects, and a dismissed sheet can too.
+  // Neither is an error worth showing, least of all after a publish succeeded.
+  const shareLink = (url: string) =>
+    Share.share({ message: `${plant.nickname}'s plant passport: ${url}`, url }).catch(() => {});
+
   const publish = async () => {
     setPublishing(true);
     setPublishError(null);
@@ -92,7 +98,7 @@ export default function PlantDetail() {
       await setKeeperName(keeperName);
       const url = await publishPassport(db, plantId);
       refresh();
-      await Share.share({ message: `${plant.nickname}'s plant passport: ${url}`, url });
+      await shareLink(url);
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -123,6 +129,18 @@ export default function PlantDetail() {
           text: "Remove",
           style: "destructive",
           onPress: async () => {
+            // A published plant's passport would otherwise stay live with no
+            // record left to take it down from.
+            if (plant.passportToken) {
+              try {
+                await unpublishPassport(db, plantId);
+              } catch (err) {
+                setPublishError(
+                  `Couldn't take the passport down, so the plant was kept: ${err instanceof Error ? err.message : String(err)}`,
+                );
+                return;
+              }
+            }
             await deletePlant(db, plantId);
             router.back();
           },
@@ -231,12 +249,7 @@ export default function PlantDetail() {
                 title="Share link"
                 small
                 disabled={publishing}
-                onPress={() =>
-                  Share.share({
-                    message: `${plant.nickname}'s plant passport: ${passportUrl(plant.passportToken!)}`,
-                    url: passportUrl(plant.passportToken!),
-                  })
-                }
+                onPress={() => shareLink(passportUrl(plant.passportToken!))}
               />
               <Button title="Unpublish" small disabled={publishing} onPress={unpublish} />
             </>

@@ -66,6 +66,7 @@ npm run web        # runs in the browser too
 npm test           # domain logic (care scheduling, alerts, keeper history)
 npm run typecheck
 npm run smoke      # exports the web build and drives it in headless Chromium
+npm run e2e        # publishes a real passport to Supabase and reads it back
 ```
 
 The care rules live in `src/domain/care.ts` and are pure functions with no
@@ -78,6 +79,22 @@ reload — against the SQLite-on-wasm build. It needs a browser once:
 `npx playwright install chromium` (or point `CHROME` at an existing binary).
 Camera flows are checked on a device.
 
+`npm run e2e` is the v1 counterpart and hits the **real Supabase project** in
+`.env`: it builds a plant with a care history and a photo, calls the app's own
+`publishPassport`, then checks the snapshot landed, the photo is publicly
+readable, the passport page renders, republishing reuses the link, a cutting
+links back to its mother, the tables stay unreadable anonymously,
+unpublishing returns a 404 and takes the photos out of the public bucket, and
+republishing puts them back. It deletes everything it created afterwards.
+
+It drives `src/lib/passport.ts` and `src/db` directly under Node — SQLite is
+backed by `node:sqlite` and the two React-Native-only modules are stubbed
+(`e2e/stubs`, wired up in `vitest.e2e.config.ts`) — so the publish path under
+test is the one that ships. Identity comes from the app's anonymous sign-in,
+so **Allow anonymous sign-ins** has to be on (see above); to run it against a
+dedicated account instead, set `PASSPORT_E2E_EMAIL` and
+`PASSPORT_E2E_PASSWORD`.
+
 ## Layout
 
 ```
@@ -89,6 +106,7 @@ src/domain/care.ts  care scheduling rules — the product's brain
 src/db/             SQLite schema and typed queries
 src/lib/            photos (camera/library → app storage), date parsing
 src/components/     small UI kit + plant card
+e2e/                live passport publish check (npm run e2e)
 docs/PRODUCT.md     product brief and roadmap
 ```
 
