@@ -13,7 +13,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "smoke": "expo export --platform web --output-dir dist && node scripts/web-smoke.mjs dist",
-    "e2e": "vitest run --config vitest.e2e.config.ts"
+    "e2e": "vitest run --config vitest.e2e.config.ts",
+    "start:tunnel": "expo start --tunnel",
+    "deploy:pages": "node scripts/deploy-pages.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/space-grotesk": "^0.4.1",

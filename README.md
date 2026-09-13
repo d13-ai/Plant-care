@@ -60,6 +60,23 @@ npm run web        # runs in the browser too
 [Expo Go](https://expo.dev/go) is the fastest way to put a build on a phone
 — yours or a friend's — without an app store.
 
+## Hand it to testers
+
+```sh
+npm run start:tunnel   # Expo Go, scannable from anywhere — not just your wifi
+npm run deploy:pages   # web build → https://d13-ai.github.io/Plant-care/
+```
+
+`start:tunnel` is the real app: camera and all. Leave it running while people
+are testing; when it stops, so does the app on their phones.
+
+`deploy:pages` puts the web build on GitHub Pages as the `gh-pages` branch —
+the whole app in a browser, data kept on that device, no camera ("Choose"
+picks from files). One-time setup: the repo must be public (or on a plan that
+serves Pages from private repos) and Settings → Pages set to deploy from
+`gh-pages`. The base path comes from `app.config.js` via `EXPO_BASE_URL`;
+everything else about the build is unchanged.
+
 ## Test it
 
 ```sh
