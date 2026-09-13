@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SpeciesPicker } from "@/components/species-picker";
 import { Button, Field } from "@/components/ui";
-import { displayName, findSpecies, scientificName, searchSpecies, type SpeciesEntry } from "@/domain/species";
+import { displayName, findSpecies, sameName, scientificName, searchSpecies, type SpeciesEntry } from "@/domain/species";
 import { font, space, useTheme } from "@/theme";
 
 /**
@@ -24,7 +24,13 @@ export function SpeciesField({
   const t = useTheme();
   const [browsing, setBrowsing] = useState(false);
   const matched = useMemo(() => findSpecies(value), [value]);
-  const suggestions = useMemo(() => (matched ? [] : searchSpecies(value)), [value, matched]);
+  // A nickname ("thai con", "pothos") is understood, but still offered as a
+  // chip so one tap turns it into the proper name.
+  const canonical = matched !== null && sameName(value, scientificName(matched));
+  const suggestions = useMemo(
+    () => (canonical ? [] : matched ? [matched] : searchSpecies(value)),
+    [value, matched, canonical],
+  );
 
   return (
     <View style={{ gap: space.sm }}>

@@ -48,6 +48,18 @@ URL and publishable key (safe to commit — RLS gates everything).
 Providers → enable **Allow anonymous sign-ins**. Publishing fails with a
 clear message until that's on.
 
+## Species catalogue
+
+`src/domain/species.ts` knows ~135 houseplants and ~110 named cultivars and
+variegations — Thai Constellation, Albo, Marble Queen, Pink Princess, Tineke,
+Raven ZZ — each with the reminder cadences that suit it. Type in the species
+box and it suggests as you go (a genus prefix leads with scientific names, a
+nickname like "thai con" or "pothos" resolves too); **Browse** opens the whole
+list by group, with a *Variegated & cultivars* filter. Picking one, or typing
+a name it knows, sets the plant's reminders and stores the catalogue's
+spelling (`Monstera deliciosa 'Thai Constellation'`). Cultivars inherit their
+parent's care and sit right under it in the list.
+
 ## AI photo analysis
 
 On the add-plant screen, **Identify with AI** names the plant from its photo

@@ -10,7 +10,10 @@ export interface SpeciesEntry {
   /** Where it sits in the browse list — aroids, succulents, ferns … */
   group: string;
   genus: string;
+  /** Empty for a hybrid sold under a cultivar name alone (Philodendron 'Prince of Orange'). */
   species: string;
+  /** A named variety or variegation — 'Thai Constellation', 'Marble Queen'. */
+  cultivar?: string;
   /** Names people search by. The first is the one shown. */
   common: string[];
   waterEveryDays: number;
@@ -26,22 +29,26 @@ const CATALOGUE: { group: string; rows: Row[] }[] = [
     ["Monstera", "deliciosa", ["Swiss cheese plant", "Monstera"], 7, 30, 365],
     ["Monstera", "adansonii", ["Swiss cheese vine", "Monkey mask"], 7, 30, 365],
     ["Monstera", "obliqua", [], 6, 30, 365],
+  ["Monstera", "standleyana", ["Five holes plant"], 7, 30, 365],
     ["Philodendron", "hederaceum", ["Heartleaf philodendron"], 7, 30, 365],
-    ["Philodendron", "erubescens", ["Pink princess", "Blushing philodendron"], 7, 30, 365],
+    ["Philodendron", "erubescens", ["Blushing philodendron", "Red-leaf philodendron"], 7, 30, 365],
     ["Philodendron", "gloriosum", [], 7, 30, 365],
     ["Philodendron", "melanochrysum", ["Black gold philodendron"], 7, 30, 365],
     ["Philodendron", "birkin", ["Birkin"], 7, 30, 365],
     ["Thaumatophyllum", "bipinnatifidum", ["Tree philodendron", "Philodendron selloum"], 7, 30, 540],
     ["Epipremnum", "aureum", ["Pothos", "Golden pothos", "Devil's ivy"], 8, 30, 365],
-    ["Epipremnum", "pinnatum", ["Dragon tail", "Cebu blue"], 8, 30, 365],
+    ["Epipremnum", "pinnatum", ["Dragon tail"], 8, 30, 365],
     ["Scindapsus", "pictus", ["Satin pothos", "Silver pothos"], 8, 30, 365],
+  ["Scindapsus", "treubii", ["Sterling silver scindapsus"], 8, 30, 365],
     ["Anthurium", "andraeanum", ["Flamingo flower", "Anthurium"], 7, 21, 365],
     ["Anthurium", "clarinervium", ["Velvet cardboard anthurium"], 7, 30, 365],
     ["Anthurium", "crystallinum", [], 7, 30, 365],
     ["Alocasia", "amazonica", ["Alocasia Polly", "African mask"], 6, 21, 365],
     ["Alocasia", "zebrina", [], 6, 21, 365],
     ["Alocasia", "macrorrhizos", ["Giant taro", "Elephant ear"], 5, 21, 365],
-    ["Alocasia", "baginda", ["Dragon scale"], 7, 21, 365],
+    ["Alocasia", "baginda", ["Dragon scale alocasia"], 7, 21, 365],
+  ["Alocasia", "reginula", ["Black velvet alocasia"], 8, 21, 365],
+  ["Alocasia", "micholitziana", ["Green velvet alocasia"], 6, 21, 365],
     ["Colocasia", "esculenta", ["Taro", "Elephant ear"], 4, 21, 365],
     ["Caladium", "bicolor", ["Caladium", "Angel wings"], 4, 21, 365],
     ["Zamioculcas", "zamiifolia", ["ZZ plant", "Zanzibar gem"], 21, 60, 730],
@@ -63,6 +70,7 @@ const CATALOGUE: { group: string; rows: Row[] }[] = [
     ["Dracaena", "marginata", ["Dragon tree"], 10, 30, 730],
     ["Dracaena", "fragrans", ["Corn plant"], 10, 30, 730],
     ["Dracaena", "angolensis", ["Cylindrical snake plant", "Sansevieria cylindrica"], 21, 60, 730],
+  ["Dracaena", "masoniana", ["Whale fin snake plant", "Sansevieria masoniana"], 21, 60, 730],
     ["Yucca", "elephantipes", ["Spineless yucca"], 14, 60, 730],
     ["Pachira", "aquatica", ["Money tree"], 8, 30, 540],
     ["Crassula", "ovata", ["Jade plant", "Money plant"], 14, 60, 730],
@@ -106,7 +114,7 @@ const CATALOGUE: { group: string; rows: Row[] }[] = [
     ["Goeppertia", "lancifolia", ["Rattlesnake plant", "Calathea lancifolia"], 5, 21, 365],
     ["Calathea", "ornata", ["Pinstripe calathea"], 5, 21, 365],
     ["Ctenanthe", "burle-marxii", ["Fishbone prayer plant", "Never never plant"], 5, 21, 365],
-    ["Stromanthe", "sanguinea", ["Triostar", "Stromanthe"], 5, 21, 365],
+    ["Stromanthe", "sanguinea", ["Stromanthe"], 5, 21, 365],
   ] },
   { group: "Ferns", rows: [
     ["Nephrolepis", "exaltata", ["Boston fern", "Sword fern"], 4, 30, 365],
@@ -181,7 +189,139 @@ const CATALOGUE: { group: string; rows: Row[] }[] = [
   ] },
 ];
 
-export const SPECIES: SpeciesEntry[] = CATALOGUE.flatMap(({ group, rows }) =>
+
+// genus, species ("" for a hybrid), cultivar, common names — and care when
+// there's no parent to inherit it from.
+type CultivarRow =
+  | [string, string, string, string[]]
+  | [string, string, string, string[], number, number, number];
+
+const CULTIVARS: CultivarRow[] = [
+  // Monstera
+  ["Monstera", "deliciosa", "Thai Constellation", ["Thai Constellation", "Thai Con"]],
+  ["Monstera", "deliciosa", "Albo Variegata", ["Monstera Albo", "Albo monstera"]],
+  ["Monstera", "deliciosa", "Aurea", ["Monstera Aurea", "Marmorata"]],
+  ["Monstera", "deliciosa", "Mint", ["Monstera Mint"]],
+  ["Monstera", "adansonii", "Albo Variegata", ["Adansonii Albo"]],
+  ["Monstera", "adansonii", "Aurea", ["Adansonii Aurea"]],
+  ["Monstera", "standleyana", "Albo Variegata", ["Standleyana Albo"]],
+  ["Rhaphidophora", "tetrasperma", "Variegata", ["Variegated mini monstera"]],
+  // Philodendron
+  ["Philodendron", "erubescens", "Pink Princess", ["Pink Princess", "PPP"]],
+  ["Philodendron", "erubescens", "White Princess", ["White Princess"]],
+  ["Philodendron", "erubescens", "White Knight", ["White Knight"]],
+  ["Philodendron", "erubescens", "White Wizard", ["White Wizard"]],
+  ["Philodendron", "hederaceum", "Brasil", ["Philodendron Brasil"]],
+  ["Philodendron", "hederaceum", "Micans", ["Velvet leaf philodendron", "Micans"]],
+  ["Philodendron", "hederaceum", "Rio", ["Philodendron Rio"]],
+  ["Philodendron", "", "Florida Ghost", ["Florida Ghost"], 7, 30, 365],
+  ["Philodendron", "", "Florida Beauty", ["Florida Beauty"], 7, 30, 365],
+  ["Philodendron", "", "Prince of Orange", ["Prince of Orange"], 7, 30, 365],
+  ["Philodendron", "", "Moonlight", ["Philodendron Moonlight"], 7, 30, 365],
+  ["Philodendron", "", "Ring of Fire", ["Ring of Fire"], 7, 30, 365],
+  ["Philodendron", "", "Paraiso Verde", ["Paraiso Verde"], 7, 30, 365],
+  ["Philodendron", "", "Burle Marx Variegata", ["Variegated Burle Marx"], 7, 30, 365],
+  ["Philodendron", "", "Jose Buono", ["Jose Buono"], 7, 30, 365],
+  // Pothos and satin pothos
+  ["Epipremnum", "aureum", "Marble Queen", ["Marble Queen pothos"]],
+  ["Epipremnum", "aureum", "Snow Queen", ["Snow Queen pothos"]],
+  ["Epipremnum", "aureum", "Neon", ["Neon pothos"]],
+  ["Epipremnum", "aureum", "Manjula", ["Manjula pothos"]],
+  ["Epipremnum", "aureum", "N'Joy", ["N'Joy pothos", "Njoy"]],
+  ["Epipremnum", "aureum", "Pearls and Jade", ["Pearls and Jade pothos"]],
+  ["Epipremnum", "aureum", "Global Green", ["Global Green pothos"]],
+  ["Epipremnum", "aureum", "Jade", ["Jade pothos"]],
+  ["Epipremnum", "aureum", "Harlequin", ["Harlequin pothos"]],
+  ["Epipremnum", "pinnatum", "Cebu Blue", ["Cebu Blue pothos"]],
+  ["Epipremnum", "pinnatum", "Albo Variegata", ["Pinnatum Albo"]],
+  ["Epipremnum", "pinnatum", "Aurea", ["Pinnatum Aurea"]],
+  ["Scindapsus", "pictus", "Exotica", ["Satin pothos Exotica"]],
+  ["Scindapsus", "pictus", "Argyraeus", ["Satin pothos Argyraeus"]],
+  ["Scindapsus", "pictus", "Silvery Ann", ["Silvery Ann"]],
+  ["Scindapsus", "treubii", "Moonlight", ["Scindapsus Moonlight"]],
+  ["Scindapsus", "treubii", "Dark Form", ["Scindapsus Dark Form"]],
+  // Alocasia, Syngonium, Anthurium relatives
+  ["Alocasia", "baginda", "Dragon Scale", ["Dragon Scale"]],
+  ["Alocasia", "baginda", "Silver Dragon", ["Silver Dragon"]],
+  ["Alocasia", "micholitziana", "Frydek", ["Frydek"]],
+  ["Alocasia", "micholitziana", "Frydek Variegata", ["Variegated Frydek"]],
+  ["Alocasia", "", "Pink Dragon", ["Pink Dragon"], 7, 21, 365],
+  ["Alocasia", "", "Regal Shield", ["Regal Shield"], 6, 21, 365],
+  ["Syngonium", "podophyllum", "Albo Variegatum", ["Syngonium Albo"]],
+  ["Syngonium", "podophyllum", "Pink Splash", ["Pink Splash"]],
+  ["Syngonium", "podophyllum", "Mojito", ["Syngonium Mojito"]],
+  ["Syngonium", "podophyllum", "Neon Robusta", ["Neon Robusta"]],
+  ["Syngonium", "podophyllum", "Three Kings", ["Three Kings"]],
+  ["Syngonium", "podophyllum", "Confetti", ["Syngonium Confetti"]],
+  // Hoya
+  ["Hoya", "carnosa", "Krimson Queen", ["Hoya Tricolor", "Krimson Queen"]],
+  ["Hoya", "carnosa", "Krimson Princess", ["Krimson Princess"]],
+  ["Hoya", "carnosa", "Compacta", ["Hindu rope hoya"]],
+  ["Hoya", "kerrii", "Variegata", ["Variegated sweetheart hoya"]],
+  ["Hoya", "", "Publicalyx Splash", ["Hoya Splash"], 10, 30, 730],
+  ["Hoya", "", "Australis Lisa", ["Hoya Lisa"], 10, 30, 730],
+  // Ficus and other trees
+  ["Ficus", "elastica", "Tineke", ["Tineke rubber plant"]],
+  ["Ficus", "elastica", "Ruby", ["Ruby rubber plant"]],
+  ["Ficus", "elastica", "Burgundy", ["Burgundy rubber plant"]],
+  ["Ficus", "elastica", "Shivereana", ["Shivereana rubber plant"]],
+  ["Ficus", "benjamina", "Starlight", ["Variegated weeping fig"]],
+  ["Ficus", "lyrata", "Bambino", ["Dwarf fiddle-leaf fig"]],
+  ["Schefflera", "arboricola", "Variegata", ["Variegated umbrella plant"]],
+  ["Dracaena", "trifasciata", "Laurentii", ["Variegated snake plant", "Laurentii"]],
+  ["Dracaena", "trifasciata", "Moonshine", ["Moonshine snake plant"]],
+  ["Dracaena", "trifasciata", "Black Gold", ["Black Gold snake plant"]],
+  ["Dracaena", "trifasciata", "Hahnii", ["Bird's nest snake plant"]],
+  ["Dracaena", "angolensis", "Boncel", ["Starfish snake plant"]],
+  ["Dracaena", "fragrans", "Lemon Lime", ["Lemon Lime dracaena"]],
+  ["Dracaena", "fragrans", "Massangeana", ["Corn plant Massangeana"]],
+  ["Dracaena", "marginata", "Tricolor", ["Tricolor dragon tree"]],
+  ["Dracaena", "marginata", "Colorama", ["Colorama dragon tree"]],
+  ["Zamioculcas", "zamiifolia", "Raven", ["Raven ZZ", "Black ZZ"]],
+  ["Zamioculcas", "zamiifolia", "Chameleon", ["Chameleon ZZ"]],
+  ["Zamioculcas", "zamiifolia", "Zenzi", ["Zenzi ZZ"]],
+  // Prayer plants and calatheas
+  ["Calathea", "", "White Fusion", ["Calathea White Fusion"], 4, 21, 365],
+  ["Calathea", "ornata", "Beauty Star", ["Calathea Beauty Star"]],
+  ["Stromanthe", "sanguinea", "Triostar", ["Triostar", "Tricolor stromanthe"]],
+  ["Ctenanthe", "", "Amagris", ["Ctenanthe Amagris"], 5, 21, 365],
+  ["Maranta", "leuconeura", "Lemon Lime", ["Lemon Lime prayer plant"]],
+  ["Maranta", "leuconeura", "Kerchoveana", ["Rabbit's foot prayer plant"]],
+  ["Maranta", "leuconeura", "Erythroneura", ["Red prayer plant", "Herringbone plant"]],
+  // Peperomia, Pilea, Tradescantia, Chlorophytum
+  ["Peperomia", "obtusifolia", "Variegata", ["Variegated baby rubber plant"]],
+  ["Peperomia", "", "Ginny", ["Peperomia Ginny", "Rainbow peperomia"], 9, 30, 730],
+  ["Pilea", "peperomioides", "Mojito", ["Variegated Chinese money plant", "Pilea Mojito"]],
+  ["Pilea", "peperomioides", "Sugar", ["Pilea Sugar"]],
+  ["Tradescantia", "zebrina", "Quadricolor", ["Quadricolor inch plant"]],
+  ["Tradescantia", "", "Tricolor", ["Tricolor tradescantia"], 5, 30, 365],
+  ["Chlorophytum", "comosum", "Vittatum", ["Variegated spider plant"]],
+  ["Chlorophytum", "comosum", "Bonnie", ["Curly spider plant"]],
+  ["Hedera", "helix", "Glacier", ["Variegated ivy"]],
+  // Aglaonema, Dieffenbachia, Spathiphyllum
+  ["Aglaonema", "commutatum", "Silver Bay", ["Silver Bay"]],
+  ["Aglaonema", "", "Red Siam", ["Red Siam"], 9, 30, 540],
+  ["Aglaonema", "", "Siam Aurora", ["Siam Aurora"], 9, 30, 540],
+  ["Aglaonema", "", "Pink Dalmatian", ["Pink Dalmatian"], 9, 30, 540],
+  ["Dieffenbachia", "seguine", "Camille", ["Dumb cane Camille"]],
+  ["Dieffenbachia", "seguine", "Tropic Snow", ["Tropic Snow"]],
+  ["Spathiphyllum", "wallisii", "Domino", ["Variegated peace lily"]],
+  ["Spathiphyllum", "wallisii", "Sensation", ["Giant peace lily"]],
+  // Succulents and cacti
+  ["Crassula", "ovata", "Gollum", ["Gollum jade"]],
+  ["Crassula", "ovata", "Hobbit", ["Hobbit jade"]],
+  ["Crassula", "ovata", "Tricolor", ["Variegated jade"]],
+  ["Euphorbia", "trigona", "Rubra", ["Red African milk tree"]],
+  ["Echeveria", "", "Lola", ["Echeveria Lola"], 14, 60, 730],
+  ["Echeveria", "", "Perle von Nürnberg", ["Perle von Nürnberg"], 14, 60, 730],
+  // Others
+  ["Codiaeum", "variegatum", "Petra", ["Croton Petra"]],
+  ["Codiaeum", "variegatum", "Mammy", ["Croton Mammy"]],
+  ["Cordyline", "fruticosa", "Red Sister", ["Red Sister ti plant"]],
+  ["Begonia", "maculata", "Wightii", ["Polka dot begonia Wightii"]],
+];
+
+const BASE: SpeciesEntry[] = CATALOGUE.flatMap(({ group, rows }) =>
   rows.map(([genus, species, common, water, fert, repot]) => ({
     group,
     genus,
@@ -193,10 +333,36 @@ export const SPECIES: SpeciesEntry[] = CATALOGUE.flatMap(({ group, rows }) =>
   })),
 );
 
+// Each cultivar sits right under its parent (or its nearest genus-mate, for
+// a hybrid), inheriting the parent's group and care unless the row says.
+const CULTIVAR_ENTRIES = CULTIVARS.map((row) => {
+  const [genus, species, cultivar, common, water, fert, repot] = row;
+  const parent = BASE.find((e) => e.genus === genus && e.species === species) ?? BASE.find((e) => e.genus === genus);
+  const entry: SpeciesEntry = {
+    group: parent?.group ?? "Other",
+    genus,
+    species,
+    cultivar,
+    common,
+    waterEveryDays: water ?? parent?.waterEveryDays ?? 7,
+    fertilizeEveryDays: fert ?? parent?.fertilizeEveryDays ?? 30,
+    repotEveryDays: repot ?? parent?.repotEveryDays ?? 365,
+  };
+  return { entry, parent };
+});
+
+export const SPECIES: SpeciesEntry[] = [];
+for (const base of BASE) {
+  SPECIES.push(base);
+  for (const { entry, parent } of CULTIVAR_ENTRIES) if (parent === base) SPECIES.push(entry);
+}
+for (const { entry, parent } of CULTIVAR_ENTRIES) if (!parent) SPECIES.push(entry);
+
 /** Browse-list sections, in the order they're shown. */
 export const SPECIES_GROUPS: string[] = CATALOGUE.map((c) => c.group);
 
-export const scientificName = (e: SpeciesEntry) => `${e.genus} ${e.species}`;
+export const scientificName = (e: SpeciesEntry) =>
+  `${e.genus}${e.species ? ` ${e.species}` : ""}${e.cultivar ? ` '${e.cultivar}'` : ""}`;
 
 /** "Monstera deliciosa" or "Swiss cheese plant (Monstera deliciosa)". */
 export function displayName(e: SpeciesEntry): string {
@@ -217,11 +383,14 @@ export function searchSpecies(query: string, limit = 5): SpeciesEntry[] {
   const scored: { entry: SpeciesEntry; score: number }[] = [];
   for (const entry of SPECIES) {
     const sci = fold(scientificName(entry));
+    const cult = entry.cultivar ? fold(entry.cultivar) : "";
     const commons = entry.common.map(fold);
     let score = 0;
     if (sci.startsWith(q)) score = 100;
-    else if (fold(entry.species).startsWith(q)) score = 90;
+    else if (cult && cult.startsWith(q)) score = 95;
+    else if (entry.species && fold(entry.species).startsWith(q)) score = 90;
     else if (commons.some((c) => c.startsWith(q))) score = 80;
+    else if (cult && cult.split(" ").some((w) => w.startsWith(q))) score = 70;
     else if (commons.some((c) => c.split(" ").some((w) => w.startsWith(q)))) score = 60;
     else if (sci.includes(q) || commons.some((c) => c.includes(q))) score = 40;
     if (score) scored.push({ entry, score });
@@ -232,6 +401,9 @@ export function searchSpecies(query: string, limit = 5): SpeciesEntry[] {
     .map((s) => s.entry);
 }
 
+/** Same plant name, ignoring case, accents and apostrophes. */
+export const sameName = (a: string, b: string) => fold(a.trim()) === fold(b.trim());
+
 /** The catalogue entry a stored species string refers to, if any. */
 export function findSpecies(name: string | null | undefined): SpeciesEntry | null {
   if (!name) return null;
@@ -239,6 +411,7 @@ export function findSpecies(name: string | null | undefined): SpeciesEntry | nul
   return (
     SPECIES.find((e) => fold(scientificName(e)) === n) ??
     SPECIES.find((e) => e.common.some((c) => fold(c) === n)) ??
+    SPECIES.find((e) => e.cultivar !== undefined && fold(e.cultivar) === n) ??
     null
   );
 }
@@ -248,13 +421,21 @@ export function findSpecies(name: string | null | undefined): SpeciesEntry | nul
  * species: "deliciosa" }: the exact species when we have it, else the first
  * plant of that genus (its reminders are a fair default for its relatives).
  */
-export function matchCandidate(candidate: { genus: string; species?: string | null }): SpeciesEntry | null {
+export function matchCandidate(candidate: {
+  genus: string;
+  species?: string | null;
+  cultivar?: string | null;
+}): SpeciesEntry | null {
   const genus = fold(candidate.genus.trim());
   if (!genus) return null;
   const sp = fold((candidate.species ?? "").trim());
+  const cv = fold((candidate.cultivar ?? "").trim());
+  const ofGenus = SPECIES.filter((e) => fold(e.genus) === genus);
   return (
-    (sp ? SPECIES.find((e) => fold(e.genus) === genus && fold(e.species) === sp) : undefined) ??
-    SPECIES.find((e) => fold(e.genus) === genus) ??
+    (cv ? ofGenus.find((e) => e.cultivar && fold(e.cultivar) === cv) : undefined) ??
+    (sp ? ofGenus.find((e) => !e.cultivar && fold(e.species) === sp) : undefined) ??
+    ofGenus.find((e) => !e.cultivar) ??
+    ofGenus[0] ??
     null
   );
 }

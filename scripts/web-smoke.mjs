@@ -59,6 +59,11 @@ try {
     if ((await page.getByPlaceholder("Monstera deliciosa").inputValue()) !== "Nephrolepis exaltata") throw new Error("pick didn't fill the species");
     await page.getByText(/reminders set: water every 4 days/).waitFor();
   });
+  await step("a typed cultivar is suggested and filled", async () => {
+    await page.getByPlaceholder("Monstera deliciosa").fill("thai con");
+    await page.getByText(/Thai Constellation \(Monstera deliciosa/).click();
+    if ((await page.getByPlaceholder("Monstera deliciosa").inputValue()) !== "Monstera deliciosa 'Thai Constellation'") throw new Error("cultivar suggestion didn't fill");
+  });
   await step("fill and save a plant acquired 40 days ago", async () => {
     await page.getByPlaceholder("Big Monstera").fill("Big Monstera");
     await page.getByPlaceholder("Monstera deliciosa").fill("Monstera deliciosa");

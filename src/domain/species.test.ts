@@ -77,3 +77,35 @@ describe("matching an AI identification", () => {
     expect(matchCandidate({ genus: "" })).toBeNull();
   });
 });
+
+describe("cultivars and variegations", () => {
+  it("knows the ones collectors ask for", () => {
+    expect(searchSpecies("thai constellation")[0].cultivar).toBe("Thai Constellation");
+    expect(searchSpecies("thai")[0].genus).toBe("Monstera");
+    expect(searchSpecies("albo").every((e) => /albo/i.test(e.cultivar ?? ""))).toBe(true);
+    expect(searchSpecies("marble queen")[0].species).toBe("aureum");
+    expect(searchSpecies("pink princess")[0].cultivar).toBe("Pink Princess");
+  });
+  it("writes the cultivar the way a label does, and reads it back", () => {
+    const thai = findSpecies("Thai Constellation")!;
+    expect(scientificName(thai)).toBe("Monstera deliciosa 'Thai Constellation'");
+    expect(findSpecies("Monstera deliciosa 'Thai Constellation'")).toBe(thai);
+    expect(scientificName(findSpecies("Prince of Orange")!)).toBe("Philodendron 'Prince of Orange'");
+  });
+  it("inherits its parent's group and care", () => {
+    const parent = findSpecies("Monstera deliciosa")!;
+    const thai = findSpecies("Thai Constellation")!;
+    expect(thai.group).toBe(parent.group);
+    expect(thai.waterEveryDays).toBe(parent.waterEveryDays);
+    expect(findSpecies("Raven ZZ")!.waterEveryDays).toBe(findSpecies("ZZ plant")!.waterEveryDays);
+  });
+  it("sits right under its parent in the list", () => {
+    const i = SPECIES.findIndex((e) => scientificName(e) === "Monstera deliciosa");
+    expect(SPECIES[i + 1].cultivar).toBe("Thai Constellation");
+  });
+  it("matches an AI identification down to the cultivar, or falls back", () => {
+    expect(matchCandidate({ genus: "Monstera", species: "deliciosa", cultivar: "Thai Constellation" })?.cultivar).toBe("Thai Constellation");
+    expect(matchCandidate({ genus: "Monstera", species: "deliciosa", cultivar: "" })?.cultivar).toBeUndefined();
+    expect(matchCandidate({ genus: "Monstera", species: "deliciosa", cultivar: "Not A Thing" })?.cultivar).toBeUndefined();
+  });
+});

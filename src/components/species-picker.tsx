@@ -11,6 +11,8 @@ import {
 } from "@/domain/species";
 import { font, radius, space, useTheme } from "@/theme";
 
+const CULTIVARS = "__cultivars__";
+
 /**
  * Browse the catalogue instead of typing: a sheet with a search box, the
  * groups as chips, and the list. Tapping a plant hands the entry back.
@@ -31,6 +33,7 @@ export function SpeciesPicker({
 
   const rows = useMemo(() => {
     if (query.trim().length >= 2) return searchSpecies(query, 40);
+    if (group === CULTIVARS) return SPECIES.filter((e) => e.cultivar);
     return group ? SPECIES.filter((e) => e.group === group) : SPECIES;
   }, [query, group]);
 
@@ -59,7 +62,11 @@ export function SpeciesPicker({
         />
         {query.trim().length < 2 && (
           <Chips
-            options={[{ label: "All", value: "" }, ...SPECIES_GROUPS.map((g) => ({ label: g, value: g }))]}
+            options={[
+              { label: "All", value: "" },
+              { label: "Variegated & cultivars", value: CULTIVARS },
+              ...SPECIES_GROUPS.map((g) => ({ label: g, value: g })),
+            ]}
             value={group}
             onChange={setGroup}
           />
@@ -80,7 +87,7 @@ export function SpeciesPicker({
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={[styles.name, { color: t.text }]}>{item.common[0] ?? scientificName(item)}</Text>
                 <Text style={[styles.sci, { color: t.muted }]}>
-                  {item.common[0] ? scientificName(item) : item.group}
+                  {item.common[0] ? scientificName(item) : item.cultivar ? `${item.genus} · cultivar` : item.group}
                   {" · water every "}
                   {item.waterEveryDays}d
                 </Text>

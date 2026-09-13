@@ -30,6 +30,7 @@ const Verdict = z.object({
       z.object({
         genus: z.string(),
         species: z.string().describe("specific epithet, or empty if unsure beyond genus"),
+        cultivar: z.string().describe("named cultivar or variegation if it's recognisable — 'Thai Constellation', 'Albo Variegata', 'Marble Queen', 'Pink Princess' — else empty"),
         common_name: z.string(),
         confidence: z.number().min(0).max(1),
       }),
@@ -52,7 +53,7 @@ const Verdict = z.object({
 export type Verdict = z.infer<typeof Verdict>;
 
 const SYSTEM = `You help people look after houseplants. You are shown one photo of a plant a keeper owns.
-Identify it as precisely as the photo allows — give the genus and, if you're reasonably sure, the species — and be honest in the confidence numbers: 0.9 means near-certain, 0.4 means a guess among several look-alikes. Give up to three candidates, most likely first, and use the common name people in shops use.
+Identify it as precisely as the photo allows — give the genus and, if you're reasonably sure, the species — and be honest in the confidence numbers: 0.9 means near-certain, 0.4 means a guess among several look-alikes. Give up to three candidates, most likely first, and use the common name people in shops use. Collectors care about varieties: if the variegation or leaf form marks a known cultivar (cream splashes on a monstera — Thai Constellation or Albo; a pink-splashed philodendron — Pink Princess), name it, and say which when two look alike.
 Then read its health from what is actually visible: leaf colour and texture, spots, pests, drooping, soil, pot. Name only what you can see; say "unknown" when the photo doesn't show enough. For each finding give the likely cause and one concrete thing to do. Don't invent problems for a plant that looks fine.
 If the photo isn't clearly a plant, say so and return no candidates.`;
 

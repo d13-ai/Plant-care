@@ -6,6 +6,7 @@ import { SpeciesField } from "@/components/species-field";
 import { Body, Button, Card, Chips, Field, Heading } from "@/components/ui";
 import { getPlant, updatePlant, type Plant, type PlantStatus } from "@/db";
 import { SCHEDULED_CARE } from "@/domain/care";
+import { findSpecies, scientificName } from "@/domain/species";
 import { space } from "@/theme";
 
 type CadenceField = (typeof SCHEDULED_CARE)[number]["cadenceField"];
@@ -58,9 +59,10 @@ export default function EditPlant() {
 
   const save = async () => {
     if (!nickname.trim()) return;
+    const known = findSpecies(species);
     await updatePlant(db, plantId, {
       nickname,
-      species,
+      species: known ? scientificName(known) : species,
       location,
       status,
       notes,

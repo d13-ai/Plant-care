@@ -4,7 +4,7 @@ import { ensureSession, supabase, supabaseConfigured } from "./supabase";
 /** What the analyze function returns — mirrors its zod schema. */
 export interface Verdict {
   is_plant: boolean;
-  species: { genus: string; species: string; common_name: string; confidence: number }[];
+  species: { genus: string; species: string; cultivar: string; common_name: string; confidence: number }[];
   health: {
     overall: "healthy" | "watch" | "unwell" | "unknown";
     findings: { observation: string; likely_cause: string; suggested_action: string; severity: "low" | "medium" | "high" }[];

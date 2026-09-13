@@ -47,8 +47,11 @@ export default function NewPlant() {
   };
 
   const useCandidate = (c: Verdict["species"][number]) => {
+    // The catalogue's spelling when it knows this plant (down to the cultivar); the AI's otherwise.
+    const typed = `${c.genus}${c.species ? ` ${c.species}` : ""}${c.cultivar ? ` '${c.cultivar}'` : ""}`;
     const entry = matchCandidate(c);
-    setSpecies(entry && (!c.species || entry.species === c.species) ? scientificName(entry) : `${c.genus} ${c.species}`.trim());
+    const known = entry && scientificName(entry).toLowerCase() === typed.toLowerCase();
+    setSpecies(known ? scientificName(entry) : typed);
     setPicked(entry);
   };
 
@@ -65,7 +68,7 @@ export default function NewPlant() {
     const entry = picked ?? findSpecies(species);
     const id = await createPlant(db, {
       nickname,
-      species,
+      species: entry ? scientificName(entry) : species,
       location,
       acquiredFrom,
       acquiredAt: acquiredIso,
@@ -113,9 +116,9 @@ export default function NewPlant() {
                   <Row>
                     {verdict.species.map((c) => (
                       <Button
-                        key={`${c.genus}-${c.species}`}
+                        key={`${c.genus}-${c.species}-${c.cultivar}`}
                         small
-                        title={`${c.common_name || `${c.genus} ${c.species}`.trim()} · ${Math.round(c.confidence * 100)}%`}
+                        title={`${c.common_name || `${c.genus} ${c.species}`.trim()}${c.cultivar ? ` '${c.cultivar}'` : ""} · ${Math.round(c.confidence * 100)}%`}
                         onPress={() => useCandidate(c)}
                       />
                     ))}
