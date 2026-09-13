@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Field } from "@/components/ui";
+import { SpeciesPicker } from "@/components/species-picker";
+import { Button, Field } from "@/components/ui";
 import { displayName, findSpecies, scientificName, searchSpecies, type SpeciesEntry } from "@/domain/species";
 import { font, space, useTheme } from "@/theme";
 
@@ -21,6 +22,7 @@ export function SpeciesField({
   placeholder?: string;
 }) {
   const t = useTheme();
+  const [browsing, setBrowsing] = useState(false);
   const matched = useMemo(() => findSpecies(value), [value]);
   const suggestions = useMemo(() => (matched ? [] : searchSpecies(value)), [value, matched]);
 
@@ -33,11 +35,20 @@ export function SpeciesField({
         placeholder={placeholder}
         autoCapitalize="none"
         autoCorrect={false}
+        trailing={<Button title="Browse" small onPress={() => setBrowsing(true)} />}
         hint={
           matched
-            ? `${matched.common[0] ? `${matched.common[0]} · ` : ""}reminders: water every ${matched.waterEveryDays} days, feed every ${matched.fertilizeEveryDays}`
-            : undefined
+            ? `${matched.common[0] ? `${matched.common[0]} · ` : ""}reminders set: water every ${matched.waterEveryDays} days, feed every ${matched.fertilizeEveryDays}`
+            : "Start typing for suggestions, or browse the list."
         }
+      />
+      <SpeciesPicker
+        visible={browsing}
+        onClose={() => setBrowsing(false)}
+        onPick={(entry) => {
+          onChangeText(scientificName(entry));
+          onPick(entry);
+        }}
       />
       {suggestions.length > 0 && (
         <View style={styles.list}>

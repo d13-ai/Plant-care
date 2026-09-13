@@ -145,22 +145,26 @@ export function IconButton({
 export function Field({
   label,
   hint,
+  trailing,
   ...input
-}: { label: string; hint?: string } & TextInputProps) {
+}: { label: string; hint?: string; trailing?: ReactNode } & TextInputProps) {
   const t = useTheme();
   return (
     <View style={{ gap: space.xs }}>
       <Text style={[styles.label, { color: t.muted }]}>{label}</Text>
-      <TextInput
-        placeholderTextColor={t.muted}
-        {...input}
-        style={[
-          styles.input,
-          { color: t.text, borderColor: t.border, backgroundColor: t.background },
-          input.multiline && { minHeight: 80, textAlignVertical: "top" },
-          input.style,
-        ]}
-      />
+      <View style={styles.inputRow}>
+        <TextInput
+          placeholderTextColor={t.muted}
+          {...input}
+          style={[
+            styles.input,
+            { color: t.text, borderColor: t.border, backgroundColor: t.background, flex: 1 },
+            input.multiline && { minHeight: 80, textAlignVertical: "top" },
+            input.style,
+          ]}
+        />
+        {trailing}
+      </View>
       {hint ? <Text style={[styles.small, { color: t.muted }]}>{hint}</Text> : null}
     </View>
   );
@@ -260,6 +264,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: font.regular,
   },
+  inputRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   chip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, borderWidth: 1 },
   chipText: { fontSize: 13, fontFamily: font.bold, fontWeight: "700" },

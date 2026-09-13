@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SPECIES, displayName, findSpecies, scientificName, searchSpecies } from "./species";
+import { SPECIES, SPECIES_GROUPS, displayName, findSpecies, scientificName, searchSpecies } from "./species";
 
 describe("species catalogue", () => {
   it("has no duplicate scientific names", () => {
@@ -48,5 +48,18 @@ describe("species catalogue", () => {
   it("shows the common name with the scientific one behind it", () => {
     expect(displayName(findSpecies("Ficus lyrata")!)).toBe("Fiddle-leaf fig (Ficus lyrata)");
     expect(displayName(findSpecies("Monstera obliqua")!)).toBe("Monstera obliqua");
+  });
+});
+
+describe("browse groups", () => {
+  it("puts every entry in a listed group, in list order", () => {
+    for (const e of SPECIES) expect(SPECIES_GROUPS, scientificName(e)).toContain(e.group);
+    const seen = [...new Set(SPECIES.map((e) => e.group))];
+    expect(seen).toEqual(SPECIES_GROUPS);
+  });
+  it("files the obvious ones where a keeper would look", () => {
+    expect(findSpecies("Monstera deliciosa")?.group).toBe("Aroids");
+    expect(findSpecies("Aloe vera")?.group).toBe("Succulents & cacti");
+    expect(findSpecies("Boston fern")?.group).toBe("Ferns");
   });
 });

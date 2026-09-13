@@ -6,7 +6,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "re
 import { SpeciesField } from "@/components/species-field";
 import { Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
 import { createPlant, listPlants, type Plant } from "@/db";
-import type { SpeciesEntry } from "@/domain/species";
+import { findSpecies, type SpeciesEntry } from "@/domain/species";
 import { parseDate } from "@/lib/dates";
 import { capturePhoto } from "@/lib/photos";
 import { radius, space, useTheme } from "@/theme";
@@ -37,6 +37,7 @@ export default function NewPlant() {
   const save = async () => {
     if (!nickname.trim() || dateInvalid) return;
     setSaving(true);
+    const entry = picked ?? findSpecies(species);
     const id = await createPlant(db, {
       nickname,
       species,
@@ -45,9 +46,9 @@ export default function NewPlant() {
       acquiredAt: acquiredIso,
       motherPlantId: motherId ? Number(motherId) : null,
       photoUri,
-      waterEveryDays: picked?.waterEveryDays,
-      fertilizeEveryDays: picked?.fertilizeEveryDays,
-      repotEveryDays: picked?.repotEveryDays,
+      waterEveryDays: entry?.waterEveryDays,
+      fertilizeEveryDays: entry?.fertilizeEveryDays,
+      repotEveryDays: entry?.repotEveryDays,
     });
     router.replace({ pathname: "/plant/[id]", params: { id: String(id) } });
   };

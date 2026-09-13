@@ -51,6 +51,14 @@ try {
     await page.getByText("Add your first plant").click();
     await page.getByPlaceholder("Big Monstera").waitFor();
   });
+  await step("browse the species list and pick one", async () => {
+    await page.getByText("Browse", { exact: true }).click();
+    await page.getByText("Pick a species").waitFor();
+    await page.getByText("Ferns", { exact: true }).click();
+    await page.getByText("Boston fern").click();
+    if ((await page.getByPlaceholder("Monstera deliciosa").inputValue()) !== "Nephrolepis exaltata") throw new Error("pick didn't fill the species");
+    await page.getByText(/reminders set: water every 4 days/).waitFor();
+  });
   await step("fill and save a plant acquired 40 days ago", async () => {
     await page.getByPlaceholder("Big Monstera").fill("Big Monstera");
     await page.getByPlaceholder("Monstera deliciosa").fill("Monstera deliciosa");
