@@ -13,7 +13,13 @@ import { zodOutputFormat } from "npm:@anthropic-ai/sdk/helpers/zod";
 import { z } from "npm:zod";
 
 const DAILY_CAP = 20;
-const MODEL = "claude-opus-5";
+// Model and effort are function secrets so cost can be tuned without a
+// redeploy: AI_MODEL (claude-opus-5 | claude-sonnet-5 | claude-haiku-4-5)
+// and AI_EFFORT (low | medium | high). A photo costs roughly 4¢ on Opus 5
+// at medium, 2¢ at low, 1.5¢ on Sonnet 5, under 1¢ on Haiku.
+const MODEL = Deno.env.get("AI_MODEL") || "claude-opus-5";
+const EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
+const EFFORT = EFFORTS.find((e) => e === Deno.env.get("AI_EFFORT")) ?? "medium";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -100,7 +106,7 @@ Deno.serve(async (req: Request) => {
       model: MODEL,
       max_tokens: 2048,
       system: SYSTEM,
-      output_config: { effort: "medium", format: zodOutputFormat(Verdict) },
+      output_config: { effort: EFFORT, format: zodOutputFormat(Verdict) },
       messages: [
         {
           role: "user",
@@ -113,7 +119,7 @@ Deno.serve(async (req: Request) => {
     });
     if (response.stop_reason === "refusal") return json({ error: "The photo couldn't be analysed." }, 422);
     if (!response.parsed_output) return json({ error: "No usable answer came back — try another photo." }, 502);
-    return json({ verdict: response.parsed_output, remaining: DAILY_CAP - used - 1 });
+    return json({ verdict: response.parsed_output, remaining: DAILY_CAP - used - 1, model: MODEL, effort: EFFORT });
   } catch (err) {
     if (err instanceof Anthropic.AuthenticationError) return json({ error: "The AI key for this project isn't valid." }, 503);
     if (err instanceof Anthropic.RateLimitError) return json({ error: "The AI is busy — try again in a minute." }, 503);

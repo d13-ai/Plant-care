@@ -68,10 +68,18 @@ reminders from the catalogue) and reads its health. On a plant's page,
 **Check health with AI** does the health read on the latest photo, and any
 finding can be logged as an issue in one tap.
 
-It runs in `supabase/functions/analyze` on Claude (Opus 5, medium effort —
-a few cents a photo). Photos are shrunk to 1024px before they're sent. Only
-signed-in keepers can call it, and each keeper gets 20 analyses a day
-(`ai_usage` table; the function alone writes it).
+It runs in `supabase/functions/analyze` on Claude. Photos are shrunk to
+1024px before they're sent. Only signed-in keepers can call it, and each
+keeper gets 20 analyses a day (`ai_usage` table; the function alone writes
+it).
+
+Cost is a dial, set as function secrets with no redeploy: `AI_MODEL`
+(`claude-opus-5` default — best at telling cultivars and health signs apart;
+`claude-sonnet-5` at about a third of the cost; `claude-haiku-4-5` cheapest)
+and `AI_EFFORT` (`low` | `medium` default | `high`). Roughly: 4¢ a photo on
+Opus at medium, 2¢ at low, 1.5¢ on Sonnet, under 1¢ on Haiku — the image is
+most of it, so caching doesn't help. Each answer reports which model and
+effort produced it.
 
 **One-time setup:** add your Anthropic API key as a function secret —
 Supabase dashboard → Edge Functions → Secrets → `ANTHROPIC_API_KEY` (or
