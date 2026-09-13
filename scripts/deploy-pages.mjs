@@ -37,6 +37,14 @@ try {
   sh(`git worktree add --detach -q "${wt}" HEAD`);
   sh(`git checkout -q --orphan gh-pages`, { cwd: wt });
   sh(`git rm -rfq .`, { cwd: wt });
+  // Keep the previous deploy's hashed bundles: a phone that cached the old
+  // page shell still finds the JS it asks for instead of a blank screen.
+  try {
+    sh(`git fetch -q origin gh-pages`, { cwd: wt });
+    sh(`git checkout -q origin/gh-pages -- _expo assets`, { cwd: wt });
+  } catch {
+    /* first deploy — nothing to keep */
+  }
   fs.cpSync(dist, wt, { recursive: true });
   sh(`git add -A`, { cwd: wt });
   sh(`git commit -q -m "Web build for GitHub Pages (${head})"`, { cwd: wt });
