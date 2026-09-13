@@ -228,11 +228,15 @@ describe("publishing a passport to Supabase", () => {
     expect(status).toBe(404);
     expect(html).not.toContain("Ficus lyrata");
 
-    // The bucket is public-read, so the image URL must stop working too.
-    const photo = await fetch(`${SUPABASE_URL}/storage/v1/object/public/plant-photos/${photoPath}`);
-    expect(photo.ok, "photo still publicly readable after unpublish").toBe(false);
+    // The object is gone from storage — the authoritative check. (The public
+    // URL itself can still serve from CDN cache for up to its max-age; see the
+    // cache-busted fetch below, which bypasses the edge and hits origin.)
     const { data: left } = await supabase.storage.from("plant-photos").list(`${keeperId}/${plantId}`);
     expect(left).toEqual([]);
+    const origin = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/public/plant-photos/${photoPath}?cb=${Date.now()}`,
+    );
+    expect(origin.ok, "photo still readable at origin after unpublish").toBe(false);
 
     const after = await getPlant(local.db, plantId);
     expect(after!.plant.passportToken).toBeNull();
