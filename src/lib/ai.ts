@@ -23,7 +23,7 @@ export async function analyzePhoto(
   options: { mode?: AnalysisMode; speciesHint?: string | null } = {},
 ): Promise<{ verdict: Verdict; remaining: number }> {
   if (!supabaseConfigured) throw new Error("Supabase isn't configured.");
-  await ensureSession();
+  const session = await ensureSession();
 
   const shrunk = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 1024 } }], {
     compress: 0.8,
@@ -34,7 +34,12 @@ export async function analyzePhoto(
 
   const { data, error } = await supabase.functions.invoke<{ verdict: Verdict; remaining: number; error?: string }>(
     "analyze",
-    { body: { image: shrunk.base64, media_type: "image/jpeg", mode: options.mode ?? "both", species_hint: options.speciesHint ?? undefined } },
+    {
+      // Send the session token explicitly: right after an anonymous sign-in the
+      // client hasn't always attached it yet, and the function would 401.
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: { image: shrunk.base64, media_type: "image/jpeg", mode: options.mode ?? "both", species_hint: options.speciesHint ?? undefined },
+    },
   );
   if (error) {
     // The function's own message is the useful one; surface it if we can get at it.
