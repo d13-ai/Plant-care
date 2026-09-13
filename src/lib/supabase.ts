@@ -24,8 +24,15 @@ export const supabase = createClient(SUPABASE_URL || "http://localhost", SUPABAS
  * email to it later is `supabase.auth.updateUser({ email })`.
  */
 export async function ensureSession(): Promise<Session> {
-  const { data } = await supabase.auth.getSession();
-  if (data.session) return data.session;
+  const stored = (await supabase.auth.getSession()).data.session;
+  if (stored) {
+    // The stored session's user can be gone (e.g. an anonymous user pruned
+    // server-side); its token then still validates locally but the server
+    // rejects it. Confirm the user really exists, and start fresh if not.
+    const { error } = await supabase.auth.getUser();
+    if (!error) return stored;
+    await supabase.auth.signOut();
+  }
 
   const { data: anon, error } = await supabase.auth.signInAnonymously();
   if (error || !anon.session) {
