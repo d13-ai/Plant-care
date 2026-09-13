@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SPECIES, SPECIES_GROUPS, displayName, findSpecies, scientificName, searchSpecies } from "./species";
+import { SPECIES, SPECIES_GROUPS, displayName, findSpecies, matchCandidate, scientificName, searchSpecies } from "./species";
 
 describe("species catalogue", () => {
   it("has no duplicate scientific names", () => {
@@ -61,5 +61,19 @@ describe("browse groups", () => {
     expect(findSpecies("Monstera deliciosa")?.group).toBe("Aroids");
     expect(findSpecies("Aloe vera")?.group).toBe("Succulents & cacti");
     expect(findSpecies("Boston fern")?.group).toBe("Ferns");
+  });
+});
+
+describe("matching an AI identification", () => {
+  it("takes the exact species when the catalogue has it", () => {
+    expect(matchCandidate({ genus: "Ficus", species: "lyrata" })?.common[0]).toBe("Fiddle-leaf fig");
+  });
+  it("falls back to the genus when the species is unknown or missing", () => {
+    expect(matchCandidate({ genus: "Monstera", species: "" })?.genus).toBe("Monstera");
+    expect(matchCandidate({ genus: "Hoya", species: "australis" })?.genus).toBe("Hoya");
+  });
+  it("gives nothing for a genus it doesn't know", () => {
+    expect(matchCandidate({ genus: "Welwitschia", species: "mirabilis" })).toBeNull();
+    expect(matchCandidate({ genus: "" })).toBeNull();
   });
 });

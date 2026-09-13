@@ -6,3 +6,8 @@ project_id = "plant-care"
 # Public tag page: anyone with the link may open it. The function only
 # calls the passport(token) RPC, which returns one public plant or nothing.
 verify_jwt = false
+
+[functions.analyze]
+# AI photo analysis. Keepers only: the gateway checks the JWT, and the
+# function caps calls per keeper per day. Needs the ANTHROPIC_API_KEY secret.
+verify_jwt = true

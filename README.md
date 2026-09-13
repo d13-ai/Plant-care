@@ -48,6 +48,24 @@ URL and publishable key (safe to commit — RLS gates everything).
 Providers → enable **Allow anonymous sign-ins**. Publishing fails with a
 clear message until that's on.
 
+## AI photo analysis
+
+On the add-plant screen, **Identify with AI** names the plant from its photo
+(top candidates with confidence; tapping one fills the species and sets its
+reminders from the catalogue) and reads its health. On a plant's page,
+**Check health with AI** does the health read on the latest photo, and any
+finding can be logged as an issue in one tap.
+
+It runs in `supabase/functions/analyze` on Claude (Opus 5, medium effort —
+a few cents a photo). Photos are shrunk to 1024px before they're sent. Only
+signed-in keepers can call it, and each keeper gets 20 analyses a day
+(`ai_usage` table; the function alone writes it).
+
+**One-time setup:** add your Anthropic API key as a function secret —
+Supabase dashboard → Edge Functions → Secrets → `ANTHROPIC_API_KEY` (or
+`supabase secrets set ANTHROPIC_API_KEY=…`). Until it's there the buttons
+show a clear "not set up" message rather than failing quietly.
+
 ## Run it
 
 ```sh

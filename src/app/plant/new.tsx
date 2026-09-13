@@ -4,11 +4,13 @@ import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { SpeciesField } from "@/components/species-field";
-import { Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
+import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
 import { createPlant, listPlants, type Plant } from "@/db";
-import { findSpecies, type SpeciesEntry } from "@/domain/species";
+import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "@/domain/species";
+import { analyzePhoto, type Verdict } from "@/lib/ai";
 import { parseDate } from "@/lib/dates";
 import { capturePhoto } from "@/lib/photos";
+import { supabaseConfigured } from "@/lib/supabase";
 import { radius, space, useTheme } from "@/theme";
 
 export default function NewPlant() {
@@ -26,6 +28,29 @@ export default function NewPlant() {
   const [motherId, setMotherId] = useState<string>("");
   const [candidates, setCandidates] = useState<Plant[]>([]);
   const [saving, setSaving] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [verdict, setVerdict] = useState<Verdict | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const identify = async () => {
+    if (!photoUri) return;
+    setAnalyzing(true);
+    setAiError(null);
+    try {
+      const { verdict: v } = await analyzePhoto(photoUri, { mode: "both" });
+      setVerdict(v);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const useCandidate = (c: Verdict["species"][number]) => {
+    const entry = matchCandidate(c);
+    setSpecies(entry && (!c.species || entry.species === c.species) ? scientificName(entry) : `${c.genus} ${c.species}`.trim());
+    setPicked(entry);
+  };
 
   useEffect(() => {
     listPlants(db).then((rows) => setCandidates(rows.map((r) => r.plant)));
@@ -69,7 +94,49 @@ export default function NewPlant() {
           <Row>
             <Button title="Take photo" onPress={() => capturePhoto("camera").then((u) => u && setPhotoUri(u))} />
             <Button title="Choose from library" onPress={() => capturePhoto("library").then((u) => u && setPhotoUri(u))} />
+            {photoUri && supabaseConfigured ? (
+              <Button title={analyzing ? "Looking…" : "Identify with AI"} variant="primary" disabled={analyzing} onPress={identify} />
+            ) : null}
           </Row>
+          {aiError ? (
+            <Body small style={{ color: t.critical.fg } as never}>
+              {aiError}
+            </Body>
+          ) : null}
+          {verdict ? (
+            <View style={{ gap: space.sm }}>
+              {!verdict.is_plant ? (
+                <Body small muted>That doesn't look like a plant to me — try a clearer photo.</Body>
+              ) : (
+                <>
+                  <Body small muted>Looks like — tap one to use it:</Body>
+                  <Row>
+                    {verdict.species.map((c) => (
+                      <Button
+                        key={`${c.genus}-${c.species}`}
+                        small
+                        title={`${c.common_name || `${c.genus} ${c.species}`.trim()} · ${Math.round(c.confidence * 100)}%`}
+                        onPress={() => useCandidate(c)}
+                      />
+                    ))}
+                  </Row>
+                  {verdict.health.findings.length > 0 ? (
+                    <View style={{ gap: space.xs }}>
+                      <Row>
+                        <Badge label={`Health: ${verdict.health.overall}`} tone={verdict.health.overall === "healthy" ? "success" : verdict.health.overall === "unwell" ? "critical" : verdict.health.overall === "watch" ? "warning" : "neutral"} />
+                      </Row>
+                      {verdict.health.findings.map((f) => (
+                        <Body small key={f.observation}>
+                          {f.observation} — {f.suggested_action}
+                        </Body>
+                      ))}
+                    </View>
+                  ) : null}
+                  {verdict.notes ? <Body small muted>{verdict.notes}</Body> : null}
+                </>
+              )}
+            </View>
+          ) : null}
         </Card>
 
         <Card>

@@ -18,6 +18,7 @@ import {
 import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
+import { analyzePhoto, type Verdict } from "@/lib/ai";
 import { capturePhoto } from "@/lib/photos";
 import { tagUrl, supabaseConfigured } from "@/lib/supabase";
 import { radius, space, useTheme, type Tone } from "@/theme";
@@ -41,6 +42,9 @@ export default function PlantDetail() {
   const [logDaysAgo, setLogDaysAgo] = useState("");
   const [cuttingName, setCuttingName] = useState("");
   const [keeperName, setKeeperNameState] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [checkup, setCheckup] = useState<Verdict | null>(null);
+  const [checkError, setCheckError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
 
@@ -90,6 +94,19 @@ export default function PlantDetail() {
   // Neither is an error worth showing, least of all after a publish succeeded.
   const shareLink = (url: string) =>
     Share.share({ message: `${plant.nickname}'s plant tag: ${url}`, url }).catch(() => {});
+
+  const checkHealth = async (uri: string, speciesHint: string | null) => {
+    setChecking(true);
+    setCheckError(null);
+    try {
+      const { verdict } = await analyzePhoto(uri, { mode: "health", speciesHint });
+      setCheckup(verdict);
+    } catch (err) {
+      setCheckError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const publish = async () => {
     setPublishing(true);
@@ -334,7 +351,54 @@ export default function PlantDetail() {
         <Row>
           <Button title="Take photo" small onPress={() => takePhoto("camera")} />
           <Button title="Choose" small onPress={() => takePhoto("library")} />
+          {hero && supabaseConfigured ? (
+            <Button
+              title={checking ? "Looking…" : "Check health with AI"}
+              small
+              variant="primary"
+              disabled={checking}
+              onPress={() => checkHealth(hero.uri, plant.species)}
+            />
+          ) : null}
         </Row>
+        {checkError ? (
+          <Body small style={{ color: t.critical.fg } as never}>
+            {checkError}
+          </Body>
+        ) : null}
+        {checkup ? (
+          <View style={{ gap: space.sm }}>
+            <Row>
+              <Badge
+                label={`Health: ${checkup.health.overall}`}
+                tone={checkup.health.overall === "healthy" ? "success" : checkup.health.overall === "unwell" ? "critical" : checkup.health.overall === "watch" ? "warning" : "neutral"}
+              />
+              {checkup.species[0] ? <Badge label={`Looks like ${checkup.species[0].common_name || checkup.species[0].genus}`} /> : null}
+            </Row>
+            {checkup.health.findings.length === 0 ? (
+              <Body small muted>Nothing worrying in this photo.</Body>
+            ) : (
+              checkup.health.findings.map((f) => (
+                <View key={f.observation} style={{ gap: 4 }}>
+                  <Body small>
+                    {f.observation} — likely {f.likely_cause.toLowerCase()}. {f.suggested_action}
+                  </Body>
+                  <Row>
+                    <Button
+                      title="Log as issue"
+                      small
+                      onPress={async () => {
+                        await logCare(db, plantId, "ISSUE", { notes: `${f.observation} — ${f.suggested_action}` });
+                        refresh();
+                      }}
+                    />
+                  </Row>
+                </View>
+              ))
+            )}
+            {checkup.notes ? <Body small muted>{checkup.notes}</Body> : null}
+          </View>
+        ) : null}
       </Card>
 
       <Card>

@@ -242,3 +242,19 @@ export function findSpecies(name: string | null | undefined): SpeciesEntry | nul
     null
   );
 }
+
+/**
+ * The catalogue entry for an identification like { genus: "Monstera",
+ * species: "deliciosa" }: the exact species when we have it, else the first
+ * plant of that genus (its reminders are a fair default for its relatives).
+ */
+export function matchCandidate(candidate: { genus: string; species?: string | null }): SpeciesEntry | null {
+  const genus = fold(candidate.genus.trim());
+  if (!genus) return null;
+  const sp = fold((candidate.species ?? "").trim());
+  return (
+    (sp ? SPECIES.find((e) => fold(e.genus) === genus && fold(e.species) === sp) : undefined) ??
+    SPECIES.find((e) => fold(e.genus) === genus) ??
+    null
+  );
+}
