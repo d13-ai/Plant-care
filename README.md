@@ -74,12 +74,13 @@ keeper gets 20 analyses a day (`ai_usage` table; the function alone writes
 it).
 
 Cost is a dial, set as function secrets with no redeploy: `AI_MODEL`
-(`claude-sonnet-5` default — about a third of Opus's cost and good at this;
-`claude-opus-5` is the upgrade if cultivars or subtle health signs come back
-vague; `claude-haiku-4-5` cheapest) and `AI_EFFORT` (`low` | `medium`
-default | `high`). Measured: a refusal on Opus cost 1.4¢; a full answer runs
-about 2–3¢ on Opus, 1–1.5¢ on Sonnet — the image is most of it, so caching
-doesn't help. Each answer reports which model and effort produced it and the tokens it
+(`claude-opus-5` default; `claude-sonnet-5` at a third of the cost;
+`claude-haiku-4-5` cheapest) and `AI_EFFORT` (`low` | `medium` default |
+`high`). Measured on five real photos: Opus named all five, cultivars
+included (Thai Constellation, White Princess, Euphorbia 'Rubra'), at about
+3¢ and 12–20 s each; Sonnet got two, calling the Thai Constellation an Albo
+and a philodendron a pothos, at about 1¢ and 9 s. The image is most of the
+cost, so caching doesn't help. Each answer reports which model and effort produced it and the tokens it
 used. A request may also name a `model` from that list to compare answers on
 one photo; the daily cap bounds it.
 
