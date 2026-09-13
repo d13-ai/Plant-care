@@ -79,8 +79,9 @@ Cost is a dial, set as function secrets with no redeploy: `AI_MODEL`
 vague; `claude-haiku-4-5` cheapest) and `AI_EFFORT` (`low` | `medium`
 default | `high`). Measured: a refusal on Opus cost 1.4¢; a full answer runs
 about 2–3¢ on Opus, 1–1.5¢ on Sonnet — the image is most of it, so caching
-doesn't help. Each answer reports which model and effort produced it and the
-tokens it used.
+doesn't help. Each answer reports which model and effort produced it and the tokens it
+used. A request may also name a `model` from that list to compare answers on
+one photo; the daily cap bounds it.
 
 **One-time setup:** add your Anthropic API key as a function secret —
 Supabase dashboard → Edge Functions → Secrets → `ANTHROPIC_API_KEY` (or
