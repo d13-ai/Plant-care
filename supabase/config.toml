@@ -13,3 +13,9 @@ verify_jwt = false
 # browser's CORS preflight, which carries no JWT. Caps calls per keeper per
 # day. Needs the ANTHROPIC_API_KEY secret.
 verify_jwt = false
+
+[functions.care]
+# Care guides per species, cached and shared. Keepers only; the function
+# checks the session itself (verify_jwt off so the CORS preflight isn't
+# blocked). Needs the ANTHROPIC_API_KEY secret.
+verify_jwt = false

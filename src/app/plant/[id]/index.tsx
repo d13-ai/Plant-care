@@ -19,6 +19,7 @@ import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
 import { analyzePhoto, type Verdict } from "@/lib/ai";
+import { CareGuide } from "@/components/care-guide";
 import { okToLog } from "@/lib/care-log";
 import { confirm } from "@/lib/confirm";
 import { capturePhoto } from "@/lib/photos";
@@ -302,6 +303,8 @@ export default function PlantDetail() {
           </View>
         ))}
       </Card>
+
+      <CareGuide species={plant.species} />
 
       <Card>
         <Heading>Log care</Heading>

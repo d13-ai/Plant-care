@@ -5,7 +5,7 @@
  * mother_plant_id already exists so propagation lineage doesn't need a
  * migration later; a mother is another local plant.
  */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /**
  * Incremental migrations, keyed by the version they upgrade *to*. v1 is the
@@ -19,6 +19,11 @@ export const MIGRATIONS: Record<number, string[]> = {
     // Storage object path once a photo has been uploaded, so republishing
     // doesn't re-upload it.
     "ALTER TABLE photos ADD COLUMN remote_path TEXT",
+  ],
+  3: [
+    // A local cache of the per-species care guide, so it shows offline and
+    // isn't re-fetched. Keyed by the normalized species name.
+    "CREATE TABLE IF NOT EXISTS care_cards (species_key TEXT PRIMARY KEY, card_json TEXT NOT NULL, fetched_at TEXT NOT NULL)",
   ],
 };
 

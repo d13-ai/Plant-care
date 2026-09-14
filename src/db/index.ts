@@ -452,6 +452,27 @@ export async function clearPhotoUploads(db: SQLiteDatabase, plantId: number): Pr
   await db.runAsync("UPDATE photos SET remote_path = NULL WHERE plant_id = ?", [plantId]);
 }
 
+/** The species care guide cached on-device, if we've fetched it before. */
+export async function getCachedCareCard<T = unknown>(db: SQLiteDatabase, speciesKey: string): Promise<T | null> {
+  const row = await db.getFirstAsync<{ card_json: string }>(
+    "SELECT card_json FROM care_cards WHERE species_key = ?",
+    [speciesKey],
+  );
+  if (!row) return null;
+  try {
+    return JSON.parse(row.card_json) as T;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveCareCard(db: SQLiteDatabase, speciesKey: string, card: unknown): Promise<void> {
+  await db.runAsync(
+    "INSERT OR REPLACE INTO care_cards (species_key, card_json, fetched_at) VALUES (?, ?, ?)",
+    [speciesKey, JSON.stringify(card), nowIso()],
+  );
+}
+
 export async function deletePlant(db: SQLiteDatabase, id: number): Promise<void> {
   await db.runAsync("DELETE FROM plants WHERE id = ?", [id]);
 }

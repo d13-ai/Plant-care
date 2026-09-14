@@ -89,6 +89,16 @@ Supabase dashboard → Edge Functions → Secrets → `ANTHROPIC_API_KEY` (or
 `supabase secrets set ANTHROPIC_API_KEY=…`). Until it's there the buttons
 show a clear "not set up" message rather than failing quietly.
 
+## Care guides
+
+Each plant's page shows a care guide for its species — light, water, humidity,
+soil, feeding, repotting, the problems it's prone to, and toxicity to pets and
+children. Guides are generated once by Claude (`supabase/functions/care`,
+Sonnet by default) and **shared**: the `care_cards` table caches each species,
+so the first keeper to look one up pays a couple of cents and everyone after
+reads it free and instantly. The card is also cached on-device, so it shows
+offline after the first view. Set `AI_CARE_MODEL` to override the model.
+
 ## Run it
 
 ```sh
