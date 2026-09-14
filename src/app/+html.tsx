@@ -19,13 +19,12 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="theme-color" content="#F3F6F1" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#0F1613" media="(prefers-color-scheme: dark)" />
         <ScrollViewStyleReset />
-        {/* A cached page shell can point at a build that has since been
-            replaced; the app then never appears. If nothing has rendered a
-            few seconds after load, fetch a fresh copy — once, so a slow
-            network can't loop. */}
+        {/* Last-resort recovery: if nothing has rendered 20s after load
+            (a genuinely broken bundle, not a slow one), fetch a fresh copy
+            once. Long enough not to interrupt a slow mobile download. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `setTimeout(function(){var r=document.getElementById('root');if(r&&r.children.length)return;try{if(sessionStorage.getItem('pp-reloaded'))return;sessionStorage.setItem('pp-reloaded','1');}catch(e){}location.replace(location.pathname+'?fresh='+Date.now());},8000);`,
+            __html: `setTimeout(function(){var r=document.getElementById('root');if(r&&r.children.length)return;try{if(sessionStorage.getItem('pp-reloaded'))return;sessionStorage.setItem('pp-reloaded','1');}catch(e){}location.replace(location.pathname+'?fresh='+Date.now());},20000);`,
           }}
         />
       </head>

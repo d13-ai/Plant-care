@@ -103,20 +103,15 @@ npm run web        # runs in the browser too
 
 ## Hand it to testers
 
-```sh
-npm run start:tunnel   # Expo Go, scannable from anywhere — not just your wifi
-npm run deploy:pages   # web build → https://d13-ai.github.io/Plant-care/
-```
+**Web:** https://plant-care-flame.vercel.app — the whole app in a browser,
+data kept on that device, no camera ("Choose from library" instead). Hosted
+on Vercel, which redeploys automatically on every push to `main`; no command
+to run. The Supabase URL and publishable key are built into the bundle, so
+any host serves a working app.
 
-`start:tunnel` is the real app: camera and all. Leave it running while people
-are testing; when it stops, so does the app on their phones.
-
-`deploy:pages` puts the web build on GitHub Pages as the `gh-pages` branch —
-the whole app in a browser, data kept on that device, no camera ("Choose"
-picks from files). One-time setup: the repo must be public (or on a plan that
-serves Pages from private repos) and Settings → Pages set to deploy from
-`gh-pages`. The base path comes from `app.config.js` via `EXPO_BASE_URL`;
-everything else about the build is unchanged.
+**The real app (camera and all):** `npm run start:tunnel` runs it through
+Expo Go, scannable from anywhere. Leave it running while people are testing;
+when it stops, so does the app on their phones.
 
 ## Test it
 
