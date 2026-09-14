@@ -8,6 +8,7 @@ import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/compone
 import { createPlant, listPlants, type Plant } from "@/db";
 import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "@/domain/species";
 import { analyzePhoto, type Verdict } from "@/lib/ai";
+import { Calendar } from "@/components/calendar";
 import { parseDate } from "@/lib/dates";
 import { capturePhoto } from "@/lib/photos";
 import { supabaseConfigured } from "@/lib/supabase";
@@ -28,6 +29,7 @@ export default function NewPlant() {
   const [motherId, setMotherId] = useState<string>("");
   const [candidates, setCandidates] = useState<Plant[]>([]);
   const [saving, setSaving] = useState(false);
+  const [pickingDate, setPickingDate] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -158,9 +160,16 @@ export default function NewPlant() {
             label="Acquired on"
             value={acquiredAt}
             onChangeText={setAcquiredAt}
-            placeholder="YYYY-MM-DD (today if blank)"
-            hint={dateInvalid ? "Use YYYY-MM-DD" : "Care reminders count from this date until you log something."}
+            placeholder="Today if blank"
+            trailing={<Button title="Pick date" small onPress={() => setPickingDate(true)} />}
+            hint={dateInvalid ? "Use YYYY-MM-DD, or tap Pick date" : "Care reminders count from this date until you log something."}
             keyboardType="numbers-and-punctuation"
+          />
+          <Calendar
+            visible={pickingDate}
+            selected={acquiredIso ? new Date(acquiredIso) : null}
+            onPick={setAcquiredAt}
+            onClose={() => setPickingDate(false)}
           />
         </Card>
 

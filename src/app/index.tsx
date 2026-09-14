@@ -54,13 +54,17 @@ export default function Greenhouse() {
   const ringFor = (item: PlantWithHistory, water: NonNullable<ReturnType<typeof summarize>["water"]>) => {
     const every = water.everyDays ?? 1;
     const untilDue = water.daysUntilDue ?? every;
+    // A water tank: full ring right after watering, draining toward empty as
+    // the next watering approaches. Overdue shows a full red ring.
+    const remaining = Math.max(0, Math.min(1, untilDue / every));
     const tone: Tone = water.state === "OVERDUE" ? "critical" : water.state === "DUE_SOON" ? "warning" : "success";
+    const fill = water.state === "OVERDUE" ? 1 : Math.max(remaining, 0.06);
     const label = untilDue <= 0 ? "Now" : untilDue === 1 ? "1 day" : `${untilDue} days`;
     return (
       <DueRing
         key={item.plant.id}
         uri={item.photos[0]?.uri ?? null}
-        progress={(every - untilDue) / every}
+        progress={fill}
         color={t[tone].ring}
         label={label}
         onPress={() => router.push({ pathname: "/plant/[id]", params: { id: String(item.plant.id) } })}

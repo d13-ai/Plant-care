@@ -36,7 +36,7 @@ export function DueRing({
     <Pressable onPress={onPress} style={[styles.wrap, { width: size }]} hitSlop={6}>
       <View style={{ width: size, height: size }}>
         <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
-          <Circle cx={c} cy={c} r={r} stroke={t.border} strokeWidth={stroke} fill="none" />
+          <Circle cx={c} cy={c} r={r} stroke={t.neutral.ring} strokeWidth={stroke} fill="none" />
           <Circle
             cx={c}
             cy={c}

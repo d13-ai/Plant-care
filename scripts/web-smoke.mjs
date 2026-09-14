@@ -68,7 +68,7 @@ try {
     await page.getByPlaceholder("Big Monstera").fill("Big Monstera");
     await page.getByPlaceholder("Monstera deliciosa").fill("Monstera deliciosa");
     await page.getByPlaceholder("South window").fill("South window");
-    await page.getByPlaceholder("YYYY-MM-DD (today if blank)").fill(daysAgo(40));
+    await page.getByPlaceholder("Today if blank").fill(daysAgo(40));
     await page.getByText("Add plant", { exact: true }).last().click();
     await page.getByText("Care schedule").waitFor();
   });
