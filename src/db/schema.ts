@@ -5,7 +5,7 @@
  * mother_plant_id already exists so propagation lineage doesn't need a
  * migration later; a mother is another local plant.
  */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 /**
  * Incremental migrations, keyed by the version they upgrade *to*. v1 is the
@@ -24,6 +24,12 @@ export const MIGRATIONS: Record<number, string[]> = {
     // A local cache of the per-species care guide, so it shows offline and
     // isn't re-fetched. Keyed by the normalized species name.
     "CREATE TABLE IF NOT EXISTS care_cards (species_key TEXT PRIMARY KEY, card_json TEXT NOT NULL, fetched_at TEXT NOT NULL)",
+  ],
+  4: [
+    // Web photos used to be stored as the browser's blob: URL, which dies
+    // with the page that made it — those rows can never render again.
+    // Photos are stored as data: URLs now. (No-op on native.)
+    "DELETE FROM photos WHERE uri LIKE 'blob:%'",
   ],
 };
 

@@ -1,4 +1,5 @@
 import { Directory, File, Paths } from "expo-file-system";
+import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { Platform } from "react-native";
 
@@ -27,14 +28,31 @@ export async function capturePhoto(source: PhotoSource): Promise<string | null> 
 
   const asset = result.canceled ? null : result.assets[0];
   if (!asset) return null;
-  return persist(asset.uri);
+  return persist(asset.uri, asset.width);
 }
 
-function persist(uri: string): string {
-  // The browser hands back a blob/data URL that is already durable enough
-  // for a dev session; the File API is native-only.
-  if (Platform.OS === "web") return uri;
+/** Longest edge kept for web photos — plenty for a phone screen and the
+ *  AI check (which shrinks to 1024 anyway), small enough to live in SQLite. */
+const WEB_MAX_WIDTH = 1600;
 
+async function persist(uri: string, width: number): Promise<string> {
+  if (Platform.OS === "web") {
+    // The browser's picker returns a blob: URL that only lives as long as
+    // the page that created it — store it and the photo is gone on the next
+    // load. Re-encode to a self-contained data: URL that the database keeps.
+    const actions = width > WEB_MAX_WIDTH ? [{ resize: { width: WEB_MAX_WIDTH } }] : [];
+    const shrunk = await ImageManipulator.manipulateAsync(uri, actions, {
+      compress: 0.85,
+      format: ImageManipulator.SaveFormat.JPEG,
+      base64: true,
+    });
+    if (uri.startsWith("blob:")) URL.revokeObjectURL(uri);
+    if (!shrunk.base64) throw new Error("Couldn't read the photo.");
+    return `data:image/jpeg;base64,${shrunk.base64}`;
+  }
+
+  // Picker results live in a cache the OS may clear; copy into the app's
+  // own document directory before the URI is stored.
   const dir = new Directory(Paths.document, "photos");
   if (!dir.exists) dir.create({ idempotent: true });
   const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;

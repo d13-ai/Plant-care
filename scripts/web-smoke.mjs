@@ -99,6 +99,19 @@ try {
     if (!/RRULE:FREQ=DAILY;INTERVAL=\d+/.test(ics)) throw new Error("no recurring reminder in the .ics");
     if (!/SUMMARY:.*Water Big Monstera/.test(ics)) throw new Error("no water reminder for the plant");
   });
+  await step("a chosen photo is kept and survives a reload", async () => {
+    const hasStoredPhoto = () => page.waitForFunction(() => [...document.images].some((i) => i.src.startsWith("data:image/jpeg")), null, { timeout: 20000 });
+    const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.getByText("Choose", { exact: true }).click()]);
+    // A 2x2 PNG; the app re-encodes whatever it's given as an inline JPEG.
+    await chooser.setFiles({ name: "leaf.png", mimeType: "image/png", buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAD0lEQVR4nGNgYPjPwMAAAAQEAQAv0f9pAAAAAElFTkSuQmCC", "base64") });
+    await hasStoredPhoto();
+    // The bug this guards: a blob: URL is gone after a reload; a data: URL isn't.
+    await page.goto(base + "/");
+    await page.getByText("Big Monstera").waitFor({ timeout: 20000 });
+    await page.getByText("Big Monstera").first().click();
+    await page.getByText("Care schedule").waitFor();
+    await hasStoredPhoto();
+  });
 
   await step("log water clears the water alert", async () => {
     await page.getByText("Log", { exact: true }).first().click();

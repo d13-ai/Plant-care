@@ -129,14 +129,17 @@ npm run web        # runs in the browser too
 ## Hand it to testers
 
 **Web:** https://plant-care-flame.vercel.app — the whole app in a browser,
-data kept on that device, no camera ("Choose from library" instead). Hosted
-on Vercel, which redeploys automatically on every push to `main`; no command
-to run. The Supabase URL and publishable key are built into the bundle, so
-any host serves a working app.
+data kept on that device. On a phone, "Take photo" opens the camera and
+"Add to Home Screen" gives it an icon. Photos are stored inside the app's
+database (shrunk to 1600px), so they survive reloads. Hosted on Vercel,
+which redeploys automatically on every push to `main`; no command to run.
+The Supabase URL and publishable key are built into the bundle, so any host
+serves a working app.
 
-**The real app (camera and all):** `npm run start:tunnel` runs it through
-Expo Go, scannable from anywhere. Leave it running while people are testing;
-when it stops, so does the app on their phones.
+**Native build:** `npm run start:tunnel` runs it through Expo Go, scannable
+from anywhere. Only needed for what a browser can't do — push notifications,
+when they land. Leave it running while people are testing; when it stops, so
+does the app on their phones.
 
 ## Test it
 
