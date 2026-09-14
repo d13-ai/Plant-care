@@ -36,7 +36,15 @@ const errors = [];
 const browser = await chromium.launch(process.env.CHROME ? { executablePath: process.env.CHROME } : {});
 const page = await browser.newPage({ viewport: { width: 420, height: 860 } });
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
-page.on("console", (m) => { if (m.type() === "error") errors.push("console: " + m.text()); });
+page.on("console", (m) => {
+  if (m.type() !== "error") return;
+  // This is the offline SQLite-on-wasm build; reaching Supabase is out of
+  // scope here. "Add to calendar" tries to fetch the care guide to enrich the
+  // reminders and falls back cleanly when it can't — so ignore the network
+  // reset that failed fetch logs, but keep every real app/JS error.
+  if (/net::ERR_/.test(m.text())) return;
+  errors.push("console: " + m.text());
+});
 
 const daysAgo = (n) => { const d = new Date(Date.now() - n * 86400000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 const shot = (name) => (shots ? page.screenshot({ path: path.join(shots, `${name}.png`), fullPage: true }) : Promise.resolve());
@@ -78,6 +86,19 @@ try {
     if (await page.getByText("Needs repotting").count()) throw new Error("repot should not be due after 40 days");
   });
   await shot("02-detail-overdue");
+
+  await step("add to calendar exports a recurring .ics with reminders", async () => {
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByText("Add to calendar").click(),
+    ]);
+    const stream = await download.createReadStream();
+    let ics = "";
+    for await (const chunk of stream) ics += chunk;
+    if (!ics.includes("BEGIN:VCALENDAR")) throw new Error("not an iCalendar file");
+    if (!/RRULE:FREQ=DAILY;INTERVAL=\d+/.test(ics)) throw new Error("no recurring reminder in the .ics");
+    if (!/SUMMARY:.*Water Big Monstera/.test(ics)) throw new Error("no water reminder for the plant");
+  });
 
   await step("log water clears the water alert", async () => {
     await page.getByText("Log", { exact: true }).first().click();

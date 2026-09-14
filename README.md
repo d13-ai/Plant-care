@@ -99,6 +99,21 @@ so the first keeper to look one up pays a couple of cents and everyone after
 reads it free and instantly. The card is also cached on-device, so it shows
 offline after the first view. Set `AI_CARE_MODEL` to override the model.
 
+## Calendar reminders
+
+**Add to calendar** on a plant's page turns its schedule into recurring
+reminders your phone's Calendar app understands — a repeating event for each
+of watering, fertilizing, repotting and a fresh photo, on that plant's own
+cadence, first ping at 9am local. Each reminder carries the species care
+instructions in its notes, so the alert tells you not just *that* the Thai
+Constellation needs water but *how* to water it. On the web it downloads an
+`.ics` (which phones open straight into Calendar); on a device it opens the
+share sheet. The generator is `src/domain/calendar.ts` (pure, unit-tested);
+`src/lib/calendar.ts` does the platform save.
+
+Push notifications ("water your Monstera", "time to reorder soil") are the
+next step and need the native app — the web page can't ping a locked phone.
+
 ## Run it
 
 ```sh

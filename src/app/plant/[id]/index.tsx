@@ -20,6 +20,8 @@ import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
 import { analyzePhoto, type Verdict } from "@/lib/ai";
 import { CareGuide } from "@/components/care-guide";
+import { getCareCard } from "@/lib/care-card";
+import { buildPlantIcs, saveIcs, slugify, tasksFromStatuses } from "@/lib/calendar";
 import { okToLog } from "@/lib/care-log";
 import { confirm } from "@/lib/confirm";
 import { capturePhoto } from "@/lib/photos";
@@ -50,6 +52,8 @@ export default function PlantDetail() {
   const [checkError, setCheckError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [calBusy, setCalBusy] = useState(false);
+  const [calError, setCalError] = useState<string | null>(null);
 
   useEffect(() => {
     getKeeperName().then(setKeeperNameState);
@@ -79,6 +83,40 @@ export default function PlantDetail() {
     setLogNotes("");
     setLogDaysAgo("");
     refresh();
+  };
+
+  const addToCalendar = async () => {
+    setCalBusy(true);
+    setCalError(null);
+    try {
+      // Pull the (cached) care guide so the reminders carry real instructions;
+      // never let a missing guide stop the schedule from exporting.
+      let care = null;
+      if (plant.species?.trim() && supabaseConfigured) {
+        try {
+          care = await getCareCard(db, plant.species);
+        } catch {
+          care = null;
+        }
+      }
+      const tasks = tasksFromStatuses(statuses, care);
+      if (tasks.length === 0) {
+        setCalError("No watering or feeding schedule set yet — add one in Edit first.");
+        return;
+      }
+      const ics = buildPlantIcs({
+        nickname: plant.nickname,
+        species: plant.species,
+        token: plant.passportToken,
+        tagUrl: plant.passportToken ? tagUrl(plant.passportToken) : null,
+        tasks,
+      });
+      await saveIcs(`${slugify(plant.nickname)}-care.ics`, ics);
+    } catch (err) {
+      setCalError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setCalBusy(false);
+    }
   };
 
   const takePhoto = async (source: "camera" | "library") => {
@@ -275,7 +313,20 @@ export default function PlantDetail() {
       </Card>
 
       <Card>
-        <Heading>Care schedule</Heading>
+        <Row style={{ justifyContent: "space-between" }}>
+          <Heading>Care schedule</Heading>
+          <Button
+            title={calBusy ? "Preparing…" : "Add to calendar"}
+            small
+            disabled={calBusy}
+            onPress={addToCalendar}
+          />
+        </Row>
+        {calError ? (
+          <Body small style={{ color: t.critical.fg } as never}>
+            {calError}
+          </Body>
+        ) : null}
         {statuses.map((care) => (
           <View key={care.type} style={[styles.careRow, { borderTopColor: t.border }]}>
             <View style={{ flex: 1, gap: 2 }}>
