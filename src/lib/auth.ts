@@ -18,8 +18,11 @@ export interface Account {
 
 export async function currentAccount(): Promise<Account | null> {
   const { data } = await supabase.auth.getSession();
-  const user = data.session?.user;
-  if (!user) return null;
+  if (!data.session) return null;
+  // The stored token can lag the server — an email confirmed by link, say —
+  // so ask; offline, the token is the best we have.
+  const { data: fresh } = await supabase.auth.getUser();
+  const user = fresh.user ?? data.session.user;
   return { userId: user.id, email: user.email ?? null, anonymous: Boolean(user.is_anonymous) || !user.email };
 }
 
