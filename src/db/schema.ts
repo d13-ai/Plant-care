@@ -1,11 +1,14 @@
 /**
- * On-device schema (v0: no accounts, no sync). Dates are ISO-8601 strings
+ * On-device schema. Dates are ISO-8601 strings
  * because that is what SQLite stores and what the domain layer parses.
  *
  * mother_plant_id already exists so propagation lineage doesn't need a
  * migration later; a mother is another local plant.
  */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
+
+/** A v4 uuid in SQLite, for backfilling rows that predate sync. */
+const UUID_SQL = "lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-' || substr('89ab', abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6)))";
 
 /**
  * Incremental migrations, keyed by the version they upgrade *to*. v1 is the
@@ -30,6 +33,29 @@ export const MIGRATIONS: Record<number, string[]> = {
     // with the page that made it — those rows can never render again.
     // Photos are stored as data: URLs now. (No-op on native.)
     "DELETE FROM photos WHERE uri LIKE 'blob:%'",
+  ],
+  5: [
+    // v2 sync. Every row gets a uuid the server keys on (backfilled here
+    // for rows that predate sync — a v4 uuid built in SQL), a `dirty` flag
+    // set by every local write and cleared by a push, and `updated_at` for
+    // last-write-wins between devices. Tombstones remember deletes until
+    // they're pushed; sync_meta holds the pull cursor.
+    "ALTER TABLE plants ADD COLUMN uuid TEXT",
+    "ALTER TABLE plants ADD COLUMN dirty INTEGER NOT NULL DEFAULT 1",
+    `UPDATE plants SET uuid = ${UUID_SQL} WHERE uuid IS NULL`,
+    "CREATE UNIQUE INDEX IF NOT EXISTS plants_uuid_idx ON plants(uuid)",
+    "ALTER TABLE care_events ADD COLUMN uuid TEXT",
+    "ALTER TABLE care_events ADD COLUMN updated_at TEXT",
+    "ALTER TABLE care_events ADD COLUMN dirty INTEGER NOT NULL DEFAULT 1",
+    `UPDATE care_events SET uuid = ${UUID_SQL}, updated_at = COALESCE(updated_at, created_at) WHERE uuid IS NULL`,
+    "CREATE UNIQUE INDEX IF NOT EXISTS care_events_uuid_idx ON care_events(uuid)",
+    "ALTER TABLE photos ADD COLUMN uuid TEXT",
+    "ALTER TABLE photos ADD COLUMN updated_at TEXT",
+    "ALTER TABLE photos ADD COLUMN dirty INTEGER NOT NULL DEFAULT 1",
+    `UPDATE photos SET uuid = ${UUID_SQL}, updated_at = COALESCE(updated_at, created_at) WHERE uuid IS NULL`,
+    "CREATE UNIQUE INDEX IF NOT EXISTS photos_uuid_idx ON photos(uuid)",
+    "CREATE TABLE IF NOT EXISTS sync_tombstones (uuid TEXT PRIMARY KEY, deleted_at TEXT NOT NULL)",
+    "CREATE TABLE IF NOT EXISTS sync_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
   ],
 };
 

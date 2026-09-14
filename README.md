@@ -6,18 +6,22 @@ sell it to. Cuttings trace back to their mother plant.
 
 The idea, personas, rules and roadmap are in [`docs/PRODUCT.md`](docs/PRODUCT.md).
 
-## Status: v1 — tags
+## Status: v2 — accounts and sync
 
-Local-first: your plants live in SQLite on the device. Publishing a plant's
-**tag** pushes a snapshot of that one plant (record, care events,
-photos) to Supabase and gives you a link anyone can open:
+Local-first: your plants live in SQLite on the device, and the app works
+with no account at all. Add your email (a 6-digit code, no password) and
+the whole greenhouse — plants, care history, photos — is saved to your
+account and syncs to any phone you sign into. See *Accounts and sync*.
+
+Publishing a plant's **tag** makes that one plant's synced record public
+at a link anyone can open:
 
 `https://ixagjvntbgyqemxxinqe.supabase.co/functions/v1/tag?t=<token>`
 
 Links are unlisted (32-hex random token), read via a `SECURITY DEFINER`
-RPC — there is no anonymous read access to any table. Identity is a
-Supabase **anonymous sign-in** created on first publish; linking an email
-to it later is a one-liner (`supabase.auth.updateUser`).
+RPC — there is no anonymous read access to any table. Until an email is
+added, identity is a Supabase **anonymous sign-in** created on first
+publish; adding the email attaches it to that same account.
 
 - Add plants with a camera or library photo
 - Per-plant reminders for watering, fertilizing, repotting and a fresh photo
@@ -29,8 +33,9 @@ to it later is a one-liner (`supabase.auth.updateUser`).
 - Log a propagation → a new plant whose record links back to this one
 - Full per-plant history
 - **Publish / update / unpublish a tag**, share the link from the app
+- **Sign in with your email** and the greenhouse backs up and syncs across phones
 
-Not yet: accounts with email, full sync, public greenhouses, trades. See the roadmap.
+Not yet: public greenhouses, trades. See the roadmap.
 
 ## Supabase
 
@@ -41,12 +46,55 @@ URL and publishable key (safe to commit — RLS gates everything).
   `care_events`, `photos`; RLS (keepers touch only their own rows);
   public-read bucket `plant-photos` with per-keeper write folders;
   `passport(token)` RPC
+- `supabase/migrations/…_greenhouse_sync.sql` — those tables become the
+  synced copy of each keeper's whole greenhouse: client-generated uuids,
+  location and cadences on plants, `deleted_at` tombstones, a server-stamped
+  `synced_at` as the pull cursor; plants private (`is_public = false`) by
+  default
 - `supabase/functions/tag/index.ts` — the public HTML tag page
   (deployed with JWT verification off; it only calls the RPC)
 
 **One-time setup in the Supabase dashboard:** Authentication → Sign In /
 Providers → enable **Allow anonymous sign-ins**. Publishing fails with a
 clear message until that's on.
+
+## Accounts and sync
+
+**In the app:** the person icon on the greenhouse (or the "back them up"
+card) → enter your email → enter the 6-digit code from the email. That's
+the whole sign-in; there are no passwords. If the phone already had an
+anonymous session, the email is attached to it, so anything already
+published keeps its links. Signing in with the same email on another phone
+brings the greenhouse over. Signing out leaves the plants on the phone;
+they just stop syncing.
+
+**How sync works** (`src/lib/sync.ts`): every local row has a uuid the
+server keys on and a `dirty` flag that each write sets. A sync *pulls* rows
+the server has changed since the phone's cursor (last-write-wins by
+`updated_at`; a local edit at least as new stays and pushes next) and then
+*pushes* every dirty row, plus tombstones for deleted plants. It runs on
+launch, when a screen regains focus, and shortly after every write. Photos
+upload once to the `plant-photos` bucket under `<keeper>/<plant>/<photo>.jpg`;
+another phone shows them from that URL. Only accounts with an email sync;
+an anonymous session couldn't be signed into elsewhere, so there'd be
+nothing to promise.
+
+**Privacy note:** the bucket is public-read (tags need it) with unguessable
+paths. Unpublishing a tag stops the link resolving but leaves the keeper's
+photos in place — they're the synced copy now — so someone who saved a
+photo URL while the tag was up keeps it. A private bucket with signed URLs
+would close that; it's a later change.
+
+**One-time setup in the Supabase dashboard:**
+
+1. Authentication → Email Templates: the **Magic Link** and **Change Email
+   Address** templates must include the code, `{{ .Token }}` — e.g.
+   `<p>Your PlantParlour code: <strong>{{ .Token }}</strong></p>`. The app
+   verifies the code; it never uses the link.
+2. Authentication → SMTP settings: point it at a real mail provider.
+   Supabase's built-in mailer sends only a few emails an hour, project-wide,
+   which is fine for one tester and not for anyone else. The app reports
+   the limit plainly when it's hit.
 
 ## Species catalogue
 
@@ -147,7 +195,7 @@ does the app on their phones.
 npm test           # domain logic (care scheduling, alerts, keeper history)
 npm run typecheck
 npm run smoke      # exports the web build and drives it in headless Chromium
-npm run e2e        # publishes a real tag to Supabase and reads it back
+npm run e2e        # publishes a real tag to Supabase and syncs two "phones"
 ```
 
 The care rules live in `src/domain/care.ts` and are pure functions with no
@@ -176,6 +224,16 @@ so **Allow anonymous sign-ins** has to be on (see above); to run it against a
 dedicated account instead, set `PASSPORT_E2E_EMAIL` and
 `PASSPORT_E2E_PASSWORD`.
 
+`e2e/sync.e2e.test.ts` is the sync counterpart: two `node:sqlite` databases
+play two phones on one account. A pushes a greenhouse with a photo and a
+cutting; B pulls it and gets the same plants, history, lineage and a photo
+that loads from storage; a change on B reaches A; when both edit the same
+plant the later edit wins on both; a delete on A disappears from B; a third,
+fresh phone ends up identical to A. Sync needs an account with an email, so
+this one needs `PASSPORT_E2E_EMAIL` / `PASSPORT_E2E_PASSWORD` set to a
+confirmed account (without them it tries a throwaway sign-up, which works
+only when the project doesn't require email confirmation).
+
 ## Layout
 
 ```
@@ -183,11 +241,13 @@ src/app/            Expo Router screens
   index.tsx           the greenhouse (plant list, sorted by what needs attention)
   plant/new.tsx       add a plant
   plant/[id]/         plant detail (care, photos, lineage, history) and edit
+  account.tsx         sign in with an email code; sync status
 src/domain/care.ts  care scheduling rules — the product's brain
-src/db/             SQLite schema and typed queries
-src/lib/            photos (camera/library → app storage), date parsing
+src/domain/calendar.ts  the .ics reminder feed
+src/db/             SQLite schema and typed queries (plus the sync-facing ones)
+src/lib/            sync engine, auth, tag publishing, AI, photos, calendar save
 src/components/     small UI kit + plant card
-e2e/                live tag publish check (npm run e2e)
+e2e/                live tag publish and two-phone sync checks (npm run e2e)
 docs/PRODUCT.md     product brief and roadmap
 ```
 

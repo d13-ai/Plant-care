@@ -10,6 +10,7 @@ import { SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { migrate } from "@/db";
+import { loadSyncStatus, requestSync } from "@/lib/sync";
 import { font, useTheme } from "@/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -31,7 +32,14 @@ export default function RootLayout() {
   // The database file keeps its original name: renaming it would orphan every
   // existing keeper's plants.
   return (
-    <SQLiteProvider databaseName="plant-passport.db" onInit={migrate}>
+    <SQLiteProvider
+      databaseName="plant-passport.db"
+      onInit={async (db) => {
+        await migrate(db);
+        await loadSyncStatus(db);
+        requestSync(db, 0);
+      }}
+    >
       <StatusBar style="auto" />
       <Stack
         screenOptions={{
@@ -46,6 +54,7 @@ export default function RootLayout() {
         <Stack.Screen name="plant/new" options={{ title: "Add plant", presentation: "modal" }} />
         <Stack.Screen name="plant/[id]/index" options={{ title: "" }} />
         <Stack.Screen name="plant/[id]/edit" options={{ title: "Edit plant", presentation: "modal" }} />
+        <Stack.Screen name="account" options={{ title: "Account", presentation: "modal" }} />
       </Stack>
     </SQLiteProvider>
   );

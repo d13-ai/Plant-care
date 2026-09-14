@@ -90,18 +90,31 @@ tag to Supabase and share it as a link (unlisted; anonymous sign-in
 under the hood). *Tests: do
 propagators want this? Is the tag something they'd send a buyer?*
 
-**v2 — Accounts and sharing.**
-Sign in; greenhouse syncs to a backend; public greenhouse link; tag
-link. *Tests: will people make their greenhouse public? Do links get shared?*
+**v2 — Accounts and sync.** ✅ shipped (public greenhouse link still to come)
+Sign in with an email and a 6-digit code (an anonymous session gets the
+email attached, so published tags keep their links); the whole greenhouse
+syncs to the account and to any phone that signs in — last-write-wins
+between phones, deletes carried as tombstones. Photos live in storage once
+and show on every phone. *Tests: does "it's backed up" change how people
+treat the app? Does a second phone feel like the same greenhouse?*
+
+**v2b — Sharing.**
+A public greenhouse page (every published plant of one keeper at one link),
+and a handle to find keepers by. *Tests: will people make their greenhouse
+public? Do links get shared?*
 
 **v3 — Trades.**
 Offer a plant to another keeper by handle; accept/decline; history moves.
 Friends/following. *Tests: does the trade flow match how people actually
 swap plants (in person, at meetups, by mail)?*
 
-Later, in no particular order: species lookup / auto-ID from a photo,
-push notifications for due care, light/humidity notes per location,
-marketplace listings backed by tags, export/import.
+Shipped along the way: species catalogue with cultivars, AI identification
+and health checks from a photo, per-species care guides (generated once and
+shared), calendar reminders that carry the care instructions.
+
+Later, in no particular order: push notifications for due care (needs the
+native app), light/humidity notes per location, marketplace listings backed
+by tags, export/import, a private photo bucket with signed URLs.
 
 ## What already exists
 
@@ -115,10 +128,12 @@ The UI and the Shopify-shop-as-identity assumption do not carry over.
 
 ## Open questions
 
-- Identity: email/passwordless? Social sign-in? Handles for trading
-  ("send to @dana")?
-- Photos: on-device only in v0; where do they live once synced (Supabase
-  storage? S3?), and what about people with 200 plants × 10 photos?
+- Identity: settled on email + 6-digit code (no passwords, no magic links —
+  a link tapped from Mail opens in the wrong place on a phone). Handles for
+  trading ("send to @dana") are still open.
+- Photos: synced to Supabase storage, one object per photo, shown from its
+  URL on other phones. Still open: people with 200 plants × 10 photos, and
+  moving to a private bucket with signed URLs.
 - Species data: free text is fine for v0; later, a species table lets the
   app suggest cadences ("succulents: water every 14 days") and power search
   in public greenhouses.

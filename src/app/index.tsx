@@ -3,11 +3,12 @@ import { useCallback, useMemo } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DueRing } from "@/components/due-ring";
-import { PlusIcon } from "@/components/icons";
+import { PersonIcon, PlusIcon } from "@/components/icons";
 import { PlantCard, summarize } from "@/components/plant-card";
-import { Body, Button, Card, Heading, SectionLabel, Title } from "@/components/ui";
+import { Body, Button, Card, Heading, Row, SectionLabel, Title } from "@/components/ui";
 import { listPlants, logCare, type PlantWithHistory } from "@/db";
 import { useQuery } from "@/hooks/use-query";
+import { useAccount } from "@/lib/auth";
 import { okToLog } from "@/lib/care-log";
 import { space, useTheme, type Tone } from "@/theme";
 
@@ -16,6 +17,9 @@ export default function Greenhouse() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data, refresh, db } = useQuery(listPlants);
+  const { account, loading: accountLoading } = useAccount();
+  // Nudge until there's an account to back the greenhouse up to.
+  const unbacked = !accountLoading && !(account && !account.anonymous);
 
   // Plants that want something come first — the reason to open the app.
   const items = useMemo(() => {
@@ -78,14 +82,24 @@ export default function Greenhouse() {
 
       <View style={styles.header}>
         <Title>Greenhouse</Title>
-        <Pressable
-          accessibilityLabel="Add plant"
-          hitSlop={8}
-          onPress={() => router.push("/plant/new")}
-          style={({ pressed }) => [styles.add, { backgroundColor: t.primary, opacity: pressed ? 0.75 : 1 }]}
-        >
-          <PlusIcon color={t.onPrimary} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            accessibilityLabel="Account"
+            hitSlop={8}
+            onPress={() => router.push("/account")}
+            style={({ pressed }) => [styles.add, { backgroundColor: t.neutral.bg, opacity: pressed ? 0.75 : 1 }]}
+          >
+            <PersonIcon color={t.text} />
+          </Pressable>
+          <Pressable
+            accessibilityLabel="Add plant"
+            hitSlop={8}
+            onPress={() => router.push("/plant/new")}
+            style={({ pressed }) => [styles.add, { backgroundColor: t.primary, opacity: pressed ? 0.75 : 1 }]}
+          >
+            <PlusIcon color={t.onPrimary} />
+          </Pressable>
+        </View>
       </View>
 
       {data && data.length === 0 ? (
@@ -111,6 +125,17 @@ export default function Greenhouse() {
           ListHeaderComponent={
             data ? (
               <View style={styles.listHeader}>
+                {unbacked && (
+                  <Card>
+                    <Heading>Your plants live only on this phone</Heading>
+                    <Body small muted>
+                      Add your email to back them up and see them on any phone you sign into.
+                    </Body>
+                    <Row>
+                      <Button title="Back them up" variant="primary" small onPress={() => router.push("/account")} />
+                    </Row>
+                  </Card>
+                )}
                 {due.length > 0 && (
                   <View style={{ gap: space.sm }}>
                     <SectionLabel>Water due</SectionLabel>
@@ -144,6 +169,7 @@ const styles = StyleSheet.create({
     paddingTop: 22,
     paddingBottom: 8,
   },
+  headerActions: { flexDirection: "row", gap: space.sm },
   add: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   list: { paddingHorizontal: space.lg, paddingBottom: space.xl, gap: 10 },
   listHeader: { gap: space.md, paddingTop: 6, paddingBottom: 4 },

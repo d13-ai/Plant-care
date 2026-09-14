@@ -2,9 +2,9 @@
  * End-to-end check of publishing a tag against a real Supabase project.
  *
  * This drives the app's own code — `publishTag` / `unpublishTag`
- * from `src/lib/tag.ts`, on top of the real `src/db` layer — so the
- * thing under test is the shipping publish path, not a re-implementation of
- * it. Only the device-side modules are swapped out: SQLite is backed by
+ * from `src/lib/tag.ts`, which push through the sync engine, on top of the
+ * real `src/db` layer — so the thing under test is the shipping publish
+ * path, not a re-implementation of it. Only the device-side modules are swapped out: SQLite is backed by
  * node:sqlite and AsyncStorage by a Map (see `vitest.e2e.config.ts`).
  *
  * It talks to the project in `.env` and writes real rows and real storage
@@ -51,6 +51,7 @@ describe("publishing a tag to Supabase", () => {
   let local: TestDatabase;
   let keeperId: string;
   let plantId: number;
+  let plantUuid: string;
   let cuttingId: number;
   let tagLink: string;
   let token: string;
@@ -89,16 +90,17 @@ describe("publishing a tag to Supabase", () => {
     const issueId = issue!.events.find((e) => e.type === "ISSUE")!.id;
     await resolveIssue(local.db, issueId, "Neem oil, twice a week");
     await addPhoto(local.db, plantId, PHOTO_DATA_URL, { caption: "New leaf", takenAt: daysAgo(1) });
+    plantUuid = (await getPlant(local.db, plantId))!.plant.uuid;
   });
 
   afterAll(async () => {
     // Take the test's rows and uploaded objects back out of the project.
     if (keeperId) {
-      const { data: paths } = await supabase.storage.from("plant-photos").list(`${keeperId}/${plantId}`);
+      const { data: paths } = await supabase.storage.from("plant-photos").list(`${keeperId}/${plantUuid}`);
       if (paths?.length) {
         await supabase.storage
           .from("plant-photos")
-          .remove(paths.map((p) => `${keeperId}/${plantId}/${p.name}`));
+          .remove(paths.map((p) => `${keeperId}/${plantUuid}/${p.name}`));
       }
       await supabase.from("plants").delete().eq("keeper_id", keeperId);
       await supabase.from("keepers").delete().eq("id", keeperId);
@@ -126,7 +128,7 @@ describe("publishing a tag to Supabase", () => {
       .from("plants")
       .select("id, nickname, species, is_public, passport_token")
       .eq("keeper_id", keeperId)
-      .eq("local_id", plantId);
+      .eq("id", plantUuid);
     expect(error).toBeNull();
     expect(rows).toHaveLength(1);
     expect(rows![0].nickname).toBe("E2E Fiddle-leaf");
@@ -146,7 +148,7 @@ describe("publishing a tag to Supabase", () => {
     const local_ = await getPlant(local.db, plantId);
     const photo = local_!.photos[0];
     expect(photo.remotePath, "photo should have been marked uploaded").toBe(
-      `${keeperId}/${plantId}/${photo.id}.jpg`,
+      `${keeperId}/${plantUuid}/${photo.uuid}.jpg`,
     );
 
     const response = await fetch(
@@ -184,7 +186,7 @@ describe("publishing a tag to Supabase", () => {
       .from("plants")
       .select("id")
       .eq("keeper_id", keeperId)
-      .eq("local_id", plantId);
+      .eq("id", plantUuid);
     expect(rows, "republishing must update the row, not add one").toHaveLength(1);
 
     const { count } = await supabase
@@ -218,7 +220,7 @@ describe("publishing a tag to Supabase", () => {
     }
   });
 
-  test("unpublishing takes the tag and its photos offline", async () => {
+  test("unpublishing takes the tag down and keeps the keeper's own copy", async () => {
     const before = await getPlant(local.db, plantId);
     const photoPath = before!.photos[0].remotePath!;
 
@@ -228,23 +230,21 @@ describe("publishing a tag to Supabase", () => {
     expect(status).toBe(404);
     expect(html).not.toContain("Ficus lyrata");
 
-    // The object is gone from storage — the authoritative check. (The public
-    // URL itself can still serve from CDN cache for up to its max-age; see the
-    // cache-busted fetch below, which bypasses the edge and hits origin.)
-    const { data: left } = await supabase.storage.from("plant-photos").list(`${keeperId}/${plantId}`);
-    expect(left).toEqual([]);
-    const origin = await fetch(
-      `${SUPABASE_URL}/storage/v1/object/public/plant-photos/${photoPath}?cb=${Date.now()}`,
-    );
-    expect(origin.ok, "photo still readable at origin after unpublish").toBe(false);
+    // The record and photo stay on the server: they're this keeper's synced
+    // copy now, not a snapshot that only existed for the tag.
+    const { data: rows } = await supabase.from("plants").select("is_public").eq("id", plantUuid);
+    expect(rows).toEqual([{ is_public: false }]);
+    const { data: left } = await supabase.storage.from("plant-photos").list(`${keeperId}/${plantUuid}`);
+    expect(left?.map((o) => `${keeperId}/${plantUuid}/${o.name}`)).toEqual([photoPath]);
 
     const after = await getPlant(local.db, plantId);
     expect(after!.plant.passportToken).toBeNull();
-    expect(after!.photos[0].remotePath, "local db must forget the upload").toBeNull();
+    expect(after!.photos[0].remotePath, "the upload is still known locally").toBe(photoPath);
   });
 
-  test("republishing after that uploads the photos again", async () => {
+  test("republishing brings the same link back without re-uploading", async () => {
     const link = await publishTag(local.db, plantId);
+    expect(link).toBe(tagLink);
     const { status, html } = await fetchTagPage(link);
     expect(status).toBe(200);
     expect(html).toContain("/storage/v1/object/public/plant-photos/");
