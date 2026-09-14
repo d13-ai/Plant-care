@@ -132,7 +132,7 @@ export default function Greenhouse() {
                       Add your email to back them up and see them on any phone you sign into.
                     </Body>
                     <Row>
-                      <Button title="Back them up" variant="primary" small onPress={() => router.push("/account")} />
+                      <Button title="Sign in" variant="primary" small onPress={() => router.push("/account")} />
                     </Row>
                   </Card>
                 )}

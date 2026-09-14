@@ -13,6 +13,7 @@ import {
   getSyncMeta,
   linkMotherByUuid,
   listTombstones,
+  markAllDirty,
   markPhotoUploaded,
   setSyncMeta,
   type RemoteEvent,
@@ -49,6 +50,7 @@ export interface SyncStatus {
 
 const CURSOR = "cursor";
 const LAST_SYNCED = "last_synced_at";
+const KEEPER = "keeper_id";
 const BUCKET = "plant-photos";
 
 let status: SyncStatus = { state: "idle", lastSyncedAt: null, error: null, version: 0 };
@@ -285,6 +287,14 @@ async function runOnce(db: SQLiteDatabase): Promise<void> {
 
   setStatus({ state: "syncing", error: null });
   try {
+    // A different account than last time (first sign-in, or a switch):
+    // whatever is on this phone now belongs to it, and its greenhouse is
+    // pulled from the start.
+    const keeperId = session!.user.id;
+    if ((await getSyncMeta(db, KEEPER)) !== keeperId) {
+      await markAllDirty(db);
+      await setSyncMeta(db, KEEPER, keeperId);
+    }
     const changed = await pull(db);
     await pushAll(db, session!);
     const finished = new Date().toISOString();

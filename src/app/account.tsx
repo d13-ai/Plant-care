@@ -1,14 +1,15 @@
 import { Stack } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
-import { Badge, Body, Button, Card, Field, Heading, Row } from "@/components/ui";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { GoogleIcon } from "@/components/icons";
+import { Badge, Body, Button, Card, Field, Heading, Row, Title } from "@/components/ui";
 import { pendingChanges } from "@/db";
-import { sendEmailCode, signOut, useAccount, verifyEmailCode, type CodeMode } from "@/lib/auth";
+import { sendEmailCode, signInWithGoogle, signOut, useAccount, verifyEmailCode, type CodeMode } from "@/lib/auth";
 import { confirm } from "@/lib/confirm";
 import { supabaseConfigured } from "@/lib/supabase";
 import { getSyncStatus, subscribeSync, syncNow, type SyncStatus } from "@/lib/sync";
-import { space, useTheme } from "@/theme";
+import { font, radius, space, useTheme } from "@/theme";
 
 function ago(iso: string | null): string {
   if (!iso) return "never";
@@ -39,6 +40,24 @@ export default function AccountScreen() {
 
   const signedIn = Boolean(account && !account.anonymous);
 
+  // Landing here signed in — straight from Google, or after a code — starts
+  // the first sync, and tidies the tokens Google's redirect leaves in the URL.
+  useEffect(() => {
+    if (!signedIn) return;
+    syncNow(db).catch(() => {});
+    if (Platform.OS === "web" && /access_token|refresh_token|error/.test(window.location.hash)) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [signedIn, db]);
+
+  // Google can bounce back with an error in the URL instead of a session.
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const description = params.get("error_description");
+    if (description) setError(description.replace(/\+/g, " "));
+  }, []);
+
   const run = async (work: () => Promise<void>) => {
     setBusy(true);
     setError(null);
@@ -52,6 +71,7 @@ export default function AccountScreen() {
   };
 
   const send = () => run(async () => setMode(await sendEmailCode(email)));
+  const google = () => run(signInWithGoogle);
   const verify = () =>
     run(async () => {
       await verifyEmailCode(db, email, code, mode!);
@@ -108,11 +128,23 @@ export default function AccountScreen() {
         </Card>
       ) : (
         <Card>
-          <Heading>Back up your greenhouse</Heading>
-          <Body small muted>
-            Right now your plants live only on this phone. Add your email and they're saved to your account —
-            and show up on any phone you sign into. No password: we email you a 6-digit code.
-          </Body>
+          <View style={{ gap: space.xs }}>
+            <Title>Sign in</Title>
+            <Body small muted>
+              Your plants live only on this phone until you do. Sign in and they're saved to your account and
+              show up on any phone you sign into.
+            </Body>
+          </View>
+          {Platform.OS === "web" ? (
+            <>
+              <GoogleButton onPress={google} disabled={busy || loading} />
+              <View style={styles.divider}>
+                <View style={[styles.rule, { backgroundColor: t.border }]} />
+                <Body small muted>or use your email</Body>
+                <View style={[styles.rule, { backgroundColor: t.border }]} />
+              </View>
+            </>
+          ) : null}
           {loading ? null : mode === null ? (
             <>
               <Field
@@ -127,8 +159,9 @@ export default function AccountScreen() {
                 textContentType="emailAddress"
               />
               <Row>
-                <Button title={busy ? "Sending…" : "Send code"} variant="primary" disabled={busy || !email.trim()} onPress={send} />
+                <Button title={busy ? "Sending…" : "Email me a code"} variant="primary" disabled={busy || !email.trim()} onPress={send} />
               </Row>
+              <Body small muted>No password — we email you a 6-digit code to type in.</Body>
             </>
           ) : (
             <>
@@ -166,6 +199,36 @@ export default function AccountScreen() {
   );
 }
 
+function GoogleButton({ onPress, disabled }: { onPress: () => void; disabled?: boolean }) {
+  const t = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityLabel="Continue with Google"
+      style={({ pressed }) => [
+        styles.google,
+        { backgroundColor: t.card, borderColor: t.neutral.ring, opacity: disabled ? 0.4 : pressed ? 0.75 : 1 },
+      ]}
+    >
+      <GoogleIcon size={20} />
+      <Text style={[styles.googleText, { color: t.text }]}>Continue with Google</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { padding: space.lg, gap: space.md, paddingBottom: space.xl * 2 },
+  google: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+  },
+  googleText: { fontSize: 15, fontFamily: font.bold, fontWeight: "700" },
+  divider: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  rule: { flex: 1, height: StyleSheet.hairlineWidth },
 });

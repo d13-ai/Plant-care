@@ -9,9 +9,10 @@ The idea, personas, rules and roadmap are in [`docs/PRODUCT.md`](docs/PRODUCT.md
 ## Status: v2 — accounts and sync
 
 Local-first: your plants live in SQLite on the device, and the app works
-with no account at all. Add your email (a 6-digit code, no password) and
-the whole greenhouse — plants, care history, photos — is saved to your
-account and syncs to any phone you sign into. See *Accounts and sync*.
+with no account at all. Sign in — with Google, or an email and a 6-digit
+code; no passwords — and the whole greenhouse (plants, care history,
+photos) is saved to your account and syncs to any phone you sign into. See
+*Accounts and sync*.
 
 Publishing a plant's **tag** makes that one plant's synced record public
 at a link anyone can open:
@@ -33,7 +34,7 @@ publish; adding the email attaches it to that same account.
 - Log a propagation → a new plant whose record links back to this one
 - Full per-plant history
 - **Publish / update / unpublish a tag**, share the link from the app
-- **Sign in with your email** and the greenhouse backs up and syncs across phones
+- **Sign in** (Google, or an emailed code) and the greenhouse backs up and syncs across phones
 
 Not yet: public greenhouses, trades. See the roadmap.
 
@@ -60,13 +61,14 @@ clear message until that's on.
 
 ## Accounts and sync
 
-**In the app:** the person icon on the greenhouse (or the "back them up"
-card) → enter your email → enter the 6-digit code from the email. That's
-the whole sign-in; there are no passwords. If the phone already had an
-anonymous session, the email is attached to it, so anything already
-published keeps its links. Signing in with the same email on another phone
-brings the greenhouse over. Signing out leaves the plants on the phone;
-they just stop syncing.
+**In the app:** the person icon on the greenhouse (or the "sign in" card)
+opens the login screen: **Continue with Google** (one tap; web app for now)
+or your email and the 6-digit code from the email. There are no passwords.
+Whichever way you sign in, whatever is on the phone is pushed into that
+account on the first sync. With the email code, an existing anonymous
+session gets the email attached, so anything already published keeps its
+links. Signing in the same way on another phone brings the greenhouse over.
+Signing out leaves the plants on the phone; they just stop syncing.
 
 **How sync works** (`src/lib/sync.ts`): every local row has a uuid the
 server keys on and a `dirty` flag that each write sets. A sync *pulls* rows
@@ -85,7 +87,23 @@ photos in place — they're the synced copy now — so someone who saved a
 photo URL while the tag was up keeps it. A private bucket with signed URLs
 would close that; it's a later change.
 
-**One-time setup in the Supabase dashboard:**
+**One-time setup for Google sign-in:**
+
+1. Google Cloud Console → APIs & Services → *OAuth consent screen*: External,
+   app name PlantParlour, your support email; add yourself as a test user
+   (or publish the app so anyone can sign in).
+2. *Credentials* → Create credentials → OAuth client ID → Web application.
+   Authorized JavaScript origin: `https://plant-care-flame.vercel.app`.
+   Authorized redirect URI:
+   `https://ixagjvntbgyqemxxinqe.supabase.co/auth/v1/callback`. Copy the
+   Client ID (`….apps.googleusercontent.com`) and the Client Secret.
+3. Supabase → Authentication → Providers → Google: enable; paste the Client
+   ID into *Client IDs* and the secret into *Client Secret*; save.
+4. Supabase → Authentication → URL Configuration: Site URL
+   `https://plant-care-flame.vercel.app`; add
+   `https://plant-care-flame.vercel.app/**` to Redirect URLs.
+
+**One-time setup for the email code (the fallback):**
 
 1. Authentication → Email Templates: the **Magic Link** and **Change Email
    Address** templates must include the code, `{{ .Token }}` — e.g.

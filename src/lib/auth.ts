@@ -1,12 +1,15 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 import { useEffect, useState } from "react";
+import { Platform } from "react-native";
 import { markAllDirty } from "@/db";
 import { supabase } from "./supabase";
 
 /**
- * Accounts are an email and a 6-digit code — no passwords, no links. Codes
- * work the same in a browser, the home-screen app and the native app; a
- * magic link tapped from Mail would open in the wrong place on a phone.
+ * Accounts are a Google sign-in (one tap) or an email and a 6-digit code —
+ * no passwords, no magic links. Codes work the same in a browser, the
+ * home-screen app and the native app; a link tapped from Mail would open in
+ * the wrong place on a phone. Whichever way someone signs in, the sync
+ * engine notices the account and pushes what's on the phone into it.
  */
 
 export interface Account {
@@ -70,12 +73,23 @@ export async function verifyEmailCode(db: SQLiteDatabase, email: string, code: s
   });
   if (error) throw new Error(/expired|invalid/i.test(error.message) ? "That code didn't work. Check it, or send a new one." : error.message);
 
-  // Whatever is on this phone now belongs to this account: push all of it,
-  // and pull the account's greenhouse from scratch.
-  await markAllDirty(db);
   const account = await currentAccount();
   if (!account) throw new Error("Signed in, but no session came back.");
   return account;
+}
+
+/**
+ * Google sign-in. The browser goes to Google and comes back to /account
+ * with the session in the URL, which the client picks up. Web only for now:
+ * the native app needs a browser session handler it doesn't ship yet.
+ */
+export async function signInWithGoogle(): Promise<void> {
+  if (Platform.OS !== "web") throw new Error("Google sign-in is available in the web app for now.");
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${window.location.origin}/account` },
+  });
+  if (error) throw new Error(error.message);
 }
 
 /** Sign out. The plants stay on this device; they just stop syncing. */
