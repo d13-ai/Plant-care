@@ -95,6 +95,19 @@ function toDate(value: Date | string): Date {
   return value instanceof Date ? value : new Date(value);
 }
 
+function startOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+/**
+ * Whole local calendar days from `a` to `b` (positive when `b` is later).
+ * Care is a daily thing: watered last night is "yesterday" at breakfast,
+ * not "today" because it was under 24 hours ago. Rounding absorbs DST.
+ */
+function calendarDaysBetween(a: Date, b: Date): number {
+  return Math.round((startOfDay(b).getTime() - startOfDay(a).getTime()) / DAY_MS);
+}
+
 /**
  * Warn a little before something is actually due — a fifth of the cadence,
  * capped at three days so an annual repotting doesn't nag for ten weeks.
@@ -116,9 +129,7 @@ export function careStatuses(
       .sort((a, b) => b.getTime() - a.getTime())[0];
 
     const lastAt = last ? last.toISOString() : null;
-    const daysSinceLast = last
-      ? Math.floor((now.getTime() - last.getTime()) / DAY_MS)
-      : null;
+    const daysSinceLast = last ? calendarDaysBetween(last, now) : null;
 
     if (!everyDays || everyDays <= 0) {
       return {
@@ -136,7 +147,9 @@ export function careStatuses(
       now;
 
     const dueAt = new Date(baseline.getTime() + everyDays * DAY_MS);
-    const daysUntilDue = Math.ceil((dueAt.getTime() - now.getTime()) / DAY_MS);
+    // Due on a day, not at an hour: it's "Needs water" from the start of
+    // the due date, whatever time the last watering was logged.
+    const daysUntilDue = calendarDaysBetween(now, dueAt);
     const state: DueState =
       daysUntilDue <= 0
         ? "OVERDUE"

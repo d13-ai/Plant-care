@@ -76,6 +76,20 @@ describe("careStatuses", () => {
     expect(s.FERTILIZE.state).toBe("OFF");
   });
 
+  it("counts calendar days, so last night's watering is 'yesterday' this morning", () => {
+    // Local times on purpose: 21:00 yesterday → 11:00 today is 14 hours,
+    // which the old 24-hour bucket reported as "today".
+    const lastNight = new Date(2026, 8, 13, 21, 0);
+    const thisMorning = new Date(2026, 8, 14, 11, 0);
+    const s = byType(careStatuses(cadence, [{ type: "WATER", occurredAt: lastNight }], thisMorning));
+    expect(s.WATER.daysSinceLast).toBe(1);
+    expect(relativeDays(s.WATER.daysSinceLast)).toBe("yesterday");
+    expect(s.WATER.daysUntilDue).toBe(6); // due on the 20th, counted in days not hours
+    // And on the due date itself it's due from the morning, not from 21:00.
+    const dueMorning = new Date(2026, 8, 20, 8, 0);
+    expect(byType(careStatuses(cadence, [{ type: "WATER", occurredAt: lastNight }], dueMorning)).WATER.state).toBe("OVERDUE");
+  });
+
   it("caps the due-soon window so annual care doesn't nag for weeks", () => {
     const s = byType(
       careStatuses(cadence, [{ type: "REPOT", occurredAt: daysAgo(365 - 5) }], now),
