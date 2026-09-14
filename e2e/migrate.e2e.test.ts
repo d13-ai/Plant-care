@@ -1,0 +1,65 @@
+/**
+ * The upgrade path a phone with plants takes on the first launch after v2:
+ * a v4 database (pre-sync) gets uuids backfilled, every row marked dirty so
+ * the first sync pushes all of it, and the lineage still resolves. Offline;
+ * runs with the e2e suite because it needs node:sqlite.
+ */
+import { expect, test } from "vitest";
+import { dirtyPlants, getPlant, listPlants, migrate, pendingChanges } from "@/db";
+import { CREATE_TABLES, MIGRATIONS } from "@/db/schema";
+import { openTestDatabase } from "./node-sqlite";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+test("a v4 database with plants upgrades to v5 with sync columns backfilled", async () => {
+  const { db, close } = openTestDatabase();
+  try {
+    await db.execAsync(CREATE_TABLES);
+    for (const version of [2, 3, 4]) for (const statement of MIGRATIONS[version]) await db.execAsync(statement);
+    await db.execAsync("PRAGMA user_version = 4");
+
+    // Rows exactly as a v4 phone holds them: no uuid, no dirty, no updated_at on events/photos.
+    await db.runAsync(
+      "INSERT INTO plants (nickname, species, status, acquired_at, created_at, updated_at, water_every_days) VALUES ('Old Monstera', 'Monstera deliciosa', 'ACTIVE', '2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z', 7)",
+    );
+    await db.runAsync(
+      "INSERT INTO plants (nickname, status, acquired_at, created_at, updated_at, mother_plant_id, propagated_at) VALUES ('Old Cutting', 'ACTIVE', '2026-08-10T00:00:00.000Z', '2026-08-10T00:00:00.000Z', '2026-08-10T00:00:00.000Z', 1, '2026-08-10T00:00:00.000Z')",
+    );
+    await db.runAsync(
+      "INSERT INTO care_events (plant_id, type, occurred_at, created_at) VALUES (1, 'WATER', '2026-09-01T00:00:00.000Z', '2026-09-01T00:00:00.000Z')",
+    );
+    await db.runAsync(
+      "INSERT INTO photos (plant_id, uri, taken_at, created_at) VALUES (1, 'data:image/jpeg;base64,AAAA', '2026-08-02T00:00:00.000Z', '2026-08-02T00:00:00.000Z')",
+    );
+
+    await migrate(db);
+
+    const version = await db.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
+    expect(version!.user_version).toBe(5);
+
+    const plants = await listPlants(db);
+    expect(plants.map((p) => p.plant.nickname).sort()).toEqual(["Old Cutting", "Old Monstera"]);
+    for (const p of plants) expect(p.plant.uuid).toMatch(UUID);
+    expect(new Set(plants.map((p) => p.plant.uuid)).size).toBe(2);
+
+    const mother = (await getPlant(db, 1))!;
+    expect(mother.events[0].uuid).toMatch(UUID);
+    expect(mother.events[0].updatedAt, "events borrow created_at as updated_at").toBe("2026-09-01T00:00:00.000Z");
+    expect(mother.photos[0].uuid).toMatch(UUID);
+    expect(mother.propagations[0].nickname).toBe("Old Cutting");
+
+    // Everything is dirty, so the first sync after adding an email pushes it all.
+    const dirty = await dirtyPlants(db);
+    expect(dirty.map((p) => p.nickname).sort()).toEqual(["Old Cutting", "Old Monstera"]);
+    expect(dirty.find((p) => p.nickname === "Old Cutting")!.motherUuid).toBe(
+      dirty.find((p) => p.nickname === "Old Monstera")!.uuid,
+    );
+    expect(await pendingChanges(db)).toBe(4);
+
+    // Running the migrations again on a current database changes nothing.
+    await migrate(db);
+    expect((await listPlants(db)).map((p) => p.plant.uuid).sort()).toEqual(plants.map((p) => p.plant.uuid).sort());
+  } finally {
+    close();
+  }
+});
