@@ -3,8 +3,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient, type Session } from "@supabase/supabase-js";
 import { Platform } from "react-native";
 
-export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
-const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY ?? "";
+// The project URL and publishable key. Safe to ship — the publishable key
+// only permits what row-level security allows. Kept as built-in defaults so
+// the app is configured wherever it's built (a host that doesn't inline the
+// EXPO_PUBLIC_* env vars, like some CI, would otherwise leave it blank);
+// .env still overrides them for anyone pointing the app at another project.
+const DEFAULT_SUPABASE_URL = "https://ixagjvntbgyqemxxinqe.supabase.co";
+const DEFAULT_SUPABASE_KEY = "sb_publishable__A5fA6nyI8nrSqJWfaaJBQ_vqEZdRn6";
+
+export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY || DEFAULT_SUPABASE_KEY;
 
 export const supabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
