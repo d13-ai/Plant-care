@@ -33,6 +33,34 @@ function fingerprint(text: string): string {
 
 type Answer = { verdict: Verdict; remaining: number; cached?: boolean; cost_usd?: number; model?: string };
 
+/**
+ * The most recent scan, photos included, so a cleared Add plant screen can
+ * bring it back without another call. The photos are the 1024px copies
+ * that were sent — a few hundred KB, well within storage on any device.
+ */
+export interface LastScan {
+  at: string;
+  mode: AnalysisMode;
+  speciesHint: string | null;
+  photos: string[];
+  answer: Answer;
+}
+const LAST_SCAN_KEY = "ai:lastScan";
+
+export async function loadLastScan(): Promise<LastScan | null> {
+  try {
+    const raw = await AsyncStorage.getItem(LAST_SCAN_KEY);
+    const last = raw ? (JSON.parse(raw) as LastScan) : null;
+    return last?.answer?.verdict && last.photos?.length ? last : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearLastScan(): Promise<void> {
+  await AsyncStorage.removeItem(LAST_SCAN_KEY).catch(() => {});
+}
+
 /** One line for the screen: what this answer cost, or that it was free. */
 export function describeCost(a: Answer): string {
   if (a.cached) return "Remembered from before — no charge.";
@@ -111,5 +139,13 @@ export async function analyzePhoto(
   if (!data?.verdict) throw new Error(data?.error ?? "No answer came back.");
   const answer: Answer = { verdict: data.verdict, remaining: data.remaining, cost_usd: data.cost_usd, model: data.model };
   AsyncStorage.setItem(cacheKey, JSON.stringify(answer)).catch(() => {});
+  const last: LastScan = {
+    at: new Date().toISOString(),
+    mode: options.mode ?? "both",
+    speciesHint: options.speciesHint ?? null,
+    photos: images.map((b64) => `data:image/jpeg;base64,${b64}`),
+    answer,
+  };
+  AsyncStorage.setItem(LAST_SCAN_KEY, JSON.stringify(last)).catch(() => {});
   return answer;
 }

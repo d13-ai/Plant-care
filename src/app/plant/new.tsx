@@ -9,7 +9,7 @@ import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/compone
 import { addPhoto, createPlant, listPlants, logCare, type Plant } from "@/db";
 import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "@/domain/species";
 import { scanSummary } from "@/domain/scan";
-import { MAX_SCAN_PHOTOS, analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
+import { MAX_SCAN_PHOTOS, analyzePhoto, clearLastScan, describeCost, loadLastScan, type LastScan, type Verdict } from "@/lib/ai";
 import { confirm } from "@/lib/confirm";
 import { clearDraft, loadDraft, saveDraftSoon } from "@/lib/draft";
 import { Calendar } from "@/components/calendar";
@@ -44,6 +44,8 @@ export default function NewPlant() {
   // The AI candidate the keeper tapped, for the highlight and the name ideas.
   const [chosen, setChosen] = useState<Verdict["species"][number] | null>(null);
   const [restored, setRestored] = useState(false);
+  // A paid scan whose screen was cleared: on offer until it's used or a new one runs.
+  const [lastScan, setLastScan] = useState<LastScan | null>(null);
   // Don't overwrite a saved draft with the empty form before it's been read back.
   const hydrated = useRef(false);
 
@@ -65,7 +67,26 @@ export default function NewPlant() {
       }
       hydrated.current = true;
     });
+    loadLastScan().then((last) => {
+      // Only a scan from the add-plant flow, and only a recent one.
+      if (last && last.mode === "both" && Date.now() - Date.parse(last.at) < 24 * 3600_000) setLastScan(last);
+    });
   }, []);
+
+  const bringBackLastScan = () => {
+    if (!lastScan) return;
+    setPhotos(lastScan.photos.slice(0, MAX_SCAN_PHOTOS));
+    setVerdict(lastScan.answer.verdict);
+    setScanNote("Brought back from your last scan — no charge.");
+    setChosen(null);
+    setRestored(false);
+    setLastScan(null);
+  };
+  const lastScanAge = (() => {
+    if (!lastScan) return "";
+    const mins = Math.max(1, Math.round((Date.now() - Date.parse(lastScan.at)) / 60_000));
+    return mins < 60 ? `${mins} min ago` : `${Math.round(mins / 60)} h ago`;
+  })();
 
   useEffect(() => {
     if (!hydrated.current) return;
@@ -98,6 +119,7 @@ export default function NewPlant() {
       const answer = await analyzePhoto(photos, { mode: "both", speciesHint: species.trim() || null });
       setVerdict(answer.verdict);
       setScanNote(describeCost(answer));
+      setLastScan(null);
     } catch (err) {
       setAiError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -168,6 +190,7 @@ export default function NewPlant() {
     // The scan's health read goes into the record, not just the species name.
     if (verdict?.is_plant) await logCare(db, id, "AI_CHECK", { notes: scanSummary(verdict) });
     await clearDraft();
+    await clearLastScan();
     router.replace({ pathname: "/plant/[id]", params: { id: String(id) } });
   };
 
@@ -182,6 +205,16 @@ export default function NewPlant() {
             <Body small muted>Picked up where you left off — the photo, the AI's answer and what you'd typed are all here.</Body>
             <Row>
               <Button title="Start over" small onPress={startOver} />
+            </Row>
+          </Card>
+        ) : null}
+        {lastScan && !verdict && photos.length === 0 ? (
+          <Card>
+            <Body small muted>
+              {`Your last scan (${lastScanAge}, ${lastScan.photos.length} photo${lastScan.photos.length === 1 ? "" : "s"}) is still here if this screen got cleared.`}
+            </Body>
+            <Row>
+              <Button title="Bring back the last scan" variant="primary" small onPress={bringBackLastScan} />
             </Row>
           </Card>
         ) : null}
