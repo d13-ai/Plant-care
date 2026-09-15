@@ -41,7 +41,10 @@ export function PlantCard({
       {/* The link stops before the drop: on the web a tap inside an anchor
           follows it, and logging water must not leave the greenhouse. */}
       <Link href={{ pathname: "/plant/[id]", params: { id: String(plant.id) } }} asChild>
-        <Pressable style={({ pressed }) => [styles.body, { opacity: pressed ? 0.75 : 1 }]}>
+        {/* A plain style object: Link merges its own style with the child's into
+            an array, and a style *function* inside that array is dropped on the
+            web — the row collapsed into a column and the drop slid off screen. */}
+        <Pressable style={styles.body}>
           {photo ? (
             <Image source={{ uri: photo.uri }} style={styles.thumb} contentFit="cover" />
           ) : (
