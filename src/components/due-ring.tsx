@@ -1,6 +1,6 @@
-import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
+import { PlantPhoto } from "@/components/plant-photo";
 import { font, useTheme } from "@/theme";
 
 /**
@@ -54,9 +54,9 @@ export function DueRing({
           />
         </Svg>
         {uri ? (
-          <Image
-            source={{ uri }}
-            contentFit="cover"
+          <PlantPhoto
+            uri={uri}
+            mode="thumb"
             style={[styles.thumb, { top: inset, left: inset, width: size - inset * 2, height: size - inset * 2 }]}
           />
         ) : (

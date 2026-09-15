@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
@@ -25,6 +24,7 @@ import { scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
 import { CareGuide } from "@/components/care-guide";
 import { PhotoTips } from "@/components/photo-tips";
+import { PlantPhoto } from "@/components/plant-photo";
 import { getCareCard } from "@/lib/care-card";
 import { buildPlantIcs, saveIcs, slugify, tasksFromStatuses } from "@/lib/calendar";
 import { okToLog } from "@/lib/care-log";
@@ -273,7 +273,7 @@ export default function PlantDetail() {
       />
 
       {hero ? (
-        <Image source={{ uri: hero.uri }} style={styles.hero} contentFit="cover" />
+        <PlantPhoto uri={hero.uri} mode="hero" />
       ) : null}
 
       <Row>
@@ -458,7 +458,7 @@ export default function PlantDetail() {
                     }}
                     style={({ pressed }) => ({ gap: 4, opacity: pressed ? 0.7 : 1 })}
                   >
-                    <Image source={{ uri: photo.uri }} style={[styles.photo, main && { borderWidth: 3, borderColor: c.gold }]} contentFit="cover" />
+                    <PlantPhoto uri={photo.uri} mode="thumb" style={[styles.photo, main && { borderWidth: 3, borderColor: c.gold }]} />
                     <Row>
                       <Body small muted>{formatDate(photo.takenAt)}</Body>
                       {main ? <Badge label="Main" tone="warning" /> : null}
@@ -626,7 +626,6 @@ export default function PlantDetail() {
 
 const styles = StyleSheet.create({
   container: { padding: space.lg, gap: space.md, paddingBottom: space.xl * 2 },
-  hero: { width: "100%", aspectRatio: 4 / 3, borderRadius: radius.lg },
   photo: { width: 120, height: 120, borderRadius: radius.md },
   careRow: {
     flexDirection: "row",

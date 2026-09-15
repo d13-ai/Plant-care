@@ -1,7 +1,7 @@
-import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 import { DropIcon, TagIcon } from "@/components/icons";
+import { PlantPhoto } from "@/components/plant-photo";
 import { Badge, Body, Card, Heading, IconButton } from "@/components/ui";
 import { coverPhoto, type PlantWithHistory } from "@/db";
 import { careStatuses, openIssues, plantAlerts, relativeDays } from "@/domain/care";
@@ -46,7 +46,7 @@ export function PlantCard({
             web — the row collapsed into a column and the drop slid off screen. */}
         <Pressable style={styles.body}>
           {photo ? (
-            <Image source={{ uri: photo.uri }} style={styles.thumb} contentFit="cover" />
+            <PlantPhoto uri={photo.uri} mode="thumb" style={styles.thumb} />
           ) : (
             <View style={[styles.thumb, { backgroundColor: t.forest }]} />
           )}

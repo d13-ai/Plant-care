@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useRef, useState } from "react";
@@ -14,6 +13,7 @@ import { confirm } from "@/lib/confirm";
 import { clearDraft, loadDraft, saveDraftSoon } from "@/lib/draft";
 import { Calendar } from "@/components/calendar";
 import { PhotoTips } from "@/components/photo-tips";
+import { PlantPhoto } from "@/components/plant-photo";
 import { parseDate } from "@/lib/dates";
 import { capturePhoto } from "@/lib/photos";
 import { supabaseConfigured } from "@/lib/supabase";
@@ -146,11 +146,14 @@ export default function NewPlant() {
   // cultivar on its own, the Latin — so nobody has to copy and paste.
   const nameIdeas = (() => {
     const ideas: string[] = [];
+    // What the AI called it comes first: "Philodendron Birkin" beats the
+    // catalogue's names for the parent species.
+    if (chosen) ideas.push(chosen.common_name, ...(chosen.cultivar ? [chosen.cultivar] : []));
     if (picked) ideas.push(...picked.common, ...(picked.cultivar ? [picked.cultivar] : []), scientificName(picked));
-    else if (chosen) ideas.push(chosen.common_name, ...(chosen.cultivar ? [chosen.cultivar] : []), latinOf(chosen));
+    else if (chosen) ideas.push(latinOf(chosen));
     else if (species.trim()) ideas.push(species.trim());
     const seen = new Set<string>();
-    return ideas.map((n) => n.trim()).filter((n) => n && !seen.has(n.toLowerCase()) && seen.add(n.toLowerCase())).slice(0, 3);
+    return ideas.map((n) => n.trim()).filter((n) => n && !seen.has(n.toLowerCase()) && seen.add(n.toLowerCase())).slice(0, 4);
   })();
   const nameIdeasRow = nameIdeas.length > 0 && !nickname.trim() ? (
     <View style={{ gap: space.xs }}>
@@ -221,7 +224,7 @@ export default function NewPlant() {
         <Card>
           <Heading>Photo</Heading>
           {photos[0] ? (
-            <Image source={{ uri: photos[0] }} style={styles.photo} contentFit="cover" />
+            <PlantPhoto uri={photos[0]} mode="hero" />
           ) : (
             <View style={[styles.photo, { backgroundColor: t.forest }]} />
           )}
@@ -235,7 +238,7 @@ export default function NewPlant() {
                     disabled={i === 0}
                     onPress={() => setPhotos((ps) => [ps[i], ...ps.filter((_, j) => j !== i)])}
                   >
-                    <Image source={{ uri }} style={[styles.thumb, i === 0 && { borderColor: t.primary, borderWidth: 2 }]} contentFit="cover" />
+                    <PlantPhoto uri={uri} mode="thumb" style={[styles.thumb, i === 0 && { borderColor: t.primary, borderWidth: 2 }]} />
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"

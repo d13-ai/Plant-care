@@ -34,7 +34,6 @@ const CATALOGUE: { group: string; rows: Row[] }[] = [
     ["Philodendron", "erubescens", ["Blushing philodendron", "Red-leaf philodendron"], 7, 30, 365],
     ["Philodendron", "gloriosum", [], 7, 30, 365],
     ["Philodendron", "melanochrysum", ["Black gold philodendron"], 7, 30, 365],
-    ["Philodendron", "birkin", ["Birkin"], 7, 30, 365],
     ["Thaumatophyllum", "bipinnatifidum", ["Tree philodendron", "Philodendron selloum"], 7, 30, 540],
     ["Epipremnum", "aureum", ["Pothos", "Golden pothos", "Devil's ivy"], 8, 30, 365],
     ["Epipremnum", "pinnatum", ["Dragon tail"], 8, 30, 365],
@@ -207,6 +206,7 @@ const CULTIVARS: CultivarRow[] = [
   ["Monstera", "standleyana", "Albo Variegata", ["Standleyana Albo"]],
   ["Rhaphidophora", "tetrasperma", "Variegata", ["Variegated mini monstera"]],
   // Philodendron
+  ["Philodendron", "erubescens", "Birkin", ["Philodendron Birkin", "Birkin"]],
   ["Philodendron", "erubescens", "Pink Princess", ["Pink Princess", "PPP"]],
   ["Philodendron", "erubescens", "White Princess", ["White Princess"]],
   ["Philodendron", "erubescens", "White Knight", ["White Knight"]],

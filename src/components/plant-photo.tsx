@@ -1,0 +1,63 @@
+import { Image, type ImageContentPosition } from "expo-image";
+import { useState, type ReactNode } from "react";
+import { Modal, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { radius, useTheme } from "@/theme";
+
+/**
+ * A plant photo framed for where it sits. Phone photos are tall; a square
+ * or 4:3 crop from the middle shows soil and pot and cuts the leaves. So a
+ * hero takes the photo's own shape (within reason), a thumbnail crops from
+ * the top where the plant is, and a hero opens full-size on tap.
+ */
+export function PlantPhoto({
+  uri,
+  mode,
+  style,
+  children,
+}: {
+  uri: string;
+  mode: "hero" | "thumb";
+  style?: StyleProp<ViewStyle>;
+  children?: ReactNode;
+}) {
+  const t = useTheme();
+  const [ratio, setRatio] = useState<number | null>(null);
+  const [open, setOpen] = useState(false);
+  const portrait = ratio != null && ratio < 0.9;
+  const position: ImageContentPosition = portrait ? "top" : "center";
+
+  if (mode === "thumb") {
+    return <Image source={{ uri }} style={style as never} contentFit="cover" contentPosition={position} onLoad={(e) => setRatio(e.source.width / e.source.height)} />;
+  }
+
+  // Between 4:5 and 3:2 the photo keeps its own shape; beyond that it's cropped, from the top if tall.
+  const aspectRatio = ratio == null ? 4 / 3 : Math.min(1.5, Math.max(0.8, ratio));
+  return (
+    <>
+      <Pressable accessibilityRole="imagebutton" accessibilityLabel="Open the photo full size" onPress={() => setOpen(true)} style={style}>
+        <Image
+          source={{ uri }}
+          style={[styles.hero, { aspectRatio }]}
+          contentFit="cover"
+          contentPosition={position}
+          onLoad={(e) => setRatio(e.source.width / e.source.height)}
+        />
+        {children}
+      </Pressable>
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={() => setOpen(false)} style={[styles.viewer, { backgroundColor: t.background }]}>
+          <View style={styles.viewerInner} pointerEvents="none">
+            <Image source={{ uri }} style={styles.full} contentFit="contain" />
+          </View>
+        </Pressable>
+      </Modal>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  hero: { width: "100%", borderRadius: radius.lg },
+  viewer: { flex: 1, alignItems: "center", justifyContent: "center" },
+  viewerInner: { width: "100%", height: "100%" },
+  full: { width: "100%", height: "100%" },
+});

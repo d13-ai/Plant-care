@@ -194,8 +194,8 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: "row", gap: space.sm },
   add: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   list: { paddingHorizontal: space.lg, paddingBottom: space.xl, gap: 10 },
-  listHeader: { gap: space.md, paddingTop: 6, paddingBottom: 4 },
-  strip: { gap: 14, paddingHorizontal: 4, paddingVertical: 2 },
+  listHeader: { gap: space.md, paddingTop: space.md, paddingBottom: 4 },
+  strip: { gap: 14, paddingHorizontal: 4, paddingVertical: 6 },
   listTitle: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 4 },
   empty: { flex: 1, justifyContent: "center", padding: space.lg },
   band: {
