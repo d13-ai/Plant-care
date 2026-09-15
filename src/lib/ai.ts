@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImageManipulator from "expo-image-manipulator";
 import { ensureSession, supabase, supabaseConfigured } from "./supabase";
 
@@ -14,16 +15,29 @@ export interface Verdict {
 
 export type AnalysisMode = "identify" | "health" | "both";
 
+/** FNV-1a over the image bytes — enough to recognise the same photo again. */
+function fingerprint(text: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0") + text.length.toString(16);
+}
+
+type Answer = { verdict: Verdict; remaining: number; cached?: boolean };
+
 /**
  * Ask the AI about one photo. The image is shrunk to 1024px on its long
- * side first — plenty for a plant, and it keeps each call cheap.
+ * side first — plenty for a plant, and it keeps each call cheap. The
+ * answer is kept on the device per photo, so asking again about the same
+ * picture (after backing out of a screen, say) costs nothing.
  */
 export async function analyzePhoto(
   uri: string,
   options: { mode?: AnalysisMode; speciesHint?: string | null } = {},
-): Promise<{ verdict: Verdict; remaining: number }> {
+): Promise<Answer> {
   if (!supabaseConfigured) throw new Error("Supabase isn't configured.");
-  const session = await ensureSession();
 
   const shrunk = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 1024 } }], {
     compress: 0.8,
@@ -31,6 +45,19 @@ export async function analyzePhoto(
     base64: true,
   });
   if (!shrunk.base64) throw new Error("Couldn't read the photo.");
+
+  const cacheKey = `ai:${fingerprint(shrunk.base64)}:${options.mode ?? "both"}:${(options.speciesHint ?? "").toLowerCase()}`;
+  try {
+    const hit = await AsyncStorage.getItem(cacheKey);
+    if (hit) {
+      const saved = JSON.parse(hit) as Answer;
+      if (saved?.verdict) return { ...saved, cached: true };
+    }
+  } catch {
+    // an unreadable cache entry just means asking again
+  }
+
+  const session = await ensureSession();
 
   const { data, error } = await supabase.functions.invoke<{ verdict: Verdict; remaining: number; error?: string }>(
     "analyze",
@@ -55,5 +82,7 @@ export async function analyzePhoto(
     throw new Error(error.message || "Analysis failed.");
   }
   if (!data?.verdict) throw new Error(data?.error ?? "No answer came back.");
-  return { verdict: data.verdict, remaining: data.remaining };
+  const answer: Answer = { verdict: data.verdict, remaining: data.remaining };
+  AsyncStorage.setItem(cacheKey, JSON.stringify(answer)).catch(() => {});
+  return answer;
 }

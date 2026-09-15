@@ -1,13 +1,14 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SpeciesField } from "@/components/species-field";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
 import { createPlant, listPlants, type Plant } from "@/db";
 import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "@/domain/species";
 import { analyzePhoto, type Verdict } from "@/lib/ai";
+import { clearDraft, loadDraft, saveDraftSoon } from "@/lib/draft";
 import { Calendar } from "@/components/calendar";
 import { parseDate } from "@/lib/dates";
 import { capturePhoto } from "@/lib/photos";
@@ -33,6 +34,44 @@ export default function NewPlant() {
   const [analyzing, setAnalyzing] = useState(false);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [restored, setRestored] = useState(false);
+  // Don't overwrite a saved draft with the empty form before it's been read back.
+  const hydrated = useRef(false);
+
+  // Whatever was here last time comes back — the photo, the AI's answer, the
+  // typed fields — so backing out by accident costs nothing.
+  useEffect(() => {
+    loadDraft().then((d) => {
+      if (d) {
+        setPhotoUri(d.photoUri);
+        setNickname(d.nickname);
+        setSpecies(d.species);
+        setPicked(d.pickedName ? findSpecies(d.pickedName) : null);
+        setLocation(d.location);
+        setAcquiredFrom(d.acquiredFrom);
+        setAcquiredAt(d.acquiredAt);
+        setMotherId(d.motherId);
+        setVerdict(d.verdict);
+        setRestored(true);
+      }
+      hydrated.current = true;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated.current) return;
+    saveDraftSoon({
+      photoUri, nickname, species, pickedName: picked ? scientificName(picked) : null,
+      location, acquiredFrom, acquiredAt, motherId, verdict,
+    });
+  }, [photoUri, nickname, species, picked, location, acquiredFrom, acquiredAt, motherId, verdict]);
+
+  const startOver = async () => {
+    await clearDraft();
+    setPhotoUri(null); setNickname(""); setSpecies(""); setPicked(null); setLocation("");
+    setAcquiredFrom(""); setAcquiredAt(""); setMotherId(""); setVerdict(null); setAiError(null);
+    setRestored(false);
+  };
 
   const identify = async () => {
     if (!photoUri) return;
@@ -80,6 +119,7 @@ export default function NewPlant() {
       fertilizeEveryDays: entry?.fertilizeEveryDays,
       repotEveryDays: entry?.repotEveryDays,
     });
+    await clearDraft();
     router.replace({ pathname: "/plant/[id]", params: { id: String(id) } });
   };
 
@@ -89,6 +129,14 @@ export default function NewPlant() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        {restored ? (
+          <Card>
+            <Body small muted>Picked up where you left off — the photo, the AI's answer and what you'd typed are all here.</Body>
+            <Row>
+              <Button title="Start over" small onPress={startOver} />
+            </Row>
+          </Card>
+        ) : null}
         <Card>
           <Heading>Photo</Heading>
           {photoUri ? (
