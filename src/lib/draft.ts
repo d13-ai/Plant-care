@@ -8,7 +8,10 @@ import type { Verdict } from "./ai";
  * chooses to start over.
  */
 export interface NewPlantDraft {
-  photoUri: string | null;
+  /** Up to three: the whole plant first, then close-ups. */
+  photoUris: string[];
+  /** Older drafts kept a single photo here. */
+  photoUri?: string | null;
   nickname: string;
   species: string;
   /** The catalogue entry's scientific name, if one was picked. */
@@ -24,7 +27,7 @@ export interface NewPlantDraft {
 const KEY = "newPlantDraft";
 
 export function draftHasContent(d: Omit<NewPlantDraft, "savedAt">): boolean {
-  return Boolean(d.photoUri || d.nickname.trim() || d.species.trim() || d.location.trim() || d.acquiredFrom.trim() || d.verdict);
+  return Boolean(d.photoUris?.length || d.photoUri || d.nickname.trim() || d.species.trim() || d.location.trim() || d.acquiredFrom.trim() || d.verdict);
 }
 
 export async function loadDraft(): Promise<NewPlantDraft | null> {
@@ -32,6 +35,7 @@ export async function loadDraft(): Promise<NewPlantDraft | null> {
     const raw = await AsyncStorage.getItem(KEY);
     if (!raw) return null;
     const d = JSON.parse(raw) as NewPlantDraft;
+    if (!d.photoUris) d.photoUris = d.photoUri ? [d.photoUri] : [];
     return draftHasContent(d) ? d : null;
   } catch {
     return null;

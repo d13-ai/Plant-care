@@ -4,11 +4,12 @@ import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SpeciesField } from "@/components/species-field";
+import { CloseIcon } from "@/components/icons";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
-import { createPlant, listPlants, logCare, type Plant } from "@/db";
+import { addPhoto, createPlant, listPlants, logCare, type Plant } from "@/db";
 import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "@/domain/species";
 import { scanSummary } from "@/domain/scan";
-import { analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
+import { MAX_SCAN_PHOTOS, analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
 import { clearDraft, loadDraft, saveDraftSoon } from "@/lib/draft";
 import { Calendar } from "@/components/calendar";
 import { PhotoTips } from "@/components/photo-tips";
@@ -22,7 +23,8 @@ export default function NewPlant() {
   const db = useSQLiteContext();
   const router = useRouter();
 
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  // The whole plant first, then close-ups; all of them go to the AI together.
+  const [photos, setPhotos] = useState<string[]>([]);
   const [nickname, setNickname] = useState("");
   const [species, setSpecies] = useState("");
   const [picked, setPicked] = useState<SpeciesEntry | null>(null);
@@ -46,7 +48,7 @@ export default function NewPlant() {
   useEffect(() => {
     loadDraft().then((d) => {
       if (d) {
-        setPhotoUri(d.photoUri);
+        setPhotos(d.photoUris);
         setNickname(d.nickname);
         setSpecies(d.species);
         setPicked(d.pickedName ? findSpecies(d.pickedName) : null);
@@ -64,26 +66,26 @@ export default function NewPlant() {
   useEffect(() => {
     if (!hydrated.current) return;
     saveDraftSoon({
-      photoUri, nickname, species, pickedName: picked ? scientificName(picked) : null,
+      photoUris: photos, nickname, species, pickedName: picked ? scientificName(picked) : null,
       location, acquiredFrom, acquiredAt, motherId, verdict,
     });
-  }, [photoUri, nickname, species, picked, location, acquiredFrom, acquiredAt, motherId, verdict]);
+  }, [photos, nickname, species, picked, location, acquiredFrom, acquiredAt, motherId, verdict]);
 
   const startOver = async () => {
     await clearDraft();
-    setPhotoUri(null); setNickname(""); setSpecies(""); setPicked(null); setLocation("");
+    setPhotos([]); setNickname(""); setSpecies(""); setPicked(null); setLocation("");
     setAcquiredFrom(""); setAcquiredAt(""); setMotherId(""); setVerdict(null); setAiError(null);
     setRestored(false);
   };
 
   const identify = async () => {
-    if (!photoUri) return;
+    if (!photos.length) return;
     setAnalyzing(true);
     setAiError(null);
     try {
       // A species already typed or picked goes along as a hint: the AI then
       // confirms or corrects it rather than guessing among look-alikes.
-      const answer = await analyzePhoto(photoUri, { mode: "both", speciesHint: species.trim() || null });
+      const answer = await analyzePhoto(photos, { mode: "both", speciesHint: species.trim() || null });
       setVerdict(answer.verdict);
       setScanNote(describeCost(answer));
     } catch (err) {
@@ -120,11 +122,12 @@ export default function NewPlant() {
       acquiredFrom,
       acquiredAt: acquiredIso,
       motherPlantId: motherId ? Number(motherId) : null,
-      photoUri,
+      photoUri: photos[0] ?? null,
       waterEveryDays: entry?.waterEveryDays,
       fertilizeEveryDays: entry?.fertilizeEveryDays,
       repotEveryDays: entry?.repotEveryDays,
     });
+    for (const uri of photos.slice(1)) await addPhoto(db, id, uri);
     // The scan's health read goes into the record, not just the species name.
     if (verdict?.is_plant) await logCare(db, id, "AI_CHECK", { notes: scanSummary(verdict) });
     await clearDraft();
@@ -147,15 +150,46 @@ export default function NewPlant() {
         ) : null}
         <Card>
           <Heading>Photo</Heading>
-          {photoUri ? (
-            <Image source={{ uri: photoUri }} style={styles.photo} contentFit="cover" />
+          {photos[0] ? (
+            <Image source={{ uri: photos[0] }} style={styles.photo} contentFit="cover" />
           ) : (
-            <View style={[styles.photo, { backgroundColor: t.neutral.bg }]} />
+            <View style={[styles.photo, { backgroundColor: t.forest }]} />
           )}
+          {photos.length > 0 ? (
+            <Row style={{ flexWrap: "nowrap" }}>
+              {photos.map((uri, i) => (
+                <View key={uri.slice(-40) + i} style={styles.thumbWrap}>
+                  <Image source={{ uri }} style={[styles.thumb, i === 0 && { borderColor: t.primary, borderWidth: 2 }]} contentFit="cover" />
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove photo ${i + 1}`}
+                    hitSlop={8}
+                    onPress={() => setPhotos((ps) => ps.filter((_, j) => j !== i))}
+                    style={[styles.thumbRemove, { backgroundColor: t.plum }]}
+                  >
+                    <CloseIcon color={t.onPlum} size={12} />
+                  </Pressable>
+                </View>
+              ))}
+              {photos.length < MAX_SCAN_PHOTOS ? (
+                <Body small muted style={{ flex: 1 } as never}>
+                  {photos.length === 1 ? "Add a close-up or two — the scan reads them together." : `Room for ${MAX_SCAN_PHOTOS - photos.length} more.`}
+                </Body>
+              ) : null}
+            </Row>
+          ) : null}
           <Row>
-            <Button title="Take photo" onPress={() => capturePhoto("camera").then((u) => u && setPhotoUri(u))} />
-            <Button title="Choose from library" onPress={() => capturePhoto("library").then((u) => u && setPhotoUri(u))} />
-            {photoUri && supabaseConfigured ? (
+            <Button
+              title={photos.length ? "Take another" : "Take photo"}
+              disabled={photos.length >= MAX_SCAN_PHOTOS}
+              onPress={() => capturePhoto("camera").then((u) => u && setPhotos((ps) => [...ps, u].slice(0, MAX_SCAN_PHOTOS)))}
+            />
+            <Button
+              title={photos.length ? "Add from library" : "Choose from library"}
+              disabled={photos.length >= MAX_SCAN_PHOTOS}
+              onPress={() => capturePhoto("library").then((u) => u && setPhotos((ps) => [...ps, u].slice(0, MAX_SCAN_PHOTOS)))}
+            />
+            {photos.length > 0 && supabaseConfigured ? (
               <Button title={analyzing ? "Looking…" : "Identify with AI"} variant="primary" disabled={analyzing} onPress={identify} />
             ) : null}
           </Row>
@@ -164,7 +198,7 @@ export default function NewPlant() {
               {aiError}
             </Body>
           ) : null}
-          {!verdict ? <PhotoTips open={!photoUri} /> : null}
+          {!verdict ? <PhotoTips open={photos.length === 0} /> : null}
           {verdict ? (
             <View style={{ gap: space.sm }}>
               {!verdict.is_plant ? (
@@ -278,4 +312,7 @@ const styles = StyleSheet.create({
   },
   container: { padding: space.lg, gap: space.md, paddingBottom: space.xl * 2 },
   photo: { width: "100%", aspectRatio: 4 / 3, borderRadius: radius.md },
+  thumbWrap: { width: 56, height: 56 },
+  thumb: { width: 56, height: 56, borderRadius: radius.sm },
+  thumbRemove: { position: "absolute", top: -6, right: -6, width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
 });

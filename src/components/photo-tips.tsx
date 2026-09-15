@@ -13,7 +13,7 @@ const TIPS = [
   "Daylight, no flash. Shoot away from a bright window so the leaves aren't silhouettes.",
   "Show a whole leaf flat to the camera, with its edge and the stem. Leaf margins and stem colour are what tell look-alike cultivars apart.",
   "Get the pot and the soil surface in — watering and drainage questions are answered from them.",
-  "For a problem, add a second photo close up: the spot itself, or the underside of the leaf for pests. Tap to focus; a sharp leaf beats a wide room.",
+  "Add a close-up as a second or third photo: the spot itself, or the underside of a leaf for pests. All the photos go to the AI together, and each extra one adds about half a cent.",
 ];
 
 export function PhotoTips({ open: openAtFirst = false }: { open?: boolean }) {

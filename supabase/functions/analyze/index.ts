@@ -1,4 +1,6 @@
-// AI photo analysis: POST /analyze  { image, media_type, mode?, species_hint?, known? }
+// AI photo analysis: POST /analyze  { images: [{ data, media_type }], mode?, species_hint?, known? }
+// (or the older single { image, media_type }). Up to three photos of the
+// same plant: the whole plant first, then close-ups; one call, one answer.
 //
 // Sends one plant photo to Claude and returns a typed verdict — what the
 // plant looks like, and what its health looks like. Only signed-in keepers
@@ -97,9 +99,25 @@ Deno.serve(async (req: Request) => {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) return json({ error: "AI isn't set up for this project yet — add ANTHROPIC_API_KEY as a function secret." }, 503);
 
-  let body: { image?: string; media_type?: string; mode?: string; species_hint?: string; model?: string; known?: unknown };
+  let body: {
+    image?: string; media_type?: string; images?: unknown;
+    mode?: string; species_hint?: string; model?: string; known?: unknown;
+  };
   try { body = await req.json(); } catch { return json({ error: "Expected JSON." }, 400); }
-  const { image, media_type = "image/jpeg", mode = "both", species_hint } = body;
+  const { mode = "both", species_hint } = body;
+  const MEDIA = ["image/jpeg", "image/png", "image/webp"];
+  type Img = { data: string; media_type: "image/jpeg" | "image/png" | "image/webp" };
+  const images: Img[] = [];
+  const raw = Array.isArray(body.images) ? body.images : body.image ? [{ data: body.image, media_type: body.media_type ?? "image/jpeg" }] : [];
+  for (const r of raw.slice(0, 3)) {
+    const data = (r as { data?: unknown })?.data;
+    const media_type = (r as { media_type?: unknown })?.media_type ?? "image/jpeg";
+    if (typeof data !== "string" || !data) return json({ error: "Missing image." }, 400);
+    if (typeof media_type !== "string" || !MEDIA.includes(media_type)) return json({ error: "Unsupported image type." }, 400);
+    if (data.length > 6_000_000) return json({ error: "Image too large — send it smaller." }, 413);
+    images.push({ data, media_type: media_type as Img["media_type"] });
+  }
+  if (!images.length) return json({ error: "Missing image." }, 400);
   // Cultivar names the app's catalogue knows — a short, bounded list.
   const known = Array.isArray(body.known)
     ? body.known.filter((k): k is string => typeof k === "string" && k.length <= 60).slice(0, 200)
@@ -107,9 +125,6 @@ Deno.serve(async (req: Request) => {
   // A request may pick a model from the allow-list — for comparing answers on
   // the same photo. The daily cap bounds what that can cost.
   const MODEL = MODELS.find((m) => m === body.model) ?? DEFAULT_MODEL;
-  if (!image || typeof image !== "string") return json({ error: "Missing image." }, 400);
-  if (!["image/jpeg", "image/png", "image/webp"].includes(media_type)) return json({ error: "Unsupported image type." }, 400);
-  if (image.length > 6_000_000) return json({ error: "Image too large — send it smaller." }, 413);
 
   // Daily cap, counted before the call so a burst can't slip past it.
   const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -124,9 +139,13 @@ Deno.serve(async (req: Request) => {
       : mode === "identify"
         ? "Focus on identifying this plant."
         : `Identify this plant and read its health.${species_hint ? ` The keeper thinks it's a ${species_hint}.` : ""}`;
+  const several = images.length > 1
+    ? ` There are ${images.length} photos of the same plant: identify it from the first, the whole plant, and read its health from all of them — the close-ups especially.`
+    : "";
   const askWithKnown = known.length
-    ? `${ask}\n\nCultivar names the keeper's app tracks (prefer these names when one fits; the list isn't exhaustive): ${known.join("; ")}.`
-    : ask;
+    ? `${ask}${several}\n\nCultivar names the keeper's app tracks (prefer these names when one fits; the list isn't exhaustive): ${known.join("; ")}.`
+    : `${ask}${several}`;
+  const label = (i: number) => (i === 0 ? (images.length > 1 ? "Photo 1 — the whole plant:" : "The photo:") : `Photo ${i + 1} — a closer look:`);
 
   try {
     const client = new Anthropic({ apiKey });
@@ -139,7 +158,10 @@ Deno.serve(async (req: Request) => {
         {
           role: "user",
           content: [
-            { type: "image", source: { type: "base64", media_type: media_type as "image/jpeg" | "image/png" | "image/webp", data: image } },
+            ...images.flatMap((img, i) => [
+              { type: "text" as const, text: label(i) },
+              { type: "image" as const, source: { type: "base64" as const, media_type: img.media_type, data: img.data } },
+            ]),
             { type: "text", text: askWithKnown },
           ],
         },
@@ -151,7 +173,7 @@ Deno.serve(async (req: Request) => {
     // so cost per photo is measured, not guessed.
     const { input_tokens, output_tokens } = response.usage;
     const cost_usd = costOf(MODEL, input_tokens, output_tokens);
-    console.log(JSON.stringify({ fn: "analyze", model: MODEL, effort: EFFORT, mode, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)) }));
+    console.log(JSON.stringify({ fn: "analyze", model: MODEL, effort: EFFORT, mode, photos: images.length, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)) }));
     await admin.rpc("record_ai_usage", { p_keeper: user.id, p_day: new Date().toISOString().slice(0, 10), p_input: input_tokens, p_output: output_tokens, p_cost: cost_usd });
     return json({ verdict: response.parsed_output, remaining: DAILY_CAP - used - 1, model: MODEL, effort: EFFORT, usage: { input_tokens, output_tokens }, cost_usd });
   } catch (err) {

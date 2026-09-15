@@ -22,7 +22,7 @@ import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
 import { scanSummary } from "@/domain/scan";
-import { analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
+import { MAX_SCAN_PHOTOS, analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
 import { CareGuide } from "@/components/care-guide";
 import { PhotoTips } from "@/components/photo-tips";
 import { getCareCard } from "@/lib/care-card";
@@ -178,11 +178,13 @@ export default function PlantDetail() {
   const shareLink = (url: string) =>
     Share.share({ message: `${plant.nickname}'s plant tag: ${url}`, url }).catch(() => {});
 
-  const checkHealth = async (uri: string, speciesHint: string | null) => {
+  // The newest photos go together, newest first — a close-up taken just now
+  // rides along with the last full view.
+  const checkHealth = async (uris: string[], speciesHint: string | null) => {
     setChecking(true);
     setCheckError(null);
     try {
-      const answer = await analyzePhoto(uri, { mode: "health", speciesHint });
+      const answer = await analyzePhoto(uris, { mode: "health", speciesHint });
       setCheckup(answer.verdict);
       setCheckNote(describeCost(answer));
       // A fresh read goes into the history; a remembered one is already there.
@@ -461,7 +463,7 @@ export default function PlantDetail() {
               small
               variant="primary"
               disabled={checking}
-              onPress={() => checkHealth(hero.uri, plant.species)}
+              onPress={() => checkHealth(photos.slice(0, MAX_SCAN_PHOTOS).map((ph) => ph.uri), plant.species)}
             />
           ) : null}
         </Row>

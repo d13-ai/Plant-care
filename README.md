@@ -24,7 +24,8 @@ RPC — there is no anonymous read access to any table. Until an email is
 added, identity is a Supabase **anonymous sign-in** created on first
 publish; adding the email attaches it to that same account.
 
-- Add plants with a camera or library photo
+- Add plants with up to three photos — the whole plant, then close-ups —
+  which the AI reads together in one scan (each extra photo is about half a cent)
 - Per-plant reminders for watering, fertilizing, repotting and a fresh photo
   ("Needs water", "Due in 2d", "New photo due")
 - Log care in one tap, or with notes and a back-date — with an Undo, and any

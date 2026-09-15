@@ -4,7 +4,9 @@ import { KNOWN_CULTIVARS } from "@/domain/species";
 import { ensureSession, supabase, supabaseConfigured } from "./supabase";
 
 /** Bump when the prompt changes, so a remembered answer from the old one isn't reused. */
-const PROMPT_VERSION = 2;
+const PROMPT_VERSION = 3;
+/** Photos per scan. Each extra one adds ~1,100 input tokens, about half a cent on Opus. */
+export const MAX_SCAN_PHOTOS = 3;
 
 /** What the analyze function returns — mirrors its zod schema. */
 export interface Verdict {
@@ -40,25 +42,33 @@ export function describeCost(a: Answer): string {
 }
 
 /**
- * Ask the AI about one photo. The image is shrunk to 1024px on its long
- * side first — plenty for a plant, and it keeps each call cheap. The
- * answer is kept on the device per photo, so asking again about the same
- * picture (after backing out of a screen, say) costs nothing.
+ * Ask the AI about one to three photos of the same plant — the whole plant
+ * first, then close-ups. Each is shrunk to 1024px on its long side first —
+ * plenty for a plant, and it keeps each call cheap; the words in the prompt
+ * cost more than the pictures. The answer is kept on the device per set of
+ * photos, so asking again about the same pictures (after backing out of a
+ * screen, say) costs nothing.
  */
 export async function analyzePhoto(
-  uri: string,
+  uris: string | string[],
   options: { mode?: AnalysisMode; speciesHint?: string | null } = {},
 ): Promise<Answer> {
   if (!supabaseConfigured) throw new Error("Supabase isn't configured.");
+  const list = (Array.isArray(uris) ? uris : [uris]).slice(0, MAX_SCAN_PHOTOS);
+  if (!list.length) throw new Error("Pick a photo first.");
 
-  const shrunk = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 1024 } }], {
-    compress: 0.8,
-    format: ImageManipulator.SaveFormat.JPEG,
-    base64: true,
-  });
-  if (!shrunk.base64) throw new Error("Couldn't read the photo.");
+  const images: string[] = [];
+  for (const uri of list) {
+    const shrunk = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 1024 } }], {
+      compress: 0.8,
+      format: ImageManipulator.SaveFormat.JPEG,
+      base64: true,
+    });
+    if (!shrunk.base64) throw new Error("Couldn't read the photo.");
+    images.push(shrunk.base64);
+  }
 
-  const cacheKey = `ai:${PROMPT_VERSION}:${fingerprint(shrunk.base64)}:${options.mode ?? "both"}:${(options.speciesHint ?? "").toLowerCase()}`;
+  const cacheKey = `ai:${PROMPT_VERSION}:${images.map(fingerprint).join("+")}:${options.mode ?? "both"}:${(options.speciesHint ?? "").toLowerCase()}`;
   try {
     const hit = await AsyncStorage.getItem(cacheKey);
     if (hit) {
@@ -78,8 +88,7 @@ export async function analyzePhoto(
       // client hasn't always attached it yet, and the function would 401.
       headers: { Authorization: `Bearer ${session.access_token}` },
       body: {
-        image: shrunk.base64,
-        media_type: "image/jpeg",
+        images: images.map((data) => ({ data, media_type: "image/jpeg" })),
         mode: options.mode ?? "both",
         species_hint: options.speciesHint ?? undefined,
         known: KNOWN_CULTIVARS,
