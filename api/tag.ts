@@ -131,6 +131,9 @@ export default async function handler(req: Req, res: Res): Promise<void> {
   const token = (Array.isArray(raw) ? raw[0] : raw)?.trim() ?? "";
   const { status, html } = await tagPage(token);
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.setHeader("Cache-Control", status === 200 ? "public, max-age=60" : "no-store");
+  // Never cached at the edge: a republish or an unpublish must show on the
+  // next load, and each render is one cheap RPC anyway.
+  res.setHeader("Cache-Control", "private, no-store");
+  res.setHeader("X-Tag-Renderer", "vercel-2");
   res.status(status).send(html);
 }

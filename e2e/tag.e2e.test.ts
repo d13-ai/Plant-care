@@ -21,7 +21,7 @@ import { SUPABASE_URL, ensureSession, tagUrl, supabase, supabaseConfigured } fro
 import { openTestDatabase, type TestDatabase } from "./node-sqlite";
 
 const KEEPER_NAME = "Tag e2e greenhouse";
-const TOKEN_IN_URL = /\/functions\/v1\/tag\?t=([0-9a-f]{32})$/;
+const TOKEN_IN_URL = /[?&]t=([a-f0-9]{32})(?:&|$)/;
 
 // Smallest valid JPEG, as the data: URL a web image picker would hand back.
 const PHOTO_DATA_URL =
