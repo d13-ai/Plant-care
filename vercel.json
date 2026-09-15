@@ -14,8 +14,8 @@
     }
   ],
   "rewrites": [
-    { "source": "/plant/new", "destination": "/plant/new.html" },
-    { "source": "/plant/:id/edit", "destination": "/plant/_id/edit.html" },
-    { "source": "/plant/:id", "destination": "/plant/_id.html" }
+    { "source": "/plant/:id/edit", "destination": "/plant/_id/edit" },
+    { "source": "/plant/:id", "destination": "/plant/_id" },
+    { "source": "/(.*)", "destination": "/" }
   ]
 }

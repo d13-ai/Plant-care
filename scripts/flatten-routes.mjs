@@ -1,8 +1,10 @@
 // After `expo export`, rename the dynamic-route pages so Vercel can rewrite
 // to them: `/plant/[id].html` becomes `/plant/_id.html` and the edit page
-// `/plant/_id/edit.html`. Vercel's rewrites never matched a destination
-// with square brackets, so a direct load of /plant/12 (a reload, a tap that
-// left the app, a bookmark) was a 404. Usage: node scripts/flatten-routes.mjs dist
+// `/plant/_id/edit.html`. With cleanUrls on, Vercel serves each page at its
+// extensionless path, so vercel.json rewrites /plant/:id to /plant/_id; the
+// bracketed name never matched, and a direct load of /plant/12 (a reload, a
+// tap that left the app, a bookmark) was a 404. Any other unknown path falls
+// back to / and the app's own router. Usage: node scripts/flatten-routes.mjs dist
 import fs from "node:fs";
 import path from "node:path";
 
