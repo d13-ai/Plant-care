@@ -255,6 +255,17 @@ this one needs `PASSPORT_E2E_EMAIL` / `PASSPORT_E2E_PASSWORD` set to a
 confirmed account (without them it tries a throwaway sign-up, which works
 only when the project doesn't require email confirmation).
 
+## Look
+
+The brand from Amanda's brief, as settled on the design canvas: an
+aubergine page with cream cards and aubergine text on them, gold as the one
+working colour, plum for the water drops and "Log", a cooler burgundy for
+"something's up". Lora (the tag page's serif) for titles and section labels,
+Source Sans 3 for everything else. `src/theme.ts` holds two palettes with
+one shape — on the page and inside a card — and `useTheme()` returns the
+right one for wherever a component renders (`Card` sets the surface), so
+every colour pair stays at or above WCAG AA.
+
 ## Layout
 
 ```

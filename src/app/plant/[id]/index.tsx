@@ -356,6 +356,7 @@ export default function PlantDetail() {
           <Heading>Care schedule</Heading>
           <Button
             title={calBusy ? "Preparing…" : "Add to calendar"}
+            variant="gold"
             small
             disabled={calBusy}
             onPress={addToCalendar}
@@ -367,7 +368,7 @@ export default function PlantDetail() {
           </Body>
         ) : null}
         {statuses.map((care) => (
-          <View key={care.type} style={[styles.careRow, { borderTopColor: t.border }]}>
+          <View key={care.type} style={[styles.careRow, { borderTopColor: t.hairline }]}>
             <View style={{ flex: 1, gap: 2 }}>
               <Row>
                 <Body style={{ fontWeight: "600" } as never}>{care.label}</Body>
@@ -389,7 +390,7 @@ export default function PlantDetail() {
                 {care.everyDays ? ` · every ${care.everyDays} days` : ""}
               </Body>
             </View>
-            <Button title="Log" small onPress={() => quickLog(care.type)} />
+            <Button title="Log" variant="plum" small onPress={() => quickLog(care.type)} />
           </View>
         ))}
       </Card>

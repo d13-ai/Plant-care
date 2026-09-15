@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { radius, space, useTheme } from "@/theme";
+import { font, radius, space, useTheme } from "@/theme";
 
 const SHOW_FOR_MS = 6000;
 
@@ -49,12 +49,12 @@ export function UndoBar({ offer, dismiss }: { offer: UndoOffer | null; dismiss: 
   };
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: insets.bottom + space.md }]}>
-      <View style={[styles.bar, { backgroundColor: t.text }]} accessibilityLiveRegion="polite">
-        <Text style={[styles.text, { color: t.card }]} numberOfLines={2}>
+      <View style={[styles.bar, { backgroundColor: t.plum, borderColor: t.hairline }]} accessibilityLiveRegion="polite">
+        <Text style={[styles.text, { color: t.onPlum }]} numberOfLines={2}>
           {offer.message}
         </Text>
         <Pressable accessibilityRole="button" onPress={undo} hitSlop={8} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
-          <Text style={[styles.undo, { color: t.primary }]}>Undo</Text>
+          <Text style={[styles.undo, { color: t.goldText }]}>Undo</Text>
         </Pressable>
       </View>
     </View>
@@ -70,9 +70,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: space.lg,
     borderRadius: radius.md,
+    borderWidth: 1,
     maxWidth: 520,
     width: "100%",
   },
-  text: { flex: 1, fontSize: 14, lineHeight: 19 },
-  undo: { fontSize: 15, fontWeight: "700" },
+  text: { flex: 1, fontSize: 14, lineHeight: 19, fontFamily: font.regular },
+  undo: { fontSize: 15, fontWeight: "700", fontFamily: font.bold },
 });

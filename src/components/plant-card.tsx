@@ -37,7 +37,7 @@ export function PlantCard({
   const waterNow = water?.state === "OVERDUE";
 
   return (
-    <Card style={styles.card}>
+    <Card contentStyle={styles.card}>
       {/* The link stops before the drop: on the web a tap inside an anchor
           follows it, and logging water must not leave the greenhouse. */}
       <Link href={{ pathname: "/plant/[id]", params: { id: String(plant.id) } }} asChild>
@@ -48,7 +48,7 @@ export function PlantCard({
           {photo ? (
             <Image source={{ uri: photo.uri }} style={styles.thumb} contentFit="cover" />
           ) : (
-            <View style={[styles.thumb, { backgroundColor: t.neutral.bg }]} />
+            <View style={[styles.thumb, { backgroundColor: t.forest }]} />
           )}
 
           <View style={styles.middle}>
@@ -75,14 +75,14 @@ export function PlantCard({
       </Link>
 
       <IconButton label={`Log water for ${plant.nickname}`} filled={waterNow} onPress={() => onLogWater(plant.id)}>
-        <DropIcon color={waterNow ? t.onPrimary : t.primary} strokeWidth={waterNow ? 2.2 : 2} />
+        <DropIcon color={waterNow ? t.dropFilled : t.drop} strokeWidth={waterNow ? 2.2 : 2} />
       </IconButton>
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md },
+  card: { flexDirection: "row", alignItems: "center", gap: space.md, padding: 9 },
   body: { flex: 1, flexDirection: "row", alignItems: "center", gap: space.md, minWidth: 0 },
   thumb: { width: 64, height: 64, borderRadius: 14 },
   middle: { flex: 1, gap: 4, minWidth: 0 },

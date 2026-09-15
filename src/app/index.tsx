@@ -1,9 +1,9 @@
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useMemo } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DueRing } from "@/components/due-ring";
-import { PersonIcon, PlusIcon } from "@/components/icons";
+import { LeafIcon, PersonIcon, PlusIcon } from "@/components/icons";
 import { PlantCard, summarize } from "@/components/plant-card";
 import { Body, Button, Card, Heading, Row, SectionLabel, Title } from "@/components/ui";
 import { UndoBar, useUndo } from "@/components/undo-bar";
@@ -11,7 +11,7 @@ import { deleteEvent, listPlants, logCare, type PlantWithHistory } from "@/db";
 import { useQuery } from "@/hooks/use-query";
 import { useAccount } from "@/lib/auth";
 import { okToLog } from "@/lib/care-log";
-import { space, useTheme, type Tone } from "@/theme";
+import { font, radius, space, useTheme, type Tone } from "@/theme";
 
 export default function Greenhouse() {
   const t = useTheme();
@@ -79,6 +79,7 @@ export default function Greenhouse() {
         uri={item.photos[0]?.uri ?? null}
         progress={fill}
         color={t[tone].ring}
+        labelColor={t[tone].fg}
         label={label}
         onPress={() => router.push({ pathname: "/plant/[id]", params: { id: String(item.plant.id) } })}
       />
@@ -90,13 +91,18 @@ export default function Greenhouse() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.header}>
-        <Title>Greenhouse</Title>
+        <View style={{ gap: 4 }}>
+          <Title>The Parlour</Title>
+          {data && data.length > 0 ? (
+            <SectionLabel>{`Your collection · ${data.length} plant${data.length === 1 ? "" : "s"}`}</SectionLabel>
+          ) : null}
+        </View>
         <View style={styles.headerActions}>
           <Pressable
             accessibilityLabel="Account"
             hitSlop={8}
             onPress={() => router.push("/account")}
-            style={({ pressed }) => [styles.add, { backgroundColor: t.neutral.bg, opacity: pressed ? 0.75 : 1 }]}
+            style={({ pressed }) => [styles.add, { borderWidth: 1, borderColor: t.border, opacity: pressed ? 0.75 : 1 }]}
           >
             <PersonIcon color={t.text} />
           </Pressable>
@@ -114,7 +120,7 @@ export default function Greenhouse() {
       {data && data.length === 0 ? (
         <View style={styles.empty}>
           <Card>
-            <Heading>Start your greenhouse</Heading>
+            <Heading>Start your parlour</Heading>
             <Body muted>
               Add a plant with a photo. Log when you water, feed or repot it, and it'll tell you
               what's due. Everything stays on this phone.
@@ -163,6 +169,12 @@ export default function Greenhouse() {
             ) : null
           }
           renderItem={({ item }) => <PlantCard item={item} onLogWater={handleLogWater} />}
+          ListFooterComponent={
+            <View style={[styles.band, { backgroundColor: t.plum, borderColor: t.hairline }]}>
+              <Text style={[styles.tagline, { color: t.goldText }]}>Rare plants. Real community. Real pride.</Text>
+              <LeafIcon color={t.goldText} />
+            </View>
+          }
         />
       )}
       <UndoBar offer={undo.offer} dismiss={undo.dismiss} />
@@ -186,4 +198,16 @@ const styles = StyleSheet.create({
   strip: { gap: 14, paddingHorizontal: 4, paddingVertical: 2 },
   listTitle: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 4 },
   empty: { flex: 1, justifyContent: "center", padding: space.lg },
+  band: {
+    marginTop: space.lg,
+    paddingVertical: 14,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: space.md,
+  },
+  tagline: { fontFamily: font.serifItalic, fontStyle: "italic", fontSize: 14, lineHeight: 18, flex: 1 },
 });

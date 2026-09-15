@@ -16,8 +16,9 @@ export default function Root({ children }: PropsWithChildren) {
         <title>PlantParlour</title>
         <meta name="application-name" content="PlantParlour" />
         <meta name="apple-mobile-web-app-title" content="PlantParlour" />
-        <meta name="theme-color" content="#F3F6F1" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#0F1613" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#2E1633" />
+        {/* The page is aubergine before the bundle paints, so there's no white flash. */}
+        <style dangerouslySetInnerHTML={{ __html: "html,body,#root{background:#2E1633}" }} />
         <ScrollViewStyleReset />
         {/* Last-resort recovery: if nothing has rendered 20s after load
             (a genuinely broken bundle, not a slow one), fetch a fresh copy

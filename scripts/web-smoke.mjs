@@ -55,7 +55,7 @@ const step = async (name, fn) => { await fn(); console.log("✓", name); };
 
 try {
   await page.goto(base + "/");
-  await step("empty greenhouse renders", () => page.getByText("Start your greenhouse").waitFor({ timeout: 20000 }));
+  await step("empty greenhouse renders", () => page.getByText("Start your parlour").waitFor({ timeout: 20000 }));
   await shot("01-empty");
 
   await step("open add-plant", async () => {

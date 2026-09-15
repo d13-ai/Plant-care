@@ -13,6 +13,7 @@ export function DueRing({
   progress,
   color,
   label,
+  labelColor,
   size = 84,
   onPress,
 }: {
@@ -21,6 +22,7 @@ export function DueRing({
   progress: number;
   color: string;
   label: string;
+  labelColor?: string;
   size?: number;
   onPress?: () => void;
 }) {
@@ -61,12 +63,12 @@ export function DueRing({
           <View
             style={[
               styles.thumb,
-              { top: inset, left: inset, width: size - inset * 2, height: size - inset * 2, backgroundColor: t.neutral.bg },
+              { top: inset, left: inset, width: size - inset * 2, height: size - inset * 2, backgroundColor: t.forest },
             ]}
           />
         )}
       </View>
-      <Text style={[styles.label, { color }]} numberOfLines={1}>
+      <Text style={[styles.label, { color: labelColor ?? color }]} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>

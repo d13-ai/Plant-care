@@ -1,9 +1,6 @@
-import {
-  SpaceGrotesk_400Regular,
-  SpaceGrotesk_500Medium,
-  SpaceGrotesk_700Bold,
-  useFonts,
-} from "@expo-google-fonts/space-grotesk";
+import { Lora_400Regular_Italic, Lora_600SemiBold, Lora_700Bold } from "@expo-google-fonts/lora";
+import { SourceSans3_400Regular, SourceSans3_600SemiBold, SourceSans3_700Bold } from "@expo-google-fonts/source-sans-3";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SQLiteProvider } from "expo-sqlite";
@@ -18,9 +15,12 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const t = useTheme();
   const [fontsLoaded] = useFonts({
-    SpaceGrotesk_400Regular,
-    SpaceGrotesk_500Medium,
-    SpaceGrotesk_700Bold,
+    Lora_400Regular_Italic,
+    Lora_600SemiBold,
+    Lora_700Bold,
+    SourceSans3_400Regular,
+    SourceSans3_600SemiBold,
+    SourceSans3_700Bold,
   });
 
   useEffect(() => {
@@ -40,17 +40,17 @@ export default function RootLayout() {
         requestSync(db, 0);
       }}
     >
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: t.background },
           headerTintColor: t.text,
-          headerTitleStyle: { fontFamily: font.bold, fontSize: 17 },
+          headerTitleStyle: { fontFamily: font.serif, fontSize: 17, fontWeight: "600", color: t.text },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: t.background },
         }}
       >
-        <Stack.Screen name="index" options={{ title: "Greenhouse", headerShown: false }} />
+        <Stack.Screen name="index" options={{ title: "The Parlour", headerShown: false }} />
         <Stack.Screen name="plant/new" options={{ title: "Add plant", presentation: "modal" }} />
         <Stack.Screen name="plant/[id]/index" options={{ title: "" }} />
         <Stack.Screen name="plant/[id]/edit" options={{ title: "Edit plant", presentation: "modal" }} />

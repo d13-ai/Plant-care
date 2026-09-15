@@ -1,52 +1,142 @@
-import { useColorScheme } from "react-native";
+import { createContext, useContext } from "react";
 
 /**
- * Direction B ("Signal"): a light, warm-green ground with one deep green as
- * the working color, status told in small square-cornered chips, and the
- * water-due rings on the home screen. Space Grotesk throughout.
+ * PlantParlour, round 3 of the brand work: an aubergine page with cream
+ * cards, aubergine text on the cards, gold as the one working colour, plum
+ * for the water drops and "Log", a cooler burgundy (never crimson) for
+ * "something's up". Lora, the upright serif from the tag page, for titles
+ * and section labels; Source Sans 3 for everything else.
+ *
+ * Text, chips and borders read differently on the page and inside a cream
+ * card, so there are two palettes with one shape. `useTheme()` returns the
+ * right one for wherever the component is rendered: Card sets the surface.
+ * Every pair was measured against WCAG AA (4.5:1 text, 3:1 graphics).
  */
-const light = {
-  background: "#F3F6F1",
-  card: "#FFFFFF",
-  text: "#14201A",
-  muted: "#6E7D72",
-  border: "#E2E8DF",
-  primary: "#1F6B3A",
-  onPrimary: "#FFFFFF",
-  critical: { fg: "#8E1F16", bg: "#FBE9E7", ring: "#C8341F" },
-  warning: { fg: "#7A4E00", bg: "#FFF3D6", ring: "#E0A526" },
-  attention: { fg: "#1F4F7A", bg: "#E4F0FA", ring: "#3C86C7" },
-  success: { fg: "#1E6B3A", bg: "#E3F3E8", ring: "#1F6B3A" },
-  neutral: { fg: "#4A4F49", bg: "#EAEFE8", ring: "#CFD9CC" },
+const brand = {
+  aubergine: "#2E1633",
+  cream: "#F3ECDD",
+  creamBright: "#FBF7EE",
+  plum: "#4B2142",
+  forest: "#1F3D2B",
+  gold: "#C9A24B",
+  goldDeep: "#7A5A12",
+  goldLight: "#E6C46B",
+  leaf: "#8FC79E",
+  hair: "rgba(201,162,75,0.6)",
+  hair2: "rgba(201,162,75,0.35)",
 };
 
-const dark: typeof light = {
-  background: "#0F1613",
-  card: "#17201B",
-  text: "#EEF3EA",
-  muted: "#93A398",
-  border: "#26302A",
-  primary: "#8FD6A3",
-  onPrimary: "#0F1A12",
-  critical: { fg: "#F2A49B", bg: "#3A1B18", ring: "#F2A49B" },
-  warning: { fg: "#F0C15C", bg: "#3A2C0F", ring: "#F0C15C" },
-  attention: { fg: "#8FC3EE", bg: "#15293A", ring: "#8FC3EE" },
-  success: { fg: "#8FD6A3", bg: "#173225", ring: "#8FD6A3" },
-  neutral: { fg: "#C3C8C0", bg: "#252B26", ring: "#3A453D" },
-};
+export type Surface = "page" | "card";
+type ToneColors = { fg: string; bg: string; ring: string };
 
-export type Theme = typeof light;
-export type Tone = "critical" | "warning" | "attention" | "success" | "neutral";
-
-export function useTheme(): Theme {
-  return useColorScheme() === "dark" ? dark : light;
+export interface Theme {
+  surface: Surface;
+  background: string;
+  card: string;
+  input: string;
+  inputBorder: string;
+  text: string;
+  muted: string;
+  /** Small serif capitals above a section. */
+  label: string;
+  border: string;
+  hairline: string;
+  primary: string;
+  onPrimary: string;
+  plum: string;
+  onPlum: string;
+  gold: string;
+  goldText: string;
+  forest: string;
+  leaf: string;
+  drop: string;
+  dropRing: string;
+  dropFilledBg: string;
+  dropFilled: string;
+  critical: ToneColors;
+  warning: ToneColors;
+  attention: ToneColors;
+  success: ToneColors;
+  neutral: ToneColors;
 }
 
-/** Space Grotesk, loaded in the root layout. Weight is chosen by family on native. */
+const onPage: Theme = {
+  surface: "page",
+  background: brand.aubergine,
+  card: brand.cream,
+  input: "#3A2145",
+  inputBorder: brand.hair,
+  text: brand.cream,
+  muted: "#C8B8C2",
+  label: brand.gold,
+  border: brand.hair,
+  hairline: brand.hair2,
+  primary: brand.gold,
+  onPrimary: brand.aubergine,
+  plum: brand.plum,
+  onPlum: brand.cream,
+  gold: brand.gold,
+  goldText: brand.goldLight,
+  forest: brand.forest,
+  leaf: brand.leaf,
+  drop: brand.gold,
+  dropRing: "#6A4F72",
+  dropFilledBg: brand.plum,
+  dropFilled: brand.goldLight,
+  critical: { fg: "#E08BA6", bg: "#4A1E2C", ring: "#BD4A69" },
+  warning: { fg: "#E6C46B", bg: "#4A3A12", ring: "#C9A24B" },
+  attention: { fg: "#B7C4EE", bg: "#2A2F4A", ring: "#B7C4EE" },
+  success: { fg: "#A8D5B5", bg: "#1F3D2B", ring: "#8FC79E" },
+  neutral: { fg: "#D9CBD6", bg: "#4A2F55", ring: "#4A2F55" },
+};
+
+const inCard: Theme = {
+  surface: "card",
+  background: brand.cream,
+  card: brand.cream,
+  input: brand.creamBright,
+  inputBorder: brand.plum,
+  text: brand.aubergine,
+  muted: "#6B5A6B",
+  label: brand.forest,
+  border: brand.hair,
+  hairline: brand.hair2,
+  primary: brand.gold,
+  onPrimary: brand.aubergine,
+  plum: brand.plum,
+  onPlum: brand.cream,
+  gold: brand.gold,
+  goldText: brand.goldDeep,
+  forest: brand.forest,
+  leaf: brand.leaf,
+  drop: "#9C7A22",
+  dropRing: brand.plum,
+  dropFilledBg: brand.plum,
+  dropFilled: brand.goldLight,
+  critical: { fg: "#7A2141", bg: "#F0DCE2", ring: "#BD4A69" },
+  warning: { fg: "#6E5212", bg: "#F6E9C6", ring: "#C9A24B" },
+  attention: { fg: "#1F3F7A", bg: "#E4EAF6", ring: "#3C86C7" },
+  success: { fg: "#1F3D2B", bg: "#E3EFE6", ring: "#8FC79E" },
+  neutral: { fg: "#4B2142", bg: "#EDE3D3", ring: "#D9CBB4" },
+};
+
+export type Tone = "critical" | "warning" | "attention" | "success" | "neutral";
+
+/** Which surface a component sits on. Card provides "card"; the page is the default. */
+export const SurfaceContext = createContext<Surface>("page");
+
+export function useTheme(): Theme {
+  return useContext(SurfaceContext) === "card" ? inCard : onPage;
+}
+
+/** Loaded in the root layout. `regular/medium/bold` are the body face; `serif*` the display face. */
 export const font = {
-  regular: "SpaceGrotesk_400Regular",
-  medium: "SpaceGrotesk_500Medium",
-  bold: "SpaceGrotesk_700Bold",
+  regular: "SourceSans3_400Regular",
+  medium: "SourceSans3_600SemiBold",
+  bold: "SourceSans3_700Bold",
+  serif: "Lora_600SemiBold",
+  serifBold: "Lora_700Bold",
+  serifItalic: "Lora_400Regular_Italic",
 } as const;
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 } as const;

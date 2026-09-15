@@ -9,13 +9,28 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from "react-native";
-import { font, radius, space, useTheme, type Tone } from "@/theme";
+import { SurfaceContext, font, radius, space, useTheme, type Tone } from "@/theme";
 
-export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+/**
+ * A cream card with the brand's double gold rule. Everything inside reads
+ * the card palette. `style` is the card itself (colour, margins);
+ * `contentStyle` lays out its children (a row, tighter padding).
+ */
+export function Card({
+  children,
+  style,
+  contentStyle,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  contentStyle?: StyleProp<ViewStyle>;
+}) {
   const t = useTheme();
   return (
     <View style={[styles.card, { backgroundColor: t.card, borderColor: t.border }, style]}>
-      {children}
+      <View style={[styles.cardInner, { borderColor: t.hairline }, contentStyle]}>
+        <SurfaceContext.Provider value="card">{children}</SurfaceContext.Provider>
+      </View>
     </View>
   );
 }
@@ -34,7 +49,7 @@ export function Heading({ children }: { children: ReactNode }) {
 /** Small uppercase label above a section or strip. */
 export function SectionLabel({ children }: { children: ReactNode }) {
   const t = useTheme();
-  return <Text style={[styles.sectionLabel, { color: t.muted }]}>{children}</Text>;
+  return <Text style={[styles.sectionLabel, { color: t.label }]}>{children}</Text>;
 }
 
 export function Body({
@@ -84,15 +99,20 @@ export function Button({
 }: {
   title: string;
   onPress: () => void;
-  variant?: "primary" | "secondary" | "danger";
+  /** primary: gold. plum: filled plum, for logging. gold: outlined in gold. secondary: outlined. */
+  variant?: "primary" | "secondary" | "danger" | "plum" | "gold";
   disabled?: boolean;
   small?: boolean;
 }) {
   const t = useTheme();
-  const background =
-    variant === "primary" ? t.primary : variant === "danger" ? t.critical.bg : t.neutral.bg;
-  const color =
-    variant === "primary" ? t.onPrimary : variant === "danger" ? t.critical.fg : t.text;
+  const look = {
+    primary: { bg: t.primary, fg: t.onPrimary, border: t.primary },
+    plum: { bg: t.plum, fg: t.onPlum, border: t.plum },
+    gold: { bg: "transparent", fg: t.goldText, border: t.gold },
+    danger: { bg: t.critical.bg, fg: t.critical.fg, border: t.critical.bg },
+    secondary: { bg: "transparent", fg: t.text, border: t.surface === "card" ? t.plum : t.border },
+  }[variant];
+  const color = look.fg;
   return (
     <Pressable
       onPress={onPress}
@@ -100,7 +120,7 @@ export function Button({
       style={({ pressed }) => [
         styles.button,
         small && styles.buttonSmall,
-        { backgroundColor: background, opacity: disabled ? 0.4 : pressed ? 0.75 : 1 },
+        { backgroundColor: look.bg, borderColor: look.border, opacity: disabled ? 0.4 : pressed ? 0.75 : 1 },
       ]}
     >
       <Text style={[styles.buttonText, small && styles.buttonTextSmall, { color }]}>{title}</Text>
@@ -132,8 +152,8 @@ export function IconButton({
       style={({ pressed }) => [
         styles.iconButton,
         filled
-          ? { backgroundColor: t.primary, borderColor: t.primary }
-          : { backgroundColor: t.card, borderColor: t.neutral.ring },
+          ? { backgroundColor: t.dropFilledBg, borderColor: t.dropFilledBg }
+          : { backgroundColor: "transparent", borderColor: t.dropRing },
         { opacity: disabled ? 0.4 : pressed ? 0.75 : 1 },
       ]}
     >
@@ -158,7 +178,7 @@ export function Field({
           {...input}
           style={[
             styles.input,
-            { color: t.text, borderColor: t.border, backgroundColor: t.background, flex: 1 },
+            { color: t.text, borderColor: t.inputBorder, backgroundColor: t.input, flex: 1 },
             input.multiline && { minHeight: 80, textAlignVertical: "top" },
             input.style,
           ]}
@@ -215,21 +235,27 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
     borderRadius: radius.lg,
-    padding: space.lg,
+    padding: 3,
+  },
+  cardInner: {
+    borderWidth: 1,
+    borderRadius: radius.lg - 3,
+    padding: space.md + 1,
     gap: space.md,
   },
-  title: { fontSize: 28, lineHeight: 32, letterSpacing: -0.6, fontFamily: font.bold, fontWeight: "700" },
-  heading: { fontSize: 17, lineHeight: 21, fontFamily: font.bold, fontWeight: "700" },
+  title: { fontSize: 34, lineHeight: 38, letterSpacing: -0.3, fontFamily: font.serif, fontWeight: "600" },
+  heading: { fontSize: 17, lineHeight: 21, fontFamily: font.serif, fontWeight: "600" },
   sectionLabel: {
     fontSize: 12,
-    letterSpacing: 0.8,
+    lineHeight: 16,
+    letterSpacing: 1.6,
     textTransform: "uppercase",
-    fontFamily: font.bold,
+    fontFamily: font.serifBold,
     fontWeight: "700",
   },
   body: { fontSize: 15, lineHeight: 21, fontFamily: font.regular },
   small: { fontSize: 13, lineHeight: 18, fontFamily: font.regular },
-  label: { fontSize: 13, fontFamily: font.medium, fontWeight: "500" },
+  label: { fontSize: 13, fontFamily: font.medium, fontWeight: "600" },
   badge: {
     flexDirection: "row",
     alignItems: "center",
@@ -241,11 +267,12 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 11, fontFamily: font.bold, fontWeight: "700" },
   button: {
     paddingHorizontal: space.lg,
-    paddingVertical: 12,
+    paddingVertical: 11,
     borderRadius: radius.md,
+    borderWidth: 1,
     alignItems: "center",
   },
-  buttonSmall: { paddingHorizontal: space.md, paddingVertical: 8 },
+  buttonSmall: { paddingHorizontal: space.md, paddingVertical: 7 },
   buttonText: { fontSize: 15, fontFamily: font.bold, fontWeight: "700" },
   buttonTextSmall: { fontSize: 13 },
   iconButton: {
