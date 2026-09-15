@@ -7,7 +7,7 @@ import { SpeciesField } from "@/components/species-field";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
 import { createPlant, listPlants, type Plant } from "@/db";
 import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "@/domain/species";
-import { analyzePhoto, type Verdict } from "@/lib/ai";
+import { analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
 import { clearDraft, loadDraft, saveDraftSoon } from "@/lib/draft";
 import { Calendar } from "@/components/calendar";
 import { parseDate } from "@/lib/dates";
@@ -34,6 +34,7 @@ export default function NewPlant() {
   const [analyzing, setAnalyzing] = useState(false);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [scanNote, setScanNote] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
   // Don't overwrite a saved draft with the empty form before it's been read back.
   const hydrated = useRef(false);
@@ -78,8 +79,9 @@ export default function NewPlant() {
     setAnalyzing(true);
     setAiError(null);
     try {
-      const { verdict: v } = await analyzePhoto(photoUri, { mode: "both" });
-      setVerdict(v);
+      const answer = await analyzePhoto(photoUri, { mode: "both" });
+      setVerdict(answer.verdict);
+      setScanNote(describeCost(answer));
     } catch (err) {
       setAiError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -199,6 +201,7 @@ export default function NewPlant() {
                     </View>
                   ) : null}
                   {verdict.notes ? <Body small muted>{verdict.notes}</Body> : null}
+                  {scanNote ? <Body small muted>{scanNote}</Body> : null}
                 </>
               )}
             </View>

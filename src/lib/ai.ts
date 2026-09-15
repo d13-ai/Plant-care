@@ -25,7 +25,15 @@ function fingerprint(text: string): string {
   return h.toString(16).padStart(8, "0") + text.length.toString(16);
 }
 
-type Answer = { verdict: Verdict; remaining: number; cached?: boolean };
+type Answer = { verdict: Verdict; remaining: number; cached?: boolean; cost_usd?: number; model?: string };
+
+/** One line for the screen: what this answer cost, or that it was free. */
+export function describeCost(a: Answer): string {
+  if (a.cached) return "Remembered from before — no charge.";
+  const cents = a.cost_usd != null ? Math.max(1, Math.round(a.cost_usd * 100)) : null;
+  const left = Number.isFinite(a.remaining) ? ` · ${a.remaining} of 20 scans left today` : "";
+  return cents != null ? `This scan cost about ${cents}¢${left}.` : `Scan done${left}.`;
+}
 
 /**
  * Ask the AI about one photo. The image is shrunk to 1024px on its long
@@ -59,7 +67,7 @@ export async function analyzePhoto(
 
   const session = await ensureSession();
 
-  const { data, error } = await supabase.functions.invoke<{ verdict: Verdict; remaining: number; error?: string }>(
+  const { data, error } = await supabase.functions.invoke<{ verdict: Verdict; remaining: number; cost_usd?: number; model?: string; error?: string }>(
     "analyze",
     {
       // Send the session token explicitly: right after an anonymous sign-in the
@@ -82,7 +90,7 @@ export async function analyzePhoto(
     throw new Error(error.message || "Analysis failed.");
   }
   if (!data?.verdict) throw new Error(data?.error ?? "No answer came back.");
-  const answer: Answer = { verdict: data.verdict, remaining: data.remaining };
+  const answer: Answer = { verdict: data.verdict, remaining: data.remaining, cost_usd: data.cost_usd, model: data.model };
   AsyncStorage.setItem(cacheKey, JSON.stringify(answer)).catch(() => {});
   return answer;
 }

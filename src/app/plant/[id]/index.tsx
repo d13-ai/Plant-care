@@ -18,7 +18,7 @@ import {
 import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
-import { analyzePhoto, type Verdict } from "@/lib/ai";
+import { analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
 import { CareGuide } from "@/components/care-guide";
 import { getCareCard } from "@/lib/care-card";
 import { buildPlantIcs, saveIcs, slugify, tasksFromStatuses } from "@/lib/calendar";
@@ -50,6 +50,7 @@ export default function PlantDetail() {
   const [checking, setChecking] = useState(false);
   const [checkup, setCheckup] = useState<Verdict | null>(null);
   const [checkError, setCheckError] = useState<string | null>(null);
+  const [checkNote, setCheckNote] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [calBusy, setCalBusy] = useState(false);
@@ -143,8 +144,9 @@ export default function PlantDetail() {
     setChecking(true);
     setCheckError(null);
     try {
-      const { verdict } = await analyzePhoto(uri, { mode: "health", speciesHint });
-      setCheckup(verdict);
+      const answer = await analyzePhoto(uri, { mode: "health", speciesHint });
+      setCheckup(answer.verdict);
+      setCheckNote(describeCost(answer));
     } catch (err) {
       setCheckError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -450,6 +452,7 @@ export default function PlantDetail() {
               ))
             )}
             {checkup.notes ? <Body small muted>{checkup.notes}</Body> : null}
+            {checkNote ? <Body small muted>{checkNote}</Body> : null}
           </View>
         ) : null}
       </Card>

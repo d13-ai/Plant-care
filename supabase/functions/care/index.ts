@@ -17,6 +17,18 @@ const DAILY_CAP = 20;
 // and cheaper — and it's cached once per species anyway. AI_CARE_MODEL overrides.
 const MODELS = ["claude-sonnet-5", "claude-opus-5", "claude-haiku-4-5"] as const;
 const MODEL = MODELS.find((m) => m === Deno.env.get("AI_CARE_MODEL")) ?? "claude-sonnet-5";
+// Anthropic list prices, $ per million tokens, so each answer can say what
+// it cost and the day's spend adds up in ai_usage. Update when prices move.
+const PRICES: Record<string, { input: number; output: number }> = {
+  "claude-opus-5": { input: 5, output: 25 },
+  "claude-sonnet-5": { input: 2, output: 10 },
+  "claude-haiku-4-5": { input: 1, output: 5 },
+};
+const costOf = (model: string, input: number, output: number) => {
+  const p = PRICES[model] ?? { input: 0, output: 0 };
+  return (input * p.input + output * p.output) / 1_000_000;
+};
+
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -95,9 +107,13 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Couldn't write a care guide for that." }, 502);
     }
     const card = response.parsed_output;
+    const { input_tokens, output_tokens } = response.usage;
+    const cost_usd = costOf(MODEL, input_tokens, output_tokens);
+    console.log(JSON.stringify({ fn: "care", model: MODEL, species, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)) }));
+    await admin.rpc("record_ai_usage", { p_keeper: user.id, p_day: day, p_input: input_tokens, p_output: output_tokens, p_cost: cost_usd });
     // Cache for everyone. Ignore a conflict if another request beat us to it.
     await admin.from("care_cards").upsert({ species_key: speciesKey, species, card, model: MODEL }, { onConflict: "species_key" });
-    return json({ card, species, cached: false });
+    return json({ card, species, cached: false, cost_usd });
   } catch (err) {
     if (err instanceof Anthropic.AuthenticationError) return json({ error: "The AI key for this project isn't valid." }, 503);
     if (err instanceof Anthropic.RateLimitError) return json({ error: "The AI is busy — try again in a minute." }, 503);

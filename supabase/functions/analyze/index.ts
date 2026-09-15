@@ -21,6 +21,18 @@ const DAILY_CAP = 20;
 // photo versus 1¢ — the difference a collector notices is worth it.
 const MODELS = ["claude-sonnet-5", "claude-opus-5", "claude-haiku-4-5"] as const;
 const DEFAULT_MODEL = MODELS.find((m) => m === Deno.env.get("AI_MODEL")) ?? "claude-opus-5";
+// Anthropic list prices, $ per million tokens, so each answer can say what
+// it cost and the day's spend adds up in ai_usage. Update when prices move.
+const PRICES: Record<string, { input: number; output: number }> = {
+  "claude-opus-5": { input: 5, output: 25 },
+  "claude-sonnet-5": { input: 2, output: 10 },
+  "claude-haiku-4-5": { input: 1, output: 5 },
+};
+const costOf = (model: string, input: number, output: number) => {
+  const p = PRICES[model] ?? { input: 0, output: 0 };
+  return (input * p.input + output * p.output) / 1_000_000;
+};
+
 const EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
 const EFFORT = EFFORTS.find((e) => e === Deno.env.get("AI_EFFORT")) ?? "medium";
 
@@ -125,9 +137,13 @@ Deno.serve(async (req: Request) => {
     });
     if (response.stop_reason === "refusal") return json({ error: "The photo couldn't be analysed." }, 422);
     if (!response.parsed_output) return json({ error: "No usable answer came back — try another photo." }, 502);
-    // Token counts ride along so cost per photo is measured, not guessed.
+    // Token counts and cost ride along, and the day's totals are recorded,
+    // so cost per photo is measured, not guessed.
     const { input_tokens, output_tokens } = response.usage;
-    return json({ verdict: response.parsed_output, remaining: DAILY_CAP - used - 1, model: MODEL, effort: EFFORT, usage: { input_tokens, output_tokens } });
+    const cost_usd = costOf(MODEL, input_tokens, output_tokens);
+    console.log(JSON.stringify({ fn: "analyze", model: MODEL, effort: EFFORT, mode, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)) }));
+    await admin.rpc("record_ai_usage", { p_keeper: user.id, p_day: new Date().toISOString().slice(0, 10), p_input: input_tokens, p_output: output_tokens, p_cost: cost_usd });
+    return json({ verdict: response.parsed_output, remaining: DAILY_CAP - used - 1, model: MODEL, effort: EFFORT, usage: { input_tokens, output_tokens }, cost_usd });
   } catch (err) {
     if (err instanceof Anthropic.AuthenticationError) return json({ error: "The AI key for this project isn't valid." }, 503);
     if (err instanceof Anthropic.RateLimitError) return json({ error: "The AI is busy — try again in a minute." }, 503);
