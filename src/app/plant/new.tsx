@@ -16,10 +16,11 @@ import { PhotoTips } from "@/components/photo-tips";
 import { parseDate } from "@/lib/dates";
 import { capturePhoto } from "@/lib/photos";
 import { supabaseConfigured } from "@/lib/supabase";
-import { radius, space, useTheme } from "@/theme";
+import { cardTheme, radius, space, useTheme } from "@/theme";
 
 export default function NewPlant() {
   const t = useTheme();
+  const c = cardTheme;
   const db = useSQLiteContext();
   const router = useRouter();
 
@@ -39,6 +40,8 @@ export default function NewPlant() {
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const [scanNote, setScanNote] = useState<string | null>(null);
+  // The AI candidate the keeper tapped, for the highlight and the name ideas.
+  const [chosen, setChosen] = useState<Verdict["species"][number] | null>(null);
   const [restored, setRestored] = useState(false);
   // Don't overwrite a saved draft with the empty form before it's been read back.
   const hydrated = useRef(false);
@@ -74,7 +77,7 @@ export default function NewPlant() {
   const startOver = async () => {
     await clearDraft();
     setPhotos([]); setNickname(""); setSpecies(""); setPicked(null); setLocation("");
-    setAcquiredFrom(""); setAcquiredAt(""); setMotherId(""); setVerdict(null); setAiError(null);
+    setAcquiredFrom(""); setAcquiredAt(""); setMotherId(""); setVerdict(null); setAiError(null); setChosen(null);
     setRestored(false);
   };
 
@@ -102,7 +105,34 @@ export default function NewPlant() {
     const known = entry && scientificName(entry).toLowerCase() === typed.toLowerCase();
     setSpecies(known ? scientificName(entry) : typed);
     setPicked(entry);
+    setChosen(c);
   };
+
+  const latinOf = (cand: Verdict["species"][number]) =>
+    `${cand.genus}${cand.species ? ` ${cand.species}` : ""}${cand.cultivar ? ` '${cand.cultivar}'` : ""}`;
+  const isChosen = (cand: Verdict["species"][number]) =>
+    species.trim() !== "" && (species.trim().toLowerCase() === latinOf(cand).toLowerCase() || (chosen != null && latinOf(chosen) === latinOf(cand)));
+
+  // Names worth offering once the species is known: the shop name, the
+  // cultivar on its own, the Latin — so nobody has to copy and paste.
+  const nameIdeas = (() => {
+    const ideas: string[] = [];
+    if (picked) ideas.push(...picked.common, ...(picked.cultivar ? [picked.cultivar] : []), scientificName(picked));
+    else if (chosen) ideas.push(chosen.common_name, ...(chosen.cultivar ? [chosen.cultivar] : []), latinOf(chosen));
+    else if (species.trim()) ideas.push(species.trim());
+    const seen = new Set<string>();
+    return ideas.map((n) => n.trim()).filter((n) => n && !seen.has(n.toLowerCase()) && seen.add(n.toLowerCase())).slice(0, 3);
+  })();
+  const nameIdeasRow = nameIdeas.length > 0 && !nickname.trim() ? (
+    <View style={{ gap: space.xs }}>
+      <Body small muted>Name it — tap one, or type your own below:</Body>
+      <Row>
+        {nameIdeas.map((n) => (
+          <Button key={n} title={n} small onPress={() => setNickname(n)} />
+        ))}
+      </Row>
+    </View>
+  ) : null;
 
   useEffect(() => {
     listPlants(db).then((rows) => setCandidates(rows.map((r) => r.plant)));
@@ -194,7 +224,7 @@ export default function NewPlant() {
             ) : null}
           </Row>
           {aiError ? (
-            <Body small style={{ color: t.critical.fg } as never}>
+            <Body small style={{ color: c.critical.fg } as never}>
               {aiError}
             </Body>
           ) : null}
@@ -209,26 +239,39 @@ export default function NewPlant() {
                   <View style={{ gap: space.sm }}>
                     {[...verdict.species]
                       .sort((a, b) => b.confidence - a.confidence)
-                      .map((c) => {
-                        const latin = `${c.genus}${c.species ? ` ${c.species}` : ""}${c.cultivar ? ` '${c.cultivar}'` : ""}`;
+                      .map((cand) => {
+                        const latin = latinOf(cand);
                         // Common name and the Latin one both: "Swiss cheese plant" alone reads like a guess.
-                        const hasCommon = Boolean(c.common_name) && c.common_name!.toLowerCase() !== latin.toLowerCase();
+                        const hasCommon = Boolean(cand.common_name) && cand.common_name!.toLowerCase() !== latin.toLowerCase();
+                        const on = isChosen(cand);
                         return (
                           <Pressable
                             key={latin}
                             accessibilityRole="button"
-                            onPress={() => useCandidate(c)}
-                            style={({ pressed }) => [styles.candidate, { borderColor: t.border, backgroundColor: t.neutral.bg, opacity: pressed ? 0.75 : 1 }]}
+                            accessibilityState={{ selected: on }}
+                            onPress={() => useCandidate(cand)}
+                            style={({ pressed }) => [
+                              styles.candidate,
+                              on
+                                ? { borderColor: c.gold, borderWidth: 2, backgroundColor: c.warning.bg }
+                                : { borderColor: c.hairline, backgroundColor: c.input },
+                              { opacity: pressed ? 0.75 : 1 },
+                            ]}
                           >
                             <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                              <Body style={{ fontWeight: "600" } as never}>{hasCommon ? c.common_name : latin}</Body>
+                              <Body style={{ fontWeight: "600" } as never}>{hasCommon ? cand.common_name : latin}</Body>
                               {hasCommon ? <Body small muted>{latin}</Body> : null}
                             </View>
-                            <Badge label={`${Math.round(c.confidence * 100)}%`} tone={c.confidence >= 0.7 ? "success" : "neutral"} />
+                            {on ? <Badge label="Chosen" tone="success" /> : null}
+                            <Badge label={`${Math.round(cand.confidence * 100)}%`} tone={cand.confidence >= 0.7 ? "success" : "neutral"} />
                           </Pressable>
                         );
                       })}
                   </View>
+                  {chosen ? (
+                    <Body small muted>Species set to {species}. {nickname.trim() ? "" : "Give it a name below."}</Body>
+                  ) : null}
+                  {nameIdeasRow}
                   {verdict.health.findings.length > 0 ? (
                     <View style={{ gap: space.xs }}>
                       <Row>
@@ -251,6 +294,7 @@ export default function NewPlant() {
 
         <Card>
           <Field label="Name" value={nickname} onChangeText={setNickname} placeholder="Big Monstera" autoFocus />
+          {nameIdeasRow}
           <SpeciesField value={species} onChangeText={(v) => { setSpecies(v); setPicked(null); }} onPick={setPicked} />
           <Field label="Where it lives" value={location} onChangeText={setLocation} placeholder="South window" />
           <Field label="Acquired from" value={acquiredFrom} onChangeText={setAcquiredFrom} placeholder="Local nursery, a friend, a trade" />

@@ -129,6 +129,13 @@ export function useTheme(): Theme {
   return useContext(SurfaceContext) === "card" ? inCard : onPage;
 }
 
+/**
+ * The card palette by name. A screen's own `useTheme()` is the page's; when
+ * it styles something that sits inside a Card (an error line, a row's
+ * background), it uses this one so the colours match the cream around it.
+ */
+export const cardTheme: Theme = inCard;
+
 /** Loaded in the root layout. `regular/medium/bold` are the body face; `serif*` the display face. */
 export const font = {
   regular: "SourceSans3_400Regular",

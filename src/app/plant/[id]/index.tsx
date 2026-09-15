@@ -31,7 +31,7 @@ import { okToLog } from "@/lib/care-log";
 import { confirm } from "@/lib/confirm";
 import { capturePhoto } from "@/lib/photos";
 import { tagUrl, supabaseConfigured } from "@/lib/supabase";
-import { font, radius, space, useTheme, type Tone } from "@/theme";
+import { cardTheme, font, radius, space, useTheme, type Tone } from "@/theme";
 
 const toneFor: Record<DueState, Tone> = {
   OVERDUE: "critical",
@@ -42,6 +42,7 @@ const toneFor: Record<DueState, Tone> = {
 
 export default function PlantDetail() {
   const t = useTheme();
+  const c = cardTheme;
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const plantId = Number(id);
@@ -291,7 +292,7 @@ export default function PlantDetail() {
       </Body>
 
       {issues.length > 0 && (
-        <Card style={{ backgroundColor: t.critical.bg, borderColor: t.critical.bg }}>
+        <Card style={{ backgroundColor: c.critical.bg, borderColor: c.critical.ring }}>
           <Heading>Special care needed</Heading>
           {issues.map((issue) => (
             <View key={issue.id} style={{ gap: space.sm }}>
@@ -321,7 +322,7 @@ export default function PlantDetail() {
               Published {formatDate(plant.publishedAt)}. Anyone with the link sees this plant's
               lineage, keepers, care record and photos — nothing else of yours.
             </Body>
-            <Body small style={{ color: t.primary } as never}>
+            <Body small style={{ color: c.goldText } as never}>
               {tagUrl(plant.passportToken)}
             </Body>
           </>
@@ -338,7 +339,7 @@ export default function PlantDetail() {
           placeholder="Dana's greenhouse"
         />
         {publishError ? (
-          <Body small style={{ color: t.critical.fg } as never}>
+          <Body small style={{ color: c.critical.fg } as never}>
             {publishError}
           </Body>
         ) : null}
@@ -376,7 +377,7 @@ export default function PlantDetail() {
           />
         </Row>
         {calError ? (
-          <Body small style={{ color: t.critical.fg } as never}>
+          <Body small style={{ color: c.critical.fg } as never}>
             {calError}
           </Body>
         ) : null}
@@ -469,7 +470,7 @@ export default function PlantDetail() {
         </Row>
         <PhotoTips />
         {checkError ? (
-          <Body small style={{ color: t.critical.fg } as never}>
+          <Body small style={{ color: c.critical.fg } as never}>
             {checkError}
           </Body>
         ) : null}
@@ -514,7 +515,7 @@ export default function PlantDetail() {
         {mother ? (
           <Pressable onPress={() => router.push({ pathname: "/plant/[id]", params: { id: String(mother.id) } })}>
             <Body>
-              Cutting from <Text style={{ color: t.primary, fontWeight: "600" }}>{mother.nickname}</Text>
+              Cutting from <Text style={{ color: c.goldText, fontWeight: "600" }}>{mother.nickname}</Text>
               {plant.propagatedAt ? ` · ${formatDate(plant.propagatedAt)}` : ""}
             </Body>
           </Pressable>
@@ -534,7 +535,7 @@ export default function PlantDetail() {
                 onPress={() => router.push({ pathname: "/plant/[id]", params: { id: String(child.id) } })}
               >
                 <Body small>
-                  <Text style={{ color: t.primary, fontWeight: "600" }}>{child.nickname}</Text>
+                  <Text style={{ color: c.goldText, fontWeight: "600" }}>{child.nickname}</Text>
                   {" · "}
                   {formatDate(child.propagatedAt)}
                 </Body>
@@ -587,9 +588,9 @@ export default function PlantDetail() {
                 accessibilityLabel={`Remove ${CARE_EVENT_LABELS[event.type] ?? event.type} from ${formatDate(event.occurredAt)}`}
                 hitSlop={10}
                 onPress={() => removeEvent(event)}
-                style={({ pressed }) => [styles.remove, { backgroundColor: t.neutral.bg, opacity: pressed ? 0.6 : 1 }]}
+                style={({ pressed }) => [styles.remove, { backgroundColor: c.neutral.bg, opacity: pressed ? 0.6 : 1 }]}
               >
-                <CloseIcon color={t.muted} />
+                <CloseIcon color={c.muted} />
               </Pressable>
             ) : null}
           </View>

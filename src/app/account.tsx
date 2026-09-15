@@ -9,7 +9,7 @@ import { sendEmailCode, signInWithGoogle, signOut, useAccount, verifyEmailCode, 
 import { confirm } from "@/lib/confirm";
 import { supabaseConfigured } from "@/lib/supabase";
 import { getSyncStatus, subscribeSync, syncNow, type SyncStatus } from "@/lib/sync";
-import { font, radius, space, useTheme } from "@/theme";
+import { font, radius, space, cardTheme, useTheme } from "@/theme";
 
 function ago(iso: string | null): string {
   if (!iso) return "never";
@@ -113,7 +113,7 @@ export default function AccountScreen() {
             {pending ? ` · ${pending} change${pending === 1 ? "" : "s"} waiting` : ""}.
           </Body>
           {sync.error ? (
-            <Body small style={{ color: t.critical.fg } as never}>{sync.error}</Body>
+            <Body small style={{ color: cardTheme.critical.fg } as never}>{sync.error}</Body>
           ) : null}
           <Row>
             <Button
@@ -139,9 +139,9 @@ export default function AccountScreen() {
             <>
               <GoogleButton onPress={google} disabled={busy || loading} />
               <View style={styles.divider}>
-                <View style={[styles.rule, { backgroundColor: t.border }]} />
+                <View style={[styles.rule, { backgroundColor: cardTheme.hairline }]} />
                 <Body small muted>or use your email</Body>
-                <View style={[styles.rule, { backgroundColor: t.border }]} />
+                <View style={[styles.rule, { backgroundColor: cardTheme.hairline }]} />
               </View>
             </>
           ) : null}
@@ -184,7 +184,7 @@ export default function AccountScreen() {
             </>
           )}
           {error ? (
-            <Body small style={{ color: t.critical.fg } as never}>{error}</Body>
+            <Body small style={{ color: cardTheme.critical.fg } as never}>{error}</Body>
           ) : null}
         </Card>
       )}
@@ -208,11 +208,11 @@ function GoogleButton({ onPress, disabled }: { onPress: () => void; disabled?: b
       accessibilityLabel="Continue with Google"
       style={({ pressed }) => [
         styles.google,
-        { backgroundColor: t.card, borderColor: t.neutral.ring, opacity: disabled ? 0.4 : pressed ? 0.75 : 1 },
+        { backgroundColor: "#FFFFFF", borderColor: cardTheme.plum, opacity: disabled ? 0.4 : pressed ? 0.75 : 1 },
       ]}
     >
       <GoogleIcon size={20} />
-      <Text style={[styles.googleText, { color: t.text }]}>Continue with Google</Text>
+      <Text style={[styles.googleText, { color: cardTheme.text }]}>Continue with Google</Text>
     </Pressable>
   );
 }
