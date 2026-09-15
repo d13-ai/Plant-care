@@ -65,3 +65,45 @@ test("a v4 database with plants upgrades to the current schema with sync columns
     close();
   }
 });
+
+test("an upgrade interrupted partway leaves the database usable and finishes on the next launch", async () => {
+  const { db, close } = openTestDatabase();
+  try {
+    // A v4 phone, mid-upgrade to v5 — the version that adds the uuid columns.
+    await db.execAsync(CREATE_TABLES);
+    for (const version of [2, 3, 4]) for (const statement of MIGRATIONS[version]) await db.execAsync(statement);
+    await db.execAsync("PRAGMA user_version = 4");
+    await db.runAsync(
+      "INSERT INTO plants (nickname, status, acquired_at, created_at, updated_at) VALUES ('Fiddle Leaf', 'ACTIVE', '2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z')",
+    );
+
+    // The app is swiped away partway through v5: plants.uuid has been added,
+    // care_events.uuid has not.
+    const realExec = db.execAsync.bind(db);
+    let interrupt = true;
+    db.execAsync = async (sql: string) => {
+      if (interrupt && sql === "ALTER TABLE care_events ADD COLUMN uuid TEXT") throw new Error("app was killed");
+      return realExec(sql);
+    };
+
+    await expect(migrate(db)).rejects.toThrow("app was killed");
+
+    // The whole version rolled back, so the schema and the version agree.
+    const stalled = await db.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
+    expect(stalled!.user_version, "an interrupted version does not half-apply").toBe(4);
+    const columns = (await db.getAllAsync<{ name: string }>("PRAGMA table_info(plants)")).map((c) => c.name);
+    expect(columns, "the uuid column went back with the transaction").not.toContain("uuid");
+
+    // Next launch: the phone is no longer wedged on "duplicate column name".
+    interrupt = false;
+    await migrate(db);
+
+    const version = await db.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
+    expect(version!.user_version).toBe(SCHEMA_VERSION);
+    const plants = await listPlants(db);
+    expect(plants.map((p) => p.plant.nickname)).toEqual(["Fiddle Leaf"]);
+    expect(plants[0].plant.uuid).toMatch(UUID);
+  } finally {
+    close();
+  }
+});

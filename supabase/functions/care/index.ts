@@ -11,8 +11,8 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { zodOutputFormat } from "npm:@anthropic-ai/sdk/helpers/zod";
 import { z } from "npm:zod";
+import { claimAiCall, refundAiCall, today } from "../_shared/cap.ts";
 
-const DAILY_CAP = 20;
 // Care text is general knowledge, not a hard vision task, so Sonnet is plenty
 // and cheaper — and it's cached once per species anyway. AI_CARE_MODEL overrides.
 const MODELS = ["claude-sonnet-5", "claude-opus-5", "claude-haiku-4-5"] as const;
@@ -87,12 +87,12 @@ Deno.serve(async (req: Request) => {
   const { data: hit } = await admin.from("care_cards").select("card, species").eq("species_key", speciesKey).maybeSingle();
   if (hit) return json({ card: hit.card, species: hit.species, cached: true });
 
-  // Miss: count it against today's cap, then generate.
-  const day = new Date().toISOString().slice(0, 10);
-  const { data: row } = await admin.from("ai_usage").select("count").eq("keeper_id", user.id).eq("day", day).maybeSingle();
-  const used = row?.count ?? 0;
-  if (used >= DAILY_CAP) return json({ error: `That's ${DAILY_CAP} AI lookups today — try again tomorrow.` }, 429);
-  await admin.from("ai_usage").upsert({ keeper_id: user.id, day, count: used + 1 });
+  // Miss: claim a slot against today's budget, then generate. Check and
+  // increment happen in one locked statement, and a claim that can't be
+  // recorded refuses the call rather than lifting the cap.
+  const day = today();
+  const claim = await claimAiCall(admin, user.id, day, "AI lookups");
+  if (!claim.ok) return json({ error: claim.error }, claim.status);
 
   try {
     const client = new Anthropic({ apiKey });
@@ -115,6 +115,8 @@ Deno.serve(async (req: Request) => {
     await admin.from("care_cards").upsert({ species_key: speciesKey, species, card, model: MODEL }, { onConflict: "species_key" });
     return json({ card, species, cached: false, cost_usd });
   } catch (err) {
+    // Nothing was generated, so the slot goes back.
+    await refundAiCall(admin, user.id, day);
     if (err instanceof Anthropic.AuthenticationError) return json({ error: "The AI key for this project isn't valid." }, 503);
     if (err instanceof Anthropic.RateLimitError) return json({ error: "The AI is busy — try again in a minute." }, 503);
     return json({ error: err instanceof Error ? err.message : "Couldn't write a care guide." }, 502);

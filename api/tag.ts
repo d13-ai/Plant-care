@@ -19,7 +19,9 @@ export type Tag = {
     published_at: string; passport_token: string;
   };
   keeper: { display_name: string } | null;
-  mother: { nickname: string; passport_token: string | null } | null;
+  // A cutting still says it is a cutting when its mother is unpublished;
+  // passport() withholds the name and the link, not the fact.
+  mother: { nickname: string | null; passport_token: string | null } | null;
   cuttings: { nickname: string; propagated_at: string | null; passport_token: string | null }[];
   events: Event[];
   photos: Photo[];
@@ -92,7 +94,7 @@ ${hero ? `<img class="hero" src="${esc(photoUrl(hero.path))}" alt="${esc(plant.n
   <tr><td>Photos</td><td>${photos.length} on record${photos[0] ? `, latest ${day(photos[0].taken_at)}` : ""}</td></tr>
 </table>${plant.acquired_from ? `<p class="small muted">Origin: ${esc(plant.acquired_from)}</p>` : ""}</section>
 <section><h2 class="caps">Lineage</h2>
-  ${mother ? `<p>Cutting from ${link(mother.passport_token, mother.nickname)}${plant.propagated_at ? ` · ${day(plant.propagated_at)}` : ""}</p>` : `<p class="muted">Original plant — no mother recorded.</p>`}
+  ${mother ? `<p>Cutting from ${mother.nickname ? link(mother.passport_token, mother.nickname) : `<span class="muted">a plant that isn't published</span>`}${plant.propagated_at ? ` · ${day(plant.propagated_at)}` : ""}</p>` : `<p class="muted">Original plant — no mother recorded.</p>`}
   ${cuttings.length ? `<p class="small"><strong>Cuttings taken</strong></p><ul class="small">${cuttings.map((c) => `<li>${link(c.passport_token, c.nickname)} · ${day(c.propagated_at)}</li>`).join("")}</ul>` : ""}
 </section>
 <section><h2 class="caps">Health &amp; handling</h2>

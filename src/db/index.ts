@@ -189,21 +189,43 @@ const newer = (current: string | null, candidate: string) =>
 // Setup
 // ---------------------------------------------------------------------------
 
+/**
+ * Bring the on-device database up to SCHEMA_VERSION.
+ *
+ * One transaction per version, with user_version bumped inside it. It used to
+ * run every statement of every pending version outside a transaction and write
+ * user_version once at the end, so an upgrade interrupted partway — the keeper
+ * swipes the app away, the phone dies — left the schema half-changed with the
+ * version still on the old number. The next launch replayed the whole version,
+ * hit an `ALTER TABLE ... ADD COLUMN` for a column that was already there, and
+ * threw "duplicate column name". Every launch after that threw the same, and
+ * the greenhouse was unreachable short of reinstalling.
+ *
+ * SQLite keeps user_version in the database header and rolls it back with the
+ * transaction, so a version either lands whole or not at all, and an
+ * interrupted upgrade simply starts that version again on the next launch.
+ */
 export async function migrate(db: SQLiteDatabase): Promise<void> {
+  // Outside any transaction: this pragma is a no-op inside one.
+  await db.execAsync("PRAGMA foreign_keys = ON;");
   const row = await db.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
   let current = row?.user_version ?? 0;
-  await db.execAsync("PRAGMA foreign_keys = ON;");
 
   if (current === 0) {
-    await db.execAsync(CREATE_TABLES);
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(CREATE_TABLES);
+      await db.execAsync("PRAGMA user_version = 1");
+    });
     current = 1;
   }
   for (let version = current + 1; version <= SCHEMA_VERSION; version++) {
-    for (const statement of MIGRATIONS[version] ?? []) {
-      await db.execAsync(statement);
-    }
+    await db.withTransactionAsync(async () => {
+      for (const statement of MIGRATIONS[version] ?? []) {
+        await db.execAsync(statement);
+      }
+      await db.execAsync(`PRAGMA user_version = ${version}`);
+    });
   }
-  await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -647,9 +669,21 @@ export async function dirtyPhotos(db: SQLiteDatabase): Promise<(Photo & { plantU
   return rows.map((r) => ({ ...toPhoto(r), plantUuid: r.plant_uuid, createdAt: r.created_at }));
 }
 
-export async function clearDirty(db: SQLiteDatabase, table: SyncTable, uuids: string[]): Promise<void> {
-  for (const id of uuids) {
-    await db.runAsync(`UPDATE ${table} SET dirty = 0 WHERE uuid = ?`, [id]);
+/**
+ * Mark pushed rows clean — but only the exact versions that were pushed.
+ *
+ * A push is a network round-trip, and the keeper can save an edit while it is
+ * in flight. Clearing by uuid alone marked that newer edit as synced, so it
+ * was never sent and the next pull overwrote it. Matching on updated_at as
+ * well leaves such a row dirty, and it goes with the next push.
+ */
+export async function clearDirty(
+  db: SQLiteDatabase,
+  table: SyncTable,
+  rows: { uuid: string; updatedAt: string }[],
+): Promise<void> {
+  for (const row of rows) {
+    await db.runAsync(`UPDATE ${table} SET dirty = 0 WHERE uuid = ? AND updated_at = ?`, [row.uuid, row.updatedAt]);
   }
 }
 
@@ -721,7 +755,17 @@ export async function plantIdByUuid(db: SQLiteDatabase, plantUuid: string): Prom
   return row?.id ?? null;
 }
 
-export type Applied = "inserted" | "updated" | "skipped";
+/**
+ * What applying one remote row did.
+ *
+ * "skipped" and "deferred" both mean nothing was written, but they mean
+ * opposite things to the pull cursor: "skipped" is settled (the local copy is
+ * already at least as new), while "deferred" means the row's plant isn't on
+ * this device yet, so the row still has to be applied on a later sync. The
+ * cursor may pass a "skipped" row; it must not pass a "deferred" one, or the
+ * row is never seen again.
+ */
+export type Applied = "inserted" | "updated" | "skipped" | "deferred";
 
 /**
  * Bring a plant from the server into the local database. Last write wins by
@@ -796,7 +840,7 @@ export async function applyRemoteEvent(db: SQLiteDatabase, r: RemoteEvent): Prom
   }
   if (!local) {
     const plantId = await plantIdByUuid(db, r.plant_id);
-    if (!plantId) return "skipped";
+    if (!plantId) return "deferred";
     await db.runAsync(
       "INSERT INTO care_events (uuid, plant_id, type, notes, occurred_at, resolved_at, created_at, updated_at, dirty) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)",
       [r.id, plantId, r.type, r.notes, r.occurred_at, r.resolved_at, r.created_at, r.updated_at],
@@ -816,7 +860,7 @@ export async function applyRemotePhoto(db: SQLiteDatabase, r: RemotePhoto, uri: 
   const local = await db.getFirstAsync<{ id: number }>("SELECT id FROM photos WHERE uuid = ?", [r.id]);
   if (local) return "skipped";
   const plantId = await plantIdByUuid(db, r.plant_id);
-  if (!plantId) return "skipped";
+  if (!plantId) return "deferred";
   await db.runAsync(
     "INSERT INTO photos (uuid, plant_id, uri, caption, taken_at, remote_path, created_at, updated_at, dirty) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)",
     [r.id, plantId, uri, r.caption, r.taken_at, r.path, r.created_at, r.updated_at],

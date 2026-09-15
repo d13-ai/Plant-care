@@ -17,6 +17,7 @@ import {
   markPhotoUploaded,
   regenerateIdentities,
   setSyncMeta,
+  type Applied,
   type RemoteEvent,
   type RemotePhoto,
   type RemotePlant,
@@ -49,7 +50,35 @@ export interface SyncStatus {
   version: number;
 }
 
+/**
+ * One pull cursor per table.
+ *
+ * v1 kept a single "cursor" for all three, advanced to the newest synced_at
+ * seen across three separately fetched queries. Each query is capped by
+ * PostgREST's max_rows, so when care_events truncated at the cap but photos
+ * came back with a later synced_at, the shared cursor moved past the events
+ * that were never returned and they were never fetched again — care history
+ * lost, silently. Separate cursors mean one table's truncation cannot skip
+ * another's rows, and the paging below means truncation stops happening.
+ */
+const CURSORS = {
+  plants: "cursor:plants",
+  care_events: "cursor:care_events",
+  photos: "cursor:photos",
+} as const;
+type PullTable = keyof typeof CURSORS;
+
+/** v1's single cursor. Still read once, to notice an install that predates the
+ *  per-table ones — see seedCursors. */
 const CURSOR = "cursor";
+const EPOCH = "1970-01-01T00:00:00Z";
+/** Rows per request. Comfortably under PostgREST's default max_rows of 1000,
+ *  so a short page always means "that was the last one" and never "the server
+ *  truncated you". */
+const PAGE = 500;
+/** Runaway guard: 200 pages is 100,000 rows, far past any real greenhouse. */
+const MAX_PAGES = 200;
+
 const LAST_SYNCED = "last_synced_at";
 const KEEPER = "keeper_id";
 const BUCKET = "plant-photos";
@@ -88,49 +117,126 @@ export function sessionHasAccount(session: Session | null): boolean {
 // Pull
 // ---------------------------------------------------------------------------
 
-async function pull(db: SQLiteDatabase): Promise<number> {
-  const since = (await getSyncMeta(db, CURSOR)) ?? "1970-01-01T00:00:00Z";
-
-  const [plants, events, photos] = await Promise.all([
-    supabase.from("plants").select("*").gt("synced_at", since).order("synced_at"),
-    supabase.from("care_events").select("*").gt("synced_at", since).order("synced_at"),
-    supabase.from("photos").select("*").gt("synced_at", since).order("synced_at"),
-  ]);
-  for (const r of [plants, events, photos]) {
-    if (r.error) throw new Error(`Pull: ${r.error.message}`);
+/**
+ * Move an install from v1's single cursor to the per-table ones.
+ *
+ * The per-table cursors start at the epoch rather than at the old cursor's
+ * value, so the first sync after this upgrade re-pulls the whole greenhouse
+ * once. That is deliberate: it is also the repair. Any row the shared cursor
+ * skipped past is still on the server, and a full re-pull brings it back.
+ * Re-applying rows is safe — applyRemote* is last-write-wins on updated_at,
+ * so a newer local edit stays put.
+ */
+async function seedCursors(db: SQLiteDatabase): Promise<void> {
+  // Emptied below once the seeding is done, so this is a one-time step and
+  // not four extra queries on every sync forever.
+  if (!(await getSyncMeta(db, CURSOR))) return;
+  for (const key of Object.values(CURSORS)) {
+    if ((await getSyncMeta(db, key)) === null) await setSyncMeta(db, key, EPOCH);
   }
-  const remotePlants = (plants.data ?? []) as (RemotePlant & { synced_at: string })[];
-  const remoteEvents = (events.data ?? []) as (RemoteEvent & { synced_at: string })[];
-  const remotePhotos = (photos.data ?? []) as (RemotePhoto & { synced_at: string })[];
+  await setSyncMeta(db, CURSOR, "");
+}
 
-  let changed = 0;
-  let cursor = since;
-  const advance = (t: string) => {
-    if (Date.parse(t) > Date.parse(cursor)) cursor = t;
-  };
+/**
+ * Every row of one table the server has touched since that table's cursor,
+ * in pages, so a greenhouse bigger than one response is still pulled whole.
+ *
+ * The filter is `gte`, not `gt`: synced_at comes from now() in a trigger, so
+ * every row written by one statement shares a timestamp, and a strict `gt`
+ * would step over the rest of a group that straddles a page boundary. The
+ * boundary row is fetched again next sync instead, and applying it again is a
+ * no-op.
+ */
+async function pullTable<T>(db: SQLiteDatabase, table: PullTable): Promise<(T & { synced_at: string })[]> {
+  const since = (await getSyncMeta(db, CURSORS[table])) || EPOCH;
+  const rows: (T & { synced_at: string })[] = [];
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const from = page * PAGE;
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .gte("synced_at", since)
+      .order("synced_at")
+      .order("id")
+      .range(from, from + PAGE - 1);
+    if (error) throw new Error(`Pull ${table}: ${error.message}`);
+    const batch = (data ?? []) as (T & { synced_at: string })[];
+    rows.push(...batch);
+    if (batch.length < PAGE) return rows;
+  }
+  throw new Error(`Pull ${table}: more than ${MAX_PAGES * PAGE} rows pending`);
+}
+
+/**
+ * Walks rows in synced_at order, remembering how far the cursor may safely
+ * move. A row that was applied — or that was already current — lets the
+ * cursor past it. A deferred row (its plant isn't on this device yet) stops
+ * the cursor where it is, so that row is fetched again next sync instead of
+ * being lost. Later rows are still attempted; only the cursor waits.
+ */
+class Cursor {
+  private safe: string;
+  private blocked = false;
+  changed = 0;
+
+  constructor(private readonly start: string) {
+    this.safe = start;
+  }
+
+  record(outcome: Applied, syncedAt: string): void {
+    if (outcome === "deferred") {
+      this.blocked = true;
+      return;
+    }
+    if (outcome !== "skipped") this.changed++;
+    if (!this.blocked && Date.parse(syncedAt) > Date.parse(this.safe)) this.safe = syncedAt;
+  }
+
+  get value(): string {
+    return this.safe;
+  }
+
+  get moved(): boolean {
+    return this.safe !== this.start;
+  }
+}
+
+async function pull(db: SQLiteDatabase): Promise<number> {
+  await seedCursors(db);
+
+  // Fetched before the transaction opens: each table is paged to exhaustion,
+  // and plants are applied first so a cutting's mother and an event's plant
+  // are already local by the time the rows that need them are applied.
+  const remotePlants = await pullTable<RemotePlant>(db, "plants");
+  const remoteEvents = await pullTable<RemoteEvent>(db, "care_events");
+  const remotePhotos = await pullTable<RemotePhoto>(db, "photos");
+
+  const plantCursor = new Cursor((await getSyncMeta(db, CURSORS.plants)) || EPOCH);
+  const eventCursor = new Cursor((await getSyncMeta(db, CURSORS.care_events)) || EPOCH);
+  const photoCursor = new Cursor((await getSyncMeta(db, CURSORS.photos)) || EPOCH);
 
   await db.withTransactionAsync(async () => {
     for (const p of remotePlants) {
-      if (p.deleted_at) {
-        if (await deletePlantByUuid(db, p.id)) changed++;
-      } else if ((await applyRemotePlant(db, p)) !== "skipped") changed++;
-      advance(p.synced_at);
+      const outcome = p.deleted_at
+        ? (await deletePlantByUuid(db, p.id)) ? "updated" : "skipped"
+        : await applyRemotePlant(db, p);
+      plantCursor.record(outcome, p.synced_at);
     }
     // Mothers second, once every plant of this pull exists locally.
     for (const p of remotePlants) {
       if (!p.deleted_at) await linkMotherByUuid(db, p.id, p.mother_plant_id);
     }
     for (const e of remoteEvents) {
-      if ((await applyRemoteEvent(db, e)) !== "skipped") changed++;
-      advance(e.synced_at);
+      eventCursor.record(await applyRemoteEvent(db, e), e.synced_at);
     }
     for (const ph of remotePhotos) {
-      if ((await applyRemotePhoto(db, ph, photoUrl(ph.path))) !== "skipped") changed++;
-      advance(ph.synced_at);
+      photoCursor.record(await applyRemotePhoto(db, ph, photoUrl(ph.path)), ph.synced_at);
     }
-    await setSyncMeta(db, CURSOR, cursor);
+    if (plantCursor.moved) await setSyncMeta(db, CURSORS.plants, plantCursor.value);
+    if (eventCursor.moved) await setSyncMeta(db, CURSORS.care_events, eventCursor.value);
+    if (photoCursor.moved) await setSyncMeta(db, CURSORS.photos, photoCursor.value);
   });
-  return changed;
+  return plantCursor.changed + eventCursor.changed + photoCursor.changed;
 }
 
 // ---------------------------------------------------------------------------
@@ -191,7 +297,7 @@ export async function pushAll(db: SQLiteDatabase, session: Session): Promise<num
       ({ error } = await upsertPlants(keeperId, plants));
     }
     if (error) throw new Error(`Plants: ${error.message}`);
-    await clearDirty(db, "plants", plants.map((p) => p.uuid));
+    await clearDirty(db, "plants", plants.map((p) => ({ uuid: p.uuid, updatedAt: p.updatedAt })));
     pushed += plants.length;
   }
 
@@ -211,7 +317,7 @@ export async function pushAll(db: SQLiteDatabase, session: Session): Promise<num
       { onConflict: "id" },
     );
     if (error) throw new Error(`Events: ${error.message}`);
-    await clearDirty(db, "care_events", events.map((e) => e.uuid));
+    await clearDirty(db, "care_events", events.map((e) => ({ uuid: e.uuid, updatedAt: e.updatedAt })));
     pushed += events.length;
   }
 
@@ -232,7 +338,7 @@ export async function pushAll(db: SQLiteDatabase, session: Session): Promise<num
       { onConflict: "id" },
     );
     if (error) throw new Error(`Photos: ${error.message}`);
-    await clearDirty(db, "photos", [ph.uuid]);
+    await clearDirty(db, "photos", [{ uuid: ph.uuid, updatedAt: ph.updatedAt }]);
     pushed++;
   }
 
@@ -260,7 +366,11 @@ function upsertPlants(keeperId: string, plants: Awaited<ReturnType<typeof dirtyP
       cover_photo_uuid: p.coverPhotoUuid,
       created_at: p.createdAt,
       updated_at: p.updatedAt,
-      deleted_at: null,
+      // deleted_at is deliberately absent. Writing null here resurrected a
+      // plant another device had deleted: publishTag pushes without pulling
+      // first, so this phone would not yet know about the tombstone, and the
+      // upsert cleared it. Deletion travels one way only, through the
+      // tombstone push above.
     })),
     { onConflict: "id" },
   );

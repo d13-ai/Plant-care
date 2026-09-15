@@ -5,16 +5,18 @@
 // Sends one plant photo to Claude and returns a typed verdict — what the
 // plant looks like, and what its health looks like. Only signed-in keepers
 // can call it — the function checks the caller's session itself, since the
-// gateway lets publishable-key requests through — and each keeper gets a
-// daily cap so a single device can't run up the bill. Needs
-// ANTHROPIC_API_KEY set as a function secret.
+// gateway lets publishable-key requests through — and every call claims a
+// slot from two budgets: the keeper's own for the day, and the project's.
+// The second one is what actually bounds the bill, because a new anonymous
+// keeper is free to mint; see _shared/cap.ts. Needs ANTHROPIC_API_KEY set as
+// a function secret.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { zodOutputFormat } from "npm:@anthropic-ai/sdk/helpers/zod";
 import { z } from "npm:zod";
+import { boundedText, claimAiCall, refundAiCall, today } from "../_shared/cap.ts";
 
-const DAILY_CAP = 20;
 // Model and effort can be overridden by function secrets without a
 // redeploy: AI_MODEL (claude-opus-5 | claude-sonnet-5 | claude-haiku-4-5)
 // and AI_EFFORT (low | medium | high). Opus 5 is the default: on five real
@@ -101,10 +103,14 @@ Deno.serve(async (req: Request) => {
 
   let body: {
     image?: string; media_type?: string; images?: unknown;
-    mode?: string; species_hint?: string; model?: string; known?: unknown;
+    mode?: string; species_hint?: unknown; model?: string; known?: unknown;
   };
   try { body = await req.json(); } catch { return json({ error: "Expected JSON." }, 400); }
-  const { mode = "both", species_hint } = body;
+  const { mode = "both" } = body;
+  // Bounded like every other input: it is interpolated into the prompt,
+  // and an unbounded one lets a caller choose how many input tokens the
+  // owner is billed for. 120 chars is what `care` allows for a species.
+  const species_hint = boundedText(body.species_hint, 120);
   const MEDIA = ["image/jpeg", "image/png", "image/webp"];
   type Img = { data: string; media_type: "image/jpeg" | "image/png" | "image/webp" };
   const images: Img[] = [];
@@ -126,12 +132,13 @@ Deno.serve(async (req: Request) => {
   // the same photo. The daily cap bounds what that can cost.
   const MODEL = MODELS.find((m) => m === body.model) ?? DEFAULT_MODEL;
 
-  // Daily cap, counted before the call so a burst can't slip past it.
+  // Daily cap, claimed before the call so a burst can't slip past it. One
+  // locked statement checks and increments, and a claim that can't be
+  // recorded refuses the call instead of lifting the cap.
   const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const { data: row } = await admin.from("ai_usage").select("count").eq("keeper_id", user.id).eq("day", new Date().toISOString().slice(0, 10)).maybeSingle();
-  const used = row?.count ?? 0;
-  if (used >= DAILY_CAP) return json({ error: `That's ${DAILY_CAP} photos today — try again tomorrow.` }, 429);
-  await admin.from("ai_usage").upsert({ keeper_id: user.id, day: new Date().toISOString().slice(0, 10), count: used + 1 });
+  const day = today();
+  const claim = await claimAiCall(admin, user.id, day, "photos");
+  if (!claim.ok) return json({ error: claim.error }, claim.status);
 
   const ask =
     mode === "health"
@@ -174,9 +181,11 @@ Deno.serve(async (req: Request) => {
     const { input_tokens, output_tokens } = response.usage;
     const cost_usd = costOf(MODEL, input_tokens, output_tokens);
     console.log(JSON.stringify({ fn: "analyze", model: MODEL, effort: EFFORT, mode, photos: images.length, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)) }));
-    await admin.rpc("record_ai_usage", { p_keeper: user.id, p_day: new Date().toISOString().slice(0, 10), p_input: input_tokens, p_output: output_tokens, p_cost: cost_usd });
-    return json({ verdict: response.parsed_output, remaining: DAILY_CAP - used - 1, model: MODEL, effort: EFFORT, usage: { input_tokens, output_tokens }, cost_usd });
+    await admin.rpc("record_ai_usage", { p_keeper: user.id, p_day: day, p_input: input_tokens, p_output: output_tokens, p_cost: cost_usd });
+    return json({ verdict: response.parsed_output, remaining: claim.remaining, model: MODEL, effort: EFFORT, usage: { input_tokens, output_tokens }, cost_usd });
   } catch (err) {
+    // Nothing was generated, so the slot goes back.
+    await refundAiCall(admin, user.id, day);
     if (err instanceof Anthropic.AuthenticationError) return json({ error: "The AI key for this project isn't valid." }, 503);
     if (err instanceof Anthropic.RateLimitError) return json({ error: "The AI is busy — try again in a minute." }, 503);
     return json({ error: err instanceof Error ? err.message : "Analysis failed." }, 502);
