@@ -4,10 +4,11 @@ import { Modal, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } fr
 import { radius, useTheme } from "@/theme";
 
 /**
- * A plant photo framed for where it sits. Phone photos are tall; a square
- * or 4:3 crop from the middle shows soil and pot and cuts the leaves. So a
- * hero takes the photo's own shape (within reason), a thumbnail crops from
- * the top where the plant is, and a hero opens full-size on tap.
+ * A plant photo framed for where it sits. Phone photos are tall; a 4:3
+ * crop from the middle shows soil and pot and cuts the leaves. So a hero
+ * takes the photo's own shape (within reason) and opens full-size on tap.
+ * Thumbnails crop from the centre: the plant is usually there, and a crop
+ * from the top showed walls and ceilings instead.
  */
 export function PlantPhoto({
   uri,
@@ -27,7 +28,7 @@ export function PlantPhoto({
   const position: ImageContentPosition = portrait ? "top" : "center";
 
   if (mode === "thumb") {
-    return <Image source={{ uri }} style={style as never} contentFit="cover" contentPosition={position} onLoad={(e) => setRatio(e.source.width / e.source.height)} />;
+    return <Image source={{ uri }} style={style as never} contentFit="cover" />;
   }
 
   // Between 4:5 and 3:2 the photo keeps its own shape; beyond that it's cropped, from the top if tall.
