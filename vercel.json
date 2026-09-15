@@ -6,16 +6,35 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/((?!tag$|api/).*)",
       "headers": [
-        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "require-corp"
+        }
       ]
     }
   ],
   "rewrites": [
-    { "source": "/plant/:id/edit", "destination": "/plant/_id/edit" },
-    { "source": "/plant/:id", "destination": "/plant/_id" },
-    { "source": "/(.*)", "destination": "/" }
+    {
+      "source": "/tag",
+      "destination": "/api/tag"
+    },
+    {
+      "source": "/plant/:id/edit",
+      "destination": "/plant/_id/edit"
+    },
+    {
+      "source": "/plant/:id",
+      "destination": "/plant/_id"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
   ]
 }

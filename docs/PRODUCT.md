@@ -119,8 +119,10 @@ by tags, export/import, a private photo bucket with signed URLs.
 ## Housekeeping from the brand round (Sep 2026)
 
 - **Tag page in the brand look** — done: aubergine page, cream card with the
-  double gold rule, Lora headings, the plum footer band. Same markup, so the
-  e2e still reads it.
+  double gold rule, Lora headings, the plum footer band. Found on the way:
+  Supabase Edge Functions rewrite `text/html` to `text/plain`, so the tag
+  page had never rendered in a browser. It now lives on Vercel
+  (`api/tag.ts`, `/tag?t=…`); the old Edge Function redirects.
 - **Data sources — decision for Amanda.** `docs/DATA_SOURCES.md` compares
   Perenual with the catalogue + cached AI guides on ten species and
   recommends: keep the catalogue and guides as the care source; add GBIF's

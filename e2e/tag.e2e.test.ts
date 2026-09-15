@@ -33,9 +33,10 @@ const PHOTO_DATA_URL =
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
 
-/** GET the deployed tag Edge Function the way a browser with the link would. */
+/** GET the deployed tag page (Vercel, api/tag.ts) the way a browser with the link would. */
 async function fetchTagPage(url: string) {
   const response = await fetch(url);
+  expect(response.headers.get("content-type"), "the tag page is served as HTML").toContain("text/html");
   return { status: response.status, html: await response.text() };
 }
 

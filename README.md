@@ -55,7 +55,9 @@ URL and publishable key (safe to commit — RLS gates everything).
   location and cadences on plants, `deleted_at` tombstones, a server-stamped
   `synced_at` as the pull cursor; plants private (`is_public = false`) by
   default
-- `supabase/functions/tag/index.ts` — the public HTML tag page
+- `api/tag.ts` — the public HTML tag page, served by Vercel at `/tag?t=…`
+  (Edge Functions rewrite `text/html` to `text/plain`, so it can't live
+  there; `supabase/functions/tag` now only redirects old links)
   (deployed with JWT verification off; it only calls the RPC)
 
 **One-time setup in the Supabase dashboard:** Authentication → Sign In /

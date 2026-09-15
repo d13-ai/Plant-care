@@ -56,7 +56,13 @@ export async function ensureSession(): Promise<Session> {
   return anon.session;
 }
 
-/** Public URL of the tag page served by the `tag` Edge Function. */
+/** Where the web app lives; the tag page is served from there (api/tag.ts). */
+export const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL || "https://plant-care-flame.vercel.app";
+
+/**
+ * Public URL of a plant's tag page. Rendered by Vercel, not an Edge
+ * Function: Supabase rewrites text/html responses to text/plain.
+ */
 export function tagUrl(token: string): string {
-  return `${SUPABASE_URL}/functions/v1/tag?t=${token}`;
+  return `${SITE_URL}/tag?t=${token}`;
 }
