@@ -17,6 +17,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
   addPhoto,
   createPlant,
+  deleteEvent,
   deletePlant,
   getPlant,
   listPlants,
@@ -221,6 +222,20 @@ describe("syncing a greenhouse between two devices", () => {
 
     expect((await getPlant(a.db, motherId))!.plant.notes).toBe("B's note");
     expect((await getPlant(b.db, motherB.id))!.plant.notes).toBe("B's note");
+  });
+
+  test("a care entry removed on phone B disappears from phone A", async () => {
+    const motherB = (await byName(b.db, "Sync Monstera (B)"))!;
+    const fed = (await getPlant(b.db, motherB.id))!.events.find((e) => e.type === "FERTILIZE" && e.notes === "From phone B")!;
+    await deleteEvent(b.db, fed.id);
+
+    await syncNow(b.db);
+    await syncNow(a.db);
+
+    expect((await getPlant(a.db, motherId))!.events.some((e) => e.uuid === fed.uuid)).toBe(false);
+    expect(await pendingChanges(b.db)).toBe(0);
+    const { data } = await supabase.from("care_events").select("deleted_at").eq("id", fed.uuid);
+    expect(data?.[0]?.deleted_at, "server keeps a tombstone").toBeTruthy();
   });
 
   test("a delete on phone A removes the plant from phone B", async () => {

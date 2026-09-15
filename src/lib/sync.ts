@@ -161,14 +161,14 @@ export async function pushAll(db: SQLiteDatabase, session: Session): Promise<num
     .upsert({ id: keeperId, display_name: (await getKeeperName()) || null, updated_at: now });
   if (keeperError) throw new Error(`Keeper: ${keeperError.message}`);
 
-  // Deletions first: a plant that came back dirty after a delete shouldn't resurrect.
+  // Deletions first: a row that came back dirty after a delete shouldn't resurrect.
   const tombstones = await listTombstones(db);
   for (const t of tombstones) {
-    const { error } = await supabase
-      .from("plants")
-      .update({ deleted_at: t.deletedAt, updated_at: t.deletedAt })
-      .eq("id", t.uuid)
-      .eq("keeper_id", keeperId);
+    const stamp = { deleted_at: t.deletedAt, updated_at: t.deletedAt };
+    const { error } =
+      t.kind === "event"
+        ? await supabase.from("care_events").update(stamp).eq("id", t.uuid)
+        : await supabase.from("plants").update(stamp).eq("id", t.uuid).eq("keeper_id", keeperId);
     if (error) throw new Error(`Delete: ${error.message}`);
   }
   await clearTombstones(db, tombstones.map((t) => t.uuid));

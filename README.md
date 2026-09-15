@@ -27,7 +27,8 @@ publish; adding the email attaches it to that same account.
 - Add plants with a camera or library photo
 - Per-plant reminders for watering, fertilizing, repotting and a fresh photo
   ("Needs water", "Due in 2d", "New photo due")
-- Log care in one tap, or with notes and a back-date
+- Log care in one tap, or with notes and a back-date — with an Undo, and any
+  history entry can be removed later (the removal syncs to other phones)
 - Report an issue → the plant is flagged **Special care needed** until you
   resolve it, and the fix goes on the record as a treatment
 - Photo timeline

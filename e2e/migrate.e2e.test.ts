@@ -6,12 +6,12 @@
  */
 import { expect, test } from "vitest";
 import { dirtyPlants, getPlant, listPlants, migrate, pendingChanges } from "@/db";
-import { CREATE_TABLES, MIGRATIONS } from "@/db/schema";
+import { CREATE_TABLES, MIGRATIONS, SCHEMA_VERSION } from "@/db/schema";
 import { openTestDatabase } from "./node-sqlite";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
-test("a v4 database with plants upgrades to v5 with sync columns backfilled", async () => {
+test("a v4 database with plants upgrades to the current schema with sync columns backfilled", async () => {
   const { db, close } = openTestDatabase();
   try {
     await db.execAsync(CREATE_TABLES);
@@ -35,7 +35,9 @@ test("a v4 database with plants upgrades to v5 with sync columns backfilled", as
     await migrate(db);
 
     const version = await db.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
-    expect(version!.user_version).toBe(5);
+    expect(version!.user_version).toBe(SCHEMA_VERSION);
+    const tombstoneColumns = (await db.getAllAsync<{ name: string }>("PRAGMA table_info(sync_tombstones)")).map((c) => c.name);
+    expect(tombstoneColumns, "v6 tombstones say what kind of row they are").toContain("kind");
 
     const plants = await listPlants(db);
     expect(plants.map((p) => p.plant.nickname).sort()).toEqual(["Old Cutting", "Old Monstera"]);

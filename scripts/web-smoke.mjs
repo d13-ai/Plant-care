@@ -22,6 +22,9 @@ const server = http.createServer((req, res) => {
   let file = path.join(root, p);
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
   if (!fs.existsSync(file)) file = path.join(root, p + ".html");
+  // The same rewrites vercel.json has, so a direct load of a plant URL is tested here too.
+  if (!fs.existsSync(file) && /^\/plant\/[^/]+\/edit$/.test(p)) file = path.join(root, "plant/_id/edit.html");
+  if (!fs.existsSync(file) && /^\/plant\/[^/]+$/.test(p)) file = path.join(root, "plant/_id.html");
   if (!fs.existsSync(file)) file = path.join(root, "index.html");
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
   res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
@@ -160,6 +163,40 @@ try {
     await page.getByText("All good").first().waitFor();
   });
   await shot("05-list");
+  await step("the card's drop logs water without leaving the greenhouse", async () => {
+    await page.getByLabel("Log water for Cutting #1").click();
+    await page.getByText("Watered Cutting #1").waitFor();
+    await page.getByText("All plants").waitFor();
+    if (/doesn.t exist|404/.test(await page.evaluate(() => document.body.innerText))) throw new Error("left the app");
+  });
+  await step("undo takes that watering back", async () => {
+    await page.getByText("Undo", { exact: true }).click();
+    await page.waitForFunction(() => !document.body.innerText.includes("Watered Cutting #1"));
+    await page.getByText("Cutting #1").first().click();
+    await page.getByText("History", { exact: true }).waitFor();
+    // "Watered" is also the log-care chip, so count the history rows by their remove buttons.
+    if (await page.getByLabel(/^Remove Watered/).count()) throw new Error("undone watering is still in the history");
+  });
+  await step("a history entry can be removed, after asking", async () => {
+    await page.getByText("Log", { exact: true }).first().click();
+    await page.getByLabel(/^Remove Watered/).waitFor();
+    page.once("dialog", (d) => { if (!/Remove "Watered"/.test(d.message())) throw new Error("wrong confirm text: " + d.message()); d.dismiss(); });
+    await page.getByLabel(/^Remove Watered/).click();
+    await page.waitForTimeout(300);
+    if (!(await page.getByLabel(/^Remove Watered/).count())) throw new Error("declined, but the entry went");
+    page.once("dialog", (d) => d.accept());
+    await page.getByLabel(/^Remove Watered/).click();
+    await page.waitForFunction(() => !document.querySelector('[aria-label^="Remove Watered"]'));
+    await page.getByText("Never logged").first().waitFor();
+    if (await page.getByLabel(/^Remove Brought home/).count()) throw new Error("the brought-home entry must not be removable");
+  });
+  await step("a plant page loads straight from its URL", async () => {
+    await page.goto(`${base}/plant/1`);
+    await page.getByText("Care schedule").waitFor({ timeout: 20000 });
+    await page.getByText("Big Monstera").first().waitFor();
+    await page.goto(base);
+    await page.getByText("All plants").waitFor({ timeout: 20000 });
+  });
   await step("remove a plant asks, then removes", async () => {
     await page.getByText("Cutting #1").first().click();
     await page.getByText("Remove plant").waitFor();

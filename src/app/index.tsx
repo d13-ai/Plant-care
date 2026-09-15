@@ -6,7 +6,8 @@ import { DueRing } from "@/components/due-ring";
 import { PersonIcon, PlusIcon } from "@/components/icons";
 import { PlantCard, summarize } from "@/components/plant-card";
 import { Body, Button, Card, Heading, Row, SectionLabel, Title } from "@/components/ui";
-import { listPlants, logCare, type PlantWithHistory } from "@/db";
+import { UndoBar, useUndo } from "@/components/undo-bar";
+import { deleteEvent, listPlants, logCare, type PlantWithHistory } from "@/db";
 import { useQuery } from "@/hooks/use-query";
 import { useAccount } from "@/lib/auth";
 import { okToLog } from "@/lib/care-log";
@@ -45,14 +46,22 @@ export default function Greenhouse() {
       .slice(0, 8);
   }, [data]);
 
+  const undo = useUndo();
   const handleLogWater = useCallback(
     async (plantId: number) => {
-      const events = data?.find((item) => item.plant.id === plantId)?.events ?? [];
-      if (!(await okToLog("WATER", events))) return;
-      await logCare(db, plantId, "WATER");
+      const item = data?.find((i) => i.plant.id === plantId);
+      if (!(await okToLog("WATER", item?.events ?? []))) return;
+      const eventId = await logCare(db, plantId, "WATER");
       refresh();
+      undo.show({
+        message: `Watered ${item?.plant.nickname ?? "plant"}`,
+        undo: async () => {
+          await deleteEvent(db, eventId);
+          refresh();
+        },
+      });
     },
-    [db, refresh, data],
+    [db, refresh, data, undo],
   );
 
   const ringFor = (item: PlantWithHistory, water: NonNullable<ReturnType<typeof summarize>["water"]>) => {
@@ -156,6 +165,7 @@ export default function Greenhouse() {
           renderItem={({ item }) => <PlantCard item={item} onLogWater={handleLogWater} />}
         />
       )}
+      <UndoBar offer={undo.offer} dismiss={undo.dismiss} />
     </View>
   );
 }

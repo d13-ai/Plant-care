@@ -2,11 +2,14 @@ import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { CloseIcon } from "@/components/icons";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
-import { addPhoto, deletePlant, getPlant, logCare, propagate, resolveIssue } from "@/db";
+import { UndoBar, useUndo } from "@/components/undo-bar";
+import { addPhoto, deleteEvent, deletePlant, getPlant, logCare, propagate, resolveIssue, type CareEvent } from "@/db";
 import {
   CARE_EVENT_LABELS,
   LOGGABLE_CARE_TYPES,
+  REPEAT_PROMPT,
   careStatuses,
   formatDate,
   openIssues,
@@ -60,13 +63,45 @@ export default function PlantDetail() {
     getKeeperName().then(setKeeperNameState);
   }, []);
 
+  const undo = useUndo();
+  // What just went into the record, with a way back for a slip of the thumb.
+  const offerUndo = useCallback(
+    (type: CareType, eventId: number) => {
+      const words = REPEAT_PROMPT[type];
+      const did = words ? words.past.charAt(0).toUpperCase() + words.past.slice(1) : `Logged: ${CARE_EVENT_LABELS[type]}`;
+      undo.show({
+        message: `${did} ${data?.plant.nickname ?? ""}`.trim(),
+        undo: async () => {
+          await deleteEvent(db, eventId);
+          refresh();
+        },
+      });
+    },
+    [db, refresh, data, undo],
+  );
+
   const quickLog = useCallback(
     async (type: CareType) => {
       if (!(await okToLog(type, data?.events ?? []))) return;
-      await logCare(db, plantId, type);
+      const eventId = await logCare(db, plantId, type);
+      refresh();
+      offerUndo(type, eventId);
+    },
+    [db, plantId, refresh, data, offerUndo],
+  );
+
+  const removeEvent = useCallback(
+    async (event: CareEvent) => {
+      const ok = await confirm(
+        `Remove "${CARE_EVENT_LABELS[event.type] ?? event.type}" from ${formatDate(event.occurredAt)}?`,
+        "It comes out of this plant's record and reminders count from the entry before it.",
+        { confirmText: "Remove", destructive: true },
+      );
+      if (!ok) return;
+      await deleteEvent(db, event.id);
       refresh();
     },
-    [db, plantId, refresh, data],
+    [db, refresh],
   );
 
   if (!data) return <View style={{ flex: 1 }} />;
@@ -80,10 +115,11 @@ export default function PlantDetail() {
   const submitLog = async () => {
     const occurredAt = daysAgoIso(logDaysAgo);
     if (!(await okToLog(logType, events, occurredAt))) return;
-    await logCare(db, plantId, logType, { notes: logNotes, occurredAt });
+    const eventId = await logCare(db, plantId, logType, { notes: logNotes, occurredAt });
     setLogNotes("");
     setLogDaysAgo("");
     refresh();
+    offerUndo(logType, eventId);
   };
 
   const addToCalendar = async () => {
@@ -206,6 +242,7 @@ export default function PlantDetail() {
   };
 
   return (
+    <View style={{ flex: 1 }}>
     <ScrollView contentContainerStyle={styles.container}>
       <Stack.Screen
         options={{
@@ -529,12 +566,26 @@ export default function PlantDetail() {
                 </Body>
               ) : null}
             </View>
+            {event.type !== "ACQUIRED" ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${CARE_EVENT_LABELS[event.type] ?? event.type} from ${formatDate(event.occurredAt)}`}
+                hitSlop={10}
+                onPress={() => removeEvent(event)}
+                style={({ pressed }) => [styles.remove, { backgroundColor: t.neutral.bg, opacity: pressed ? 0.6 : 1 }]}
+              >
+                <CloseIcon color={t.muted} />
+              </Pressable>
+            ) : null}
           </View>
         ))}
+        <Body small muted>Logged something by mistake? Tap × to take it out of the record.</Body>
       </Card>
 
       <Button title="Remove plant" variant="danger" onPress={confirmDelete} />
     </ScrollView>
+    <UndoBar offer={undo.offer} dismiss={undo.dismiss} />
+    </View>
   );
 }
 
@@ -550,4 +601,5 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   event: { flexDirection: "row", gap: space.md, alignItems: "flex-start" },
+  remove: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
 });

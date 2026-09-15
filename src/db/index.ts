@@ -299,11 +299,12 @@ async function insertEvent(
   notes: string | null,
   occurredAt: string,
   now: string,
-): Promise<void> {
-  await db.runAsync(
+): Promise<number> {
+  const result = await db.runAsync(
     "INSERT INTO care_events (uuid, plant_id, type, notes, occurred_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
     [uuid(), plantId, type, notes, occurredAt, now, now],
   );
+  return result.lastInsertRowId;
 }
 
 export async function createPlant(db: SQLiteDatabase, input: NewPlant): Promise<number> {
@@ -364,9 +365,26 @@ export async function logCare(
   plantId: number,
   type: CareType,
   options: { notes?: string | null; occurredAt?: string | null } = {},
-): Promise<void> {
+): Promise<number> {
   const now = nowIso();
-  await insertEvent(db, plantId, type, blank(options.notes), options.occurredAt || now, now);
+  return insertEvent(db, plantId, type, blank(options.notes), options.occurredAt || now, now);
+}
+
+/**
+ * Take a care entry out of the record — a mis-tapped water drop, say. A
+ * tombstone carries the removal to other phones. The "brought home" entry
+ * stays: change the plant's acquired date instead.
+ */
+export async function deleteEvent(db: SQLiteDatabase, eventId: number): Promise<void> {
+  const row = await db.getFirstAsync<{ uuid: string; type: string }>("SELECT uuid, type FROM care_events WHERE id = ?", [eventId]);
+  if (!row || row.type === "ACQUIRED") return;
+  await db.withTransactionAsync(async () => {
+    await db.runAsync("INSERT OR REPLACE INTO sync_tombstones (uuid, deleted_at, kind) VALUES (?, ?, 'event')", [
+      row.uuid,
+      nowIso(),
+    ]);
+    await db.runAsync("DELETE FROM care_events WHERE id = ?", [eventId]);
+  });
 }
 
 /** Clears an issue and writes the fix into the record as a TREATMENT. */
@@ -520,7 +538,7 @@ export async function deletePlant(db: SQLiteDatabase, id: number): Promise<void>
   const row = await db.getFirstAsync<{ uuid: string }>("SELECT uuid FROM plants WHERE id = ?", [id]);
   await db.withTransactionAsync(async () => {
     if (row) {
-      await db.runAsync("INSERT OR REPLACE INTO sync_tombstones (uuid, deleted_at) VALUES (?, ?)", [
+      await db.runAsync("INSERT OR REPLACE INTO sync_tombstones (uuid, deleted_at, kind) VALUES (?, ?, 'plant')", [
         row.uuid,
         nowIso(),
       ]);
@@ -567,6 +585,7 @@ export interface RemoteEvent {
   resolved_at: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 export interface RemotePhoto {
@@ -652,9 +671,13 @@ export async function markAllDirty(db: SQLiteDatabase): Promise<void> {
   );
 }
 
-export async function listTombstones(db: SQLiteDatabase): Promise<{ uuid: string; deletedAt: string }[]> {
-  const rows = await db.getAllAsync<{ uuid: string; deleted_at: string }>("SELECT * FROM sync_tombstones");
-  return rows.map((r) => ({ uuid: r.uuid, deletedAt: r.deleted_at }));
+export type TombstoneKind = "plant" | "event";
+
+export async function listTombstones(
+  db: SQLiteDatabase,
+): Promise<{ uuid: string; deletedAt: string; kind: TombstoneKind }[]> {
+  const rows = await db.getAllAsync<{ uuid: string; deleted_at: string; kind: string }>("SELECT * FROM sync_tombstones");
+  return rows.map((r) => ({ uuid: r.uuid, deletedAt: r.deleted_at, kind: r.kind === "event" ? "event" : "plant" }));
 }
 
 export async function clearTombstones(db: SQLiteDatabase, uuids: string[]): Promise<void> {
@@ -743,6 +766,12 @@ export async function applyRemoteEvent(db: SQLiteDatabase, r: RemoteEvent): Prom
     "SELECT id, updated_at FROM care_events WHERE uuid = ?",
     [r.id],
   );
+  if (r.deleted_at) {
+    // A removal is final: whoever removed it wins over any pending edit.
+    const gone = local ? (await db.runAsync("DELETE FROM care_events WHERE id = ?", [local.id])).changes > 0 : false;
+    await db.runAsync("DELETE FROM sync_tombstones WHERE uuid = ?", [r.id]);
+    return gone ? "updated" : "skipped";
+  }
   if (!local) {
     const plantId = await plantIdByUuid(db, r.plant_id);
     if (!plantId) return "skipped";

@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "smoke": "expo export --platform web --output-dir dist && node scripts/web-smoke.mjs dist",
+    "build:web": "expo export --platform web --output-dir dist && node scripts/flatten-routes.mjs dist",
+    "smoke": "npm run build:web && node scripts/web-smoke.mjs dist",
     "e2e": "vitest run --config vitest.e2e.config.ts",
     "start:tunnel": "expo start --tunnel"
   },

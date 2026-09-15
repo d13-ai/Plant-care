@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npx expo export --platform web --output-dir dist",
+  "buildCommand": "npm run build:web",
   "outputDirectory": "dist",
   "framework": null,
   "cleanUrls": true,
@@ -15,7 +15,7 @@
   ],
   "rewrites": [
     { "source": "/plant/new", "destination": "/plant/new.html" },
-    { "source": "/plant/:id/edit", "destination": "/plant/[id]/edit.html" },
-    { "source": "/plant/:id", "destination": "/plant/[id].html" }
+    { "source": "/plant/:id/edit", "destination": "/plant/_id/edit.html" },
+    { "source": "/plant/:id", "destination": "/plant/_id.html" }
   ]
 }

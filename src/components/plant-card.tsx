@@ -37,9 +37,11 @@ export function PlantCard({
   const waterNow = water?.state === "OVERDUE";
 
   return (
-    <Link href={{ pathname: "/plant/[id]", params: { id: String(plant.id) } }} asChild>
-      <Pressable>
-        <Card style={styles.card}>
+    <Card style={styles.card}>
+      {/* The link stops before the drop: on the web a tap inside an anchor
+          follows it, and logging water must not leave the greenhouse. */}
+      <Link href={{ pathname: "/plant/[id]", params: { id: String(plant.id) } }} asChild>
+        <Pressable style={({ pressed }) => [styles.body, { opacity: pressed ? 0.75 : 1 }]}>
           {photo ? (
             <Image source={{ uri: photo.uri }} style={styles.thumb} contentFit="cover" />
           ) : (
@@ -66,18 +68,19 @@ export function PlantCard({
               ) : null}
             </View>
           </View>
+        </Pressable>
+      </Link>
 
-          <IconButton label="Log water" filled={waterNow} onPress={() => onLogWater(plant.id)}>
-            <DropIcon color={waterNow ? t.onPrimary : t.primary} strokeWidth={waterNow ? 2.2 : 2} />
-          </IconButton>
-        </Card>
-      </Pressable>
-    </Link>
+      <IconButton label={`Log water for ${plant.nickname}`} filled={waterNow} onPress={() => onLogWater(plant.id)}>
+        <DropIcon color={waterNow ? t.onPrimary : t.primary} strokeWidth={waterNow ? 2.2 : 2} />
+      </IconButton>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   card: { flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md },
+  body: { flex: 1, flexDirection: "row", alignItems: "center", gap: space.md, minWidth: 0 },
   thumb: { width: 64, height: 64, borderRadius: 14 },
   middle: { flex: 1, gap: 4, minWidth: 0 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
