@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SpeciesField } from "@/components/species-field";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
 import { createPlant, listPlants, type Plant } from "@/db";
@@ -115,23 +115,29 @@ export default function NewPlant() {
               ) : (
                 <>
                   <Body small muted>Looks like — tap one to use it:</Body>
-                  <Row>
+                  <View style={{ gap: space.sm }}>
                     {[...verdict.species]
                       .sort((a, b) => b.confidence - a.confidence)
                       .map((c) => {
                         const latin = `${c.genus}${c.species ? ` ${c.species}` : ""}${c.cultivar ? ` '${c.cultivar}'` : ""}`;
                         // Common name and the Latin one both: "Swiss cheese plant" alone reads like a guess.
-                        const label = c.common_name && c.common_name.toLowerCase() !== latin.toLowerCase() ? `${c.common_name} · ${latin}` : latin;
+                        const hasCommon = Boolean(c.common_name) && c.common_name!.toLowerCase() !== latin.toLowerCase();
                         return (
-                          <Button
+                          <Pressable
                             key={latin}
-                            small
-                            title={`${label} · ${Math.round(c.confidence * 100)}%`}
+                            accessibilityRole="button"
                             onPress={() => useCandidate(c)}
-                          />
+                            style={({ pressed }) => [styles.candidate, { borderColor: t.border, backgroundColor: t.neutral.bg, opacity: pressed ? 0.75 : 1 }]}
+                          >
+                            <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                              <Body style={{ fontWeight: "600" } as never}>{hasCommon ? c.common_name : latin}</Body>
+                              {hasCommon ? <Body small muted>{latin}</Body> : null}
+                            </View>
+                            <Badge label={`${Math.round(c.confidence * 100)}%`} tone={c.confidence >= 0.7 ? "success" : "neutral"} />
+                          </Pressable>
                         );
                       })}
-                  </Row>
+                  </View>
                   {verdict.health.findings.length > 0 ? (
                     <View style={{ gap: space.xs }}>
                       <Row>
@@ -202,6 +208,16 @@ export default function NewPlant() {
 }
 
 const styles = StyleSheet.create({
+  candidate: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.md,
+    paddingVertical: 10,
+    paddingHorizontal: space.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    minHeight: 44,
+  },
   container: { padding: space.lg, gap: space.md, paddingBottom: space.xl * 2 },
   photo: { width: "100%", aspectRatio: 4 / 3, borderRadius: radius.md },
 });
