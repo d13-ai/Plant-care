@@ -79,7 +79,9 @@ export default function NewPlant() {
     setAnalyzing(true);
     setAiError(null);
     try {
-      const answer = await analyzePhoto(photoUri, { mode: "both" });
+      // A species already typed or picked goes along as a hint: the AI then
+      // confirms or corrects it rather than guessing among look-alikes.
+      const answer = await analyzePhoto(photoUri, { mode: "both", speciesHint: species.trim() || null });
       setVerdict(answer.verdict);
       setScanNote(describeCost(answer));
     } catch (err) {

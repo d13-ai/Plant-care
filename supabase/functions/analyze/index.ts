@@ -1,4 +1,4 @@
-// AI photo analysis: POST /analyze  { image, media_type, mode?, species_hint? }
+// AI photo analysis: POST /analyze  { image, media_type, mode?, species_hint?, known? }
 //
 // Sends one plant photo to Claude and returns a typed verdict — what the
 // plant looks like, and what its health looks like. Only signed-in keepers
@@ -74,7 +74,10 @@ const Verdict = z.object({
 export type Verdict = z.infer<typeof Verdict>;
 
 const SYSTEM = `You help people look after houseplants. You are shown one photo of a plant a keeper owns.
+Identify the plant that fills the frame — the one in the pot at the centre. Other plants at the edges are neighbours, not candidates, unless the main one isn't clear.
 Identify it as precisely as the photo allows — give the genus and, if you're reasonably sure, the species — and be honest in the confidence numbers: 0.9 means near-certain, 0.4 means a guess among several look-alikes. Give up to three candidates, most likely first, and use the common name people in shops use. Collectors care about varieties: if the variegation or leaf form marks a known cultivar (cream splashes on a monstera — Thai Constellation or Albo; a pink-splashed philodendron — Pink Princess), name it, and say which when two look alike.
+Decide between look-alikes on diagnostic features, not overall impression: leaf margin (toothed or serrated edges on a variegated philodendron point to 'Ring of Fire', smooth lobed edges to 'Golden Dragon' or 'Florida Beauty'), lobing, petiole colour and texture, the colours in the variegation (orange and pink tones as well as cream), leaf shape at maturity. Say in the notes which feature decided it.
+When the keeper's app lists the cultivar names it tracks, prefer those names and spellings whenever one fits — they are the plants this keeper is likely to own — but don't force a match that the photo doesn't support.
 Then read its health from what is actually visible: leaf colour and texture, spots, pests, drooping, soil, pot. Name only what you can see; say "unknown" when the photo doesn't show enough. For each finding give the likely cause and one concrete thing to do. Don't invent problems for a plant that looks fine.
 If the photo isn't clearly a plant, say so and return no candidates.`;
 
@@ -94,9 +97,13 @@ Deno.serve(async (req: Request) => {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) return json({ error: "AI isn't set up for this project yet — add ANTHROPIC_API_KEY as a function secret." }, 503);
 
-  let body: { image?: string; media_type?: string; mode?: string; species_hint?: string; model?: string };
+  let body: { image?: string; media_type?: string; mode?: string; species_hint?: string; model?: string; known?: unknown };
   try { body = await req.json(); } catch { return json({ error: "Expected JSON." }, 400); }
   const { image, media_type = "image/jpeg", mode = "both", species_hint } = body;
+  // Cultivar names the app's catalogue knows — a short, bounded list.
+  const known = Array.isArray(body.known)
+    ? body.known.filter((k): k is string => typeof k === "string" && k.length <= 60).slice(0, 200)
+    : [];
   // A request may pick a model from the allow-list — for comparing answers on
   // the same photo. The daily cap bounds what that can cost.
   const MODEL = MODELS.find((m) => m === body.model) ?? DEFAULT_MODEL;
@@ -117,6 +124,9 @@ Deno.serve(async (req: Request) => {
       : mode === "identify"
         ? "Focus on identifying this plant."
         : `Identify this plant and read its health.${species_hint ? ` The keeper thinks it's a ${species_hint}.` : ""}`;
+  const askWithKnown = known.length
+    ? `${ask}\n\nCultivar names the keeper's app tracks (prefer these names when one fits; the list isn't exhaustive): ${known.join("; ")}.`
+    : ask;
 
   try {
     const client = new Anthropic({ apiKey });
@@ -130,7 +140,7 @@ Deno.serve(async (req: Request) => {
           role: "user",
           content: [
             { type: "image", source: { type: "base64", media_type: media_type as "image/jpeg" | "image/png" | "image/webp", data: image } },
-            { type: "text", text: ask },
+            { type: "text", text: askWithKnown },
           ],
         },
       ],

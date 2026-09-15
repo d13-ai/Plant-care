@@ -1,6 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImageManipulator from "expo-image-manipulator";
+import { KNOWN_CULTIVARS } from "@/domain/species";
 import { ensureSession, supabase, supabaseConfigured } from "./supabase";
+
+/** Bump when the prompt changes, so a remembered answer from the old one isn't reused. */
+const PROMPT_VERSION = 2;
 
 /** What the analyze function returns — mirrors its zod schema. */
 export interface Verdict {
@@ -54,7 +58,7 @@ export async function analyzePhoto(
   });
   if (!shrunk.base64) throw new Error("Couldn't read the photo.");
 
-  const cacheKey = `ai:${fingerprint(shrunk.base64)}:${options.mode ?? "both"}:${(options.speciesHint ?? "").toLowerCase()}`;
+  const cacheKey = `ai:${PROMPT_VERSION}:${fingerprint(shrunk.base64)}:${options.mode ?? "both"}:${(options.speciesHint ?? "").toLowerCase()}`;
   try {
     const hit = await AsyncStorage.getItem(cacheKey);
     if (hit) {
@@ -73,7 +77,13 @@ export async function analyzePhoto(
       // Send the session token explicitly: right after an anonymous sign-in the
       // client hasn't always attached it yet, and the function would 401.
       headers: { Authorization: `Bearer ${session.access_token}` },
-      body: { image: shrunk.base64, media_type: "image/jpeg", mode: options.mode ?? "both", species_hint: options.speciesHint ?? undefined },
+      body: {
+        image: shrunk.base64,
+        media_type: "image/jpeg",
+        mode: options.mode ?? "both",
+        species_hint: options.speciesHint ?? undefined,
+        known: KNOWN_CULTIVARS,
+      },
     },
   );
   if (error) {

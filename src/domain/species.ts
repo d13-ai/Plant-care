@@ -361,6 +361,15 @@ for (const { entry, parent } of CULTIVAR_ENTRIES) if (!parent) SPECIES.push(entr
 /** Browse-list sections, in the order they're shown. */
 export const SPECIES_GROUPS: string[] = CATALOGUE.map((c) => c.group);
 
+/**
+ * Every named cultivar the catalogue knows, as "Genus species 'Cultivar'".
+ * Sent along with a photo so the AI reaches for these names (and their
+ * spellings) when one fits, instead of a look-alike it happens to know.
+ */
+export const KNOWN_CULTIVARS: string[] = CULTIVARS.map(([genus, species, cultivar]) =>
+  `${genus}${species ? ` ${species}` : ""} '${cultivar}'`,
+);
+
 export const scientificName = (e: SpeciesEntry) =>
   `${e.genus}${e.species ? ` ${e.species}` : ""}${e.cultivar ? ` '${e.cultivar}'` : ""}`;
 
