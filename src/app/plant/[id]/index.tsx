@@ -30,7 +30,7 @@ import { okToLog } from "@/lib/care-log";
 import { confirm } from "@/lib/confirm";
 import { capturePhoto } from "@/lib/photos";
 import { tagUrl, supabaseConfigured } from "@/lib/supabase";
-import { radius, space, useTheme, type Tone } from "@/theme";
+import { font, radius, space, useTheme, type Tone } from "@/theme";
 
 const toneFor: Record<DueState, Tone> = {
   OVERDUE: "critical",
@@ -251,9 +251,13 @@ export default function PlantDetail() {
           headerRight: () => (
             <Pressable
               hitSlop={12}
+              accessibilityRole="button"
               onPress={() => router.push({ pathname: "/plant/[id]/edit", params: { id: String(plantId) } })}
+              // The header's right slot is flush with the screen edge on the
+              // web, so the button carries its own inset.
+              style={{ paddingHorizontal: 16, paddingVertical: 8 }}
             >
-              <Text style={{ color: t.primary, fontSize: 16, fontWeight: "600" }}>Edit</Text>
+              <Text style={{ color: t.primary, fontSize: 16, fontWeight: "700", fontFamily: font.bold }}>Edit</Text>
             </Pressable>
           ),
         }}
