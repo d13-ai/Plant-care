@@ -15,6 +15,7 @@ import {
   listTombstones,
   markAllDirty,
   markPhotoUploaded,
+  regenerateIdentities,
   setSyncMeta,
   type RemoteEvent,
   type RemotePhoto,
@@ -174,31 +175,21 @@ export async function pushAll(db: SQLiteDatabase, session: Session): Promise<num
   pushed += tombstones.length;
 
   // Plants, mothers before cuttings (a cutting's id is always higher).
-  const plants = await dirtyPlants(db);
+  let plants = await dirtyPlants(db);
   if (plants.length) {
-    const { error } = await supabase.from("plants").upsert(
-      plants.map((p) => ({
-        id: p.uuid,
-        keeper_id: keeperId,
-        nickname: p.nickname,
-        species: p.species,
-        location: p.location,
-        status: p.status,
-        acquired_at: p.acquiredAt,
-        acquired_from: p.acquiredFrom,
-        notes: p.notes,
-        water_every_days: p.waterEveryDays,
-        fertilize_every_days: p.fertilizeEveryDays,
-        repot_every_days: p.repotEveryDays,
-        photo_every_days: p.photoEveryDays,
-        mother_plant_id: p.motherUuid,
-        propagated_at: p.propagatedAt,
-        created_at: p.createdAt,
-        updated_at: p.updatedAt,
-        deleted_at: null,
-      })),
-      { onConflict: "id" },
-    );
+    let { error } = await upsertPlants(keeperId, plants);
+    if (error && isSomeoneElsesRow(error)) {
+      // These ids already exist on the server under another keeper: this
+      // phone synced as a different account before. Rather than fail
+      // forever, this account gets its own copy — fresh identities for
+      // everything, then push again. (Only when the session itself is
+      // good; an expired one fails the same policy for a different reason.)
+      const { error: who } = await supabase.auth.getUser();
+      if (who) throw new Error(`Plants: ${error.message}`);
+      await regenerateIdentities(db);
+      plants = await dirtyPlants(db);
+      ({ error } = await upsertPlants(keeperId, plants));
+    }
     if (error) throw new Error(`Plants: ${error.message}`);
     await clearDirty(db, "plants", plants.map((p) => p.uuid));
     pushed += plants.length;
@@ -246,6 +237,38 @@ export async function pushAll(db: SQLiteDatabase, session: Session): Promise<num
   }
 
   return pushed;
+}
+
+function upsertPlants(keeperId: string, plants: Awaited<ReturnType<typeof dirtyPlants>>) {
+  return supabase.from("plants").upsert(
+    plants.map((p) => ({
+      id: p.uuid,
+      keeper_id: keeperId,
+      nickname: p.nickname,
+      species: p.species,
+      location: p.location,
+      status: p.status,
+      acquired_at: p.acquiredAt,
+      acquired_from: p.acquiredFrom,
+      notes: p.notes,
+      water_every_days: p.waterEveryDays,
+      fertilize_every_days: p.fertilizeEveryDays,
+      repot_every_days: p.repotEveryDays,
+      photo_every_days: p.photoEveryDays,
+      mother_plant_id: p.motherUuid,
+      propagated_at: p.propagatedAt,
+      created_at: p.createdAt,
+      updated_at: p.updatedAt,
+      deleted_at: null,
+    })),
+    { onConflict: "id" },
+  );
+}
+
+/** The policy's USING clause failing on an upsert means the conflicting row
+ *  exists but isn't ours; a WITH CHECK failure would read differently. */
+function isSomeoneElsesRow(error: { message: string }): boolean {
+  return /row-level security/i.test(error.message) && /USING expression/i.test(error.message);
 }
 
 // ---------------------------------------------------------------------------

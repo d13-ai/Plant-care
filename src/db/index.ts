@@ -623,6 +623,27 @@ export async function pendingChanges(db: SQLiteDatabase): Promise<number> {
   return row?.n ?? 0;
 }
 
+/**
+ * Give every local row a fresh identity. Used when this phone's plants are
+ * becoming a new account's copy: their rows on the server belong to another
+ * keeper, which the server (rightly) won't let this one overwrite. Uploads
+ * and tag tokens belonged to the old copy too, so everything pushes again
+ * from scratch under the new account.
+ */
+export async function regenerateIdentities(db: SQLiteDatabase): Promise<void> {
+  await db.withTransactionAsync(async () => {
+    for (const table of ["plants", "care_events", "photos"] as const) {
+      const rows = await db.getAllAsync<{ id: number }>(`SELECT id FROM ${table}`);
+      for (const row of rows) {
+        await db.runAsync(`UPDATE ${table} SET uuid = ?, dirty = 1 WHERE id = ?`, [uuid(), row.id]);
+      }
+    }
+    await db.execAsync(
+      "UPDATE photos SET remote_path = NULL; UPDATE plants SET passport_token = NULL, published_at = NULL; DELETE FROM sync_tombstones; DELETE FROM sync_meta WHERE key = 'cursor';",
+    );
+  });
+}
+
 /** Flag every row for the next push — when a different account signs in on
  *  this device, its greenhouse should follow. */
 export async function markAllDirty(db: SQLiteDatabase): Promise<void> {

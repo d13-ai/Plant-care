@@ -41,14 +41,24 @@ const PHOTO_DATA_URL =
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+async function signIn(email: string, password: string): Promise<string> {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw new Error(`Test account sign-in failed (${email}): ${error.message}`);
+  return data.user!.id;
+}
+
+/** Delete everything the signed-in account owns on the server. */
+async function wipeSignedInAccount(keeperId: string): Promise<void> {
+  const { data: photos } = await supabase.from("photos").select("path");
+  if (photos?.length) await supabase.storage.from("plant-photos").remove(photos.map((p) => p.path));
+  await supabase.from("plants").delete().eq("keeper_id", keeperId);
+  await supabase.from("keepers").delete().eq("id", keeperId);
+}
+
 async function signInTestAccount(): Promise<string> {
   const email = process.env.PASSPORT_E2E_EMAIL;
   const password = process.env.PASSPORT_E2E_PASSWORD;
-  if (email && password) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(`Test account sign-in failed: ${error.message}`);
-    return data.user!.id;
-  }
+  if (email && password) return signIn(email, password);
   const fresh = `e2e-${Date.now()}@plantparlour.app`;
   const { data, error } = await supabase.auth.signUp({
     email: fresh,
@@ -85,6 +95,7 @@ describe("syncing a greenhouse between two devices", () => {
   let a: TestDatabase;
   let b: TestDatabase;
   let keeperId: string;
+  let secondKeeperId: string | null = null;
   let motherId: number;
   let motherUuid: string;
 
@@ -115,16 +126,15 @@ describe("syncing a greenhouse between two devices", () => {
   });
 
   afterAll(async () => {
-    if (keeperId) {
-      const folder = `${keeperId}/${motherUuid}`;
-      const { data: objects } = await supabase.storage.from("plant-photos").list(folder);
-      if (objects?.length) {
-        await supabase.storage.from("plant-photos").remove(objects.map((o) => `${folder}/${o.name}`));
-      }
-      await supabase.from("plants").delete().eq("keeper_id", keeperId);
-      await supabase.from("keepers").delete().eq("id", keeperId);
-      await supabase.auth.signOut();
+    // The last test may have switched accounts; clean whichever is signed in,
+    // then the first account too.
+    const { data } = await supabase.auth.getSession();
+    if (data.session) await wipeSignedInAccount(data.session.user.id);
+    if (secondKeeperId && process.env.PASSPORT_E2E_EMAIL && process.env.PASSPORT_E2E_PASSWORD) {
+      await signIn(process.env.PASSPORT_E2E_EMAIL, process.env.PASSPORT_E2E_PASSWORD);
+      await wipeSignedInAccount(keeperId);
     }
+    await supabase.auth.signOut();
     a?.close();
     b?.close();
   });
@@ -243,4 +253,35 @@ describe("syncing a greenhouse between two devices", () => {
       c.close();
     }
   });
+
+  test("signing a phone into a different account gives that account its own copy", async () => {
+    const email = process.env.PASSPORT_E2E_EMAIL_2;
+    const password = process.env.PASSPORT_E2E_PASSWORD_2;
+    if (!email || !password) {
+      console.warn("PASSPORT_E2E_EMAIL_2 / _PASSWORD_2 not set — skipping the account-switch check");
+      return;
+    }
+    // Phone A's plants live on the server under the first account. A second
+    // account signs in on A; the server won't let it overwrite those rows,
+    // so A must give the second account its own copy and carry on.
+    const before = await listPlants(a.db);
+    const oldUuids = before.map((p) => p.plant.uuid);
+    secondKeeperId = await signIn(email, password);
+    await supabase.from("plants").delete().eq("keeper_id", secondKeeperId);
+
+    await syncNow(a.db);
+    expect(getSyncStatus().state).toBe("idle");
+
+    const after = await listPlants(a.db);
+    expect(after.map((p) => p.plant.nickname).sort()).toEqual(before.map((p) => p.plant.nickname).sort());
+    for (const p of after) expect(oldUuids, "every plant got a fresh identity").not.toContain(p.plant.uuid);
+
+    const { data: mine } = await supabase.from("plants").select("id").eq("keeper_id", secondKeeperId).is("deleted_at", null);
+    expect(mine!.map((r) => r.id).sort()).toEqual(after.map((p) => p.plant.uuid).sort());
+
+    const photo = (await getPlant(a.db, motherId))!.photos[0];
+    expect(photo.remotePath?.startsWith(`${secondKeeperId}/`), "photo re-uploaded under the new account").toBe(true);
+    expect(await pendingChanges(a.db)).toBe(0);
+  });
+
 });

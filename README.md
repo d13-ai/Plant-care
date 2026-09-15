@@ -68,7 +68,9 @@ Whichever way you sign in, whatever is on the phone is pushed into that
 account on the first sync. With the email code, an existing anonymous
 session gets the email attached, so anything already published keeps its
 links. Signing in the same way on another phone brings the greenhouse over.
-Signing out leaves the plants on the phone; they just stop syncing.
+Signing out leaves the plants on the phone; they just stop syncing. A phone
+that signs into a *different* account keeps its plants and gives that
+account its own copy (the first account's copy stays as it was).
 
 **How sync works** (`src/lib/sync.ts`): every local row has a uuid the
 server keys on and a `dirty` flag that each write sets. A sync *pulls* rows
