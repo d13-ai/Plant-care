@@ -241,6 +241,9 @@ describe("syncing a greenhouse between two devices", () => {
     const fullB = (await getPlant(b.db, motherB.id))!;
     expect(fullB.plant.coverPhotoUuid).toBe(older.uuid);
     expect(coverPhoto(fullB.plant, fullB.photos)!.uuid).toBe(older.uuid);
+    // The collection list carries the chosen photo too, not just the newest.
+    const listedB = (await listPlants(b.db)).find((p) => p.plant.id === motherB.id)!;
+    expect(listedB.photos[0]?.uuid, "greenhouse card shows the main photo").toBe(older.uuid);
   });
 
   test("a care entry removed on phone B disappears from phone A", async () => {

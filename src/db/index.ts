@@ -216,7 +216,7 @@ export interface PlantWithHistory {
   photos: Photo[];
 }
 
-/** Every plant with its recent events and latest photo — the collection screen. */
+/** Every plant with its recent events and the photo that fronts it — the collection screen. */
 export async function listPlants(db: SQLiteDatabase): Promise<PlantWithHistory[]> {
   const plants = (
     await db.getAllAsync<PlantRow>("SELECT * FROM plants ORDER BY nickname COLLATE NOCASE")
@@ -230,11 +230,16 @@ export async function listPlants(db: SQLiteDatabase): Promise<PlantWithHistory[]
     await db.getAllAsync<PhotoRow>("SELECT * FROM photos ORDER BY taken_at DESC")
   ).map(toPhoto);
 
-  return plants.map((plant) => ({
-    plant,
-    events: events.filter((e) => e.plantId === plant.id),
-    photos: photos.filter((p) => p.plantId === plant.id).slice(0, 1),
-  }));
+  return plants.map((plant) => {
+    // The chosen main photo, or the newest — one is all the list shows, so
+    // keeping only the newest would hide the choice.
+    const cover = coverPhoto(plant, photos.filter((p) => p.plantId === plant.id));
+    return {
+      plant,
+      events: events.filter((e) => e.plantId === plant.id),
+      photos: cover ? [cover] : [],
+    };
+  });
 }
 
 export async function getPlant(
