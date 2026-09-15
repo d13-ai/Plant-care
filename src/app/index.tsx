@@ -7,7 +7,7 @@ import { LeafIcon, PersonIcon, PlusIcon } from "@/components/icons";
 import { PlantCard, summarize } from "@/components/plant-card";
 import { Body, Button, Card, Heading, Row, SectionLabel, Title } from "@/components/ui";
 import { UndoBar, useUndo } from "@/components/undo-bar";
-import { deleteEvent, listPlants, logCare, type PlantWithHistory } from "@/db";
+import { coverPhoto, deleteEvent, listPlants, logCare, type PlantWithHistory } from "@/db";
 import { useQuery } from "@/hooks/use-query";
 import { useAccount } from "@/lib/auth";
 import { okToLog } from "@/lib/care-log";
@@ -76,7 +76,7 @@ export default function Greenhouse() {
     return (
       <DueRing
         key={item.plant.id}
-        uri={item.photos[0]?.uri ?? null}
+        uri={coverPhoto(item.plant, item.photos)?.uri ?? null}
         progress={fill}
         color={t[tone].ring}
         labelColor={t[tone].fg}

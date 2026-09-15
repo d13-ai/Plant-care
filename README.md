@@ -32,7 +32,7 @@ publish; adding the email attaches it to that same account.
   history entry can be removed later (the removal syncs to other phones)
 - Report an issue → the plant is flagged **Special care needed** until you
   resolve it, and the fix goes on the record as a treatment
-- Photo timeline
+- Photo timeline — tap any photo to make it the plant's main picture (syncs, and fronts the tag)
 - Log a propagation → a new plant whose record links back to this one
 - Full per-plant history — every AI photo check is written into it, so the
   findings sync and stay with the plant

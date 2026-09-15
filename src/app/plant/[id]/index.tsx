@@ -5,7 +5,7 @@ import { Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-nati
 import { CloseIcon } from "@/components/icons";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
 import { UndoBar, useUndo } from "@/components/undo-bar";
-import { addPhoto, deleteEvent, deletePlant, getPlant, logCare, propagate, resolveIssue, type CareEvent } from "@/db";
+import { addPhoto, coverPhoto, deleteEvent, deletePlant, getPlant, logCare, propagate, resolveIssue, setCoverPhoto, type CareEvent } from "@/db";
 import {
   CARE_EVENT_LABELS,
   LOGGABLE_CARE_TYPES,
@@ -113,7 +113,7 @@ export default function PlantDetail() {
   const statuses = careStatuses(plant, events);
   const issues = openIssues(events);
   const alerts = plantAlerts(statuses, issues.length);
-  const hero = photos[0];
+  const hero = coverPhoto(plant, photos);
 
   const submitLog = async () => {
     const occurredAt = daysAgoIso(logDaysAgo);
@@ -443,21 +443,40 @@ export default function PlantDetail() {
           </Body>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <Row style={{ flexWrap: "nowrap" }}>
-              {photos.map((photo) => (
-                <View key={photo.id} style={{ gap: 4 }}>
-                  <Image source={{ uri: photo.uri }} style={styles.photo} contentFit="cover" />
-                  <Body small muted>
-                    {formatDate(photo.takenAt)}
-                  </Body>
-                </View>
-              ))}
+            <Row style={{ flexWrap: "nowrap", alignItems: "flex-start" }}>
+              {photos.map((photo) => {
+                const main = hero?.id === photo.id;
+                return (
+                  <Pressable
+                    key={photo.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={main ? `Main photo, ${formatDate(photo.takenAt)}` : `Make the photo from ${formatDate(photo.takenAt)} the main one`}
+                    disabled={main}
+                    onPress={async () => {
+                      await setCoverPhoto(db, plantId, photo.id);
+                      refresh();
+                    }}
+                    style={({ pressed }) => ({ gap: 4, opacity: pressed ? 0.7 : 1 })}
+                  >
+                    <Image source={{ uri: photo.uri }} style={[styles.photo, main && { borderWidth: 3, borderColor: c.gold }]} contentFit="cover" />
+                    <Row>
+                      <Body small muted>{formatDate(photo.takenAt)}</Body>
+                      {main ? <Badge label="Main" tone="warning" /> : null}
+                    </Row>
+                  </Pressable>
+                );
+              })}
             </Row>
           </ScrollView>
         )}
         <Row>
           <Button title="Take photo" small onPress={() => takePhoto("camera")} />
           <Button title="Choose" small onPress={() => takePhoto("library")} />
+        </Row>
+        {photos.length > 1 ? (
+          <Body small muted>Tap a photo to make it the main one. Changing it doesn't touch the AI checks on record.</Body>
+        ) : null}
+        <Row>
           {hero && supabaseConfigured ? (
             <Button
               title={checking ? "Looking…" : "Check health with AI"}

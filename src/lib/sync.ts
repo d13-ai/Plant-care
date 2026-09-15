@@ -257,6 +257,7 @@ function upsertPlants(keeperId: string, plants: Awaited<ReturnType<typeof dirtyP
       photo_every_days: p.photoEveryDays,
       mother_plant_id: p.motherUuid,
       propagated_at: p.propagatedAt,
+      cover_photo_uuid: p.coverPhotoUuid,
       created_at: p.createdAt,
       updated_at: p.updatedAt,
       deleted_at: null,

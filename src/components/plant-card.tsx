@@ -3,7 +3,7 @@ import { Link } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 import { DropIcon, TagIcon } from "@/components/icons";
 import { Badge, Body, Card, Heading, IconButton } from "@/components/ui";
-import type { PlantWithHistory } from "@/db";
+import { coverPhoto, type PlantWithHistory } from "@/db";
 import { careStatuses, openIssues, plantAlerts, relativeDays } from "@/domain/care";
 import { space, useTheme } from "@/theme";
 
@@ -33,7 +33,7 @@ export function PlantCard({
   const t = useTheme();
   const { plant, photos } = item;
   const { alerts, water, lastWatered } = summarize(item);
-  const photo = photos[0];
+  const photo = coverPhoto(plant, photos);
   const waterNow = water?.state === "OVERDUE";
 
   return (

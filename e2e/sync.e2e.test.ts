@@ -16,6 +16,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
   addPhoto,
+  coverPhoto,
   createPlant,
   deleteEvent,
   deletePlant,
@@ -25,6 +26,7 @@ import {
   migrate,
   pendingChanges,
   propagate,
+  setCoverPhoto,
   updatePlant,
   type Plant,
 } from "@/db";
@@ -222,6 +224,23 @@ describe("syncing a greenhouse between two devices", () => {
 
     expect((await getPlant(a.db, motherId))!.plant.notes).toBe("B's note");
     expect((await getPlant(b.db, motherB.id))!.plant.notes).toBe("B's note");
+  });
+
+  test("the main photo chosen on phone A is the main photo on phone B", async () => {
+    const before = (await getPlant(a.db, motherId))!;
+    await addPhoto(a.db, motherId, PHOTO_DATA_URL, { takenAt: daysAgo(30) });
+    const older = (await getPlant(a.db, motherId))!.photos.find((ph) => ph.uuid !== before.photos[0].uuid)!;
+    await setCoverPhoto(a.db, motherId, older.id);
+    const afterA = (await getPlant(a.db, motherId))!;
+    expect(coverPhoto(afterA.plant, afterA.photos)!.uuid).toBe(older.uuid);
+
+    await syncNow(a.db);
+    await syncNow(b.db);
+
+    const motherB = (await byName(b.db, "Sync Monstera (B)"))!;
+    const fullB = (await getPlant(b.db, motherB.id))!;
+    expect(fullB.plant.coverPhotoUuid).toBe(older.uuid);
+    expect(coverPhoto(fullB.plant, fullB.photos)!.uuid).toBe(older.uuid);
   });
 
   test("a care entry removed on phone B disappears from phone A", async () => {

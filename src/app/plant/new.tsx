@@ -229,7 +229,14 @@ export default function NewPlant() {
             <Row style={{ flexWrap: "nowrap" }}>
               {photos.map((uri, i) => (
                 <View key={uri.slice(-40) + i} style={styles.thumbWrap}>
-                  <Image source={{ uri }} style={[styles.thumb, i === 0 && { borderColor: t.primary, borderWidth: 2 }]} contentFit="cover" />
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={i === 0 ? "Main photo" : `Make photo ${i + 1} the main one`}
+                    disabled={i === 0}
+                    onPress={() => setPhotos((ps) => [ps[i], ...ps.filter((_, j) => j !== i)])}
+                  >
+                    <Image source={{ uri }} style={[styles.thumb, i === 0 && { borderColor: t.primary, borderWidth: 2 }]} contentFit="cover" />
+                  </Pressable>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Remove photo ${i + 1}`}
@@ -243,7 +250,7 @@ export default function NewPlant() {
               ))}
               {photos.length < MAX_SCAN_PHOTOS ? (
                 <Body small muted style={{ flex: 1 } as never}>
-                  {photos.length === 1 ? "Add a close-up or two — the scan reads them together." : `Room for ${MAX_SCAN_PHOTOS - photos.length} more.`}
+                  {photos.length === 1 ? "Add a close-up or two — the scan reads them together." : `Room for ${MAX_SCAN_PHOTOS - photos.length} more. Tap a photo to make it the main one.`}
                 </Body>
               ) : null}
             </Row>

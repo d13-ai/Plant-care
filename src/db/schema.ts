@@ -5,7 +5,7 @@
  * mother_plant_id already exists so propagation lineage doesn't need a
  * migration later; a mother is another local plant.
  */
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 /** A v4 uuid in SQLite, for backfilling rows that predate sync. */
 const UUID_SQL = "lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-' || substr('89ab', abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6)))";
@@ -60,6 +60,10 @@ export const MIGRATIONS: Record<number, string[]> = {
   6: [
     // Care entries can be removed too, so a tombstone says what it was for.
     "ALTER TABLE sync_tombstones ADD COLUMN kind TEXT NOT NULL DEFAULT 'plant'",
+  ],
+  7: [
+    // The photo that fronts the plant, chosen by the keeper; newest otherwise.
+    "ALTER TABLE plants ADD COLUMN cover_photo_uuid TEXT",
   ],
 };
 

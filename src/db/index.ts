@@ -33,6 +33,8 @@ export interface Plant {
   propagatedAt: string | null;
   passportToken: string | null;
   publishedAt: string | null;
+  /** uuid of the photo that fronts the plant; the newest when null. */
+  coverPhotoUuid: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -82,6 +84,7 @@ type PlantRow = {
   photo_every_days: number | null;
   mother_plant_id: number | null;
   propagated_at: string | null;
+  cover_photo_uuid?: string | null;
   passport_token: string | null;
   published_at: string | null;
   created_at: string;
@@ -133,9 +136,22 @@ const toPlant = (r: PlantRow): Plant => ({
   propagatedAt: r.propagated_at,
   passportToken: r.passport_token,
   publishedAt: r.published_at,
+  coverPhotoUuid: r.cover_photo_uuid ?? null,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
 });
+
+/** The photo that fronts a plant: the chosen one if it's still there, else the newest. */
+export function coverPhoto<P extends { uuid: string }>(plant: { coverPhotoUuid: string | null }, photos: P[]): P | null {
+  return (plant.coverPhotoUuid && photos.find((ph) => ph.uuid === plant.coverPhotoUuid)) || photos[0] || null;
+}
+
+export async function setCoverPhoto(db: SQLiteDatabase, plantId: number, photoId: number): Promise<void> {
+  await db.runAsync(
+    "UPDATE plants SET cover_photo_uuid = (SELECT uuid FROM photos WHERE id = ? AND plant_id = ?), updated_at = ?, dirty = 1 WHERE id = ?",
+    [photoId, plantId, nowIso(), plantId],
+  );
+}
 
 const toEvent = (r: EventRow): CareEvent => ({
   id: r.id,
@@ -571,6 +587,7 @@ export interface RemotePlant {
   passport_token: string | null;
   is_public: boolean;
   published_at: string | null;
+  cover_photo_uuid?: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -719,12 +736,12 @@ export async function applyRemotePlant(db: SQLiteDatabase, r: RemotePlant): Prom
       `INSERT INTO plants (
          uuid, nickname, species, location, status, acquired_at, acquired_from, notes,
          water_every_days, fertilize_every_days, repot_every_days, photo_every_days,
-         mother_plant_id, propagated_at, passport_token, published_at, created_at, updated_at, dirty
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, 0)`,
+         mother_plant_id, propagated_at, passport_token, published_at, cover_photo_uuid, created_at, updated_at, dirty
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, 0)`,
       [
         r.id, r.nickname, r.species, r.location, r.status, r.acquired_at, r.acquired_from, r.notes,
         r.water_every_days, r.fertilize_every_days, r.repot_every_days, r.photo_every_days,
-        r.propagated_at, token, publishedAt, r.created_at, r.updated_at,
+        r.propagated_at, token, publishedAt, r.cover_photo_uuid ?? null, r.created_at, r.updated_at,
       ],
     );
     return "inserted";
@@ -734,12 +751,12 @@ export async function applyRemotePlant(db: SQLiteDatabase, r: RemotePlant): Prom
     `UPDATE plants SET
        nickname = ?, species = ?, location = ?, status = ?, acquired_at = ?, acquired_from = ?, notes = ?,
        water_every_days = ?, fertilize_every_days = ?, repot_every_days = ?, photo_every_days = ?,
-       propagated_at = ?, passport_token = ?, published_at = ?, updated_at = ?, dirty = 0
+       propagated_at = ?, passport_token = ?, published_at = ?, cover_photo_uuid = ?, updated_at = ?, dirty = 0
      WHERE id = ?`,
     [
       r.nickname, r.species, r.location, r.status, r.acquired_at, r.acquired_from, r.notes,
       r.water_every_days, r.fertilize_every_days, r.repot_every_days, r.photo_every_days,
-      r.propagated_at, token, publishedAt, r.updated_at, local.id,
+      r.propagated_at, token, publishedAt, r.cover_photo_uuid ?? null, r.updated_at, local.id,
     ],
   );
   return "updated";
