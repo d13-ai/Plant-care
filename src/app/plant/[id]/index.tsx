@@ -23,6 +23,7 @@ import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
 import { analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
 import { CareGuide } from "@/components/care-guide";
+import { PhotoTips } from "@/components/photo-tips";
 import { getCareCard } from "@/lib/care-card";
 import { buildPlantIcs, saveIcs, slugify, tasksFromStatuses } from "@/lib/calendar";
 import { okToLog } from "@/lib/care-log";
@@ -454,6 +455,7 @@ export default function PlantDetail() {
             />
           ) : null}
         </Row>
+        <PhotoTips />
         {checkError ? (
           <Body small style={{ color: t.critical.fg } as never}>
             {checkError}

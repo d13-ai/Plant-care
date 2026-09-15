@@ -10,6 +10,7 @@ import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "
 import { analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
 import { clearDraft, loadDraft, saveDraftSoon } from "@/lib/draft";
 import { Calendar } from "@/components/calendar";
+import { PhotoTips } from "@/components/photo-tips";
 import { parseDate } from "@/lib/dates";
 import { capturePhoto } from "@/lib/photos";
 import { supabaseConfigured } from "@/lib/supabase";
@@ -160,6 +161,7 @@ export default function NewPlant() {
               {aiError}
             </Body>
           ) : null}
+          {!verdict ? <PhotoTips open={!photoUri} /> : null}
           {verdict ? (
             <View style={{ gap: space.sm }}>
               {!verdict.is_plant ? (
