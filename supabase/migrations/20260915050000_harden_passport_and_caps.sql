@@ -53,13 +53,10 @@ create constraint trigger plants_mother_same_keeper
   when (new.mother_plant_id is not null)
   execute function public.plants_mother_same_keeper();
 
--- Any link that crossed keepers before the trigger existed is either the bug
--- or the exploit; either way it is not lineage. Only those rows are touched.
-update public.plants c
-   set mother_plant_id = null
-  from public.plants m
- where c.mother_plant_id = m.id
-   and c.keeper_id <> m.keeper_id;
+-- Links that crossed keepers before the trigger existed are cleaned up in
+-- 20260915070000_clear_cross_keeper_lineage.sql. That one rewrites live rows,
+-- so it is kept apart from this file and applied deliberately, after looking
+-- at how many rows it matches. The trigger above stops new ones either way.
 
 -- 3 and 4 ------------------------------------------------------------------
 -- The whole public surface, stated positively: every field here is one a
