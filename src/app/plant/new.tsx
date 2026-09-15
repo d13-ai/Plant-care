@@ -5,8 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SpeciesField } from "@/components/species-field";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
-import { createPlant, listPlants, type Plant } from "@/db";
+import { createPlant, listPlants, logCare, type Plant } from "@/db";
 import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "@/domain/species";
+import { scanSummary } from "@/domain/scan";
 import { analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
 import { clearDraft, loadDraft, saveDraftSoon } from "@/lib/draft";
 import { Calendar } from "@/components/calendar";
@@ -124,6 +125,8 @@ export default function NewPlant() {
       fertilizeEveryDays: entry?.fertilizeEveryDays,
       repotEveryDays: entry?.repotEveryDays,
     });
+    // The scan's health read goes into the record, not just the species name.
+    if (verdict?.is_plant) await logCare(db, id, "AI_CHECK", { notes: scanSummary(verdict) });
     await clearDraft();
     router.replace({ pathname: "/plant/[id]", params: { id: String(id) } });
   };

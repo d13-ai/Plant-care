@@ -33,7 +33,8 @@ publish; adding the email attaches it to that same account.
   resolve it, and the fix goes on the record as a treatment
 - Photo timeline
 - Log a propagation → a new plant whose record links back to this one
-- Full per-plant history
+- Full per-plant history — every AI photo check is written into it, so the
+  findings sync and stay with the plant
 - **Publish / update / unpublish a tag**, share the link from the app
 - **Sign in** (Google, or an emailed code) and the greenhouse backs up and syncs across phones
 

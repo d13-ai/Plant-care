@@ -17,7 +17,8 @@ export type CareType =
   | "NOTE"
   | "ACQUIRED"
   | "PROPAGATED"
-  | "TRANSFERRED";
+  | "TRANSFERRED"
+  | "AI_CHECK";
 
 export const CARE_EVENT_LABELS: Record<CareType, string> = {
   WATER: "Watered",
@@ -31,6 +32,7 @@ export const CARE_EVENT_LABELS: Record<CareType, string> = {
   ACQUIRED: "Brought home",
   PROPAGATED: "Propagated",
   TRANSFERRED: "Changed keeper",
+  AI_CHECK: "AI check",
 };
 
 /** Care types a keeper can log by hand, in the order the UI offers them. */

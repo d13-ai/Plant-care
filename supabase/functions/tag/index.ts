@@ -29,6 +29,7 @@ const LABELS: Record<string, string> = {
   WATER: "Watered", FERTILIZE: "Fertilized", REPOT: "Repotted", PRUNE: "Pruned",
   PHOTO: "Photo taken", ISSUE: "Issue reported", TREATMENT: "Treatment applied",
   NOTE: "Note", ACQUIRED: "Acquired", PROPAGATED: "Propagated", TRANSFERRED: "Changed keeper",
+  AI_CHECK: "AI check",
 };
 
 const esc = (s: unknown) =>
@@ -61,7 +62,7 @@ function render(p: Tag) {
   const last = (type: string) => events.find((e) => e.type === type)?.occurred_at ?? null;
   const count = (type: string) => events.filter((e) => e.type === type).length;
   const open = events.filter((e) => e.type === "ISSUE" && !e.resolved_at).length;
-  const health = events.filter((e) => ["ISSUE", "TREATMENT", "REPOT", "PRUNE", "PROPAGATED", "TRANSFERRED"].includes(e.type));
+  const health = events.filter((e) => ["ISSUE", "TREATMENT", "REPOT", "PRUNE", "PROPAGATED", "TRANSFERRED", "AI_CHECK"].includes(e.type));
   const hero = photos[0];
   const link = (t: string | null, label: string) => (t ? `<a href="?t=${esc(t)}">${esc(label)}</a>` : esc(label));
 

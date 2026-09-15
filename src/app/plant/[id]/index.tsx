@@ -21,6 +21,7 @@ import {
 import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
+import { scanSummary } from "@/domain/scan";
 import { analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
 import { CareGuide } from "@/components/care-guide";
 import { PhotoTips } from "@/components/photo-tips";
@@ -184,6 +185,11 @@ export default function PlantDetail() {
       const answer = await analyzePhoto(uri, { mode: "health", speciesHint });
       setCheckup(answer.verdict);
       setCheckNote(describeCost(answer));
+      // A fresh read goes into the history; a remembered one is already there.
+      if (!answer.cached && answer.verdict.is_plant) {
+        await logCare(db, plantId, "AI_CHECK", { notes: scanSummary(answer.verdict) });
+        refresh();
+      }
     } catch (err) {
       setCheckError(err instanceof Error ? err.message : String(err));
     } finally {
