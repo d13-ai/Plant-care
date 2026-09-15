@@ -28,7 +28,7 @@ export const CARE_EVENT_LABELS: Record<CareType, string> = {
   ISSUE: "Issue reported",
   TREATMENT: "Treatment applied",
   NOTE: "Note",
-  ACQUIRED: "Added to greenhouse",
+  ACQUIRED: "Brought home",
   PROPAGATED: "Propagated",
   TRANSFERRED: "Changed keeper",
 };
