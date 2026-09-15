@@ -10,6 +10,7 @@ import { addPhoto, createPlant, listPlants, logCare, type Plant } from "@/db";
 import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "@/domain/species";
 import { scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
+import { confirm } from "@/lib/confirm";
 import { clearDraft, loadDraft, saveDraftSoon } from "@/lib/draft";
 import { Calendar } from "@/components/calendar";
 import { PhotoTips } from "@/components/photo-tips";
@@ -75,6 +76,12 @@ export default function NewPlant() {
   }, [photos, nickname, species, picked, location, acquiredFrom, acquiredAt, motherId, verdict]);
 
   const startOver = async () => {
+    const ok = await confirm(
+      "Start over?",
+      "The photos, the AI's answer and everything typed here will be cleared. A scan of the same photos is remembered, so re-adding them costs nothing.",
+      { confirmText: "Start over", destructive: true },
+    );
+    if (!ok) return;
     await clearDraft();
     setPhotos([]); setNickname(""); setSpecies(""); setPicked(null); setLocation("");
     setAcquiredFrom(""); setAcquiredAt(""); setMotherId(""); setVerdict(null); setAiError(null); setChosen(null);
