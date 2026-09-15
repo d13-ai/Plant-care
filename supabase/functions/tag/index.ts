@@ -39,23 +39,35 @@ const day = (iso: string | null) =>
 const photoUrl = (path: string) => `${SUPABASE_URL}/storage/v1/object/public/plant-photos/${path}`;
 
 function page(title: string, body: string, status = 200) {
+  // The PlantParlour look: aubergine page, one cream card with the double
+  // gold rule, Lora for titles and small capitals, Source Sans 3 for text.
   return new Response(
     `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#2E1633">
 <title>${esc(title)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
-:root{color-scheme:light dark;--bg:#f6f7f4;--card:#fff;--text:#1b1f1a;--muted:#6b7069;--line:#e3e6e0;--green:#2f6b3a;--red-bg:#fbe9e7;--red:#8e1f16;--ok-bg:#e3f3e8;--ok:#1e6b3a}
-@media(prefers-color-scheme:dark){:root{--bg:#101311;--card:#1a1f1b;--text:#eef1ec;--muted:#9ba39a;--line:#2a302b;--green:#7bc48a;--red-bg:#3a1b18;--red:#f2a49b;--ok-bg:#173225;--ok:#8fd6a3}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:16px}
-main{max-width:640px;margin:0 auto;display:grid;gap:14px}h1{font-size:26px;margin:0 0 2px}h2{font-size:16px;margin:0 0 8px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}.muted{color:var(--muted)}small,.small{font-size:13px}
-.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--line);margin-right:6px}.badge.ok{background:var(--ok-bg);color:var(--ok)}.badge.bad{background:var(--red-bg);color:var(--red)}
+:root{--bg:#2E1633;--card:#F3ECDD;--text:#2E1633;--muted:#6B5A6B;--label:#1F3D2B;--gold:#C9A24B;--gold-deep:#7A5A12;--gold-light:#E6C46B;--plum:#4B2142;--hair:rgba(201,162,75,.6);--hair2:rgba(201,162,75,.35);--ok-bg:#E3EFE6;--ok:#1F3D2B;--bad-bg:#F0DCE2;--bad:#7A2141;--neu-bg:#EDE3D3;--neu:#4B2142}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 'Source Sans 3','Segoe UI',system-ui,sans-serif;padding:20px 16px;-webkit-font-smoothing:antialiased}
+main{max-width:640px;margin:0 auto;background:var(--card);border:1.5px solid var(--gold);border-radius:6px;box-shadow:inset 0 0 0 4px var(--card),inset 0 0 0 5px var(--hair);padding:22px 18px;display:grid;gap:16px}
+h1{font-family:Lora,Georgia,serif;font-size:30px;line-height:34px;font-weight:600;margin:0 0 2px}
+.sub{font-family:Lora,Georgia,serif;font-style:italic;font-size:15px;color:var(--muted)}
+.caps{font-family:Lora,Georgia,serif;font-size:12px;line-height:16px;letter-spacing:1.6px;text-transform:uppercase;font-weight:700;color:var(--label)}
+.top{display:flex;align-items:center;justify-content:space-between}.brand{font-family:Lora,Georgia,serif;font-style:italic;font-size:13px;color:var(--muted)}
+section{display:grid;gap:8px}h2{margin:0}.muted{color:var(--muted)}small,.small{font-size:13px}p{margin:0}
+.badges{display:flex;flex-wrap:wrap;gap:6px}.badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;line-height:15px;font-weight:700;background:var(--neu-bg);color:var(--neu)}.badge.ok{background:var(--ok-bg);color:var(--ok)}.badge.bad{background:var(--bad-bg);color:var(--bad)}
 .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
-table{width:100%;border-collapse:collapse}td{padding:6px 0;border-top:1px solid var(--line);vertical-align:top}td:first-child{color:var(--muted);white-space:nowrap;width:110px;padding-right:12px}
-a{color:var(--green)}.hero{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;display:block}
+table{width:100%;border-collapse:collapse}td{padding:7px 0;border-top:1px solid var(--hair2);vertical-align:top;font-size:14px}tr:last-child td{border-bottom:1px solid var(--hair2)}td:first-child{color:var(--muted);white-space:nowrap;width:92px;padding-right:12px}
+a{color:var(--gold-deep);font-weight:600}.hero{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;display:block}
+ul{margin:0;padding-left:18px}
+.foot{background-color:var(--plum);background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.045) 0 2px,transparent 2px 7px);padding:12px 14px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:Lora,Georgia,serif;font-style:italic;font-size:13px;line-height:17px;color:var(--gold-light)}
 </style></head><body><main>${body}</main></body></html>`,
     { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=60" } },
   );
 }
+
+const LEAF = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E6C46B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21C7 21 4 17 4 12 4 8 8 4 13 3c4-1 7 0 7 0s-1 4-2 9c-1 5-3 9-6 9z"></path><path d="M12 21c1-6 3-10 7-16"></path></svg>`;
 
 function render(p: Tag) {
   const { plant, keeper, mother, cuttings, events, photos } = p;
@@ -67,40 +79,41 @@ function render(p: Tag) {
   const link = (t: string | null, label: string) => (t ? `<a href="?t=${esc(t)}">${esc(label)}</a>` : esc(label));
 
   return `
-<header><h1>${esc(plant.nickname)}</h1><div class="muted">${esc(plant.species || "Species not listed")}</div></header>
+<div class="top"><div class="caps">Plant tag</div><div class="brand">PlantParlour</div></div>
+<header><h1>${esc(plant.nickname)}</h1><div class="sub">${esc(plant.species || "Species not listed")}</div></header>
 ${hero ? `<img class="hero" src="${esc(photoUrl(hero.path))}" alt="${esc(plant.nickname)}">` : ""}
-<div>
+<div class="badges">
   <span class="badge ${plant.status === "ACTIVE" ? "ok" : ""}">${esc(plant.status.toLowerCase())}</span>
   <span class="badge ${open ? "bad" : "ok"}">${open ? `${open} open issue${open === 1 ? "" : "s"}` : "No open issues"}</span>
   <span class="badge">kept by ${esc(keeper?.display_name ?? "A keeper")} since ${day(plant.acquired_at)}</span>
 </div>
-<section class="card"><h2>Care record</h2><table>
+<section><h2 class="caps">Care record</h2><table>
   <tr><td>Water</td><td>last ${day(last("WATER"))} · ${count("WATER")} logged</td></tr>
   <tr><td>Fertilize</td><td>last ${day(last("FERTILIZE"))} · ${count("FERTILIZE")} logged</td></tr>
   <tr><td>Repot</td><td>last ${day(last("REPOT"))} · ${count("REPOT")} logged</td></tr>
   <tr><td>Photos</td><td>${photos.length} on record${photos[0] ? `, latest ${day(photos[0].taken_at)}` : ""}</td></tr>
 </table>${plant.acquired_from ? `<p class="small muted">Origin: ${esc(plant.acquired_from)}</p>` : ""}</section>
-<section class="card"><h2>Lineage</h2>
+<section><h2 class="caps">Lineage</h2>
   ${mother ? `<p>Cutting from ${link(mother.passport_token, mother.nickname)}${plant.propagated_at ? ` · ${day(plant.propagated_at)}` : ""}</p>` : `<p class="muted">Original plant — no mother recorded.</p>`}
   ${cuttings.length ? `<p class="small"><strong>Cuttings taken</strong></p><ul class="small">${cuttings.map((c) => `<li>${link(c.passport_token, c.nickname)} · ${day(c.propagated_at)}</li>`).join("")}</ul>` : ""}
 </section>
-<section class="card"><h2>Health &amp; handling</h2>
+<section><h2 class="caps">Health &amp; handling</h2>
   ${health.length ? `<table>${health.map((e) => `<tr><td>${day(e.occurred_at)}</td><td>${esc(LABELS[e.type] ?? e.type)}${e.type === "ISSUE" ? (e.resolved_at ? ` · resolved ${day(e.resolved_at)}` : " · <strong>unresolved</strong>") : ""}${e.notes ? `<br><span class="small muted">${esc(e.notes)}</span>` : ""}</td></tr>`).join("")}</table>` : `<p class="muted">Nothing reported — no issues, treatments or repottings on record.</p>`}
 </section>
-${photos.length > 1 ? `<section class="card"><h2>Photos over time</h2><div class="photos">${photos.map((ph) => `<figure style="margin:0"><img src="${esc(photoUrl(ph.path))}" alt="" loading="lazy"><figcaption class="small muted">${day(ph.taken_at)}${ph.caption ? ` · ${esc(ph.caption)}` : ""}</figcaption></figure>`).join("")}</div></section>` : ""}
-${plant.notes ? `<section class="card"><h2>Notes</h2><p>${esc(plant.notes)}</p></section>` : ""}
-<p class="small muted">Plant Tag · self-reported by the plant's keeper · published ${day(plant.published_at)}</p>`;
+${photos.length > 1 ? `<section><h2 class="caps">Photos over time</h2><div class="photos">${photos.map((ph) => `<figure style="margin:0"><img src="${esc(photoUrl(ph.path))}" alt="" loading="lazy"><figcaption class="small muted">${day(ph.taken_at)}${ph.caption ? ` · ${esc(ph.caption)}` : ""}</figcaption></figure>`).join("")}</div></section>` : ""}
+${plant.notes ? `<section><h2 class="caps">Notes</h2><p>${esc(plant.notes)}</p></section>` : ""}
+<div class="foot"><span>Self-reported by the plant's keeper · published ${day(plant.published_at)}</span>${LEAF}</div>`;
 }
 
 Deno.serve(async (req: Request) => {
   if (req.method !== "GET") return new Response("Method not allowed", { status: 405 });
   const token = new URL(req.url).searchParams.get("t")?.trim() ?? "";
-  if (!/^[a-f0-9]{32}$/.test(token)) return page("Plant Tag", `<section class="card"><h2>No tag here</h2><p class="muted">This link is missing its token.</p></section>`, 404);
+  if (!/^[a-f0-9]{32}$/.test(token)) return page("Plant Tag", `<section><h2 class="caps">No tag here</h2><p class="muted">This link is missing its token.</p></section>`, 404);
 
   const supabase = createClient(SUPABASE_URL, ANON_KEY);
   const { data, error } = await supabase.rpc("passport", { token });
-  if (error) return page("Plant Tag", `<section class="card"><h2>Something went wrong</h2><p class="muted">${esc(error.message)}</p></section>`, 500);
-  if (!data) return page("Plant Tag", `<section class="card"><h2>No tag here</h2><p class="muted">This plant isn't published, or the link is wrong.</p></section>`, 404);
+  if (error) return page("Plant Tag", `<section><h2 class="caps">Something went wrong</h2><p class="muted">${esc(error.message)}</p></section>`, 500);
+  if (!data) return page("Plant Tag", `<section><h2 class="caps">No tag here</h2><p class="muted">This plant isn't published, or the link is wrong.</p></section>`, 404);
 
   const tag = data as Tag;
   return page(`${tag.plant.nickname} · Plant Tag`, render(tag));

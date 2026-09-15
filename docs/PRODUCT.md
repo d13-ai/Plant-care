@@ -116,6 +116,25 @@ Later, in no particular order: push notifications for due care (needs the
 native app), light/humidity notes per location, marketplace listings backed
 by tags, export/import, a private photo bucket with signed URLs.
 
+## Housekeeping from the brand round (Sep 2026)
+
+- **Tag page in the brand look** — done: aubergine page, cream card with the
+  double gold rule, Lora headings, the plum footer band. Same markup, so the
+  e2e still reads it.
+- **Data sources — decision for Amanda.** `docs/DATA_SOURCES.md` compares
+  Perenual with the catalogue + cached AI guides on ten species and
+  recommends: keep the catalogue and guides as the care source; add GBIF's
+  free name-matching for species outside the catalogue; use the ASPCA list
+  as the pet-safety reference; skip USDA PLANTS; revisit Perenual only for
+  structured attributes (hardiness, propagation) on a paid tier. *Open:
+  Amanda to confirm or push back; nothing in the app depends on it yet.*
+- **Emailed sign-in codes** need two dashboard settings only the project
+  owner can make (see README → Accounts and sync): the Magic Link and
+  Change Email templates must contain `{{ .Token }}`, and SMTP must point
+  at Resend (the sending-only key for bondcreativestudios.com is already
+  created). Until then Google sign-in is the working path and the email
+  path hits Supabase's few-per-hour limit.
+
 ## What already exists
 
 A first cut of all of the above was prototyped inside a Shopify app
