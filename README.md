@@ -136,16 +136,49 @@ would close that; it's a later change.
    domain needs its own `/**` entry here too, added alongside rather than
    in place of this one.
 
-**One-time setup for the email code (the fallback):**
+**One-time setup for the email code.** Two settings in the Supabase
+dashboard, both only the project owner can make. Until they are done, Google
+is the only way in.
 
-1. Authentication → Email Templates: the **Magic Link** and **Change Email
-   Address** templates must include the code, `{{ .Token }}` — e.g.
-   `<p>Your PlantParlour code: <strong>{{ .Token }}</strong></p>`. The app
-   verifies the code; it never uses the link.
-2. Authentication → SMTP settings: point it at a real mail provider.
-   Supabase's built-in mailer sends only a few emails an hour, project-wide,
-   which is fine for one tester and not for anyone else. The app reports
-   the limit plainly when it's hit.
+*1. The templates must carry the code.* Authentication → Emails → Templates.
+Edit **Magic Link** and **Change Email Address** so each body contains
+`{{ .Token }}`:
+
+```html
+<h2>Your PlantParlour code</h2>
+<p style="font-size:28px;letter-spacing:4px"><strong>{{ .Token }}</strong></p>
+<p>Type it into the app. It's good for an hour.</p>
+```
+
+Without `{{ .Token }}` Supabase sends only a link, and a link opened from a
+mail app lands in a different browser than the one that asked for it, where
+it fails. The app verifies the code and never uses the link. Both templates
+matter: "Magic Link" is a sign-in, "Change Email Address" is an older
+anonymous session attaching an email.
+
+*2. Mail has to go out through Resend.* Authentication → Emails → SMTP
+Settings → enable custom SMTP:
+
+| Field | Value |
+| --- | --- |
+| Host | `smtp.resend.com` |
+| Port | `465` |
+| Username | `resend` |
+| Password | a Resend API key with send permission |
+| Sender email | an address at `bondcreativestudios.com` (verified in Resend) |
+| Sender name | `PlantParlour` |
+
+The key is shown once when it's created, so make a new one in Resend →
+API Keys if the old one wasn't saved. Supabase's built-in mailer, which is
+what runs until this is set, sends only a few messages an hour across the
+whole project — fine for one tester, not for keepers. The app says so plainly
+when it hits the limit.
+
+Afterwards, Authentication → Rate Limits governs how many sign-in emails an
+hour the project will send; the default stays low even once custom SMTP is
+on. Resend's own dashboard (or `list-emails`) shows whether Supabase actually
+handed a message over, which is the quickest way to tell a template problem
+from a delivery one.
 
 ## Species catalogue
 
