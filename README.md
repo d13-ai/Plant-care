@@ -100,15 +100,19 @@ would close that; it's a later change.
    app name PlantParlour, your support email; add yourself as a test user
    (or publish the app so anyone can sign in).
 2. *Credentials* → Create credentials → OAuth client ID → Web application.
-   Authorized JavaScript origin: `https://plant-care-flame.vercel.app`.
-   Authorized redirect URI:
-   `https://ixagjvntbgyqemxxinqe.supabase.co/auth/v1/callback`. Copy the
+   Authorized JavaScript origin: `https://plant-care-flame.vercel.app`, plus
+   any custom domain — list both, don't swap one for the other (see
+   *Domain* below). Authorized redirect URI:
+   `https://ixagjvntbgyqemxxinqe.supabase.co/auth/v1/callback` — that one is
+   the Supabase callback and doesn't change with the domain. Copy the
    Client ID (`….apps.googleusercontent.com`) and the Client Secret.
 3. Supabase → Authentication → Providers → Google: enable; paste the Client
    ID into *Client IDs* and the secret into *Client Secret*; save.
 4. Supabase → Authentication → URL Configuration: Site URL
    `https://plant-care-flame.vercel.app`; add
-   `https://plant-care-flame.vercel.app/**` to Redirect URLs.
+   `https://plant-care-flame.vercel.app/**` to Redirect URLs. A custom
+   domain needs its own `/**` entry here too, added alongside rather than
+   in place of this one.
 
 **One-time setup for the email code (the fallback):**
 
@@ -201,7 +205,8 @@ npm run web        # runs in the browser too
 
 ## Hand it to testers
 
-**Web:** https://plant-care-flame.vercel.app — the whole app in a browser,
+**Web:** https://plant-care-flame.vercel.app — the permanent address every
+published tag points at, and the whole app in a browser,
 data kept on that device. On a phone, "Take photo" opens the camera and
 "Add to Home Screen" gives it an icon. Photos are stored inside the app's
 database (shrunk to 1600px), so they survive reloads. Hosted on Vercel,
@@ -213,6 +218,42 @@ serves a working app.
 from anywhere. Only needed for what a browser can't do — push notifications,
 when they land. Leave it running while people are testing; when it stops, so
 does the app on their phones.
+
+## Domain
+
+The app answers on its Vercel address, and `EXPO_PUBLIC_SITE_URL` points it
+at a custom one. Two facts shape the whole switch:
+
+- **A published tag link is permanent.** `tagUrl()` bakes the host into the
+  URL at publish time, and those links are shared and printed onto plant
+  tags. Nothing can rewrite them, so **the Vercel address has to keep
+  answering forever** — add a domain, never replace one.
+- **`EXPO_PUBLIC_SITE_URL` is inlined at build time.** Setting it in Vercel
+  fixes the web app on the next deploy. Phones keep minting links from the
+  value compiled into their build until a new binary ships, so the rollover
+  is gradual, not a cutover.
+
+In order, and safe to stop after any step:
+
+1. Vercel → Settings → Domains → add the domain; create the DNS records it
+   shows you at the registrar; wait for *Valid Configuration* and the
+   certificate.
+2. Confirm it serves: `curl -sI https://<domain>/ | head -1` → `HTTP/2 200`.
+   Both hosts work now and nothing else has changed.
+3. Supabase → Authentication → URL Configuration: **add** `https://<domain>/**`
+   to Redirect URLs, keeping the existing entry.
+4. Google Cloud Console → Credentials → Web client: **add** `https://<domain>`
+   to Authorized JavaScript origins, keeping the existing one.
+5. Vercel → Environment Variables: `EXPO_PUBLIC_SITE_URL=https://<domain>`,
+   then redeploy. New tag links published from the web app now use it.
+6. Supabase → Edge Functions → `tag` → secrets: `SITE_URL=https://<domain>`,
+   so old `/functions/v1/tag?t=…` links forward to the new host.
+7. Supabase → Authentication → URL Configuration: change *Site URL* to the
+   new domain, once step 3 is confirmed working.
+8. For phones: uncomment `EXPO_PUBLIC_SITE_URL` in `.env` and ship a build.
+
+Steps 3 and 4 are adds, not edits: replacing the old values locks out anyone
+mid-session and breaks sign-in from the old host while it is still live.
 
 ## Test it
 

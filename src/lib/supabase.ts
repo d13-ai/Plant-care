@@ -56,7 +56,17 @@ export async function ensureSession(): Promise<Session> {
   return anon.session;
 }
 
-/** Where the web app lives; the tag page is served from there (api/tag.ts). */
+/**
+ * Where the web app lives; the tag page is served from there (api/tag.ts).
+ *
+ * EXPO_PUBLIC_SITE_URL overrides it, and is inlined at build time rather than
+ * read at runtime: setting it only takes effect on the next build, and on a
+ * phone that means a new binary, because tagUrl() runs on the device.
+ *
+ * The fallback stays the Vercel address on purpose. It is what every tag link
+ * and printed QR code already out there points at, none of which can be
+ * rewritten, so that host has to keep answering whatever else is set up.
+ */
 export const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL || "https://plant-care-flame.vercel.app";
 
 /**
