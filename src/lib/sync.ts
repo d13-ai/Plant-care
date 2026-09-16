@@ -247,7 +247,13 @@ async function uploadPhoto(keeperId: string, plantUuid: string, photoUuid: strin
   const response = await fetch(uri);
   const body = await response.arrayBuffer();
   const path = `${keeperId}/${plantUuid}/${photoUuid}.jpg`;
-  const { error } = await supabase.storage.from(BUCKET).upload(path, body, { contentType: "image/jpeg", upsert: true });
+  // A photo's path carries its uuid and a new photo always gets a new uuid, so
+  // the bytes at a path never change: cache it hard. Supabase defaults to
+  // no-cache, which meant a phone re-downloaded the whole greenhouse's photos
+  // — megabytes of them — on every single load.
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, body, { contentType: "image/jpeg", cacheControl: "31536000", upsert: true });
   if (error) throw new Error(`Upload: ${error.message}`);
   return path;
 }
