@@ -439,6 +439,30 @@ on `lower(handle)` so `@Amanda` and `@amanda` can't be two people. `HANDLE` in
 `api/conservatory.ts` and `HANDLE_RULE` in `src/lib/conservatory.ts` are copies for the
 app's benefit, and a test checks they agree with the constraint.
 
+## Calling cards
+
+Following, in the register the rest of this is written in: you leave your card
+at someone's conservatory and it joins your rounds (Account → Your rounds).
+
+**A card grants nothing.** The rounds read exactly the published plants a
+stranger sees at `/@handle` — a private plant is as invisible to someone
+holding your card as to anyone else — so no policy on `plants`, `photos` or
+`care_events` moved to build this. That was the point of the ordering: the one
+sharing feature that existed before had a cross-tenant hole in it, and a
+feature that hands out nothing has nothing to leak.
+
+`calling_cards` is RLS'd to its owner, so the graph of who follows whom isn't
+something the publishable key can walk. Leaving a card needs the other keeper's
+id, which RLS rightly hides, so it goes through `leave_card(handle)` — handles
+are public by design, being in URLs, so resolving one leaks nothing `/@handle`
+doesn't. `rounds()` is an allow-list like `conservatory()`.
+
+Verified against the live project: with no session, `rounds()` is empty and
+`leave_card` is refused; following is not mutual; a card at your own
+conservatory is refused; an unknown handle is refused; and with a follower
+holding a card, every photo the rounds hand back belongs to a published plant
+(`photos_from_private_plants: 0`). The card that needed was deleted afterwards.
+
 ## The welcome page
 
 `/` is the welcome: what PlantParlour is, who made it, and the sign-in. It is

@@ -271,6 +271,19 @@ try {
     await page.getByText("Done", { exact: true }).click();
     await page.getByText("All plants").waitFor({ timeout: 20000 });
   });
+  await step("your rounds is reachable and empty before any card is left", async () => {
+    // The rounds themselves need the server; what's checked offline is that the
+    // screen stands up, says what it's for, and doesn't pretend to have data.
+    await page.route("**/rest/v1/rpc/rounds", (r) =>
+      r.fulfill({ status: 200, contentType: "application/json", body: "[]" }));
+    await page.goto(base + "/rounds");
+    await page.getByText("Your rounds").first().waitFor({ timeout: 20000 });
+    await page.getByText("No cards left yet").waitFor();
+    await page.getByText("Leave a card", { exact: true }).waitFor();
+    await page.getByText("Done", { exact: true }).click();
+    await page.getByText("All plants").waitFor({ timeout: 20000 });
+    await page.unroute("**/rest/v1/rpc/rounds");
+  });
   await step("a second tab says so instead of showing nothing", async () => {
     // The database lives in the browser's origin-private filesystem, which
     // only one tab can hold open. The second used to throw

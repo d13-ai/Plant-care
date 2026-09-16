@@ -210,6 +210,17 @@ export default function AccountScreen() {
         {handleError ? <Body small style={{ color: cardTheme.critical.fg }}>{handleError}</Body> : null}
       </Card>
 
+      <Card>
+        <Heading>Your rounds</Heading>
+        <Body small muted>
+          The conservatories whose calling cards you hold. Leave one at a plant friend's and what
+          they put on show turns up here.
+        </Body>
+        <Row>
+          <Button title="Your rounds" variant="primary" small onPress={() => router.push("/rounds")} />
+        </Row>
+      </Card>
+
       <Body small muted>
         Signing in on another phone with the same email brings this greenhouse over. Changes made on either
         phone reach the other the next time it opens. A photo taken with no signal saves here and uploads on

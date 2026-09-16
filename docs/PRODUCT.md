@@ -106,7 +106,7 @@ tag is one plant, this is the collection — and the first thing about a keeper
 that is public and findable rather than an unlisted link. *Tests: will people
 claim a handle? Do parlour links travel further than tag links?*
 
-**v2c — Calling cards.** next
+**v2c — Calling cards.** ✅ shipped
 Follow a keeper and their conservatory joins your rounds. Deliberately grants
 nothing: following curates whose *public* conservatories you see, so a private plant
 stays invisible to friends exactly as it is to strangers, and none of the RLS
