@@ -174,7 +174,17 @@ link opens in whichever browser the mail app prefers — the body needs
 
 The app has no reset screen yet either way; this is the groundwork for one.
 
-*2. Mail has to go out through Resend.* Authentication → Emails → SMTP
+*2. Mail has to go out through a real SMTP provider.* Not a preference:
+Supabase's own docs say that **without custom SMTP, Auth refuses to deliver to
+any address that isn't a member of the project team** — its built-in sender is
+for trying things out and testing templates against your own inboxes. A reset
+email that silently never arrives is the worst possible failure for the one
+message a locked-out person needs.
+
+Any SMTP provider does (Brevo, Postmark, SES, …). Resend is what's written
+here because it is already most of the way there — `bondcreativestudios.com`
+is verified with sending enabled and a key exists; another provider means
+redoing domain verification for no gain. Authentication → Emails → SMTP
 Settings → enable custom SMTP:
 
 | Field | Value |
