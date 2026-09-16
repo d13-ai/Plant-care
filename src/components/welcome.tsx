@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { LeafIcon } from "@/components/icons";
 import { SignIn } from "@/components/sign-in";
-import { Body, Card, Heading, Row } from "@/components/ui";
+import { Body, Card, Heading, Row, SectionLabel } from "@/components/ui";
 import { font, space, useTheme } from "@/theme";
 
 /**
@@ -28,6 +28,12 @@ const POINTS: { title: string; body: string }[] = [
   },
 ];
 
+/** The one line that invites rather than explains — Lora italic, in plum. */
+function InviteLine({ children }: { children: string }) {
+  const t = useTheme();
+  return <Text style={[styles.invite, { color: t.plum }]}>{children}</Text>;
+}
+
 function Point({ title, body }: { title: string; body: string }) {
   // These sit on the page, not in a card, so the page's gold — the light one.
   const t = useTheme();
@@ -50,11 +56,26 @@ export function Welcome() {
         <LeafIcon size={40} color={t.leaf} />
         <Text style={[styles.wordmark, { color: t.text }]}>PlantParlour</Text>
         <Body muted style={styles.tagline}>Every plant, on the record.</Body>
-        <Body small muted style={styles.byline}>
-          Made by David and Amanda — two plant people who wanted their collection on the record, and
-          everyone else's too.
-        </Body>
       </View>
+
+      <Card>
+        <SectionLabel>Come in</SectionLabel>
+        <Body>
+          We're David and Amanda. Our home filled up with plants the way it happens to people — one
+          Monstera, then a cutting from a friend, then a Ring of Fire we'd been hunting for a year.
+        </Body>
+        <Body>
+          We started keeping notes because we cared how they were doing: when each one was watered,
+          what a spotted leaf turned out to be, who gave us what. A plant you've kept thriving for
+          three years deserves to be remembered properly — and whoever you pass it to deserves to
+          know its whole story.
+        </Body>
+        <Body>
+          That notebook became PlantParlour, and we'd rather share it than keep it. A parlour is the
+          room you bring people into to show them what you love.
+        </Body>
+        <InviteLine>So bring yours in. We'll help you not miss a thing.</InviteLine>
+      </Card>
 
       <View style={styles.points}>
         {POINTS.map((p) => (
@@ -79,7 +100,7 @@ const styles = StyleSheet.create({
   masthead: { alignItems: "center", gap: space.sm },
   wordmark: { fontFamily: font.serifBold, fontSize: 32, textAlign: "center" },
   tagline: { textAlign: "center", maxWidth: 420 },
-  byline: { textAlign: "center", maxWidth: 420 },
+  invite: { fontFamily: font.serifItalic, fontSize: 17, lineHeight: 25, marginTop: space.xs },
   points: { gap: space.lg, paddingHorizontal: space.xs },
   point: { alignItems: "flex-start", gap: space.md },
   dot: { width: 8, height: 8, borderRadius: 4, marginTop: 7 },
