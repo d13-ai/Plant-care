@@ -40,12 +40,18 @@ const day = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—";
 const photoUrl = (path: string) => `${SUPABASE_URL}/storage/v1/object/public/plant-photos/${path}`;
 
-/** The PlantParlour look: aubergine page, one cream card with the double gold rule, Lora and Source Sans 3. */
-export function page(title: string, body: string, status = 200): { status: number; html: string } {
+/**
+ * The PlantParlour look: aubergine page, one cream card with the double gold
+ * rule, Lora and Source Sans 3. `head` is extra markup for the document head
+ * — the welcome page's description and social tags; a tag page has none,
+ * being one keeper's unlisted record rather than something to index.
+ */
+export function page(title: string, body: string, status = 200, head = ""): { status: number; html: string } {
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#2E1633">
 <title>${esc(title)}</title>
 ${status === 200 ? "" : '<meta name="robots" content="noindex">'}
+${head}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>

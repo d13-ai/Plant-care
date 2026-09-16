@@ -1,5 +1,5 @@
-import { Stack, useRouter } from "expo-router";
-import { useCallback, useMemo } from "react";
+import { Redirect, Stack, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DueRing } from "@/components/due-ring";
@@ -11,6 +11,7 @@ import { coverPhoto, deleteEvent, listPlants, logCare, type PlantWithHistory } f
 import { useQuery } from "@/hooks/use-query";
 import { useAccount } from "@/lib/auth";
 import { okToLog } from "@/lib/care-log";
+import { useWelcomeSeen } from "@/lib/welcome";
 import { font, radius, space, useTheme, type Tone } from "@/theme";
 
 export default function Greenhouse() {
@@ -21,6 +22,15 @@ export default function Greenhouse() {
   const { account, loading: accountLoading } = useAccount();
   // Nudge until there's an account to back the greenhouse up to.
   const unbacked = !accountLoading && !(account && !account.anonymous);
+
+  // First launch opens on the welcome screen instead of an empty greenhouse.
+  // A keeper who already has plants — anyone updating from a build without
+  // the screen — is past being welcomed, so note it and leave them here.
+  const { seen: welcomeSeen, markSeen: markWelcomeSeen } = useWelcomeSeen();
+  const firstRun = welcomeSeen === false && data !== null && data.length === 0;
+  useEffect(() => {
+    if (welcomeSeen === false && data !== null && data.length > 0) markWelcomeSeen();
+  }, [welcomeSeen, data, markWelcomeSeen]);
 
   // Plants that want something come first — the reason to open the app.
   const items = useMemo(() => {
@@ -85,6 +95,8 @@ export default function Greenhouse() {
       />
     );
   };
+
+  if (firstRun) return <Redirect href="/start" />;
 
   return (
     <View style={{ flex: 1, paddingTop: insets.top }}>

@@ -58,7 +58,17 @@ const step = async (name, fn) => { await fn(); console.log("✓", name); };
 
 try {
   await page.goto(base + "/");
+  await step("first launch opens on the welcome screen", async () => {
+    // A fresh profile has no welcomeSeen flag, so / redirects to /start.
+    await page.getByText("Every plant, on the record.").waitFor({ timeout: 20000 });
+    await page.getByText(/Scanning, care guides and tags all need an account/).waitFor();
+    await page.getByText("Start without an account").click();
+  });
   await step("empty greenhouse renders", () => page.getByText("Start your parlour").waitFor({ timeout: 20000 }));
+  await step("the welcome screen does not come back", async () => {
+    await page.goto(base + "/");
+    await page.getByText("Start your parlour").waitFor({ timeout: 20000 });
+  });
   await shot("01-empty");
 
   await step("open add-plant", async () => {

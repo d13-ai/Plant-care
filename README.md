@@ -54,6 +54,8 @@ URL and publishable key (safe to commit — RLS gates everything).
   location and cadences on plants, `deleted_at` tombstones, a server-stamped
   `synced_at` as the pull cursor; plants private (`is_public = false`) by
   default
+- `api/welcome.ts` — the public welcome page at `/welcome`; static HTML, no
+  data access, sharing the tag page's shell (see *Welcome pages*)
 - `api/tag.ts` — the public HTML tag page, served by Vercel at `/tag?t=…`
   (Edge Functions rewrite `text/html` to `text/plain`, so it can't live
   there; `supabase/functions/tag` now only redirects old links)
@@ -321,6 +323,37 @@ this one needs `PASSPORT_E2E_EMAIL` / `PASSPORT_E2E_PASSWORD` set to a
 confirmed account (without them it tries a throwaway sign-up, which works
 only when the project doesn't require email confirmation).
 
+## Welcome pages
+
+There are two, for two different arrivals.
+
+**In the app** (`src/app/start.tsx`, route `/start`): the first launch opens
+here instead of on an empty greenhouse. It says what the app is and is
+straight about the split — plants, reminders and the care log need nothing
+but the phone, while scanning, care guides and tags need an account, because
+they run on the server. Two ways out: *Sign in and get everything*, which
+opens the account modal over it and turns the screen into *Enter the parlour*
+on the way back, or *Start without an account*.
+
+The device flag behind it is `src/lib/welcome.ts` (AsyncStorage,
+`welcomeSeen`). The greenhouse redirects here while the flag is unset **and**
+there are no plants yet, so an existing keeper updating from an older build
+never sees it. Unreadable storage counts as seen: being held on a welcome
+screen with the greenhouse unreachable behind it is the worse failure.
+
+**On the web** (`api/welcome.ts`, served at `/welcome`): the link you hand to
+someone who has never opened PlantParlour. Static HTML with no data access
+and no app boot, so it renders on a slow phone long before the Expo bundle
+would; it reuses the tag page's `page()` shell, and carries the description
+and og: tags that a shared link wants. The app keeps `/` — moving it would
+break deep links, the SPA fallback and the Google OAuth origins — so this
+page links *into* the app rather than fronting it.
+
+Like `/tag`, it is exempt from the `Cross-Origin-Embedder-Policy` header in
+`vercel.json`: require-corp blocks the Google Fonts stylesheet these two
+pages load, and neither needs the cross-origin isolation expo-sqlite's wasm
+does.
+
 ## Look
 
 The brand from Amanda's brief, as settled on the design canvas: an
@@ -337,6 +370,7 @@ every colour pair stays at or above WCAG AA.
 ```
 src/app/            Expo Router screens
   index.tsx           the greenhouse (plant list, sorted by what needs attention)
+  start.tsx           first-run welcome, before the greenhouse has anything in it
   plant/new.tsx       add a plant
   plant/[id]/         plant detail (care, photos, lineage, history) and edit
   account.tsx         sign in with an email code; sync status

@@ -121,6 +121,7 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ title: "The Parlour", headerShown: false }} />
+        <Stack.Screen name="start" options={{ title: "Welcome", headerShown: false }} />
         <Stack.Screen name="plant/new" options={{ title: "Add plant", presentation: "modal" }} />
         <Stack.Screen name="plant/[id]/index" options={{ title: "" }} />
         <Stack.Screen name="plant/[id]/edit" options={{ title: "Edit plant", presentation: "modal" }} />
