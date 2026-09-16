@@ -37,7 +37,10 @@ const base = `http://localhost:${server.address().port}`;
 // --- drive it
 const errors = [];
 const browser = await chromium.launch(process.env.CHROME ? { executablePath: process.env.CHROME } : {});
-const page = await browser.newPage({ viewport: { width: 420, height: 860 } });
+// An explicit context, so a second tab can be opened on the same origin --
+// which is what the database-locking check at the end needs.
+const context = await browser.newContext({ viewport: { width: 420, height: 860 } });
+const page = await context.newPage();
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
 page.on("console", (m) => {
   if (m.type() !== "error") return;
@@ -213,6 +216,21 @@ try {
     await page.getByText("All plants").waitFor({ timeout: 20000 });
     await page.getByText("Big Monstera").waitFor();
     if (await page.getByText("Cutting #1").count()) throw new Error("removed plant came back after reload");
+  });
+  await step("a second tab says so instead of showing nothing", async () => {
+    // The database lives in the browser's origin-private filesystem, which
+    // only one tab can hold open. The second used to throw
+    // NoModificationAllowedError out of SQLiteProvider, render nothing, and
+    // sit blank until the +html.tsx watchdog reloaded it twenty seconds on.
+    // Same context as `page`, so it is genuinely the same origin and file.
+    const second = await context.newPage();
+    try {
+      await second.goto(base, { waitUntil: "domcontentloaded" });
+      // Either it got the file (the first tab yielded it) or it says why not.
+      await second.getByText("Already open in another tab").waitFor({ timeout: 15000 });
+    } finally {
+      await second.close();
+    }
   });
 } finally {
   await browser.close();

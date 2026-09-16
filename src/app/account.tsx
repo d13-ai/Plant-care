@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -23,6 +23,7 @@ function ago(iso: string | null): string {
 
 export default function AccountScreen() {
   const t = useTheme();
+  const router = useRouter();
   const db = useSQLiteContext();
   const { account, loading } = useAccount();
   const [email, setEmail] = useState("");
@@ -195,6 +196,17 @@ export default function AccountScreen() {
           phone reach the other the next time it opens.
         </Body>
       ) : null}
+
+      {/* Landing here from a sign-in redirect is a fresh page load, so there is
+          no history to go back to and the modal's own dismiss never appears.
+          Without this the screen is a dead end. */}
+      <Row>
+        <Button
+          title="Go to the parlour"
+          variant="primary"
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+        />
+      </Row>
     </ScrollView>
   );
 }
