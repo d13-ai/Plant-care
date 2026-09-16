@@ -54,6 +54,8 @@ URL and publishable key (safe to commit — RLS gates everything).
   location and cadences on plants, `deleted_at` tombstones, a server-stamped
   `synced_at` as the pull cursor; plants private (`is_public = false`) by
   default
+- `api/welcome.ts` — the public welcome page at `/welcome`; static HTML, no
+  data access, sharing the tag page's shell (see *The welcome page*)
 - `api/tag.ts` — the public HTML tag page, served by Vercel at `/tag?t=…`
   (Edge Functions rewrite `text/html` to `text/plain`, so it can't live
   there; `supabase/functions/tag` now only redirects old links)
@@ -364,6 +366,26 @@ fresh phone ends up identical to A. Sync needs an account with an email, so
 this one needs `PASSPORT_E2E_EMAIL` / `PASSPORT_E2E_PASSWORD` set to a
 confirmed account (without them it tries a throwaway sign-up, which works
 only when the project doesn't require email confirmation).
+
+## The welcome page
+
+`api/welcome.ts`, served at `/welcome`: the link you hand to someone who has
+never opened PlantParlour. Static HTML with no data access and no app boot, so
+it renders on a slow phone long before the Expo bundle and the SQLite wasm
+would, and it carries the description, canonical link and og: tags a shared
+link wants. The app's own sign-in screen is inside the bundle and can do
+neither — which is why this page exists alongside it rather than instead of
+it. It reuses the tag page's `page()` shell, which takes optional head markup
+now, so the two public pages are visibly the same product.
+
+Every button on it goes to `/`. That is the sign-in screen for anyone without
+an account, and signing in and signing up are the same button, so there is
+nothing else to send them to. The app keeps `/` — moving it would break deep
+links, the SPA fallback and the Google OAuth origins.
+
+Like `/tag`, it is exempt from the `Cross-Origin-Embedder-Policy` header in
+`vercel.json`: require-corp blocks the Google Fonts stylesheet these two pages
+load, and neither needs the cross-origin isolation expo-sqlite's wasm does.
 
 ## Look
 
