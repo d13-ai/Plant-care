@@ -75,6 +75,7 @@ export function SignIn({ heading }: { heading?: string }) {
         value={password}
         onChangeText={setPassword}
         placeholder="At least 8 characters"
+        hint="A capital letter, a number and a symbol too."
         secureTextEntry
         autoCapitalize="none"
         autoCorrect={false}

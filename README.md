@@ -146,13 +146,26 @@ would close that; it's a later change.
    domain needs its own `/**` entry here too, added alongside rather than
    in place of this one.
 
-**Setup owed first: new accounts are switched off.** Authentication → Sign In
-/ Providers → Email → **Allow new users to sign up**. A live `signUp` against
-this project answers `Signups not allowed for this instance`, which is
-project-wide, not per-provider — so *nobody new can join by any method*, and
-the emailed-code path could never have created an account either, even with
-`{{ .Token }}` in place. Existing keepers are unaffected. The app says so
-plainly rather than blaming the person's typing.
+**Signups are on** (Authentication → Sign In / Providers → Email → *Allow new
+users to sign up*). They were off until Sep 2026, which meant nobody new could
+join by any method — a live `signUp` answered `Signups not allowed for this
+instance`, project-wide rather than per-provider, so the emailed-code path
+could never have made an account either.
+
+**What blocks a new account now: "Confirm email".** With it on, `signUp` sends
+a confirmation before returning a session — and the built-in mailer both
+rate-limits to a few an hour and refuses any address outside the project team,
+so for a real keeper that email never arrives. Either turn **Confirm email**
+off (Authentication → Sign In / Providers → Email), which is how the existing
+`e2e-sync@plantparlour.app` accounts were created and what the app expects, or
+set up SMTP below and leave it on. Signing *in* is unaffected either way.
+
+**The password policy** is set to require a lowercase letter, a capital, a
+number and a symbol, minimum 6. The field's hint asks for all of it, but
+`signInOrUp` only checks length — the policy is a dashboard setting and a copy
+of it hardcoded in the app would start rejecting passwords the server accepts.
+Supabase's refusal, which lists every acceptable character including the
+punctuation, is rewritten into one readable sentence.
 
 **Setup still owed: resetting a forgotten password.** Nothing else needs a
 mail server now — signing up and signing in don't send email at all (the

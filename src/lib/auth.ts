@@ -55,6 +55,11 @@ const MIN_PASSWORD = 8;
 export async function signInOrUp(email: string, password: string): Promise<EntryMode> {
   const address = email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) throw new Error("That doesn't look like an email address.");
+  // Length only, deliberately. The project also demands a capital, a number and
+  // a symbol; that is a dashboard setting which can be relaxed, and a rule
+  // hardcoded here would start rejecting passwords the server would accept.
+  // The hint on the field asks for all of it, and friendly() handles the
+  // refusal if the policy and the hint ever drift apart.
   if (password.length < MIN_PASSWORD) throw new Error(`Use at least ${MIN_PASSWORD} characters.`);
 
   const { error: signInError } = await supabase.auth.signInWithPassword({ email: address, password });
@@ -75,14 +80,26 @@ export async function signInOrUp(email: string, password: string): Promise<Entry
   return "signup";
 }
 
+/**
+ * Supabase's messages are written for whoever configured the project, not for
+ * the person typing. Three of them reach a keeper and none of them reads well.
+ */
 function friendly(message: string): string {
-  // "Signups not allowed for this instance" is the project's own switch
-  // (Authentication → Sign In / Providers → Allow new users to sign up), not
-  // anything the person typed. Nothing they do to this form will get past it.
+  // The project's own switch (Authentication → Sign In / Providers → Allow new
+  // users to sign up). Nothing done to this form gets past it.
   if (/signups? not allowed/i.test(message)) {
     return "New accounts are switched off for PlantParlour right now. Continue with Google, or ask us to let you in.";
   }
-  if (/rate limit/i.test(message)) return "Too many attempts recently. Wait a while and try again.";
+  // The password policy, which arrives as a full listing of every acceptable
+  // character — punctuation and all — and is unreadable.
+  if (/password should contain|password should be at least/i.test(message)) {
+    return "That password won't do: use at least 8 characters, with a capital letter, a number and a symbol.";
+  }
+  // Signing up sends a confirmation email while "Confirm email" is on, so this
+  // is the built-in mailer's few-per-hour ceiling rather than anything they did.
+  if (/rate limit/i.test(message)) {
+    return "We can't set up new accounts just now — too many attempts in the last hour. Continue with Google, or try again later.";
+  }
   return message;
 }
 
