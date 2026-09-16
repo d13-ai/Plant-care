@@ -165,9 +165,9 @@ export default function AccountScreen() {
               else stays private.
             </Body>
             <Row>
+              <Button title="What's on show" variant="primary" small onPress={() => router.push("/on-show")} />
               <Button
                 title="Share"
-                variant="primary"
                 small
                 // Same as the plant page: on web without navigator.share this
                 // rejects, and so does a dismissed sheet. Neither is an error.

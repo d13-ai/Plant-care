@@ -257,6 +257,20 @@ try {
     await page.getByText("Big Monstera").waitFor();
     if (await page.getByText("Cutting #1").count()) throw new Error("removed plant came back after reload");
   });
+  await step("what's on show lists the greenhouse with a switch each", async () => {
+    // Publishing itself needs the server, which this run doesn't have; what is
+    // checked here is that the screen is reachable and lists every plant with
+    // its own control, which is the part that used to mean opening each plant.
+    await page.goto(base + "/on-show");
+    await page.getByText("What's on show").first().waitFor({ timeout: 20000 });
+    await page.getByText("Nothing is on show yet").waitFor();
+    await page.getByText("Big Monstera").waitFor();
+    const switches = await page.getByRole("switch").count();
+    if (switches < 1) throw new Error("no per-plant control on the on-show screen");
+    await shot("03-on-show");
+    await page.getByText("Done", { exact: true }).click();
+    await page.getByText("All plants").waitFor({ timeout: 20000 });
+  });
   await step("a second tab says so instead of showing nothing", async () => {
     // The database lives in the browser's origin-private filesystem, which
     // only one tab can hold open. The second used to throw
