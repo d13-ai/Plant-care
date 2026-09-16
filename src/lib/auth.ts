@@ -5,11 +5,19 @@ import { markAllDirty } from "@/db";
 import { supabase } from "./supabase";
 
 /**
- * Accounts are a Google sign-in (one tap) or an email and a 6-digit code —
- * no passwords, no magic links. Codes work the same in a browser, the
- * home-screen app and the native app; a link tapped from Mail would open in
- * the wrong place on a phone. Whichever way someone signs in, the sync
- * engine notices the account and pushes what's on the phone into it.
+ * Accounts are a Google sign-in (one tap) or an email and a password.
+ *
+ * It was a 6-digit emailed code, chosen so that it would behave the same in a
+ * browser, a home-screen app and a native app — unlike a magic link, which
+ * opens in whichever browser the mail app prefers and fails there. That
+ * reasoning held; what it did not survive is that Supabase only sends the code
+ * if the email template contains {{ .Token }}, and until it does it sends a
+ * bare link instead. So the code path was broken in production for everyone
+ * without a Google account, and a password needs no mail server at all.
+ *
+ * The one thing that still does is resetting a forgotten password. Until the
+ * SMTP settings are made (README → Accounts and sync), Google is the way back
+ * in for anyone who forgets theirs.
  */
 
 export interface Account {
@@ -29,53 +37,53 @@ export async function currentAccount(): Promise<Account | null> {
   return { userId: user.id, email: user.email ?? null, anonymous: Boolean(user.is_anonymous) || !user.email };
 }
 
-export type CodeMode = "link" | "signin";
+/** Whether the email was already an account. Only the wording differs. */
+export type EntryMode = "signin" | "signup";
+
+/** Supabase's own minimum is 6; eight is little harder to pick and much harder to guess. */
+const MIN_PASSWORD = 8;
 
 /**
- * Send a code to `email`. An anonymous session gets the email attached
- * (same account, so anything already published stays put); otherwise, or
- * if that email already has an account, it's a sign-in — creating the
- * account if it's new.
+ * Sign in with an email and a password, or make the account if there isn't
+ * one. The screen offers a single button, so this has to tell those apart
+ * itself — and Supabase answers a wrong password and an unknown email with
+ * the same "Invalid login credentials", by design, so that nobody can use the
+ * form to discover which addresses have accounts. Signing up second is what
+ * separates them: it is refused for an email that already exists, and that
+ * refusal means the password was simply wrong.
  */
-export async function sendEmailCode(email: string): Promise<CodeMode> {
+export async function signInOrUp(email: string, password: string): Promise<EntryMode> {
   const address = email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) throw new Error("That doesn't look like an email address.");
+  if (password.length < MIN_PASSWORD) throw new Error(`Use at least ${MIN_PASSWORD} characters.`);
 
-  const { data } = await supabase.auth.getSession();
-  if (data.session?.user.is_anonymous) {
-    const { error } = await supabase.auth.updateUser({ email: address });
-    if (!error) return "link";
-    if (!/already|registered|exists|taken/i.test(error.message)) throw new Error(friendly(error.message));
-    // The email has an account already: sign into that one instead.
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email: address, password });
+  if (!signInError) return "signin";
+  if (!/invalid login credentials/i.test(signInError.message)) throw new Error(friendly(signInError.message));
+
+  const { data, error: signUpError } = await supabase.auth.signUp({ email: address, password });
+  if (signUpError) {
+    if (/already registered|already exists|user already/i.test(signUpError.message)) {
+      throw new Error("That password doesn't match this email. Try again, or continue with Google.");
+    }
+    throw new Error(friendly(signUpError.message));
   }
-  const { error } = await supabase.auth.signInWithOtp({ email: address, options: { shouldCreateUser: true } });
-  if (error) throw new Error(friendly(error.message));
-  return "signin";
+  if (!data.session) {
+    // Only reachable if email confirmation gets turned on for the project.
+    throw new Error("Check your email to confirm the address, then sign in.");
+  }
+  return "signup";
 }
 
-/** Supabase's built-in mailer allows only a few emails an hour; say so plainly. */
 function friendly(message: string): string {
-  return /rate limit/i.test(message)
-    ? "Too many sign-in emails were sent recently. Wait a while and try again."
-    : message;
-}
-
-/** Check the code from the email; on success the session is the account's. */
-export async function verifyEmailCode(email: string, code: string, mode: CodeMode): Promise<Account> {
-  const address = email.trim().toLowerCase();
-  const token = code.replace(/\D/g, "");
-  if (token.length < 6) throw new Error("Enter the 6-digit code from the email.");
-
-  const { error } = await supabase.auth.verifyOtp({
-    email: address,
-    token,
-    type: mode === "link" ? "email_change" : "email",
-  });
-  if (error) throw new Error(/expired|invalid/i.test(error.message) ? "That code didn't work. Check it, or send a new one." : error.message);
-
-  const account = await currentAccount();
-  if (!account) throw new Error("Signed in, but no session came back.");
-  return account;
+  // "Signups not allowed for this instance" is the project's own switch
+  // (Authentication → Sign In / Providers → Allow new users to sign up), not
+  // anything the person typed. Nothing they do to this form will get past it.
+  if (/signups? not allowed/i.test(message)) {
+    return "New accounts are switched off for PlantParlour right now. Continue with Google, or ask us to let you in.";
+  }
+  if (/rate limit/i.test(message)) return "Too many attempts recently. Wait a while and try again.";
+  return message;
 }
 
 /**

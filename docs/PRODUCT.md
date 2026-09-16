@@ -91,8 +91,8 @@ under the hood). *Tests: do
 propagators want this? Is the tag something they'd send a buyer?*
 
 **v2 — Accounts and sync.** ✅ shipped (public greenhouse link still to come)
-Sign in with an email and a 6-digit code (an anonymous session gets the
-email attached, so published tags keep their links); the whole greenhouse
+Sign in with Google or an email and a password (originally a 6-digit code,
+replaced in Sep 2026 — see the note below); the whole greenhouse
 syncs to the account and to any phone that signs in — last-write-wins
 between phones, deletes carried as tombstones. Photos live in storage once
 and show on every phone. *Tests: does "it's backed up" change how people
@@ -153,6 +153,16 @@ by tags, export/import, a private photo bucket with signed URLs.
   offline on the next sync. *Worth watching: how many people bounce off the
   sign-in rather than sign up — that is the cost we accepted for it.*
 
+- **Email and password, replacing the emailed code** (Sep 2026). The code was
+  the right shape — it works the same in a browser, a home-screen app and a
+  native app, where a magic link opens in whichever browser the mail app
+  prefers and fails. What sank it is that Supabase only sends a code when the
+  template carries `{{ .Token }}`, and sends a bare link until it does: the
+  path was broken in production for everyone without a Google account, on the
+  same night the app started requiring an account. A password needs no mail
+  server. *Cost accepted: a forgotten password needs email to reset, so until
+  the SMTP settings are made, Google is the way back in.*
+
 ## What already exists
 
 A first cut of all of the above was prototyped inside a Shopify app
@@ -165,7 +175,7 @@ The UI and the Shopify-shop-as-identity assumption do not carry over.
 
 ## Open questions
 
-- Identity: settled on email + 6-digit code (no passwords, no magic links —
+- Identity: was email + 6-digit code (no passwords, no magic links —
   a link tapped from Mail opens in the wrong place on a phone). Handles for
   trading ("send to @dana") are still open.
 - Photos: synced to Supabase storage, one object per photo, shown from its

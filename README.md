@@ -9,7 +9,7 @@ The idea, personas, rules and roadmap are in [`docs/PRODUCT.md`](docs/PRODUCT.md
 ## Status: v2 — accounts and sync
 
 Local-first: your plants live in SQLite on the device, and the app works
-with no account at all. Sign in — with Google, or an email and a 6-digit
+with no account at all. Sign in — with Google, or an email and a
 code; no passwords — and the whole greenhouse (plants, care history,
 photos) is saved to your account and syncs to any phone you sign into. See
 *Accounts and sync*.
@@ -73,11 +73,21 @@ are in (`RequireAccount` in `src/app/_layout.tsx`). The greenhouse used to be
 open to anyone and nagged about signing in later, which left a keeper's plants
 in one browser's storage with nothing tying them to a person.
 
-**Signing in:** **Continue with Google** (one tap; web app for now) or your
-email and the 6-digit code from the email. There are no passwords. Signing in
-the same way on another phone brings the greenhouse over. Signing out stops
-this phone showing it until you sign in again; the greenhouse stays in the
-account.
+**Signing in:** **Continue with Google** (one tap; web app for now) or an
+email and a password — one *Continue* button, which signs you in or makes the
+account, because Supabase answers a wrong password and an unknown email
+identically (by design, so a form can't be used to discover who has an
+account) and signing up second is what tells them apart. Signing in the same
+way on another phone brings the greenhouse over. Signing out stops this phone
+showing it until you sign in again; the greenhouse stays in the account.
+
+It was an emailed 6-digit code, for a good reason — a code behaves the same in
+a browser, a home-screen app and a native app, where a magic link opens in
+whichever browser the mail app prefers and fails there. What that did not
+survive is that Supabase only sends the code if the Magic Link template
+contains `{{ .Token }}`, and sends a bare link until it does. The code path was
+broken in production for everyone without a Google account; a password needs no
+mail server.
 
 **The device still keeps a copy**, and that is the point of it: the app opens
 at once, works with no signal, and a photo taken on a balcony with no bars
@@ -136,12 +146,24 @@ would close that; it's a later change.
    domain needs its own `/**` entry here too, added alongside rather than
    in place of this one.
 
-**One-time setup for the email code.** Two settings in the Supabase
-dashboard, both only the project owner can make. Until they are done, Google
-is the only way in.
+**Setup owed first: new accounts are switched off.** Authentication → Sign In
+/ Providers → Email → **Allow new users to sign up**. A live `signUp` against
+this project answers `Signups not allowed for this instance`, which is
+project-wide, not per-provider — so *nobody new can join by any method*, and
+the emailed-code path could never have created an account either, even with
+`{{ .Token }}` in place. Existing keepers are unaffected. The app says so
+plainly rather than blaming the person's typing.
 
-*1. The templates must carry the code.* Authentication → Emails → Templates.
-Edit **Magic Link** and **Change Email Address** so each body contains
+**Setup still owed: resetting a forgotten password.** Nothing else needs a
+mail server now — signing up and signing in don't send email at all (the
+project has email confirmation off, so `signUp` returns a live session). But
+a reset does, so until these two settings are made, someone who forgets their
+password has Google or nothing.
+
+*1. The reset template.* Authentication → Emails → Templates → **Reset
+Password**. The default carries a link, which is right for a reset. If you
+would rather it be a code the app asks for — the same argument as before, a
+link opens in whichever browser the mail app prefers — the body needs
 `{{ .Token }}`:
 
 ```html
@@ -150,11 +172,7 @@ Edit **Magic Link** and **Change Email Address** so each body contains
 <p>Type it into the app. It's good for an hour.</p>
 ```
 
-Without `{{ .Token }}` Supabase sends only a link, and a link opened from a
-mail app lands in a different browser than the one that asked for it, where
-it fails. The app verifies the code and never uses the link. Both templates
-matter: "Magic Link" is a sign-in, "Change Email Address" is an older
-anonymous session attaching an email.
+The app has no reset screen yet either way; this is the groundwork for one.
 
 *2. Mail has to go out through Resend.* Authentication → Emails → SMTP
 Settings → enable custom SMTP:

@@ -24,7 +24,7 @@ export const supabase = createClient(SUPABASE_URL || "http://localhost", SUPABAS
     persistSession: true,
     // A confirmation link tapped on Android opens the same Chrome profile
     // the home-screen app uses, so a session arriving in the URL can be
-    // picked up. (The 6-digit code is still the primary path.)
+    // picked up. (Email and password is the primary path.)
     detectSessionInUrl: Platform.OS === "web",
   },
 });

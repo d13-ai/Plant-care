@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { GoogleIcon } from "@/components/icons";
 import { Body, Button, Field, Row, Title } from "@/components/ui";
-import { sendEmailCode, signInWithGoogle, verifyEmailCode, type CodeMode } from "@/lib/auth";
+import { signInOrUp, signInWithGoogle } from "@/lib/auth";
 import { cardTheme, font, radius, space, useTheme } from "@/theme";
 
 /**
- * Signing in: Google in one tap, or an email and a 6-digit code. No passwords.
+ * Signing in: Google in one tap, or an email and a password.
  *
  * It lives in its own component because it is the front door now — the welcome
  * screen is the only thing an unsigned-in visitor sees — rather than a panel
@@ -19,8 +19,7 @@ import { cardTheme, font, radius, space, useTheme } from "@/theme";
 export function SignIn({ heading }: { heading?: string }) {
   const t = useTheme();
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [mode, setMode] = useState<CodeMode | null>(null);
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,13 +43,8 @@ export function SignIn({ heading }: { heading?: string }) {
     }
   };
 
-  const send = () => run(async () => setMode(await sendEmailCode(email)));
-  const verify = () =>
-    run(async () => {
-      await verifyEmailCode(email, code, mode!);
-      setCode("");
-      setMode(null);
-    });
+  const ready = /\S+@\S+\.\S+/.test(email.trim()) && password.length >= 8;
+  const enter = () => run(async () => { await signInOrUp(email, password); });
 
   return (
     <>
@@ -65,54 +59,41 @@ export function SignIn({ heading }: { heading?: string }) {
           </View>
         </>
       ) : null}
-      {mode === null ? (
-        <>
-          <Field
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@example.com"
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-            autoComplete="email"
-            textContentType="emailAddress"
-          />
-          <Row>
-            <Button
-              title={busy ? "Sending…" : "Email me a code"}
-              variant="primary"
-              disabled={busy || !email.trim()}
-              onPress={send}
-            />
-          </Row>
-          <Body small muted>No password — we email you a 6-digit code to type in.</Body>
-        </>
-      ) : (
-        <>
-          <Body small>We sent a 6-digit code to {email.trim()}. It's good for an hour.</Body>
-          <Field
-            label="Code"
-            value={code}
-            onChangeText={setCode}
-            placeholder="123456"
-            keyboardType="number-pad"
-            autoComplete="one-time-code"
-            textContentType="oneTimeCode"
-            maxLength={6}
-          />
-          <Row>
-            <Button
-              title={busy ? "Checking…" : "Verify"}
-              variant="primary"
-              disabled={busy || code.replace(/\D/g, "").length < 6}
-              onPress={verify}
-            />
-            <Button title="Send again" small disabled={busy} onPress={send} />
-            <Button title="Use another email" small disabled={busy} onPress={() => { setMode(null); setCode(""); }} />
-          </Row>
-        </>
-      )}
+      <Field
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        placeholder="you@example.com"
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType="email-address"
+        autoComplete="email"
+        textContentType="emailAddress"
+      />
+      <Field
+        label="Password"
+        value={password}
+        onChangeText={setPassword}
+        placeholder="At least 8 characters"
+        secureTextEntry
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoComplete="current-password"
+        textContentType="password"
+        onSubmitEditing={() => ready && !busy && enter()}
+        returnKeyType="go"
+      />
+      <Row>
+        <Button
+          title={busy ? "One moment…" : "Continue"}
+          variant="primary"
+          disabled={busy || !ready}
+          onPress={enter}
+        />
+      </Row>
+      <Body small muted>
+        New here? This makes your parlour. Already have one? It signs you in.
+      </Body>
       {error ? <Body small style={{ color: cardTheme.critical.fg } as never}>{error}</Body> : null}
     </>
   );
