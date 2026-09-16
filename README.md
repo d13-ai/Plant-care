@@ -67,16 +67,27 @@ Scanning, care guides and tags all ask the keeper to sign in instead.
 
 ## Accounts and sync
 
-**In the app:** the person icon on the greenhouse (or the "sign in" card)
-opens the login screen: **Continue with Google** (one tap; web app for now)
-or your email and the 6-digit code from the email. There are no passwords.
-Whichever way you sign in, whatever is on the phone is pushed into that
-account on the first sync. (Where an anonymous session still exists — from
-before those were turned off — the email code attaches to it, so anything
-already published keeps its links.) Signing in the same way on another phone
-brings the greenhouse over.
-Signing out leaves the plants on the phone; they just stop syncing. A phone
-that signs into a *different* account keeps its plants and gives that
+**The parlour belongs to an account.** Anyone without one gets the welcome
+screen and nothing else — a deep link to a plant waits for them until they
+are in (`RequireAccount` in `src/app/_layout.tsx`). The greenhouse used to be
+open to anyone and nagged about signing in later, which left a keeper's plants
+in one browser's storage with nothing tying them to a person.
+
+**Signing in:** **Continue with Google** (one tap; web app for now) or your
+email and the 6-digit code from the email. There are no passwords. Signing in
+the same way on another phone brings the greenhouse over. Signing out stops
+this phone showing it until you sign in again; the greenhouse stays in the
+account.
+
+**The device still keeps a copy**, and that is the point of it: the app opens
+at once, works with no signal, and a photo taken on a balcony with no bars
+saves locally and uploads on the next sync. The account is the source of
+truth; the device database is the working copy. A failed token refresh does
+*not* eject a keeper back to the welcome screen — only a real sign-out does
+(`useAccount` in `src/lib/auth.ts`), because being thrown out mid-task is
+exactly what shouldn't happen to someone photographing a plant offline.
+
+A phone that signs into a *different* account keeps its plants and gives that
 account its own copy (the first account's copy stays as it was).
 
 **How sync works** (`src/lib/sync.ts`): every local row has a uuid the

@@ -6,6 +6,7 @@ import {
   TextInput,
   View,
   type StyleProp,
+  type TextStyle,
   type TextInputProps,
   type ViewStyle,
 } from "react-native";
@@ -61,11 +62,12 @@ export function Body({
   children: ReactNode;
   muted?: boolean;
   small?: boolean;
-  style?: StyleProp<ViewStyle>;
+  /** Text style — it lands on a <Text>, whatever the rest of this file does. */
+  style?: StyleProp<TextStyle>;
 }) {
   const t = useTheme();
   return (
-    <Text style={[small ? styles.small : styles.body, { color: muted ? t.muted : t.text }, style as never]}>
+    <Text style={[small ? styles.small : styles.body, { color: muted ? t.muted : t.text }, style]}>
       {children}
     </Text>
   );

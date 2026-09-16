@@ -110,8 +110,20 @@ export function useAccount(): { account: Account | null; loading: boolean } {
         setLoading(false);
       }
     });
-    const { data } = supabase.auth.onAuthStateChange(() => {
-      currentAccount().then((a) => live && setAccount(a));
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      // Only a real sign-out takes the account away. Every other event that
+      // resolves to null is the network failing — a refresh that couldn't
+      // reach the server, say — and the app is gated on this: dropping the
+      // account there would throw a keeper back to the welcome screen in the
+      // middle of what they were doing, which is precisely what shouldn't
+      // happen to someone photographing a plant with no signal.
+      if (event === "SIGNED_OUT") {
+        if (live) setAccount(null);
+        return;
+      }
+      currentAccount().then((a) => {
+        if (live && a) setAccount(a);
+      });
     });
     return () => {
       live = false;

@@ -143,6 +143,15 @@ by tags, export/import, a private photo bucket with signed URLs.
   reminders and history all still work signed out. *Worth watching: whether
   the sign-in wall costs us people at the scan, which is the moment the app
   first proves itself.*
+- **An account is the front door** (Sep 2026). Signing in is no longer a thing
+  you get nagged about after the fact: the welcome screen is all anyone sees
+  until they have an account, and then they go to their parlour. The reason is
+  growth — plants that belong to a keeper can follow them to a new phone, be
+  shared with Amanda, and be reached by a tag; plants that belong to a browser
+  can't, and quietly evaporate. The device keeps a working copy, so the app
+  still opens instantly, works with no signal, and uploads a photo taken
+  offline on the next sync. *Worth watching: how many people bounce off the
+  sign-in rather than sign up — that is the cost we accepted for it.*
 
 ## What already exists
 

@@ -9,7 +9,6 @@ import { Body, Button, Card, Heading, Row, SectionLabel, Title } from "@/compone
 import { UndoBar, useUndo } from "@/components/undo-bar";
 import { coverPhoto, deleteEvent, listPlants, logCare, type PlantWithHistory } from "@/db";
 import { useQuery } from "@/hooks/use-query";
-import { useAccount } from "@/lib/auth";
 import { okToLog } from "@/lib/care-log";
 import { font, radius, space, useTheme, type Tone } from "@/theme";
 
@@ -18,10 +17,6 @@ export default function Greenhouse() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data, refresh, db } = useQuery(listPlants);
-  const { account, loading: accountLoading } = useAccount();
-  // Nudge until there's an account to back the greenhouse up to.
-  const unbacked = !accountLoading && !(account && !account.anonymous);
-
   // Plants that want something come first — the reason to open the app.
   const items = useMemo(() => {
     if (!data) return [];
@@ -140,17 +135,6 @@ export default function Greenhouse() {
           ListHeaderComponent={
             data ? (
               <View style={styles.listHeader}>
-                {unbacked && (
-                  <Card>
-                    <Heading>Your plants live only on this phone</Heading>
-                    <Body small muted>
-                      Add your email to back them up and see them on any phone you sign into.
-                    </Body>
-                    <Row>
-                      <Button title="Sign in" variant="primary" small onPress={() => router.push("/account")} />
-                    </Row>
-                  </Card>
-                )}
                 {due.length > 0 && (
                   <View style={{ gap: space.sm }}>
                     <SectionLabel>Water due</SectionLabel>

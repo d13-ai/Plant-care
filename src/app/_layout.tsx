@@ -6,9 +6,11 @@ import * as SplashScreen from "expo-splash-screen";
 import { SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
 import { Body, Button, Row, Title } from "@/components/ui";
+import { Welcome } from "@/components/welcome";
 import { migrate } from "@/db";
+import { useAccount } from "@/lib/auth";
 import { loadSyncStatus, requestSync } from "@/lib/sync";
 import { font, space, useTheme } from "@/theme";
 
@@ -111,7 +113,8 @@ export default function RootLayout() {
       }}
     >
       <StatusBar style="light" />
-      <Stack
+      <RequireAccount>
+        <Stack
         screenOptions={{
           headerStyle: { backgroundColor: t.background },
           headerTintColor: t.text,
@@ -125,7 +128,28 @@ export default function RootLayout() {
         <Stack.Screen name="plant/[id]/index" options={{ title: "" }} />
         <Stack.Screen name="plant/[id]/edit" options={{ title: "Edit plant", presentation: "modal" }} />
         <Stack.Screen name="account" options={{ title: "Account", presentation: "modal" }} />
-      </Stack>
+        </Stack>
+      </RequireAccount>
     </SQLiteProvider>
   );
+}
+
+/**
+ * The parlour belongs to an account. Anyone without one gets the welcome
+ * screen and nothing else — including on a deep link to a plant, which is
+ * waiting for them once they are in.
+ *
+ * Inside the SQLiteProvider, because signing in needs the local database: the
+ * codes path marks everything on the device dirty so it pushes into the
+ * account. The device database stays as the working copy, so a photo taken
+ * with no signal still saves and uploads on the next sync.
+ */
+function RequireAccount({ children }: PropsWithChildren) {
+  const { account, loading } = useAccount();
+  // Nothing at all while the session is being read: a flash of the welcome
+  // screen for someone who is signed in reads as being logged out.
+  if (loading) return null;
+  // An account means an email. A leftover anonymous session from before those
+  // were turned off is not one, so it gets the welcome screen like anyone else.
+  return account && !account.anonymous ? <>{children}</> : <Welcome />;
 }

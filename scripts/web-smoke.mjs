@@ -40,6 +40,46 @@ const browser = await chromium.launch(process.env.CHROME ? { executablePath: pro
 // An explicit context, so a second tab can be opened on the same origin --
 // which is what the database-locking check at the end needs.
 const context = await browser.newContext({ viewport: { width: 420, height: 860 } });
+
+// The parlour is behind an account now, so this run needs to be signed in.
+// supabase-js keeps the session as plain JSON under sb-<project ref>-auth-token,
+// and the auth endpoints are stubbed so the client can confirm the user it
+// finds there -- without that it decides the token is no good and signs out
+// mid-run. Everything else stays offline, as before.
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "https://ixagjvntbgyqemxxinqe.supabase.co";
+const ref = new URL(SUPABASE_URL).hostname.split(".")[0];
+const user = {
+  id: "00000000-0000-4000-8000-000000000001",
+  aud: "authenticated",
+  role: "authenticated",
+  email: "smoke@plantparlour.test",
+  is_anonymous: false,
+  app_metadata: { provider: "email" },
+  user_metadata: {},
+  created_at: new Date(0).toISOString(),
+};
+const session = {
+  access_token: "smoke-access-token",
+  refresh_token: "smoke-refresh-token",
+  token_type: "bearer",
+  expires_in: 3600,
+  expires_at: Math.floor(Date.now() / 1000) + 3600,
+  user,
+};
+const asJson = (body) => ({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+await context.route("**/auth/v1/user**", (route) => route.fulfill(asJson(user)));
+await context.route("**/auth/v1/token**", (route) => route.fulfill(asJson(session)));
+await context.addInitScript(
+  ([key, value]) => {
+    try {
+      window.localStorage.setItem(key, value);
+    } catch {
+      /* private mode: the first step will fail loudly enough */
+    }
+  },
+  [`sb-${ref}-auth-token`, JSON.stringify(session)],
+);
+
 const page = await context.newPage();
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
 page.on("console", (m) => {
@@ -230,6 +270,23 @@ try {
       await second.getByText("Already open in another tab").waitFor({ timeout: 15000 });
     } finally {
       await second.close();
+    }
+  });
+  await step("without an account there is a welcome screen and no way past it", async () => {
+    // A clean context: no session in storage, no stubbed auth. The parlour
+    // belongs to an account, so this is all anyone sees -- including on a
+    // direct link to a plant, which waits for them until they are in.
+    const stranger = await browser.newContext({ viewport: { width: 420, height: 860 } });
+    try {
+      const visitor = await stranger.newPage();
+      for (const route of ["/", "/plant/1", "/account"]) {
+        await visitor.goto(base + route, { waitUntil: "domcontentloaded" });
+        await visitor.getByText("Sign in to your parlour").waitFor({ timeout: 15000 });
+        if (await visitor.getByText("All plants").count()) throw new Error(`${route} showed the greenhouse to a stranger`);
+        if (await visitor.getByText("Big Monstera").count()) throw new Error(`${route} leaked a plant to a stranger`);
+      }
+    } finally {
+      await stranger.close();
     }
   });
 } finally {
