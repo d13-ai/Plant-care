@@ -5,7 +5,7 @@
  * mother_plant_id already exists so propagation lineage doesn't need a
  * migration later; a mother is another local plant.
  */
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 /** A v4 uuid in SQLite, for backfilling rows that predate sync. */
 const UUID_SQL = "lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-' || substr('89ab', abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6)))";
@@ -64,6 +64,14 @@ export const MIGRATIONS: Record<number, string[]> = {
   7: [
     // The photo that fronts the plant, chosen by the keeper; newest otherwise.
     "ALTER TABLE plants ADD COLUMN cover_photo_uuid TEXT",
+  ],
+  8: [
+    // Deleting a plant left its photos in the bucket for good: the tombstone
+    // said which plant had gone, but nothing remembered where its pictures
+    // were stored, and the local rows were already cascaded away by then. A
+    // tombstone can now carry the object path, so a photo gets one of its own
+    // and the push has what it needs to take the file down.
+    "ALTER TABLE sync_tombstones ADD COLUMN path TEXT",
   ],
 };
 

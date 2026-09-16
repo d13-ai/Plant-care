@@ -579,11 +579,24 @@ export async function saveCareCard(db: SQLiteDatabase, speciesKey: string, card:
  *  next sync tells the server (and so other devices) about it. */
 export async function deletePlant(db: SQLiteDatabase, id: number): Promise<void> {
   const row = await db.getFirstAsync<{ uuid: string }>("SELECT uuid FROM plants WHERE id = ?", [id]);
+  const now = nowIso();
   await db.withTransactionAsync(async () => {
     if (row) {
+      // One tombstone per uploaded photo, carrying its object path. This has
+      // to happen before the plant goes: the photo rows cascade with it, and
+      // with them the only record of where the files live. Without this the
+      // pictures of a deleted plant stayed in a public-read bucket for good --
+      // removing the plant took it off the tag page and out of the app, but
+      // anyone still holding a photo URL kept it.
+      await db.runAsync(
+        `INSERT OR REPLACE INTO sync_tombstones (uuid, deleted_at, kind, path)
+         SELECT uuid, ?, 'photo', remote_path FROM photos
+          WHERE plant_id = ? AND remote_path IS NOT NULL`,
+        [now, id],
+      );
       await db.runAsync("INSERT OR REPLACE INTO sync_tombstones (uuid, deleted_at, kind) VALUES (?, ?, 'plant')", [
         row.uuid,
-        nowIso(),
+        now,
       ]);
     }
     await db.runAsync("DELETE FROM plants WHERE id = ?", [id]);
@@ -727,13 +740,29 @@ export async function markAllDirty(db: SQLiteDatabase): Promise<void> {
   );
 }
 
-export type TombstoneKind = "plant" | "event";
+export type TombstoneKind = "plant" | "event" | "photo";
 
-export async function listTombstones(
-  db: SQLiteDatabase,
-): Promise<{ uuid: string; deletedAt: string; kind: TombstoneKind }[]> {
-  const rows = await db.getAllAsync<{ uuid: string; deleted_at: string; kind: string }>("SELECT * FROM sync_tombstones");
-  return rows.map((r) => ({ uuid: r.uuid, deletedAt: r.deleted_at, kind: r.kind === "event" ? "event" : "plant" }));
+/** A deletion still owed to the server. `path` is set only on "photo"
+ *  tombstones: it is the object to take out of the bucket. */
+export interface Tombstone {
+  uuid: string;
+  deletedAt: string;
+  kind: TombstoneKind;
+  path: string | null;
+}
+
+const TOMBSTONE_KINDS: TombstoneKind[] = ["plant", "event", "photo"];
+
+export async function listTombstones(db: SQLiteDatabase): Promise<Tombstone[]> {
+  const rows = await db.getAllAsync<{ uuid: string; deleted_at: string; kind: string; path: string | null }>(
+    "SELECT * FROM sync_tombstones",
+  );
+  return rows.map((r) => ({
+    uuid: r.uuid,
+    deletedAt: r.deleted_at,
+    kind: TOMBSTONE_KINDS.find((k) => k === r.kind) ?? "plant",
+    path: r.path ?? null,
+  }));
 }
 
 export async function clearTombstones(db: SQLiteDatabase, uuids: string[]): Promise<void> {

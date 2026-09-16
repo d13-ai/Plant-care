@@ -268,17 +268,42 @@ export async function pushAll(db: SQLiteDatabase, session: Session): Promise<num
   if (keeperError) throw new Error(`Keeper: ${keeperError.message}`);
 
   // Deletions first: a row that came back dirty after a delete shouldn't resurrect.
+  //
+  // A plant and a care entry are tombstoned on the server -- other devices
+  // have to be able to learn that they went. A photo is different: its file
+  // sits in a public-read bucket, where a URL is the only thing standing
+  // between a stranger and the picture, so a delete has to actually take the
+  // file down. Nothing did, and photos of deleted plants stayed readable for
+  // anyone who had ever seen a link to one.
+  //
+  // Each tombstone is cleared as it lands rather than all of them at the end,
+  // so a failure part-way through doesn't re-send the deletions that already
+  // succeeded. Re-sending would be harmless -- removing an object that isn't
+  // there is not an error, and the updates are idempotent -- but it would
+  // repeat every round until the failing one cleared.
   const tombstones = await listTombstones(db);
   for (const t of tombstones) {
-    const stamp = { deleted_at: t.deletedAt, updated_at: t.deletedAt };
-    const { error } =
-      t.kind === "event"
-        ? await supabase.from("care_events").update(stamp).eq("id", t.uuid)
-        : await supabase.from("plants").update(stamp).eq("id", t.uuid).eq("keeper_id", keeperId);
-    if (error) throw new Error(`Delete: ${error.message}`);
+    if (t.kind === "photo") {
+      if (t.path) {
+        const { error } = await supabase.storage.from(BUCKET).remove([t.path]);
+        if (error) throw new Error(`Delete photo file: ${error.message}`);
+      }
+      // The row last: while it exists, the plant it belongs to still grants
+      // access to it, and a row pointing at a file that has gone is worse
+      // than no row -- another device would render a dead image.
+      const { error } = await supabase.from("photos").delete().eq("id", t.uuid);
+      if (error) throw new Error(`Delete photo: ${error.message}`);
+    } else {
+      const stamp = { deleted_at: t.deletedAt, updated_at: t.deletedAt };
+      const { error } =
+        t.kind === "event"
+          ? await supabase.from("care_events").update(stamp).eq("id", t.uuid)
+          : await supabase.from("plants").update(stamp).eq("id", t.uuid).eq("keeper_id", keeperId);
+      if (error) throw new Error(`Delete: ${error.message}`);
+    }
+    await clearTombstones(db, [t.uuid]);
+    pushed++;
   }
-  await clearTombstones(db, tombstones.map((t) => t.uuid));
-  pushed += tombstones.length;
 
   // Plants, mothers before cuttings (a cutting's id is always higher).
   let plants = await dirtyPlants(db);

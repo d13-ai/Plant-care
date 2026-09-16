@@ -8,15 +8,20 @@
  */
 import { expect, test } from "vitest";
 import {
+  addPhoto,
   applyRemoteEvent,
   clearDirty,
   createPlant,
+  deletePlant,
+  listTombstones,
+  markPhotoUploaded,
   dirtyPlants,
   getPlant,
   migrate,
   updatePlant,
   type RemoteEvent,
 } from "@/db";
+import { CREATE_TABLES, MIGRATIONS } from "@/db/schema";
 import { openTestDatabase } from "./node-sqlite";
 
 const plantInput = (nickname: string) => ({
@@ -111,6 +116,68 @@ test("an event whose plant hasn't arrived yet is deferred, not dropped", async (
     expect(await applyRemoteEvent(db, remote), "and then it applies").toBe("inserted");
     const plant = await getPlant(db, plantId);
     expect(plant!.events.map((e) => e.type)).toContain("WATER");
+  } finally {
+    close();
+  }
+});
+
+test("deleting a plant remembers where its photos were stored, so the push can take them down", async () => {
+  const { db, close } = openTestDatabase();
+  try {
+    await migrate(db);
+    const id = await createPlant(db, plantInput("Calathea orbifolia"));
+    await addPhoto(db, id, "file:///tmp/one.jpg");
+    await addPhoto(db, id, "file:///tmp/two.jpg");
+
+    // Two photos have been pushed to the bucket; a third is still local-only.
+    const photos = await db.getAllAsync<{ id: number }>("SELECT id FROM photos ORDER BY id");
+    await markPhotoUploaded(db, photos[0].id, "keeper-uuid/plant-uuid/one.jpg");
+    await markPhotoUploaded(db, photos[1].id, "keeper-uuid/plant-uuid/two.jpg");
+    await addPhoto(db, id, "file:///tmp/unsent.jpg");
+
+    await deletePlant(db, id);
+
+    const tombstones = await listTombstones(db);
+    const paths = tombstones.filter((t) => t.kind === "photo").map((t) => t.path).sort();
+    expect(paths, "every uploaded photo leaves a path for the push to remove").toEqual([
+      "keeper-uuid/plant-uuid/one.jpg",
+      "keeper-uuid/plant-uuid/two.jpg",
+    ]);
+    expect(
+      tombstones.filter((t) => t.kind === "photo").length,
+      "a photo that was never uploaded has no file to take down",
+    ).toBe(2);
+    expect(tombstones.filter((t) => t.kind === "plant").length, "and the plant is still tombstoned").toBe(1);
+
+    // The local rows went with the plant, which is why the paths had to be
+    // captured before the delete rather than looked up after it.
+    expect(await db.getAllAsync("SELECT id FROM photos")).toEqual([]);
+  } finally {
+    close();
+  }
+});
+
+test("a v7 database upgrades without losing the tombstones it was already holding", async () => {
+  const { db, close } = openTestDatabase();
+  try {
+    await db.execAsync(CREATE_TABLES);
+    for (const version of [2, 3, 4, 5, 6, 7]) for (const statement of MIGRATIONS[version]) await db.execAsync(statement);
+    await db.execAsync("PRAGMA user_version = 7");
+    await db.runAsync(
+      "INSERT INTO sync_tombstones (uuid, deleted_at, kind) VALUES ('11111111-1111-4111-8111-111111111111', '2026-09-01T00:00:00.000Z', 'plant')",
+    );
+
+    await migrate(db);
+
+    const tombstones = await listTombstones(db);
+    expect(tombstones).toEqual([
+      {
+        uuid: "11111111-1111-4111-8111-111111111111",
+        deletedAt: "2026-09-01T00:00:00.000Z",
+        kind: "plant",
+        path: null,
+      },
+    ]);
   } finally {
     close();
   }
