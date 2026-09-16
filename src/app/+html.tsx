@@ -6,9 +6,9 @@ import type { PropsWithChildren } from "react";
  * otherwise writes no <title>, so the tab and "Add to Home screen" would
  * show the URL instead of the app's name.
  */
-const TITLE = "PlantParlour — every plant, on the record";
+const TITLE = "PlantParlour — a room for the plants you're proud of";
 const DESCRIPTION =
-  "Keep every plant you own on the record: what it is, what it needs today, and everything that has happened to it. Made by two plant people who wanted their collection remembered properly — and yours too.";
+  "Every plant you keep, given the care and the credit it's due: what it is, what it needs today, and the whole story to hand on to whoever gets it next. Made by two plant people who'd rather share it than keep it to themselves.";
 
 export default function Root({ children }: PropsWithChildren) {
   return (

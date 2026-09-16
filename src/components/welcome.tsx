@@ -19,15 +19,15 @@ import { font, space, useTheme } from "@/theme";
 const POINTS: { title: string; body: string }[] = [
   {
     title: "Never miss a beat",
-    body: "Every plant says what it needs today — water, feed, repot, a fresh photo — on its own schedule, not a species average.",
+    body: "Every plant tells you what it needs today — water, feed, repot, a fresh photo — on its own schedule, not a species average.",
   },
   {
     title: "Know what you're holding",
-    body: "Photograph the whole plant and a close-up or two. They get read together: what it is down to the cultivar, how it's doing, and a care guide for the plant in front of you.",
+    body: "Photograph the whole plant and a close-up. We'll tell you what it is down to the cultivar, how it's doing, and how to care for the plant actually in front of you.",
   },
   {
-    title: "Share your treasures",
-    body: "Publish a plant and its whole life becomes a link — photos over time, every watering, the issue you treated, the cuttings you took.",
+    title: "Show off your collection",
+    body: "Publish a plant and its story becomes something worth sharing — every photo, every watering, the leaf you saved, the cuttings you gave away.",
   },
 ];
 
@@ -51,26 +51,25 @@ export function Welcome() {
       <View style={styles.masthead}>
         <LeafIcon size={44} color={t.leaf} />
         <Text style={[styles.wordmark, { color: t.text }]}>PlantParlour</Text>
-        <Text style={[styles.tagline, { color: t.muted }]}>Every plant, on the record.</Text>
+        <Text style={[styles.tagline, { color: t.muted }]}>A room for the plants you're proud of.</Text>
       </View>
 
       <Card>
         <SectionLabel>Come in</SectionLabel>
         <Body style={styles.story}>
-          We're David and Amanda. Our home filled up with plants the way it happens to people — one
+          We're David and Amanda. Our home filled with plants the way it happens to people — one
           Monstera, then a cutting from a friend, then a Ring of Fire we'd been hunting for a year.
         </Body>
         <Body style={styles.story}>
-          We started keeping notes because we cared how they were doing: when each one was watered,
+          We started keeping notes because we cared how they were doing — when each one was watered,
           what a spotted leaf turned out to be, who gave us what. A plant you've kept thriving for
-          three years deserves to be remembered properly — and whoever you pass it to deserves to
-          know its whole story.
+          three years has earned its story. And whoever you pass it to deserves to know it.
         </Body>
         <Body style={styles.story}>
-          That notebook became PlantParlour, and we'd rather share it than keep it. A parlour is the
-          room you bring people into to show them what you love.
+          That notebook became PlantParlour. A parlour is the room you bring people into to show them
+          what you love — so we built one, and we'd rather share it than keep it to ourselves.
         </Body>
-        <InviteLine>So bring yours in. We'll help you not miss a thing.</InviteLine>
+        <InviteLine>Bring yours in. We'll help you give it the care — and the credit — it's due.</InviteLine>
       </Card>
 
       <View style={styles.points}>
