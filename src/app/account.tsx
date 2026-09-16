@@ -7,7 +7,7 @@ import { pendingChanges } from "@/db";
 import { signOut, useAccount } from "@/lib/auth";
 import { confirm } from "@/lib/confirm";
 import { getKeeperName, setKeeperName } from "@/lib/keeper";
-import { getHandle, parlourUrl, setHandle } from "@/lib/parlour";
+import { conservatoryUrl, getHandle, setHandle } from "@/lib/conservatory";
 import { getSyncStatus, subscribeSync, syncNow, type SyncStatus } from "@/lib/sync";
 import { cardTheme, font, space } from "@/theme";
 
@@ -48,7 +48,7 @@ export default function AccountScreen() {
     getKeeperName().then(setName).catch(() => {});
   }, []);
 
-  // The name heads your parlour and every tag you publish. It is kept on the
+  // The name heads your conservatory and every tag you publish. It is kept on the
   // device and pushed by the sync, so it is saved that way rather than written
   // straight to the server — a direct write would be overwritten by the next
   // push, which sends whatever the device holds.
@@ -143,13 +143,13 @@ export default function AccountScreen() {
       </Card>
 
       <Card>
-        <Heading>Your parlour</Heading>
+        <Heading>Your conservatory</Heading>
         <Field
           label="Your name"
           value={name}
           onChangeText={setName}
           placeholder="Amanda"
-          hint="Heads your parlour and every tag you publish. Blank shows “A keeper”."
+          hint="Heads your conservatory and every tag you publish. Blank shows “A keeper”."
           maxLength={40}
           onBlur={saveName}
         />
@@ -159,7 +159,7 @@ export default function AccountScreen() {
         {handle ? (
           <>
             <Body>Anyone can visit your published plants at</Body>
-            <Body selectable style={{ fontFamily: font.serif }}>{parlourUrl(handle)}</Body>
+            <Body selectable style={{ fontFamily: font.serif }}>{conservatoryUrl(handle)}</Body>
             <Body small muted>
               Only plants you've published appear there — publish one from its own page. Everything
               else stays private.
@@ -173,8 +173,8 @@ export default function AccountScreen() {
                 // rejects, and so does a dismissed sheet. Neither is an error.
                 onPress={() =>
                   Share.share({
-                    message: `My plant parlour: ${parlourUrl(handle)}`,
-                    url: parlourUrl(handle),
+                    message: `My conservatory: ${conservatoryUrl(handle)}`,
+                    url: conservatoryUrl(handle),
                   }).catch(() => {})
                 }
               />
@@ -183,8 +183,8 @@ export default function AccountScreen() {
         ) : (
           <>
             <Body small muted>
-              Pick a name and your published plants get one page to send people, instead of a
-              separate link each. Nothing new becomes public.
+              Pick a name and your published plants get one page to send people — your
+              conservatory — instead of a separate link each. Nothing new becomes public.
             </Body>
             <Field
               label="Handle"

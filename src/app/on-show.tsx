@@ -5,18 +5,18 @@ import { PlantPhoto } from "@/components/plant-photo";
 import { Body, Button, Card, Row, Title } from "@/components/ui";
 import { coverPhoto, listPlants } from "@/db";
 import { useQuery } from "@/hooks/use-query";
-import { getHandle, parlourUrl } from "@/lib/parlour";
+import { conservatoryUrl, getHandle } from "@/lib/conservatory";
 import { publishTag, unpublishTag } from "@/lib/tag";
 import { font, radius, space, useTheme } from "@/theme";
 import { useEffect } from "react";
 
 /**
  * What's on show: the whole greenhouse with a switch per plant, deciding which
- * ones appear in the keeper's parlour.
+ * ones appear in the keeper's conservatory.
  *
  * Publishing already existed, one plant at a time on that plant's own page —
- * which is fine for sending someone a single tag and hopeless for curating a
- * collection. Putting five plants on show meant opening five plants. This is
+ * which is fine for sending someone a single tag and hopeless for filling a
+ * conservatory. Putting five plants on show meant opening five plants. This is
  * the same two calls (`publishTag` / `unpublishTag`) over the whole list.
  */
 export default function OnShow() {
@@ -58,10 +58,10 @@ export default function OnShow() {
         <Title>What's on show</Title>
         <Body small muted>
           {onShow === 0
-            ? "Nothing is on show yet. Anything you switch on appears in your parlour, and gets its own link to send someone."
-            : `${onShow} of ${plants.length} ${plants.length === 1 ? "plant" : "plants"} in your parlour. Everything else stays private.`}
+            ? "Nothing is on show yet. Anything you switch on appears in your conservatory, and gets its own link to send someone."
+            : `${onShow} of ${plants.length} ${plants.length === 1 ? "plant" : "plants"} in your conservatory. Everything else stays private.`}
         </Body>
-        {handle ? <Body small muted>{parlourUrl(handle)}</Body> : null}
+        {handle ? <Body small muted>{conservatoryUrl(handle)}</Body> : null}
         {error ? <Body small style={{ color: t.critical.fg }}>{error}</Body> : null}
       </Card>
 

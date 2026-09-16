@@ -1,4 +1,6 @@
--- A keeper's public parlour: every plant they have published, at one link.
+-- A keeper's conservatory: every plant they have published, at one link.
+-- (The parlour is the private room; the conservatory is the glass house you
+-- show people into.)
 --
 -- Until now a keeper had N unlisted tag links and no identity — nothing to
 -- hand someone that says "this is my collection". A handle gives them one
@@ -27,6 +29,7 @@ alter table public.keepers drop constraint if exists keepers_handle_not_reserved
 alter table public.keepers add constraint keepers_handle_not_reserved check (
   handle is null or lower(handle) not in (
     'tag', 'welcome', 'api', 'account', 'plant', 'plants', 'parlour', 'parlor',
+    'conservatory',
     'admin', 'support', 'help', 'about', 'settings', 'signin', 'signup', 'login',
     'plantparlour', 'official', 'staff', 'root', 'me', 'new', 'index'
   )
@@ -36,7 +39,7 @@ alter table public.keepers add constraint keepers_handle_not_reserved check (
 -- The page's only read. SECURITY DEFINER because RLS hides other keepers'
 -- rows, and an allow-list rather than `to_jsonb(k) - ...` so that a column
 -- added later is private until someone decides otherwise.
-create or replace function public.parlour(handle text)
+create or replace function public.conservatory(handle text)
 returns jsonb
 language sql
 stable
@@ -73,8 +76,8 @@ as $$
     ), '[]'::jsonb)
   )
   from public.keepers k
-  where lower(k.handle) = lower(parlour.handle)
+  where lower(k.handle) = lower(conservatory.handle)
 $$;
 
-revoke all on function public.parlour(text) from public;
-grant execute on function public.parlour(text) to anon, authenticated;
+revoke all on function public.conservatory(text) from public;
+grant execute on function public.conservatory(text) to anon, authenticated;

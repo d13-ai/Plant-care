@@ -43,7 +43,7 @@ const photoUrl = (path: string) => `${SUPABASE_URL}/storage/v1/object/public/pla
 /**
  * The PlantParlour look: aubergine page, one cream card with the double gold
  * rule, Lora and Source Sans 3. `head` is extra markup for the document head —
- * a parlour is meant to be found and shared and carries description and social
+ * a conservatory is meant to be found and shared and carries description and social
  * tags; a tag page is one keeper's unlisted record and carries none.
  */
 export function page(title: string, body: string, status = 200, head = ""): { status: number; html: string } {

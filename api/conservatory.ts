@@ -1,12 +1,14 @@
-// A keeper's public parlour: GET /@handle, served by Vercel.
+// A keeper's conservatory: GET /@handle, served by Vercel.
 //
 // Every plant one keeper has published, at one link — where a tag is one
-// plant, this is the collection. Same shape as api/tag.ts and for the same
+// plant, this is the collection. The parlour is the private room a keeper
+// keeps their greenhouse in; the conservatory is the glass house they show
+// people into. Same shape as api/tag.ts and for the same
 // reasons: static HTML off the edge, one SECURITY DEFINER RPC with the
 // publishable key, no app boot, so it renders before the bundle would and
 // carries the og: tags a shared link needs.
 //
-// It publishes nothing new. parlour() returns only plants already marked
+// It publishes nothing new. conservatory() returns only plants already marked
 // is_public — the same set the tag links expose — so a private plant is as
 // invisible here as everywhere else.
 
@@ -28,7 +30,7 @@ type Plant = {
   passport_token: string;
   photo: string | null;
 };
-export type Parlour = {
+export type Conservatory = {
   keeper: { handle: string; display_name: string; keeping_since: string };
   plants: Plant[];
 };
@@ -38,7 +40,7 @@ const esc = (s: unknown) =>
 const photoUrl = (path: string) => `${SUPABASE_URL}/storage/v1/object/public/plant-photos/${path}`;
 const year = (iso: string | null) => (iso ? new Date(iso).getFullYear() : null);
 
-export function renderParlour(data: Parlour): string {
+export function renderConservatory(data: Conservatory): string {
   const { keeper, plants } = data;
   const count = plants.length;
   const since = new Date(keeper.keeping_since).toLocaleDateString("en-US", { month: "long", year: "numeric" });
@@ -66,7 +68,7 @@ export function renderParlour(data: Parlour): string {
 .pbody p{margin:0}
 .empty{background:var(--neu-bg);border-radius:10px;padding:14px}
 </style>
-<div class="top"><div class="caps">A parlour</div><div class="brand">PlantParlour</div></div>
+<div class="top"><div class="caps">A conservatory</div><div class="brand">PlantParlour</div></div>
 
 <header>
   <h1>${esc(keeper.display_name)}</h1>
@@ -83,28 +85,28 @@ ${
 <div class="foot"><span>Rare plants. Real community. Real pride.</span></div>`;
 }
 
-export async function parlourPage(handle: string): Promise<{ status: number; html: string }> {
+export async function conservatoryPage(handle: string): Promise<{ status: number; html: string }> {
   const missing = page(
-    "Parlour not found",
-    `<section><h2 class="caps">No parlour here</h2><p class="muted">Nobody keeps plants at that name — or they haven't chosen one yet.</p></section>`,
+    "Conservatory not found",
+    `<section><h2 class="caps">No conservatory here</h2><p class="muted">Nobody keeps plants at that name — or they haven't chosen one yet.</p></section>`,
     404,
   );
   if (!HANDLE.test(handle)) return missing;
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/parlour`, {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/conservatory`, {
     method: "POST",
     headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
     body: JSON.stringify({ handle }),
   });
   if (!res.ok) return missing;
-  const data = (await res.json()) as Parlour | null;
+  const data = (await res.json()) as Conservatory | null;
   if (!data) return missing;
 
   const title = `${data.keeper.display_name} · PlantParlour`;
   const description =
     data.plants.length === 0
-      ? `${data.keeper.display_name}'s parlour on PlantParlour.`
-      : `${data.plants.length} plant${data.plants.length === 1 ? "" : "s"} on show in ${data.keeper.display_name}'s parlour — every photo, every watering, and where each one came from.`;
+      ? `${data.keeper.display_name}'s conservatory on PlantParlour.`
+      : `${data.plants.length} plant${data.plants.length === 1 ? "" : "s"} on show in ${data.keeper.display_name}'s conservatory — every photo, every watering, and where each one came from.`;
   const head = `<meta name="description" content="${esc(description)}">
 <link rel="canonical" href="${SITE}/@${esc(data.keeper.handle)}">
 <meta property="og:type" content="profile">
@@ -113,7 +115,7 @@ export async function parlourPage(handle: string): Promise<{ status: number; htm
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${SITE}/@${esc(data.keeper.handle)}">
 <meta name="twitter:card" content="summary">`;
-  return page(title, renderParlour(data), 200, head);
+  return page(title, renderConservatory(data), 200, head);
 }
 
 type Req = { method?: string; query?: Record<string, string | string[] | undefined>; url?: string };
@@ -127,9 +129,9 @@ export default async function handler(req: Req, res: Res): Promise<void> {
   }
   const raw = req.query?.h ?? new URL(req.url ?? "/", "http://x").searchParams.get("h") ?? "";
   const handle = (Array.isArray(raw) ? raw[0] : raw)?.trim().replace(/^@/, "") ?? "";
-  const { status, html } = await parlourPage(handle);
+  const { status, html } = await conservatoryPage(handle);
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  // A parlour changes when its keeper publishes something, so it can't be held
+  // A conservatory changes when its keeper publishes something, so it can't be held
   // for long; a minute at the edge still absorbs a link doing the rounds.
   res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=600");
   res.status(status).send(html);

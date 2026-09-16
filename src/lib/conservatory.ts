@@ -1,7 +1,7 @@
 import { SITE_URL, supabase } from "./supabase";
 
 /**
- * A keeper's handle: the name their public parlour lives at, and the first
+ * A keeper's handle: the name their conservatory lives at, and the first
  * thing about them that is globally unique rather than private to their
  * account. It is stored on the server for that reason — a name only this
  * device knew could be taken by somebody else tomorrow.
@@ -9,11 +9,11 @@ import { SITE_URL, supabase } from "./supabase";
  * Same rule as the database's own check constraint on `keepers.handle`, which
  * is the one that actually holds; this copy exists so the app can say no
  * before a round trip, and the two are checked against each other in
- * `e2e/parlour-render.e2e.test.ts`.
+ * `e2e/conservatory-render.e2e.test.ts`.
  */
 export const HANDLE_RULE = /^[A-Za-z0-9_]{3,20}$/;
 
-export function parlourUrl(handle: string): string {
+export function conservatoryUrl(handle: string): string {
   return `${SITE_URL}/@${handle}`;
 }
 

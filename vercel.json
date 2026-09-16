@@ -46,7 +46,7 @@
     },
     {
       "source": "/@:handle",
-      "destination": "/api/parlour?h=:handle"
+      "destination": "/api/conservatory?h=:handle"
     },
     {
       "source": "/plant/:id/edit",

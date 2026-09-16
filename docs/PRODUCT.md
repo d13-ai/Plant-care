@@ -98,24 +98,27 @@ between phones, deletes carried as tombstones. Photos live in storage once
 and show on every phone. *Tests: does "it's backed up" change how people
 treat the app? Does a second phone feel like the same greenhouse?*
 
-**v2b — A parlour worth visiting.** ✅ stage 1 shipped
-Every plant one keeper has published, at `plantparlour.org/@handle`. Where a
+**v2b — The conservatory.** ✅ stage 1 shipped
+Every plant one keeper has published, at `plantparlour.org/@handle`. The
+parlour is the private room a keeper keeps their greenhouse in; the
+conservatory is the glass house they show people into. Where a
 tag is one plant, this is the collection — and the first thing about a keeper
 that is public and findable rather than an unlisted link. *Tests: will people
 claim a handle? Do parlour links travel further than tag links?*
 
 **v2c — Calling cards.** next
-Follow a keeper and their parlour joins your rounds. Deliberately grants
-nothing: following curates whose *public* parlours you see, so a private plant
+Follow a keeper and their conservatory joins your rounds. Deliberately grants
+nothing: following curates whose *public* conservatories you see, so a private plant
 stays invisible to friends exactly as it is to strangers, and none of the RLS
 that guards a greenhouse has to be loosened to build it.
 
-**v3 — The conservatory.**
-Tips and talk: notes on a published plant, questions answered. The one that
+**v3 — Tips and talk.**
+Notes on a published plant, questions answered: notes on a published plant, questions answered. The one that
 changes what PlantParlour is, and the one that costs — the moment strangers
 can post, report and block are day-one features and somebody has to read the
-reports. Hence last, and hence after there are enough parlours worth visiting
-that a shared room isn't empty.
+reports. Hence last, and hence after there are enough conservatories worth visiting
+that a shared room isn't empty. *Still unnamed — "conservatory" went to the
+keeper's own public page instead.*
 
 **v3b — Trades.**
 Offer a plant to another keeper by handle; accept/decline; history moves.
