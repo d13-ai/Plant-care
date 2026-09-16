@@ -6,7 +6,7 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/((?!tag$|welcome$|api/|plant-photos/).*)",
+      "source": "/((?!tag$|api/|plant-photos/).*)",
       "headers": [
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -28,6 +28,13 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/welcome",
+      "destination": "/",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/plant-photos/(.*)",
@@ -36,10 +43,6 @@
     {
       "source": "/tag",
       "destination": "/api/tag"
-    },
-    {
-      "source": "/welcome",
-      "destination": "/api/welcome"
     },
     {
       "source": "/plant/:id/edit",

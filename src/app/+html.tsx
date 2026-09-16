@@ -6,6 +6,10 @@ import type { PropsWithChildren } from "react";
  * otherwise writes no <title>, so the tab and "Add to Home screen" would
  * show the URL instead of the app's name.
  */
+const TITLE = "PlantParlour — every plant, on the record";
+const DESCRIPTION =
+  "Keep every plant you own on the record: what it is, what it needs today, and everything that has happened to it. Made by two plant people who wanted their collection remembered properly — and yours too.";
+
 export default function Root({ children }: PropsWithChildren) {
   return (
     <html lang="en">
@@ -17,6 +21,16 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="application-name" content="PlantParlour" />
         <meta name="apple-mobile-web-app-title" content="PlantParlour" />
         <meta name="theme-color" content="#2E1633" />
+        {/* / is the welcome page, so it is the link people pass around: this is
+            what unfurls in a chat thread, and it has to be in the markup rather
+            than rendered by the bundle. */}
+        <meta name="description" content={DESCRIPTION} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="PlantParlour" />
+        <meta property="og:title" content={TITLE} />
+        <meta property="og:description" content={DESCRIPTION} />
+        <meta property="og:url" content="https://plantparlour.org/" />
+        <meta name="twitter:card" content="summary" />
         {/* The page is aubergine before the bundle paints, so there's no white flash. */}
         <style dangerouslySetInnerHTML={{ __html: "html,body,#root{background:#2E1633}" }} />
         <ScrollViewStyleReset />

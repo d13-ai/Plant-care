@@ -54,8 +54,6 @@ URL and publishable key (safe to commit — RLS gates everything).
   location and cadences on plants, `deleted_at` tombstones, a server-stamped
   `synced_at` as the pull cursor; plants private (`is_public = false`) by
   default
-- `api/welcome.ts` — the public welcome page at `/welcome`; static HTML, no
-  data access, sharing the tag page's shell (see *The welcome page*)
 - `api/tag.ts` — the public HTML tag page, served by Vercel at `/tag?t=…`
   (Edge Functions rewrite `text/html` to `text/plain`, so it can't live
   there; `supabase/functions/tag` now only redirects old links)
@@ -369,23 +367,24 @@ only when the project doesn't require email confirmation).
 
 ## The welcome page
 
-`api/welcome.ts`, served at `/welcome`: the link you hand to someone who has
-never opened PlantParlour. Static HTML with no data access and no app boot, so
-it renders on a slow phone long before the Expo bundle and the SQLite wasm
-would, and it carries the description, canonical link and og: tags a shared
-link wants. The app's own sign-in screen is inside the bundle and can do
-neither — which is why this page exists alongside it rather than instead of
-it. It reuses the tag page's `page()` shell, which takes optional head markup
-now, so the two public pages are visibly the same product.
+`/` is the welcome: what PlantParlour is, who made it, and the sign-in. It is
+the page a stranger lands on, so `src/app/+html.tsx` carries the description
+and og: tags — that markup is what unfurls in a chat thread when someone
+passes the link on, and it has to be in the document rather than rendered by
+the bundle.
 
-Every button on it goes to `/`. That is the sign-in screen for anyone without
-an account, and signing in and signing up are the same button, so there is
-nothing else to send them to. The app keeps `/` — moving it would break deep
-links, the SPA fallback and the Google OAuth origins.
+There was a second copy served as static HTML at `/welcome`, which rendered
+before the bundle downloaded and carried its own og: tags. The cost was the
+same words in two places, and they drifted apart within a day of being
+written. `/welcome` redirects to `/` now, so links already shared still work.
+If first paint on a cold phone ever becomes the thing that loses people, the
+static page is in the history at `api/welcome.ts` and worth reviving — but
+then the copy needs one source, not two.
 
-Like `/tag`, it is exempt from the `Cross-Origin-Embedder-Policy` header in
-`vercel.json`: require-corp blocks the Google Fonts stylesheet these two pages
-load, and neither needs the cross-origin isolation expo-sqlite's wasm does.
+Type on this screen runs larger than the rest of the app (17px body, 19px
+headings). Fifteen-point body is right for a dense screen someone uses every
+day, and small for a page a stranger reads once while deciding whether to
+bother.
 
 ## Look
 

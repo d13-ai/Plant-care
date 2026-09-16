@@ -281,7 +281,7 @@ try {
       const visitor = await stranger.newPage();
       for (const route of ["/", "/plant/1", "/account"]) {
         await visitor.goto(base + route, { waitUntil: "domcontentloaded" });
-        await visitor.getByText("Sign in to your parlour").waitFor({ timeout: 15000 });
+        await visitor.getByText("Start your parlour").waitFor({ timeout: 15000 });
         if (await visitor.getByText("All plants").count()) throw new Error(`${route} showed the greenhouse to a stranger`);
         if (await visitor.getByText("Big Monstera").count()) throw new Error(`${route} leaked a plant to a stranger`);
       }
