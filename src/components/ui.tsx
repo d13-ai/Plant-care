@@ -58,16 +58,22 @@ export function Body({
   muted,
   small,
   style,
+  selectable,
 }: {
   children: ReactNode;
   muted?: boolean;
   small?: boolean;
   /** Text style — it lands on a <Text>, whatever the rest of this file does. */
   style?: StyleProp<TextStyle>;
+  /** For text someone needs to copy, like an error worth reporting. */
+  selectable?: boolean;
 }) {
   const t = useTheme();
   return (
-    <Text style={[small ? styles.small : styles.body, { color: muted ? t.muted : t.text }, style]}>
+    <Text
+      selectable={selectable}
+      style={[small ? styles.small : styles.body, { color: muted ? t.muted : t.text }, style]}
+    >
       {children}
     </Text>
   );

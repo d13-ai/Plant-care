@@ -107,3 +107,31 @@ test("an upgrade interrupted partway leaves the database usable and finishes on 
     close();
   }
 });
+
+test("a database wedged by the old half-applied upgrade heals itself", async () => {
+  const { db, close } = openTestDatabase();
+  try {
+    // What an older build could leave behind: it bumped user_version outside
+    // the transaction, so a phone killed mid-upgrade kept the new column while
+    // the version stayed behind. Every launch after that re-ran the ALTER and
+    // threw "duplicate column name" — the database never opened again.
+    await db.execAsync(CREATE_TABLES);
+    for (const version of [2, 3, 4, 5, 6]) for (const statement of MIGRATIONS[version]) await db.execAsync(statement);
+    await db.execAsync("PRAGMA user_version = 6");
+    await db.runAsync(
+      "INSERT INTO plants (nickname, status, acquired_at, created_at, updated_at) VALUES ('Stuck Monstera', 'ACTIVE', '2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z', '2026-08-01T00:00:00.000Z')",
+    );
+    // v7's column is already there; the version says it isn't.
+    for (const statement of MIGRATIONS[7]) await db.execAsync(statement);
+
+    await migrate(db);
+
+    const version = await db.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
+    expect(version!.user_version, "the upgrade gets past the column it already added").toBe(SCHEMA_VERSION);
+    const columns = (await db.getAllAsync<{ name: string }>("PRAGMA table_info(plants)")).map((c) => c.name);
+    expect(columns).toContain("cover_photo_uuid");
+    expect((await listPlants(db)).map((p) => p.plant.nickname)).toEqual(["Stuck Monstera"]);
+  } finally {
+    close();
+  }
+});

@@ -31,7 +31,15 @@ const DB_OPEN_RETRIES = 3;
 const isFileLocked = (e: Error | null) =>
   /NoModificationAllowedError|Access Handle|another open/i.test(e?.message ?? "");
 
-function DatabaseUnavailable({ locked, onRetry }: { locked: boolean; onRetry: () => void }) {
+function DatabaseUnavailable({
+  locked,
+  detail,
+  onRetry,
+}: {
+  locked: boolean;
+  detail: string | null;
+  onRetry: () => void;
+}) {
   const t = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: t.background, alignItems: "center", justifyContent: "center", padding: space.lg }}>
@@ -45,6 +53,14 @@ function DatabaseUnavailable({ locked, onRetry }: { locked: boolean; onRetry: ()
         <Row>
           <Button title="Try again" variant="primary" onPress={onRetry} />
         </Row>
+        {/* What actually failed. On a phone the console is out of reach, and
+            "something went wrong" is not something anyone can act on or
+            report — this is the line that makes a screenshot worth sending. */}
+        {detail ? (
+          <Body small muted selectable>
+            {detail}
+          </Body>
+        ) : null}
       </View>
     </View>
   );
@@ -64,9 +80,10 @@ export default function RootLayout() {
   const [mount, setMount] = useState(0);
   const [failures, setFailures] = useState(0);
   const [dbError, setDbError] = useState<Error | null>(null);
-  // Sticky: retrying a locked file churns the VFS, so the *last* error is
+  // Sticky, both of them: retrying churns the VFS, so the *last* error is
   // often "Invalid VFS state" and only the first one names the real cause.
   const [locked, setLocked] = useState(false);
+  const [firstError, setFirstError] = useState<string | null>(null);
   const givenUp = dbError !== null && failures > DB_OPEN_RETRIES;
 
   useEffect(() => {
@@ -82,12 +99,14 @@ export default function RootLayout() {
     setDbError(null);
     setFailures(0);
     setLocked(false);
+    setFirstError(null);
     setMount((n) => n + 1);
   }, []);
 
   const openFailed = useCallback((error: Error) => {
     console.warn("Opening the database failed:", error.message);
     if (isFileLocked(error)) setLocked(true);
+    setFirstError((seen) => seen ?? error.message);
     setDbError(error);
     setFailures((n) => n + 1);
   }, []);
@@ -97,7 +116,7 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
-  if (givenUp) return <DatabaseUnavailable locked={locked} onRetry={retry} />;
+  if (givenUp) return <DatabaseUnavailable locked={locked} detail={firstError} onRetry={retry} />;
 
   // The database file keeps its original name: renaming it would orphan every
   // existing keeper's plants.

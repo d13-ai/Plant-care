@@ -221,12 +221,26 @@ export async function migrate(db: SQLiteDatabase): Promise<void> {
   for (let version = current + 1; version <= SCHEMA_VERSION; version++) {
     await db.withTransactionAsync(async () => {
       for (const statement of MIGRATIONS[version] ?? []) {
-        await db.execAsync(statement);
+        try {
+          await db.execAsync(statement);
+        } catch (error) {
+          // One version of this function bumped user_version outside the
+          // transaction, so a phone killed mid-upgrade then kept the new
+          // column while the version stayed behind. Every launch after that
+          // re-ran the ALTER, threw "duplicate column name", and the database
+          // never opened again — an app bricked with no way back. The column
+          // being there already is exactly what this step wanted, so take it
+          // and carry on. Everything else still throws.
+          if (!isDuplicateColumn(error)) throw error;
+        }
       }
       await db.execAsync(`PRAGMA user_version = ${version}`);
     });
   }
 }
+
+const isDuplicateColumn = (error: unknown) =>
+  /duplicate column name/i.test(error instanceof Error ? error.message : String(error));
 
 // ---------------------------------------------------------------------------
 // Reads
