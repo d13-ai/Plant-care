@@ -6,7 +6,7 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/((?!tag$|api/|plant-photos/).*)",
+      "source": "/((?!tag$|@|api/|plant-photos/).*)",
       "headers": [
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -43,6 +43,10 @@
     {
       "source": "/tag",
       "destination": "/api/tag"
+    },
+    {
+      "source": "/@:handle",
+      "destination": "/api/parlour?h=:handle"
     },
     {
       "source": "/plant/:id/edit",

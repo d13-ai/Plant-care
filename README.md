@@ -412,6 +412,27 @@ this one needs `PASSPORT_E2E_EMAIL` / `PASSPORT_E2E_PASSWORD` set to a
 confirmed account (without them it tries a throwaway sign-up, which works
 only when the project doesn't require email confirmation).
 
+## Parlours
+
+A keeper claims a handle on the account screen and their published plants get
+one page: `plantparlour.org/@handle`, served by `api/parlour.ts` the same way
+`/tag` is — static HTML, one `SECURITY DEFINER` RPC with the publishable key,
+no app boot, and og: tags so a shared link unfurls. Each plant on it links to
+its own tag; there is no other way into a plant from there.
+
+**It publishes nothing new.** `parlour()` returns only rows already marked
+`is_public`, which is the same set the tag links expose — the handle just
+gathers them. A private plant is as invisible here as everywhere else, and the
+function is an allow-list (`jsonb_build_object`), so a column added to `plants`
+later is private until somebody decides otherwise.
+
+The handle's rules live in the database, not only in the app: a check
+constraint for the shape (`^[A-Za-z0-9_]{3,20}$`), another for the reserved
+names (`admin`, `tag`, `plantparlour`, the route names…), and a unique index
+on `lower(handle)` so `@Amanda` and `@amanda` can't be two people. `HANDLE` in
+`api/parlour.ts` and `HANDLE_RULE` in `src/lib/parlour.ts` are copies for the
+app's benefit, and a test checks they agree with the constraint.
+
 ## The welcome page
 
 `/` is the welcome: what PlantParlour is, who made it, and the sign-in. It is

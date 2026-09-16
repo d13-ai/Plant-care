@@ -1,13 +1,14 @@
 import { Stack, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
-import { Platform, ScrollView, StyleSheet } from "react-native";
-import { Badge, Body, Button, Card, Heading, Row } from "@/components/ui";
+import { Platform, ScrollView, Share, StyleSheet } from "react-native";
+import { Badge, Body, Button, Card, Field, Heading, Row } from "@/components/ui";
 import { pendingChanges } from "@/db";
 import { signOut, useAccount } from "@/lib/auth";
 import { confirm } from "@/lib/confirm";
+import { getHandle, parlourUrl, setHandle } from "@/lib/parlour";
 import { getSyncStatus, subscribeSync, syncNow, type SyncStatus } from "@/lib/sync";
-import { cardTheme, space } from "@/theme";
+import { cardTheme, font, space } from "@/theme";
 
 function ago(iso: string | null): string {
   if (!iso) return "never";
@@ -33,6 +34,28 @@ export default function AccountScreen() {
   const [error, setError] = useState<string | null>(null);
   const [sync, setSync] = useState<SyncStatus>(getSyncStatus());
   const [pending, setPending] = useState(0);
+  const [handle, setHandleValue] = useState<string | null>(null);
+  const [wanted, setWanted] = useState("");
+  const [claiming, setClaiming] = useState(false);
+  const [handleError, setHandleError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getHandle().then(setHandleValue).catch(() => {});
+  }, []);
+
+  const claim = async () => {
+    setClaiming(true);
+    setHandleError(null);
+    try {
+      await setHandle(wanted);
+      setHandleValue(wanted.trim());
+      setWanted("");
+    } catch (err) {
+      setHandleError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setClaiming(false);
+    }
+  };
 
   useEffect(() => subscribeSync(setSync), []);
   useEffect(() => {
@@ -96,6 +119,62 @@ export default function AccountScreen() {
           />
           <Button title="Sign out" small disabled={busy} onPress={leave} />
         </Row>
+      </Card>
+
+      <Card>
+        <Heading>Your parlour</Heading>
+        {handle ? (
+          <>
+            <Body>Anyone can visit your published plants at</Body>
+            <Body selectable style={{ fontFamily: font.serif }}>{parlourUrl(handle)}</Body>
+            <Body small muted>
+              Only plants you've published appear there — publish one from its own page. Everything
+              else stays private.
+            </Body>
+            <Row>
+              <Button
+                title="Share"
+                variant="primary"
+                small
+                // Same as the plant page: on web without navigator.share this
+                // rejects, and so does a dismissed sheet. Neither is an error.
+                onPress={() =>
+                  Share.share({
+                    message: `My plant parlour: ${parlourUrl(handle)}`,
+                    url: parlourUrl(handle),
+                  }).catch(() => {})
+                }
+              />
+            </Row>
+          </>
+        ) : (
+          <>
+            <Body small muted>
+              Pick a name and your published plants get one page to send people, instead of a
+              separate link each. Nothing new becomes public.
+            </Body>
+            <Field
+              label="Handle"
+              value={wanted}
+              onChangeText={setWanted}
+              placeholder="amanda"
+              hint="3–20 letters, numbers or underscores. This can't be changed later."
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={20}
+            />
+            <Row>
+              <Button
+                title={claiming ? "Claiming…" : "Claim it"}
+                variant="primary"
+                small
+                disabled={claiming || wanted.trim().length < 3}
+                onPress={claim}
+              />
+            </Row>
+          </>
+        )}
+        {handleError ? <Body small style={{ color: cardTheme.critical.fg }}>{handleError}</Body> : null}
       </Card>
 
       <Body small muted>
