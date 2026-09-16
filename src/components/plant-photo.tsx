@@ -1,6 +1,7 @@
 import { Image, type ImageContentPosition } from "expo-image";
 import { useState, type ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { displayPhotoUri } from "@/lib/photo-uri";
 import { radius, useTheme } from "@/theme";
 
 /**
@@ -11,7 +12,7 @@ import { radius, useTheme } from "@/theme";
  * from the top showed walls and ceilings instead.
  */
 export function PlantPhoto({
-  uri,
+  uri: stored,
   mode,
   style,
   children,
@@ -21,6 +22,9 @@ export function PlantPhoto({
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
 }) {
+  // A photo pulled from another phone is a bucket URL; on the web it has to
+  // come through our own origin to survive the page's embedder policy.
+  const uri = displayPhotoUri(stored);
   const t = useTheme();
   const [ratio, setRatio] = useState<number | null>(null);
   const [open, setOpen] = useState(false);

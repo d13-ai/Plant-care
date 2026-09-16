@@ -90,6 +90,15 @@ another phone shows them from that URL. Only accounts with an email sync;
 an anonymous session couldn't be signed into elsewhere, so there'd be
 nothing to promise.
 
+On the web those photos are fetched through `/plant-photos/<path>`, which
+Vercel rewrites to the bucket (`vercel.json`; Metro does the same in dev).
+They can't be loaded from Supabase directly: the app sets
+`Cross-Origin-Embedder-Policy: require-corp` for expo-sqlite's wasm, and that
+blocks a cross-origin image whose response has no
+`Cross-Origin-Resource-Policy` — which Supabase Storage doesn't send. Own
+photos are local files and were never affected, so this only ever showed up
+on a *second* phone, as a greenhouse with no pictures.
+
 **Privacy note:** the bucket is public-read (tags need it) with unguessable
 paths. Unpublishing a tag stops the link resolving but leaves the keeper's
 photos in place — they're the synced copy now — so someone who saved a

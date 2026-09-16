@@ -23,7 +23,7 @@ import {
   type RemotePlant,
 } from "@/db";
 import { getKeeperName } from "./keeper";
-import { SUPABASE_URL, supabase, supabaseConfigured } from "./supabase";
+import { BUCKET, SUPABASE_URL, supabase, supabaseConfigured } from "./supabase";
 
 /**
  * Keeps the phone's greenhouse and the server's copy the same.
@@ -81,7 +81,7 @@ const MAX_PAGES = 200;
 
 const LAST_SYNCED = "last_synced_at";
 const KEEPER = "keeper_id";
-const BUCKET = "plant-photos";
+
 
 let status: SyncStatus = { state: "idle", lastSyncedAt: null, error: null, version: 0 };
 const listeners = new Set<(s: SyncStatus) => void>();

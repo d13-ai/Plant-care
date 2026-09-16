@@ -6,7 +6,7 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/((?!tag$|api/).*)",
+      "source": "/((?!tag$|api/|plant-photos/).*)",
       "headers": [
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -20,6 +20,10 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/plant-photos/(.*)",
+      "destination": "https://ixagjvntbgyqemxxinqe.supabase.co/storage/v1/object/public/plant-photos/$1"
+    },
     {
       "source": "/tag",
       "destination": "/api/tag"

@@ -61,6 +61,9 @@ export async function ensureSession(): Promise<Session> {
   return anon.session;
 }
 
+/** The storage bucket plant photos live in: public-read, unguessable paths. */
+export const BUCKET = "plant-photos";
+
 /**
  * Where the web app lives; the tag page is served from there (api/tag.ts).
  *
