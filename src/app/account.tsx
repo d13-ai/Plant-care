@@ -6,6 +6,7 @@ import { Badge, Body, Button, Card, Field, Heading, Row } from "@/components/ui"
 import { pendingChanges } from "@/db";
 import { signOut, useAccount } from "@/lib/auth";
 import { confirm } from "@/lib/confirm";
+import { getKeeperName, setKeeperName } from "@/lib/keeper";
 import { getHandle, parlourUrl, setHandle } from "@/lib/parlour";
 import { getSyncStatus, subscribeSync, syncNow, type SyncStatus } from "@/lib/sync";
 import { cardTheme, font, space } from "@/theme";
@@ -39,9 +40,29 @@ export default function AccountScreen() {
   const [claiming, setClaiming] = useState(false);
   const [handleError, setHandleError] = useState<string | null>(null);
 
+  const [name, setName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
   useEffect(() => {
     getHandle().then(setHandleValue).catch(() => {});
+    getKeeperName().then(setName).catch(() => {});
   }, []);
+
+  // The name heads your parlour and every tag you publish. It is kept on the
+  // device and pushed by the sync, so it is saved that way rather than written
+  // straight to the server — a direct write would be overwritten by the next
+  // push, which sends whatever the device holds.
+  const saveName = async () => {
+    setSavingName(true);
+    try {
+      await setKeeperName(name);
+      await syncNow(db);
+    } catch {
+      /* the sync status says if it didn't land */
+    } finally {
+      setSavingName(false);
+    }
+  };
 
   const claim = async () => {
     setClaiming(true);
@@ -123,6 +144,18 @@ export default function AccountScreen() {
 
       <Card>
         <Heading>Your parlour</Heading>
+        <Field
+          label="Your name"
+          value={name}
+          onChangeText={setName}
+          placeholder="Amanda"
+          hint="Heads your parlour and every tag you publish. Blank shows “A keeper”."
+          maxLength={40}
+          onBlur={saveName}
+        />
+        <Row>
+          <Button title={savingName ? "Saving…" : "Save name"} small disabled={savingName} onPress={saveName} />
+        </Row>
         {handle ? (
           <>
             <Body>Anyone can visit your published plants at</Body>
