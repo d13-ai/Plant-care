@@ -50,12 +50,49 @@ async function signIn(email: string, password: string): Promise<string> {
   return data.user!.id;
 }
 
-/** Delete everything the signed-in account owns on the server. */
-async function wipeSignedInAccount(keeperId: string): Promise<void> {
-  const { data: photos } = await supabase.from("photos").select("path");
-  if (photos?.length) await supabase.storage.from("plant-photos").remove(photos.map((p) => p.path));
-  await supabase.from("plants").delete().eq("keeper_id", keeperId);
-  await supabase.from("keepers").delete().eq("id", keeperId);
+/**
+ * Every plant this test has put on the server, by id.
+ *
+ * The cleanup used to be `delete().eq("keeper_id", ...)`, which takes the whole
+ * account with it. PASSPORT_E2E_EMAIL can point at an account that holds a real
+ * greenhouse, so the test deletes the ids it created and nothing else. An
+ * identity regeneration mints fresh ids for the same plants, so this is added
+ * to rather than replaced.
+ */
+const createdPlantIds = new Set<string>();
+
+/** Remember what is in this database as the test's own. */
+async function trackPlants(db: TestDatabase["db"]): Promise<void> {
+  for (const p of await listPlants(db)) createdPlantIds.add(p.plant.uuid);
+}
+
+/** The nicknames this test writes, under every name it gives them. */
+const TEST_NICKNAMES = ["Sync Monstera", "Sync Monstera (B)", "Sync Cutting"];
+
+/** Clear an interrupted run's leftovers, whose ids this run doesn't know,
+ *  without reaching past the plants this test makes. */
+async function clearLeftovers(id: string): Promise<void> {
+  await supabase.from("plants").delete().eq("keeper_id", id).in("nickname", TEST_NICKNAMES);
+}
+
+/** Set when the test signs an account up itself, rather than being given one. */
+let throwawayKeeperId: string | null = null;
+
+/** Take the test's rows and uploaded objects back out, and nothing else. RLS
+ *  keeps each delete to the signed-in account, so the same id list serves both
+ *  accounts the run may have touched. */
+async function removeTestData(signedInAs: string): Promise<void> {
+  const ids = [...createdPlantIds];
+  if (ids.length) {
+    const { data: photos } = await supabase.from("photos").select("path").in("plant_id", ids);
+    if (photos?.length) await supabase.storage.from("plant-photos").remove(photos.map((p) => p.path));
+    await supabase.from("plants").delete().in("id", ids);
+  }
+  // The keeper row is the account's own profile. It is the test's to remove
+  // only when the test created the account.
+  if (throwawayKeeperId && throwawayKeeperId === signedInAs) {
+    await supabase.from("keepers").delete().eq("id", signedInAs);
+  }
 }
 
 async function signInTestAccount(): Promise<string> {
@@ -68,6 +105,7 @@ async function signInTestAccount(): Promise<string> {
     password: `E2e-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   });
   if (error) throw new Error(`Sign-up failed: ${error.message}`);
+  if (data.user) throwawayKeeperId = data.user.id;
   if (!data.session) {
     throw new Error(
       "This project requires email confirmation, so a throwaway account can't sign in. " +
@@ -105,8 +143,8 @@ describe("syncing a greenhouse between two devices", () => {
   beforeAll(async () => {
     expect(supabaseConfigured, "EXPO_PUBLIC_SUPABASE_URL / _KEY must be set").toBe(true);
     keeperId = await signInTestAccount();
-    // A clean slate for this account, in case an earlier run was interrupted.
-    await supabase.from("plants").delete().eq("keeper_id", keeperId);
+    // A clean slate for this test's plants, in case an earlier run was interrupted.
+    await clearLeftovers(keeperId);
 
     a = openTestDatabase();
     await migrate(a.db);
@@ -126,16 +164,17 @@ describe("syncing a greenhouse between two devices", () => {
     await addPhoto(a.db, motherId, PHOTO_DATA_URL, { caption: "Day one", takenAt: daysAgo(29) });
     await propagate(a.db, motherId, "Sync Cutting");
     motherUuid = (await getPlant(a.db, motherId))!.plant.uuid;
+    await trackPlants(a.db);
   });
 
   afterAll(async () => {
     // The last test may have switched accounts; clean whichever is signed in,
     // then the first account too.
     const { data } = await supabase.auth.getSession();
-    if (data.session) await wipeSignedInAccount(data.session.user.id);
+    if (data.session) await removeTestData(data.session.user.id);
     if (secondKeeperId && process.env.PASSPORT_E2E_EMAIL && process.env.PASSPORT_E2E_PASSWORD) {
       await signIn(process.env.PASSPORT_E2E_EMAIL, process.env.PASSPORT_E2E_PASSWORD);
-      await wipeSignedInAccount(keeperId);
+      await removeTestData(keeperId);
     }
     await supabase.auth.signOut();
     a?.close();
@@ -304,10 +343,13 @@ describe("syncing a greenhouse between two devices", () => {
     const before = await listPlants(a.db);
     const oldUuids = before.map((p) => p.plant.uuid);
     secondKeeperId = await signIn(email, password);
-    await supabase.from("plants").delete().eq("keeper_id", secondKeeperId);
+    await clearLeftovers(secondKeeperId);
 
     await syncNow(a.db);
     expect(getSyncStatus().state).toBe("idle");
+
+    // The regenerated ids belong to this test too, and to a second account.
+    await trackPlants(a.db);
 
     const after = await listPlants(a.db);
     expect(after.map((p) => p.plant.nickname).sort()).toEqual(before.map((p) => p.plant.nickname).sort());

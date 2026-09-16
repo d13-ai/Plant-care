@@ -10,9 +10,10 @@
  * It talks to the project in `.env` and writes real rows and real storage
  * objects, then deletes them again. Run it with `npm run e2e`.
  *
- * Identity: by default the app's anonymous sign-in is used, which requires
- * "Allow anonymous sign-ins" to be on for the project. Set PASSPORT_E2E_EMAIL
- * and PASSPORT_E2E_PASSWORD to run as a dedicated test account instead.
+ * Identity: PASSPORT_E2E_EMAIL and PASSPORT_E2E_PASSWORD. Anonymous sign-ins
+ * are off for this project — they let anyone mint a fresh keeper against the
+ * publishable key that ships in the app — so the fallback to the app's own
+ * anonymous session is only there for a project that still allows them.
  */
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { addPhoto, createPlant, getPlant, logCare, migrate, propagate, resolveIssue } from "@/db";
@@ -54,8 +55,13 @@ describe("publishing a tag to Supabase", () => {
   let plantId: number;
   let plantUuid: string;
   let cuttingId: number;
+  let cuttingUuid: string | null = null;
   let tagLink: string;
   let token: string;
+  /** The account's greenhouse name on the server before this test renamed it,
+   *  or null when the test's own sync is what created the keeper row. */
+  let previousKeeperName: string | null = null;
+  let keeperRowExisted = false;
 
   beforeAll(async () => {
     expect(supabaseConfigured, "EXPO_PUBLIC_SUPABASE_URL / _KEY must be set").toBe(true);
@@ -75,6 +81,15 @@ describe("publishing a tag to Supabase", () => {
     // an issue that was treated, and a photo.
     local = openTestDatabase();
     await migrate(local.db);
+    // setKeeperName renames the account's greenhouse, and the push carries that
+    // to the server. Note what was there so afterAll can put it back.
+    const { data: keeper } = await supabase
+      .from("keepers")
+      .select("display_name")
+      .eq("id", keeperId)
+      .maybeSingle();
+    keeperRowExisted = !!keeper;
+    previousKeeperName = keeper?.display_name ?? null;
     await setKeeperName(KEEPER_NAME);
 
     plantId = await createPlant(local.db, {
@@ -95,16 +110,26 @@ describe("publishing a tag to Supabase", () => {
   });
 
   afterAll(async () => {
-    // Take the test's rows and uploaded objects back out of the project.
+    // Take the test's rows and uploaded objects back out, by the ids this test
+    // created. The old cleanup deleted by keeper and dropped the keeper row,
+    // which empties the whole account — and PASSPORT_E2E_EMAIL can name an
+    // account with a real greenhouse in it.
     if (keeperId) {
-      const { data: paths } = await supabase.storage.from("plant-photos").list(`${keeperId}/${plantUuid}`);
-      if (paths?.length) {
-        await supabase.storage
-          .from("plant-photos")
-          .remove(paths.map((p) => `${keeperId}/${plantUuid}/${p.name}`));
+      const ids = [plantUuid, cuttingUuid].filter((id): id is string => !!id);
+      if (ids.length) {
+        // The paths come from the photos table, not a bucket listing: listing
+        // the bucket is no longer permitted, and these rows go with the plants.
+        const { data: photos } = await supabase.from("photos").select("path").in("plant_id", ids);
+        if (photos?.length) await supabase.storage.from("plant-photos").remove(photos.map((p) => p.path));
+        await supabase.from("plants").delete().in("id", ids);
       }
-      await supabase.from("plants").delete().eq("keeper_id", keeperId);
-      await supabase.from("keepers").delete().eq("id", keeperId);
+      // The keeper row is the account's own profile. Delete it only when this
+      // test's sync is what created it; otherwise put the name back.
+      if (keeperRowExisted) {
+        await supabase.from("keepers").update({ display_name: previousKeeperName }).eq("id", keeperId);
+      } else {
+        await supabase.from("keepers").delete().eq("id", keeperId);
+      }
       await supabase.auth.signOut();
     }
     local?.close();
@@ -199,6 +224,7 @@ describe("publishing a tag to Supabase", () => {
 
   test("a published cutting links back to its mother", async () => {
     cuttingId = await propagate(local.db, plantId, "E2E Cutting");
+    cuttingUuid = (await getPlant(local.db, cuttingId))!.plant.uuid;
     const cuttingLink = await publishTag(local.db, cuttingId);
     expect(cuttingLink).not.toBe(tagLink);
 
@@ -235,8 +261,10 @@ describe("publishing a tag to Supabase", () => {
     // copy now, not a snapshot that only existed for the tag.
     const { data: rows } = await supabase.from("plants").select("is_public").eq("id", plantUuid);
     expect(rows).toEqual([{ is_public: false }]);
-    const { data: left } = await supabase.storage.from("plant-photos").list(`${keeperId}/${plantUuid}`);
-    expect(left?.map((o) => `${keeperId}/${plantUuid}/${o.name}`)).toEqual([photoPath]);
+    // Proved by a download, not a listing: the bucket can no longer be listed
+    // by anyone, which is what closed the path-enumeration hole.
+    const still = await fetch(`${SUPABASE_URL}/storage/v1/object/public/plant-photos/${photoPath}`);
+    expect(still.status, "the keeper's own copy stays in the bucket").toBe(200);
 
     const after = await getPlant(local.db, plantId);
     expect(after!.plant.passportToken).toBeNull();

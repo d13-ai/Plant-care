@@ -17,12 +17,11 @@ photos) is saved to your account and syncs to any phone you sign into. See
 Publishing a plant's **tag** makes that one plant's synced record public
 at a link anyone can open:
 
-`https://ixagjvntbgyqemxxinqe.supabase.co/functions/v1/tag?t=<token>`
+`https://plantparlour.org/tag?t=<token>`
 
 Links are unlisted (32-hex random token), read via a `SECURITY DEFINER`
-RPC — there is no anonymous read access to any table. Until an email is
-added, identity is a Supabase **anonymous sign-in** created on first
-publish; adding the email attaches it to that same account.
+RPC — there is no anonymous read access to any table. Publishing needs an
+account: sign in with Google or an email code first.
 
 - Add plants with up to three photos — the whole plant, then close-ups —
   which the AI reads together in one scan (each extra photo is about half a cent)
@@ -60,9 +59,11 @@ URL and publishable key (safe to commit — RLS gates everything).
   there; `supabase/functions/tag` now only redirects old links)
   (deployed with JWT verification off; it only calls the RPC)
 
-**One-time setup in the Supabase dashboard:** Authentication → Sign In /
-Providers → enable **Allow anonymous sign-ins**. Publishing fails with a
-clear message until that's on.
+**Anonymous sign-ins are off** (Authentication → Sign In / Providers). v1
+used one to give a keeper an id before they had an account, but an anonymous
+sign-in against the publishable key that ships in the app is a fresh keeper
+for the asking — which is how a script walks past the per-keeper AI cap.
+Scanning, care guides and tags all ask the keeper to sign in instead.
 
 ## Accounts and sync
 
@@ -70,9 +71,10 @@ clear message until that's on.
 opens the login screen: **Continue with Google** (one tap; web app for now)
 or your email and the 6-digit code from the email. There are no passwords.
 Whichever way you sign in, whatever is on the phone is pushed into that
-account on the first sync. With the email code, an existing anonymous
-session gets the email attached, so anything already published keeps its
-links. Signing in the same way on another phone brings the greenhouse over.
+account on the first sync. (Where an anonymous session still exists — from
+before those were turned off — the email code attaches to it, so anything
+already published keeps its links.) Signing in the same way on another phone
+brings the greenhouse over.
 Signing out leaves the plants on the phone; they just stop syncing. A phone
 that signs into a *different* account keeps its plants and gives that
 account its own copy (the first account's copy stays as it was).
@@ -288,16 +290,17 @@ Camera flows are checked on a device.
 `publishTag`, then checks the snapshot landed, the photo is publicly
 readable, the tag page renders, republishing reuses the link, a cutting
 links back to its mother, the tables stay unreadable anonymously,
-unpublishing returns a 404 and takes the photos out of the public bucket, and
-republishing puts them back. It deletes everything it created afterwards.
+unpublishing returns a 404 while the keeper's own copy of the photo stays in
+the bucket (the privacy note above), and republishing brings the same link
+back. It deletes the rows and objects it created afterwards, by id.
 
 It drives `src/lib/tag.ts` and `src/db` directly under Node — SQLite is
 backed by `node:sqlite` and the two React-Native-only modules are stubbed
 (`e2e/stubs`, wired up in `vitest.e2e.config.ts`) — so the publish path under
-test is the one that ships. Identity comes from the app's anonymous sign-in,
-so **Allow anonymous sign-ins** has to be on (see above); to run it against a
-dedicated account instead, set `PASSPORT_E2E_EMAIL` and
-`PASSPORT_E2E_PASSWORD`.
+test is the one that ships. It needs `PASSPORT_E2E_EMAIL` and
+`PASSPORT_E2E_PASSWORD`: anonymous sign-ins are off (see above), so there is
+no identity without them. It leaves that account's own plants and its
+greenhouse name as it found them.
 
 `e2e/sync.e2e.test.ts` is the sync counterpart: two `node:sqlite` databases
 play two phones on one account. A pushes a greenhouse with a photo and a

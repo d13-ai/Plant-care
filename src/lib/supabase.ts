@@ -30,9 +30,14 @@ export const supabase = createClient(SUPABASE_URL || "http://localhost", SUPABAS
 });
 
 /**
- * v1 identity: the device signs in anonymously the first time it publishes.
- * That gives the keeper a stable id without an account screen; linking an
- * email to it later is `supabase.auth.updateUser({ email })`.
+ * The session behind everything server-side: scanning, care guides, tags, sync.
+ *
+ * v1 let the device sign in anonymously the first time it published, so a
+ * keeper got a stable id without an account screen. That is off for this
+ * project now — an anonymous sign-in against the publishable key that ships in
+ * the app is a fresh keeper for the asking, which is how a script would walk
+ * past the per-keeper AI cap. The fallback stays for a project that allows
+ * them; here it lands on the message below and the keeper signs in.
  */
 export async function ensureSession(): Promise<Session> {
   const stored = (await supabase.auth.getSession()).data.session;
@@ -49,7 +54,7 @@ export async function ensureSession(): Promise<Session> {
   if (error || !anon.session) {
     throw new Error(
       error?.message.includes("Anonymous sign-ins are disabled")
-        ? "Anonymous sign-ins are off for this Supabase project. Enable them under Authentication → Sign In / Providers."
+        ? "Sign in on the Account screen first — scanning, care guides and tags all need an account."
         : error?.message ?? "Could not start a session.",
     );
   }

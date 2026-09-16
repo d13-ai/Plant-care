@@ -136,6 +136,13 @@ by tags, export/import, a private photo bucket with signed URLs.
   at Resend (the sending-only key for bondcreativestudios.com is already
   created). Until then Google sign-in is the working path and the email
   path hits Supabase's few-per-hour limit.
+- **Anonymous sign-ins turned off** (Sep 2026), closing the last way past the
+  AI spend cap: the publishable key ships inside the app, so anyone could mint
+  a fresh keeper and a fresh daily allowance. The cost is that a new keeper now
+  signs in before their first AI scan, care guide or tag — adding plants,
+  reminders and history all still work signed out. *Worth watching: whether
+  the sign-in wall costs us people at the scan, which is the moment the app
+  first proves itself.*
 
 ## What already exists
 

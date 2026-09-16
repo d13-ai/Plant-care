@@ -14,7 +14,14 @@ const t = openTestDatabase();
 let plantId: number;
 let token: string;
 
+/** This one publishes for real, so it needs the test account. Without it the
+ *  suite used to throw in beforeAll and report as a failure; say what is
+ *  missing and stand down instead. */
+const LIVE = !!(process.env.PASSPORT_E2E_EMAIL && process.env.PASSPORT_E2E_PASSWORD);
+if (!LIVE) console.warn("PASSPORT_E2E_EMAIL / _PASSWORD not set — skipping the tag handler checks");
+
 beforeAll(async () => {
+  if (!LIVE) return;
   const { error } = await supabase.auth.signInWithPassword({
     email: process.env.PASSPORT_E2E_EMAIL!,
     password: process.env.PASSPORT_E2E_PASSWORD!,
@@ -27,6 +34,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  if (!LIVE) return t.close();
   await unpublishTag(t.db, plantId).catch(() => {});
   const { data } = await supabase.auth.getSession();
   if (data.session) await supabase.from("plants").delete().eq("nickname", "Handler check").eq("keeper_id", data.session.user.id);
@@ -34,7 +42,7 @@ afterAll(async () => {
   await supabase.auth.signOut();
 });
 
-test("a published plant renders as HTML", async () => {
+test.skipIf(!LIVE)("a published plant renders as HTML", async () => {
   const { status, html } = await tagPage(token);
   expect(status).toBe(200);
   expect(html).toContain("<!doctype html>");
@@ -43,7 +51,7 @@ test("a published plant renders as HTML", async () => {
   expect(html).toContain("Looks healthy.");
 });
 
-test("the handler sets the HTML content type and a real 404 for a bad link", async () => {
+test.skipIf(!LIVE)("the handler sets the HTML content type and a real 404 for a bad link", async () => {
   const calls: { status?: number; headers: Record<string, string>; body?: string } = { headers: {} };
   const res = {
     status(code: number) { calls.status = code; return res; },
