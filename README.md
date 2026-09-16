@@ -152,20 +152,26 @@ join by any method — a live `signUp` answered `Signups not allowed for this
 instance`, project-wide rather than per-provider, so the emailed-code path
 could never have made an account either.
 
-**What blocks a new account now: "Confirm email".** With it on, `signUp` sends
-a confirmation before returning a session — and the built-in mailer both
-rate-limits to a few an hour and refuses any address outside the project team,
-so for a real keeper that email never arrives. Either turn **Confirm email**
-off (Authentication → Sign In / Providers → Email), which is how the existing
-`e2e-sync@plantparlour.app` accounts were created and what the app expects, or
-set up SMTP below and leave it on. Signing *in* is unaffected either way.
+**"Confirm email" is off**, so `signUp` returns a live session and sends
+nothing. It has to stay off until SMTP is configured: with it on, signing up
+waits on a confirmation email, and the built-in mailer both rate-limits to a
+few an hour and refuses any address outside the project team — so for a real
+keeper it never arrives. The cost of off is that someone can sign up with an
+address they don't own, which will matter once a tag is an identity and
+doesn't yet.
 
-**The password policy** is set to require a lowercase letter, a capital, a
-number and a symbol, minimum 6. The field's hint asks for all of it, but
-`signInOrUp` only checks length — the policy is a dashboard setting and a copy
-of it hardcoded in the app would start rejecting passwords the server accepts.
-Supabase's refusal, which lists every acceptable character including the
-punctuation, is rewritten into one readable sentence.
+**The password policy** requires a lowercase letter, a capital and a number,
+minimum 6. The field's hint asks for all of it so it's right the first time,
+but `signInOrUp` only checks length (8) — the policy is a dashboard setting,
+already relaxed once, and a copy of it hardcoded here would start rejecting
+passwords the server accepts. Supabase's refusal lists every acceptable
+character; it is rewritten into one readable sentence.
+
+Verified end to end against the live project: an unknown email is refused,
+signing up returns a confirmed session with no email sent, the password then
+signs in, a wrong one is refused and reported as a wrong password rather than
+a failed signup, and a weak one is refused legibly. The account made for that
+was deleted afterwards by id.
 
 **Setup still owed: resetting a forgotten password.** Nothing else needs a
 mail server now — signing up and signing in don't send email at all (the

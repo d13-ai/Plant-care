@@ -55,8 +55,8 @@ const MIN_PASSWORD = 8;
 export async function signInOrUp(email: string, password: string): Promise<EntryMode> {
   const address = email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) throw new Error("That doesn't look like an email address.");
-  // Length only, deliberately. The project also demands a capital, a number and
-  // a symbol; that is a dashboard setting which can be relaxed, and a rule
+  // Length only, deliberately. The project also demands a capital and a number;
+  // that is a dashboard setting which has already been relaxed once, and a rule
   // hardcoded here would start rejecting passwords the server would accept.
   // The hint on the field asks for all of it, and friendly() handles the
   // refusal if the policy and the hint ever drift apart.
@@ -93,7 +93,7 @@ function friendly(message: string): string {
   // The password policy, which arrives as a full listing of every acceptable
   // character — punctuation and all — and is unreadable.
   if (/password should contain|password should be at least/i.test(message)) {
-    return "That password won't do: use at least 8 characters, with a capital letter, a number and a symbol.";
+    return "That password won't do: use at least 8 characters, with a capital letter and a number.";
   }
   // Signing up sends a confirmation email while "Confirm email" is on, so this
   // is the built-in mailer's few-per-hour ceiling rather than anything they did.
