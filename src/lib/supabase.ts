@@ -63,11 +63,17 @@ export async function ensureSession(): Promise<Session> {
  * read at runtime: setting it only takes effect on the next build, and on a
  * phone that means a new binary, because tagUrl() runs on the device.
  *
- * The fallback stays the Vercel address on purpose. It is what every tag link
- * and printed QR code already out there points at, none of which can be
- * rewritten, so that host has to keep answering whatever else is set up.
+ * The fallback is the live domain, so a build that never sets the variable
+ * still mints links that work. It was the Vercel address while tags might
+ * have been printed against it -- a link on a physical plant tag cannot be
+ * recalled, so that host had to keep answering. Checked before changing it:
+ * two published tags, both this keeper's own, none shared or printed, so
+ * nothing was relying on it.
+ *
+ * The Vercel address still answers, and should be left alone; it is just no
+ * longer what an unconfigured build falls back to.
  */
-export const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL || "https://plant-care-flame.vercel.app";
+export const SITE_URL = process.env.EXPO_PUBLIC_SITE_URL || "https://plantparlour.org";
 
 /**
  * Public URL of a plant's tag page. Rendered by Vercel, not an Edge

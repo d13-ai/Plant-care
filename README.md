@@ -224,10 +224,17 @@ does the app on their phones.
 The app answers on its Vercel address, and `EXPO_PUBLIC_SITE_URL` points it
 at a custom one. Two facts shape the whole switch:
 
-- **A published tag link is permanent.** `tagUrl()` bakes the host into the
-  URL at publish time, and those links are shared and printed onto plant
-  tags. Nothing can rewrite them, so **the Vercel address has to keep
-  answering forever** — add a domain, never replace one.
+- **A published tag link is permanent once it leaves the app.** The database
+  stores only the token; `tagUrl()` rebuilds the URL from `SITE_URL` every
+  time it is shown, so the app itself follows whatever host is configured.
+  What cannot be rewritten is a link already texted to someone or printed
+  onto a plant tag. Until such links exist, switching hosts is free — after
+  that, the old host has to keep answering, so **add a domain rather than
+  replace one** and check what is actually published before retiring a host:
+
+  ```sql
+  select count(*) from plants where is_public and deleted_at is null;
+  ```
 - **`EXPO_PUBLIC_SITE_URL` is inlined at build time.** Setting it in Vercel
   fixes the web app on the next deploy. Phones keep minting links from the
   value compiled into their build until a new binary ships, so the rollover
@@ -250,7 +257,9 @@ In order, and safe to stop after any step:
    so old `/functions/v1/tag?t=…` links forward to the new host.
 7. Supabase → Authentication → URL Configuration: change *Site URL* to the
    new domain, once step 3 is confirmed working.
-8. For phones: uncomment `EXPO_PUBLIC_SITE_URL` in `.env` and ship a build.
+8. For phones: `SITE_URL`'s fallback in `src/lib/supabase.ts` is the live
+   domain, so a rebuilt app is correct without any variable set. Reload the
+   app and publish a tag to confirm the link comes out on the right host.
 
 Steps 3 and 4 are adds, not edits: replacing the old values locks out anyone
 mid-session and breaks sign-in from the old host while it is still live.
