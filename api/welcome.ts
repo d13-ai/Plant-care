@@ -20,7 +20,7 @@ const esc = (s: unknown) =>
 
 const TITLE = "PlantParlour — every plant, on the record";
 const DESCRIPTION =
-  "A CARFAX for plants. Photograph what you own, log what you do for it, see what it needs today, and hand the whole history to whoever you trade or sell it to.";
+  "Keep every plant you own on the record: what it is, what it needs today, and everything that has happened to it. Made by two plant people who wanted their collection remembered properly — and yours too.";
 
 /** Head markup the tag page has no use for: this is the one page meant to be found and shared. */
 const HEAD = `<meta name="description" content="${esc(DESCRIPTION)}">
@@ -77,17 +77,28 @@ export function renderWelcome(): string {
 .btn.ghost{background:transparent;color:var(--gold-deep)}
 .note{background:var(--neu-bg);border-radius:10px;padding:10px 12px}
 .rule{border:0;border-top:1px solid var(--hair2);margin:0}
+.invite{font-family:Lora,Georgia,serif;font-style:italic;font-size:18px;line-height:1.5;color:var(--plum);margin:14px 0 0}
 </style>
 <div class="top"><div class="caps">Welcome</div><div class="brand">PlantParlour</div></div>
 
 <header>
   <h1>Every plant, on the record.</h1>
-  <div class="sub">A CARFAX for plants.</div>
+  <div class="sub">Come in.</div>
 </header>
 <p>
-  Photograph what you own, log what you do for it, and see what it needs today. When a plant moves
-  on — traded, sold, or left with a friend for a fortnight — its whole history goes with it.
+  We're David and Amanda. Our home filled up with plants the way it happens to people — one
+  Monstera, then a cutting from a friend, then a Ring of Fire we'd been hunting for a year.
 </p>
+<p>
+  We started keeping notes because we cared how they were doing: when each one was watered, what a
+  spotted leaf turned out to be, who gave us what. A plant you've kept thriving for three years
+  deserves to be remembered properly — and whoever you pass it to deserves to know its whole story.
+</p>
+<p>
+  That notebook became PlantParlour, and we'd rather share it than keep it. A parlour is the room
+  you bring people into to show them what you love.
+</p>
+<p class="invite">So bring yours in. We'll help you not miss a thing.</p>
 <div class="cta">
   <a class="btn" href="/">Start your parlour</a>
   <span class="small muted">Free, and it works in your browser — nothing to install.</span>

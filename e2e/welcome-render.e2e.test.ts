@@ -11,8 +11,17 @@ test("it says what the app is and offers a way in", () => {
   const { status, html } = welcomePage();
   expect(status).toBe(200);
   expect(html).toContain("Every plant, on the record.");
-  expect(html).toContain("A CARFAX for plants.");
   expect(html).toContain('href="/"');
+});
+
+test("it is the same welcome as the app's own screen, in the same voice", () => {
+  const { html } = welcomePage();
+  // Whoever is behind this, by name — the part a stranger being asked for an
+  // email actually wants to know.
+  expect(html).toContain("We're David and Amanda");
+  // And the invitation the whole page is built on.
+  expect(html).toMatch(/A parlour is the room\s+you bring people into to show them what you love/);
+  expect(html).toContain("So bring yours in.");
 });
 
 test("it says an account is needed, rather than letting it be a surprise", () => {
