@@ -5,7 +5,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
 import { Body, Button, Row, Title } from "@/components/ui";
 import { Welcome } from "@/components/welcome";
@@ -18,18 +18,38 @@ SplashScreen.preventAutoHideAsync();
 
 /**
  * On the web the database lives in the browser's origin-private filesystem,
- * which expo-sqlite opens with a sync access handle — and only one of those
- * can exist per file. A second tab, or a reload that beats the previous tab's
- * worker to releasing the file, throws NoModificationAllowedError. The
- * provider rethrows by default, nothing renders, and the page sits blank
- * until the watchdog in +html.tsx reloads it twenty seconds later.
+ * which expo-sqlite opens with a sync access handle — only one of those can
+ * exist per file, so a second tab, or a page that beats the previous one to
+ * releasing it, fails to open.
  *
- * The racing-reload case clears itself in a moment, so retry a few times
- * before saying anything. A genuinely second tab doesn't, so then say so.
+ * What makes that failure stick is a bug in the worker (expo-sqlite
+ * web/worker.ts, maybeInitAsync): it assigns the sqlite3 module *before*
+ * creating the VFS. When the VFS creation throws, the module stays set and
+ * the VFS stays null — and every later attempt skips the whole init block and
+ * throws "Invalid VFS state" instead. The worker is poisoned for the life of
+ * the page, so retrying inside it can never work; only a fresh worker can,
+ * and that means a reload. Hence the reload below rather than a remount.
  */
-const DB_OPEN_RETRIES = 3;
 const isFileLocked = (e: Error | null) =>
   /NoModificationAllowedError|Access Handle|another open/i.test(e?.message ?? "");
+
+/** Set once a reload has been spent, so a database that cannot open ever
+ *  can't put the page in a loop. */
+const RELOADED_KEY = "pp-db-reloaded";
+
+/** A fresh worker, which is the only thing that clears a poisoned VFS.
+ *  Returns false when the reload has been spent, or can't be tracked. */
+function reloadForFreshWorker(): boolean {
+  if (Platform.OS !== "web") return false;
+  try {
+    if (window.sessionStorage.getItem(RELOADED_KEY)) return false;
+    window.sessionStorage.setItem(RELOADED_KEY, "1");
+  } catch {
+    return false;
+  }
+  window.location.reload();
+  return true;
+}
 
 function DatabaseUnavailable({
   locked,
@@ -48,7 +68,7 @@ function DatabaseUnavailable({
         <Body muted>
           {locked
             ? "Your plants are kept in this browser, and only one tab can use them at a time. Close the other PlantParlour tab and try again."
-            : "Something went wrong opening the plants kept in this browser. Trying again usually sorts it."}
+            : "Something went wrong opening the plants kept in this browser. Your greenhouse is safe in your account — this is only the copy on this phone. Try again, and if it keeps happening, closing the other PlantParlour tabs and reopening usually clears it."}
         </Body>
         <Row>
           <Button title="Try again" variant="primary" onPress={onRetry} />
@@ -78,37 +98,31 @@ export default function RootLayout() {
   });
 
   const [mount, setMount] = useState(0);
-  const [failures, setFailures] = useState(0);
   const [dbError, setDbError] = useState<Error | null>(null);
-  // Sticky, both of them: retrying churns the VFS, so the *last* error is
-  // often "Invalid VFS state" and only the first one names the real cause.
-  const [locked, setLocked] = useState(false);
-  const [firstError, setFirstError] = useState<string | null>(null);
-  const givenUp = dbError !== null && failures > DB_OPEN_RETRIES;
-
-  useEffect(() => {
-    if (!dbError || givenUp) return;
-    const timer = setTimeout(() => {
-      setDbError(null);
-      setMount((n) => n + 1);
-    }, 400 * 2 ** failures);
-    return () => clearTimeout(timer);
-  }, [dbError, givenUp, failures]);
+  const locked = isFileLocked(dbError);
 
   const retry = useCallback(() => {
+    // Spend the reload again: the person asked for it, so a loop is theirs to
+    // stop, and a remount would hand them the same poisoned worker.
+    if (Platform.OS === "web") {
+      try {
+        window.sessionStorage.removeItem(RELOADED_KEY);
+      } catch {
+        /* nothing to clear */
+      }
+      window.location.reload();
+      return;
+    }
     setDbError(null);
-    setFailures(0);
-    setLocked(false);
-    setFirstError(null);
     setMount((n) => n + 1);
   }, []);
 
   const openFailed = useCallback((error: Error) => {
     console.warn("Opening the database failed:", error.message);
-    if (isFileLocked(error)) setLocked(true);
-    setFirstError((seen) => seen ?? error.message);
+    // One automatic reload: it costs a second and it fixes the common case,
+    // where whatever held the file has since let go.
+    if (reloadForFreshWorker()) return;
     setDbError(error);
-    setFailures((n) => n + 1);
   }, []);
 
   useEffect(() => {
@@ -116,11 +130,12 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
-  if (givenUp) return <DatabaseUnavailable locked={locked} detail={firstError} onRetry={retry} />;
 
   // The database file keeps its original name: renaming it would orphan every
   // existing keeper's plants.
-  return (
+  const parlour = dbError ? (
+    <DatabaseUnavailable locked={locked} detail={dbError.message} onRetry={retry} />
+  ) : (
     <SQLiteProvider
       key={mount}
       databaseName="plant-passport.db"
@@ -131,9 +146,7 @@ export default function RootLayout() {
         requestSync(db, 0);
       }}
     >
-      <StatusBar style="light" />
-      <RequireAccount>
-        <Stack
+      <Stack
         screenOptions={{
           headerStyle: { backgroundColor: t.background },
           headerTintColor: t.text,
@@ -147,9 +160,17 @@ export default function RootLayout() {
         <Stack.Screen name="plant/[id]/index" options={{ title: "" }} />
         <Stack.Screen name="plant/[id]/edit" options={{ title: "Edit plant", presentation: "modal" }} />
         <Stack.Screen name="account" options={{ title: "Account", presentation: "modal" }} />
-        </Stack>
-      </RequireAccount>
+      </Stack>
     </SQLiteProvider>
+  );
+
+  return (
+    <>
+      <StatusBar style="light" />
+      {/* Outside the provider: signing in needs no database, and putting one in
+          front of the sign-in screen only gave signing in a way to fail. */}
+      <RequireAccount>{parlour}</RequireAccount>
+    </>
   );
 }
 
@@ -158,10 +179,10 @@ export default function RootLayout() {
  * screen and nothing else — including on a deep link to a plant, which is
  * waiting for them once they are in.
  *
- * Inside the SQLiteProvider, because signing in needs the local database: the
- * codes path marks everything on the device dirty so it pushes into the
- * account. The device database stays as the working copy, so a photo taken
- * with no signal still saves and uploads on the next sync.
+ * It sits *outside* the SQLiteProvider. Someone who has not signed in has no
+ * plants on this device, so the sign-in screen has nothing to read — and while
+ * it was inside, a database that would not open took the login page down with
+ * it. The database opens once there is an account to open it for.
  */
 function RequireAccount({ children }: PropsWithChildren) {
   const { account, loading } = useAccount();

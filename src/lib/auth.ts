@@ -61,7 +61,7 @@ function friendly(message: string): string {
 }
 
 /** Check the code from the email; on success the session is the account's. */
-export async function verifyEmailCode(db: SQLiteDatabase, email: string, code: string, mode: CodeMode): Promise<Account> {
+export async function verifyEmailCode(email: string, code: string, mode: CodeMode): Promise<Account> {
   const address = email.trim().toLowerCase();
   const token = code.replace(/\D/g, "");
   if (token.length < 6) throw new Error("Enter the 6-digit code from the email.");

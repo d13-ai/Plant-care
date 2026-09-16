@@ -279,6 +279,11 @@ try {
     const stranger = await browser.newContext({ viewport: { width: 420, height: 860 } });
     try {
       const visitor = await stranger.newPage();
+      // No database at all: SQLite's wasm never loads. Signing in must still
+      // work, because someone without an account has nothing on this device to
+      // read -- and while the provider sat in front of the sign-in screen, a
+      // database that wouldn't open took the login page down with it.
+      await visitor.route("**/*.wasm", (route) => route.abort());
       for (const route of ["/", "/plant/1", "/account"]) {
         await visitor.goto(base + route, { waitUntil: "domcontentloaded" });
         await visitor.getByText("Start your parlour").waitFor({ timeout: 15000 });

@@ -1,4 +1,3 @@
-import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { GoogleIcon } from "@/components/icons";
@@ -12,10 +11,13 @@ import { cardTheme, font, radius, space, useTheme } from "@/theme";
  * It lives in its own component because it is the front door now — the welcome
  * screen is the only thing an unsigned-in visitor sees — rather than a panel
  * tucked inside the account screen.
+ *
+ * It touches no database. Someone who has not signed in has no plants on this
+ * device, so opening one to let them sign in only created a way for signing in
+ * to fail.
  */
 export function SignIn({ heading }: { heading?: string }) {
   const t = useTheme();
-  const db = useSQLiteContext();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [mode, setMode] = useState<CodeMode | null>(null);
@@ -45,7 +47,7 @@ export function SignIn({ heading }: { heading?: string }) {
   const send = () => run(async () => setMode(await sendEmailCode(email)));
   const verify = () =>
     run(async () => {
-      await verifyEmailCode(db, email, code, mode!);
+      await verifyEmailCode(email, code, mode!);
       setCode("");
       setMode(null);
     });
