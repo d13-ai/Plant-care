@@ -57,9 +57,11 @@ Two decisions that follow from this:
    streak worked only for people who were signed out, which is why the smoke
    test never saw it. The streak now belongs to the harness and no game can
    reach it; there is a test that breaks if one can.
-3. **Windowsill.** In progress — steps 1 to 4 of 8 done (the shelf, the rules,
-   placing, the generator, practice, and the daily board). Spec and build plan
-   in `docs/windowsill-spec.md`.
+3. **Windowsill.** In progress — steps 1 to 5 of 8 done: the shelf, the rules,
+   placing, the generator, practice, the daily board, and progress sync. The
+   shared streak is now genuinely shared — playing Trickle's daily board and
+   then opening Windowsill continues the same run, which the smoke test plays
+   out rather than asserts. Spec and build plan in `docs/windowsill-spec.md`.
 4. **Thicket.** Later.
 5. **Roots.** Later.
 

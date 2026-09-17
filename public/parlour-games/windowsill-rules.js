@@ -284,6 +284,74 @@
     return { w: shelf.w, d: shelf.d, tray: shuffle(best.pool, rnd), ways: best.ways, tries: best.tries, missed: true };
   }
 
+  /* ---- what this game keeps, and how two copies of it fold together ----- */
+
+  /**
+   * The shape of a keeper's Windowsill progress. The harness carries it to
+   * the account and back; what is in it, and which half of each pair wins a
+   * disagreement, is the game's own business.
+   *
+   * It lives here rather than in the page for one reason: the merge that used
+   * to live inside Trickle's page silently dropped a streak on every pull and
+   * nothing could see it, because nothing could reach it. This one is
+   * reachable, and tested.
+   */
+  function emptyProgress() {
+    return { done: 0, byShelf: {}, best: {}, dailyBest: null, daily: null };
+  }
+
+  function bigger(a, b) { return Math.max(a | 0, b | 0); }
+  function smaller(a, b) { return a == null ? b : b == null ? a : Math.min(a, b); }
+
+  function unionKeys(a, b) {
+    var all = {};
+    Object.keys(a || {}).forEach(function (k) { all[k] = 1; });
+    Object.keys(b || {}).forEach(function (k) { all[k] = 1; });
+    return Object.keys(all);
+  }
+
+  /**
+   * Which of two saved daily boards to keep.
+   *
+   * A later day always wins -- yesterday's board is finished business. On the
+   * same day, a board somebody finished beats one still in play, and between
+   * two unfinished ones the further along wins. Nothing is ever merged square
+   * by square: half of one arrangement and half of another is not a position
+   * anybody played.
+   */
+  function laterDaily(a, b) {
+    if (!a) return b || null;
+    if (!b) return a;
+    if ((a.num | 0) !== (b.num | 0)) return (a.num | 0) > (b.num | 0) ? a : b;
+    if (!!a.done !== !!b.done) return a.done ? a : b;
+    return (b.placements | 0) > (a.placements | 0) ? b : a;
+  }
+
+  /**
+   * Merge this device's progress with the account's. Signing in must never
+   * make things worse, so nothing is replaced: counts take the larger, fewest
+   * placements takes the smaller, and a shelf only one side has heard of
+   * survives.
+   */
+  function mergeProgress(local, remote) {
+    if (!remote) return local;
+    var out = {
+      done: bigger(local.done, remote.done),
+      byShelf: {},
+      best: {},
+      dailyBest: smaller(local.dailyBest, remote.dailyBest),
+      daily: laterDaily(local.daily, remote.daily)
+    };
+    unionKeys(local.byShelf, remote.byShelf).forEach(function (k) {
+      out.byShelf[k] = bigger((local.byShelf || {})[k], (remote.byShelf || {})[k]);
+    });
+    /* Fewest placements is the one number where smaller wins. */
+    unionKeys(local.best, remote.best).forEach(function (k) {
+      out.best[k] = smaller((local.best || {})[k], (remote.best || {})[k]);
+    });
+    return out;
+  }
+
   /** For labels and for anything a screen reader has to say out loud. */
   function describe(plant) {
     if (!plant) return "empty";
@@ -306,6 +374,9 @@
     solutions: solutions,
     SHELVES: SHELVES,
     PRACTICE: PRACTICE,
+    emptyProgress: emptyProgress,
+    laterDaily: laterDaily,
+    mergeProgress: mergeProgress,
     shuffle: shuffle,
     deal: deal,
     describe: describe

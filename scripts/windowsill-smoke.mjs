@@ -19,15 +19,19 @@ const FILES = {
   "/parlour-games/harness.js": readFileSync("public/parlour-games/harness.js", "utf8"),
 };
 const PAGE = readFileSync("public/parlour-games/windowsill.html", "utf8");
+// Trickle is served here too, at its own paths, so the one claim that spans
+// both games -- a single streak -- can actually be played rather than argued.
+const TRICKLE = readFileSync("public/parlour-games/trickle.html", "utf8");
 const server = createServer((req, res) => {
-  const js = FILES[new URL(req.url, "http://x").pathname];
+  const path = new URL(req.url, "http://x").pathname;
+  const js = FILES[path];
   if (js) {
     res.setHeader("Content-Type", "text/javascript; charset=utf-8");
     res.end(js);
     return;
   }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.end(PAGE);
+  res.end(/^\/parlour-games\/trickle(\/|$)/.test(path) ? TRICKLE : PAGE);
 }).listen(4611);
 
 const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined });
@@ -576,9 +580,9 @@ try {
 
   await step("a saved board from another day is ignored, not half-restored", async () => {
     await dp.evaluate(() => {
-      const saved = window.Parlour.read("pp_windowsill_daily", null);
-      saved.num -= 1;                       // yesterday's
-      window.Parlour.write("pp_windowsill_daily", saved);
+      const p = window.Parlour.read("pp_windowsill_progress", null);
+      p.daily.num -= 1;                     // yesterday's
+      window.Parlour.write("pp_windowsill_progress", p);
     });
     await dp.reload();
     await dp.waitForSelector(".cell");
@@ -634,6 +638,197 @@ try {
     if (await page.locator("#coach").isVisible()) throw new Error("a real board was coaching");
     if (!(await page.locator("#learn-link").isVisible())) throw new Error("no way in to practice");
     if (!(await page.locator("#daily-link").isVisible())) throw new Error("no way in to today's board");
+  });
+
+  // ---- progress, the streak, and the account ---------------------------
+  const solveOn = async (pg) => {
+    const sol = (await pg.evaluate(() => window.__game.solutions()))[0];
+    for (let r = 0; r < sol.length; r++) {
+      for (let t = 0; t < sol[r].length; t++) {
+        const id = await pg.evaluate(([n, h]) => {
+          const x = window.__game.tray().find((p) => p.need === n && p.height === h);
+          return x ? x.id : null;
+        }, [sol[r][t].need, sol[r][t].height]);
+        await pg.locator(`.chip[data-plant="${id}"]`).click();
+        await pg.locator(`.cell[data-run="${r}"][data-tier="${t}"]`).click();
+      }
+    }
+    await pg.waitForSelector("#win:not([hidden])", { timeout: 10000 });
+  };
+
+  await step("signed out, nothing is sent anywhere", async () => {
+    const quiet = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const calls = [];
+    await quiet.route("**://*.supabase.co/**", (route) => {
+      calls.push(route.request().url());
+      return route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    });
+    const qp = await quiet.newPage();
+    await qp.goto("http://localhost:4611/parlour-games/windowsill");
+    await qp.waitForSelector(".cell");
+    await solveOn(qp);
+    await qp.waitForTimeout(2200);           // past the debounce
+    if (calls.length) throw new Error(`${calls.length} requests while signed out: ${calls[0]}`);
+    const line = await qp.textContent("#save");
+    if (!/Sign in/.test(line)) throw new Error(`the save line reads "${line}"`);
+    // It still keeps a record locally.
+    const prog = await qp.evaluate(() => window.__game.progress());
+    if (prog.done !== 1) throw new Error(`finished ${prog.done} boards`);
+    await quiet.close();
+  });
+
+  await step("finishing counts once, and a reload does not count it again", async () => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const cp = await ctx.newPage();
+    await cp.goto("http://localhost:4611/parlour-games/windowsill?daily=1");
+    await cp.waitForSelector(".cell");
+    await solveOn(cp);
+    const first = await cp.evaluate(() => ({
+      streak: window.__game.streak(), best: window.__game.progress().dailyBest,
+    }));
+    if (first.streak.streak !== 1 || first.streak.played !== 1) {
+      throw new Error(`a first finish recorded ${JSON.stringify(first.streak)}`);
+    }
+    await cp.reload();
+    await cp.waitForSelector("#win:not([hidden])", { timeout: 10000 });
+    const again = await cp.evaluate(() => ({
+      streak: window.__game.streak(), best: window.__game.progress().dailyBest,
+    }));
+    if (again.streak.played !== 1) throw new Error(`a reload counted it again: ${JSON.stringify(again.streak)}`);
+    if (again.best !== first.best) throw new Error("the daily record moved on a reload");
+    await ctx.close();
+  });
+
+  await step("signed in, its own row is read and written back", async () => {
+    const signed = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const posted = [];
+    await signed.addInitScript(() => {
+      localStorage.setItem("sb-ixagjvntbgyqemxxinqe-auth-token", JSON.stringify({
+        access_token: "test-token", refresh_token: "test-refresh",
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        user: { id: "00000000-0000-4000-8000-00000000abcd" },
+      }));
+      // Fewer boards here, a better record here.
+      localStorage.setItem("pp_windowsill_progress", JSON.stringify({
+        done: 2, byShelf: { standard: 2 }, best: { standard: 13 }, dailyBest: null, daily: null,
+      }));
+    });
+    await signed.route("**://*.supabase.co/rest/v1/game_progress**", async (route) => {
+      if (route.request().method() === "GET") {
+        return route.fulfill({
+          status: 200, contentType: "application/json",
+          body: JSON.stringify([{
+            game: "windowsill",
+            progress: { done: 11, byShelf: { standard: 9, deep: 2 }, best: { standard: 30, deep: 40 },
+                        dailyBest: 14, daily: null },
+          }]),
+        });
+      }
+      posted.push(JSON.parse(route.request().postData() || "{}"));
+      return route.fulfill({ status: 201, body: "" });
+    });
+    const sp = await signed.newPage();
+    await sp.goto("http://localhost:4611/parlour-games/windowsill");
+    await sp.waitForSelector(".cell");
+    await sp.waitForFunction(() => window.__game.progress().done === 11, { timeout: 5000 });
+
+    const prog = await sp.evaluate(() => window.__game.progress());
+    if (prog.best.standard !== 13) throw new Error(`the better record was lost: ${JSON.stringify(prog.best)}`);
+    if (prog.best.deep !== 40) throw new Error("a record only the account had was dropped");
+    if (prog.dailyBest !== 14) throw new Error("the account's daily record was dropped");
+    if (!/Saved to your account/.test(await sp.textContent("#save"))) {
+      throw new Error(`the save line reads "${await sp.textContent("#save")}"`);
+    }
+    // It asked for its own row, not Trickle's.
+    const asked = await sp.evaluate(() => performance.getEntriesByType("resource")
+      .map((e) => e.name).filter((n) => /game_progress/.test(n)));
+    if (!asked.some((n) => /windowsill/.test(n))) throw new Error(`it asked for ${asked.join(", ")}`);
+    if (asked.some((n) => /trickle/.test(n))) throw new Error("it went looking in Trickle's row");
+
+    if (!posted.length) throw new Error("the merge was never written back");
+    const rows = posted[posted.length - 1];
+    if (!Array.isArray(rows)) throw new Error("the push should be one row per game, as an array");
+    const mine = rows.find((r) => r.game === "windowsill");
+    if (!mine) throw new Error(`no windowsill row in ${JSON.stringify(rows.map((r) => r.game))}`);
+    if (mine.progress.done !== 11) throw new Error(`pushed done ${mine.progress.done}`);
+    if (mine.progress.best.standard !== 13) throw new Error("pushed the worse record");
+    if (mine.user_id !== "00000000-0000-4000-8000-00000000abcd") throw new Error("pushed the wrong user");
+    await signed.close();
+  });
+
+  await step("the streak is shared with the rest of the arcade", async () => {
+    // A run kept alive in Trickle: playing Windowsill today should continue
+    // it, not start a new one. That is the whole point of one streak.
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const today = Math.floor(
+      (Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) -
+       Date.UTC(2026, 8, 17)) / 86400000) + 1;
+    await ctx.addInitScript((yesterday) => {
+      localStorage.setItem("pp_streak", JSON.stringify(
+        { last: yesterday, streak: 4, longest: 4, played: 4 }));
+    }, today - 1);
+    const cp = await ctx.newPage();
+    await cp.goto("http://localhost:4611/parlour-games/windowsill?daily=1");
+    await cp.waitForSelector(".cell");
+    await solveOn(cp);
+    const streak = await cp.evaluate(() => window.__game.streak());
+    if (streak.streak !== 5) throw new Error(`a run of four continued into ${streak.streak}`);
+    if (!/5 days running/.test(await cp.textContent("#records"))) {
+      throw new Error(`the records line reads "${await cp.textContent("#records")}"`);
+    }
+    await ctx.close();
+  });
+
+  await step("a keeper's own records are shown once there are any", async () => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const cp = await ctx.newPage();
+    await cp.goto("http://localhost:4611/parlour-games/windowsill");
+    await cp.waitForSelector(".cell");
+    if (await cp.locator("#records").isVisible()) throw new Error("records showed before anything was finished");
+    await solveOn(cp);
+    const line = await cp.textContent("#records");
+    if (!/Best on standard/.test(line)) throw new Error(`the records line reads "${line}"`);
+    if (!/Finished/.test(line)) throw new Error(`no count of finished boards in "${line}"`);
+    await ctx.close();
+  });
+
+  await step("one streak across the arcade: Trickle feeds it, Windowsill keeps it", async () => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const tp = await ctx.newPage();
+    tp.on("pageerror", (e) => errors.push("pageerror(trickle): " + e.message));
+
+    // Play Trickle's daily board to start a run.
+    await tp.goto("http://localhost:4611/parlour-games/trickle/daily");
+    await tp.waitForSelector(".tile");
+    const tiles = await tp.$$(".tile");
+    for (const tile of tiles) {
+      for (let guard = 0; guard < 5; guard++) {
+        const before = await tile.$eval("svg", (el) => el.style.transform);
+        const deg = /rotate\((-?\d+)deg\)/.exec(before);
+        if (deg && Number(deg[1]) % 360 === 0) break;
+        await tile.click();
+        if ((await tile.$eval("svg", (el) => el.style.transform)) === before) break;
+      }
+    }
+    await tp.waitForSelector("#win:not([hidden])", { timeout: 20000 });
+    const afterTrickle = await tp.evaluate(() => window.__game.streak());
+    if (afterTrickle.streak !== 1) throw new Error(`Trickle left the streak at ${afterTrickle.streak}`);
+
+    // Now Windowsill, same browser, same day. It should already know.
+    const wp = await ctx.newPage();
+    await wp.goto("http://localhost:4611/parlour-games/windowsill?daily=1");
+    await wp.waitForSelector(".cell");
+    const known = await wp.evaluate(() => window.__game.streak());
+    if (known.streak !== 1 || known.played !== 1) {
+      throw new Error(`Windowsill did not see Trickle's run: ${JSON.stringify(known)}`);
+    }
+    // And finishing a second game on the same day must not count twice.
+    await solveOn(wp);
+    const after = await wp.evaluate(() => window.__game.streak());
+    if (after.streak !== 1 || after.played !== 1) {
+      throw new Error(`a second game the same day counted again: ${JSON.stringify(after)}`);
+    }
+    await ctx.close();
   });
 
   if (errors.length) throw new Error("page errors:\n  " + errors.join("\n  "));

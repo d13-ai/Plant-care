@@ -288,6 +288,83 @@ describe("the practice board", () => {
   });
 });
 
+describe("merging progress with the account", () => {
+  const base = () => R.emptyProgress();
+  const day = (num: number, placements: number, done = false) =>
+    ({ num, placements, done } as never);
+
+  it("leaves this device alone when the account has nothing", () => {
+    const local = { ...base(), done: 7 };
+    expect(R.mergeProgress(local, null)).toBe(local);
+  });
+
+  it("takes the larger count, whichever side holds it", () => {
+    expect(R.mergeProgress({ ...base(), done: 9 }, { ...base(), done: 3 }).done).toBe(9);
+    expect(R.mergeProgress({ ...base(), done: 3 }, { ...base(), done: 9 }).done).toBe(9);
+  });
+
+  it("takes the smaller number of placements, because fewer is better", () => {
+    const a = { ...base(), best: { standard: 12 }, dailyBest: 19 };
+    const b = { ...base(), best: { standard: 30 }, dailyBest: 14 };
+    const merged = R.mergeProgress(a, b);
+    expect(merged.best.standard).toBe(12);
+    expect(merged.dailyBest).toBe(14);
+  });
+
+  it("keeps a record only one side has ever set", () => {
+    const merged = R.mergeProgress(
+      { ...base(), best: { gentle: 9 }, byShelf: { gentle: 2 } },
+      { ...base(), best: { deep: 21 }, byShelf: { deep: 5 } },
+    );
+    expect(merged.best).toEqual({ gentle: 9, deep: 21 });
+    expect(merged.byShelf).toEqual({ gentle: 2, deep: 5 });
+  });
+
+  it("does not invent a record out of nothing", () => {
+    expect(R.mergeProgress(base(), base()).dailyBest).toBe(null);
+    expect(R.mergeProgress({ ...base(), dailyBest: 11 }, base()).dailyBest).toBe(11);
+  });
+
+  it("is order independent", () => {
+    const a = { done: 4, byShelf: { gentle: 4 }, best: { gentle: 9 }, dailyBest: 20, daily: day(6, 3) };
+    const b = { done: 9, byShelf: { deep: 1 }, best: { gentle: 12 }, dailyBest: 14, daily: day(6, 8) };
+    expect(R.mergeProgress(a, b)).toEqual(R.mergeProgress(b, a));
+  });
+});
+
+describe("choosing between two saved daily boards", () => {
+  const day = (num: number, placements: number, done = false) =>
+    ({ num, placements, done } as never);
+
+  it("keeps today's over yesterday's", () => {
+    expect(R.laterDaily(day(6, 11), day(7, 1))).toEqual(day(7, 1));
+    expect(R.laterDaily(day(7, 1), day(6, 11))).toEqual(day(7, 1));
+  });
+
+  it("keeps a board somebody finished over one still in play", () => {
+    expect(R.laterDaily(day(7, 12, true), day(7, 3))).toEqual(day(7, 12, true));
+    expect(R.laterDaily(day(7, 3), day(7, 12, true))).toEqual(day(7, 12, true));
+  });
+
+  it("keeps the one further along when neither is finished", () => {
+    expect(R.laterDaily(day(7, 2), day(7, 8))).toEqual(day(7, 8));
+  });
+
+  it("keeps whichever one exists when the other does not", () => {
+    expect(R.laterDaily(null, day(7, 2))).toEqual(day(7, 2));
+    expect(R.laterDaily(day(7, 2), null)).toEqual(day(7, 2));
+    expect(R.laterDaily(null, null)).toBe(null);
+  });
+
+  // Half of one arrangement and half of another is not a position anybody
+  // played, so one whole board is always chosen over the other.
+  it("never blends two boards together", () => {
+    const a = day(7, 4), b = day(7, 9);
+    const picked = R.laterDaily(a, b);
+    expect(picked === a || picked === b).toBe(true);
+  });
+});
+
 describe("saying it out loud", () => {
   it("names a plant by what it wants and how big it is", () => {
     expect(R.describe(shade(3))).toBe("shade, tall");

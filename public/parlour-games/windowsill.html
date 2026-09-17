@@ -166,6 +166,10 @@ button.quiet{
 button.quiet:hover{border-color:var(--gold)}
 button.quiet:focus-visible{outline:2px solid var(--gold-light);outline-offset:2px}
 #status{margin:10px 0 0;font-size:14px;color:var(--muted);min-height:1.5em}
+#records{margin:6px 0 0;font-size:14px;color:var(--muted)}
+#records b{color:var(--gold-light)}
+#save{margin:6px 0 0;font-size:13px;color:var(--muted)}
+#save a{color:var(--gold-light)}
 #win{
   margin-top:18px;background:var(--card);border:1px solid var(--edge);
   border-radius:14px;padding:18px;text-align:center;
@@ -209,6 +213,8 @@ button.plain{
     </span>
   </div>
   <p id="status"></p>
+  <p id="records" hidden></p>
+  <p id="save"></p>
 
   <h2>Still to go in</h2>
   <div id="tray"></div>
@@ -234,7 +240,10 @@ button.plain{
   var P = window.Parlour;
   var KEY = {
     shelf: "pp_windowsill_shelf",
-    daily: "pp_windowsill_daily"   /* today's board, so a reload keeps it */
+    /* Everything worth keeping, in one blob, in the shape the account holds
+       it -- so what is sent is what is stored and there is nothing to
+       translate between the two. */
+    progress: "pp_windowsill_progress"
   };
 
   /* Practice wins over the daily board; the arcade reads all three modes the
@@ -281,6 +290,10 @@ button.plain{
     BOARD.seed = seed;
   }
 
+  var progress = P.read(KEY.progress, null) || R.emptyProgress();
+  if (!progress.byShelf) progress.byShelf = {};
+  if (!progress.best) progress.best = {};
+
   var shelf = [], tray = [], held = null, placements = 0, done = false;
   var shelfEl = document.getElementById("shelf");
   var trayEl = document.getElementById("tray");
@@ -297,9 +310,14 @@ button.plain{
      somebody a fresh start at the one board they only get once. Anything
      from another day, or that does not match the board dealt for today, is
      dropped rather than half-restored. */
-  function saveDaily() {
+  function saveProgress(immediate) {
+    P.write(KEY.progress, progress);
+    sync.push(!!immediate);
+  }
+
+  function saveDaily(immediate) {
     if (!DAILY) return;
-    P.write(KEY.daily, {
+    progress.daily = {
       num: BOARD.num,
       shelf: shelf.map(function (run) {
         return run.map(function (p) { return p ? { need: p.need, height: p.height, id: p.id } : null; });
@@ -307,11 +325,12 @@ button.plain{
       tray: tray.map(function (p) { return p.id; }),
       placements: placements,
       done: done
-    });
+    };
+    saveProgress(immediate);
   }
 
   function storedDaily() {
-    var saved = P.read(KEY.daily, null);
+    var saved = progress.daily;
     if (!saved || saved.num !== BOARD.num) return null;
     if (!Array.isArray(saved.shelf) || saved.shelf.length !== BOARD.w) return null;
     if (saved.shelf.some(function (run) { return !Array.isArray(run) || run.length !== BOARD.d; })) return null;
@@ -350,7 +369,8 @@ button.plain{
 
     build();
     paint();
-    if (saved && saved.done) finish();
+    showRecords();
+    if (saved && saved.done) finish(true);
   }
 
   /* ---- drawing --------------------------------------------------------- */
@@ -487,7 +507,7 @@ button.plain{
       tray.push(held.plant);
       held = null;
       paint();
-      saveDaily();
+      saveDaily(false);
       /* Taking one back out changes the board as much as putting one in, so
          the coaching answers it too rather than leaving a stale line up. */
       coachAfter(vacated);
@@ -521,7 +541,7 @@ button.plain{
     placements += 1;
     held = null;
     paint();
-    saveDaily();
+    saveDaily(false);
     coachAfter({ run: r, tier: t });
   }
 
@@ -616,15 +636,79 @@ button.plain{
     if (!countdownTimer) countdownTimer = setInterval(tickCountdown, 30000);
   }
 
+  /* Finishing is the only place the numbers move, and it happens once per
+     board: a restored board that was already finished does not count again. */
+  function countIt() {
+    if (DAILY) {
+      /* The streak belongs to the arcade -- playing anything today keeps it
+         alive -- so it is recorded rather than worked out here. */
+      P.recordPlay(BOARD.num);
+      if (progress.dailyBest == null || placements < progress.dailyBest) {
+        progress.dailyBest = placements;
+      }
+    } else {
+      progress.done = (progress.done | 0) + 1;
+      progress.byShelf[shelfKind.key] = (progress.byShelf[shelfKind.key] | 0) + 1;
+      var best = progress.best[shelfKind.key];
+      if (best == null || placements < best) progress.best[shelfKind.key] = placements;
+    }
+    saveProgress(true);
+  }
+
   function scoreLine() {
     return placements === par()
       ? "In " + placements + " placements — you never moved one twice."
       : "In " + placements + " placements. Par is " + par() + ".";
   }
 
-  function finish() {
+  /* The only two numbers worth showing: fewest placements here, and how many
+     boards have been finished. */
+  function showRecords() {
+    var el = document.getElementById("records");
+    var bits = [];
+    var best = progress.best[shelfKind.key];
+    if (!LEARN && !DAILY && best != null) {
+      bits.push("Best on " + shelfKind.label.toLowerCase() + " <b>" + best + "</b>");
+    }
+    if (DAILY && progress.dailyBest != null) bits.push("Best daily <b>" + progress.dailyBest + "</b>");
+    var streak = P.getStreak();
+    if (streak.streak > 1) bits.push("<b>" + streak.streak + "</b> days running");
+    if (!LEARN && (progress.done | 0) > 0) bits.push("Finished <b>" + progress.done + "</b>");
+    el.innerHTML = bits.join(" · ");
+    el.hidden = bits.length === 0;
+  }
+
+  function showSaveLine(signedIn) {
+    var el = document.getElementById("save");
+    if (LEARN) { el.textContent = ""; return; }
+    el.innerHTML = signedIn
+      ? "Saved to your account."
+      : '<a href="' + P.signInUrl + '">Sign in</a> to keep your progress across devices.';
+  }
+
+  /* What this device holds; the harness carries it, the rules module decides
+     how two copies of it fold together. */
+  var sync = P.sync({
+    game: "windowsill",
+    local: function () { return progress; },
+    merge: R.mergeProgress,
+    apply: function (merged) {
+      progress = merged;
+      if (!progress.byShelf) progress.byShelf = {};
+      if (!progress.best) progress.best = {};
+      P.write(KEY.progress, progress);
+      showRecords();
+      /* A daily board from another device is only taken up when nothing has
+         been touched here, so it can never interrupt a game half-played. */
+      if (DAILY && !done && placements === 0 && storedDaily()) layOut();
+    },
+    onStatus: function (signedIn) { showSaveLine(signedIn); showRecords(); }
+  });
+
+  function finish(restored) {
     done = true;
     held = null;
+    if (!restored && !LEARN) countIt();
     if (LEARN) {
       winLine.textContent = "Now the real thing: bigger shelves, and a board dealt fresh each time.";
     } else if (DAILY) {
@@ -636,7 +720,8 @@ button.plain{
     document.getElementById("again").textContent =
       LEARN ? "Play a proper board" : DAILY ? "Play a board of your own" : "Start again";
     winEl.hidden = false;
-    if (DAILY) { tickCountdown(); saveDaily(); }
+    showRecords();
+    if (DAILY) { tickCountdown(); saveDaily(true); }
     coachAfter(null);
     if (LEARN) coachAfter({ run: 0, tier: 0 });
   }
@@ -697,6 +782,10 @@ button.plain{
   markShelf();
   dealAndLay();
   coachAfter(null);
+  /* Drawn from the session already in hand, so somebody signed in is not told
+     to sign in for the second it takes the pull to answer. */
+  showSaveLine(!!P.session());
+  if (!LEARN) sync.pull();
 
   /* The test script drives the page; it needs to see the state. */
   window.__game = {
@@ -715,6 +804,8 @@ button.plain{
     learning: function () { return LEARN; },
     isDaily: function () { return DAILY; },
     dayNumber: P.dayNumber,
+    progress: function () { return progress; },
+    streak: P.getStreak,
     coach: function () { return coachLine.textContent; },
     newBoard: dealAndLay
   };
