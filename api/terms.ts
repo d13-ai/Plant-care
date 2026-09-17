@@ -3,13 +3,13 @@
 // Deliberately short, and deliberately blunt about the AI: identification
 // and care guides are generated, and the toxicity field in a care guide is
 // the one place where trusting a wrong answer could hurt somebody.
-import { CONTACT, legalPage, serve, UPDATED } from "./legal";
+import { CONTACT, ENTITY, legalPage, serve, UPDATED } from "./legal";
 
 const sections = [
   {
     heading: "What this is",
-    html: `<p>PlantParlour is a place to keep the record of your plants — what they are, what you have done for them, and the story you would want to pass on with a cutting. It is free to use. We are two people, not a company with a support desk.</p>
-<p>These terms are a binding agreement between you and the people who run PlantParlour. By making an account or using the service you accept them. If you do not, please do not use it.</p>`,
+    html: `<p>PlantParlour is a place to keep the record of your plants — what they are, what you have done for them, and the story you would want to pass on with a cutting. It is free to use, and it is a small operation: there is no support desk, just us.</p>
+<p>PlantParlour is operated by <strong>${ENTITY}</strong> ("we", "us", "our"). These terms are a binding agreement between you and ${ENTITY}. By making an account or using the service, you accept them. If you do not, please do not use it.</p>`,
   },
   {
     heading: "Your account",
@@ -52,7 +52,7 @@ const sections = [
   {
     heading: "What we are liable for",
     html: `<p class="legal"><strong>To the fullest extent the law allows, we are not liable for any indirect, incidental, special, consequential, exemplary or punitive damages</strong>, nor for lost profits, lost data, lost plants, lost goodwill, or the cost of anything bought to replace the service — whether the claim is in contract, tort, negligence, strict liability or anything else, and even if we were told such damage was possible.</p>
-<p class="legal"><strong>Our total liability to you for everything arising out of these terms or your use of PlantParlour will not exceed one hundred US dollars ($100).</strong> PlantParlour is free, so there are no fees to refund, and this cap is part of what makes offering it free possible.</p>
+<p class="legal"><strong>The total liability of ${ENTITY}, and of its members, managers and employees, to you for everything arising out of these terms or your use of PlantParlour will not exceed one hundred US dollars ($100).</strong> PlantParlour is free, so there are no fees to refund, and this cap is part of what makes offering it free possible.</p>
 <p>Nothing here limits liability that cannot be limited by law — including fraud, or death or personal injury caused by negligence. Some states do not allow these exclusions, so some of them may not apply to you.</p>
 <p><strong>Any claim must be brought within one year</strong> of when it arose, or it is permanently barred, unless the law where you live forbids shortening that period.</p>`,
   },
@@ -84,7 +84,7 @@ const sections = [
 <li><strong>No waiver.</strong> If we do not enforce something straight away, we have not given up the right to enforce it later.</li>
 <li><strong>Survival.</strong> The sections on your content licence, the AI, warranties, liability, disputes and these odds and ends survive your account ending.</li>
 <li><strong>Entire agreement.</strong> These terms and the <a href="/privacy">privacy page</a> are the whole agreement between us about PlantParlour, and replace anything said before.</li>
-<li><strong>Assignment.</strong> Your account cannot be transferred. We may transfer these terms if PlantParlour changes hands, and we will tell you before it does.</li>
+<li><strong>Assignment.</strong> Your account cannot be transferred. ${ENTITY} may transfer these terms if PlantParlour changes hands, and we will tell you before it does.</li>
 <li><strong>Notices.</strong> We reach you at the email on your account; you reach us at <a href="mailto:${CONTACT}">${CONTACT}</a>. You agree to receive communications about the service electronically.</li>
 </ul>`,
   },

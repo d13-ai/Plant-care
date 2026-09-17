@@ -4,7 +4,7 @@
 // supabase/migrations, the `plant-photos` bucket (public: true, hence the
 // blunt paragraph about photo links), the analyze and care functions, and
 // the fact that the app carries no analytics of any kind.
-import { CONTACT, legalPage, serve } from "./legal";
+import { CONTACT, ENTITY, legalPage, serve } from "./legal";
 
 const sections = [
   {
@@ -88,7 +88,7 @@ export default function handler(req: Parameters<typeof serve>[0], res: Parameter
   serve(req, res, () =>
     legalPage(
       "Privacy",
-      "PlantParlour is made by two people who keep plants. We built it for ourselves first, and we have tried to write this the way we would want it written for us: plainly, and without burying anything.",
+      "PlantParlour is made by two people who keep plants. We built it for ourselves first, and we have tried to write this the way we would want it written for us: plainly, and without burying anything. PlantParlour is operated by <strong>" + ENTITY + "</strong>, which is responsible for the information described on this page.",
       sections,
       "What PlantParlour collects, where it is kept, what is public and who else can see it.",
     ),

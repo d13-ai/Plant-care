@@ -13,6 +13,12 @@ export const SITE = "https://plantparlour.org";
 export const UPDATED = "17 September 2026";
 /** Both pages point here. It has to be a mailbox someone actually reads. */
 export const CONTACT = "bondcreativestudios@gmail.com";
+/**
+ * The legal person behind PlantParlour. Named on both pages, because terms
+ * that describe the operator as a couple of individuals invite an argument
+ * that the individuals are the ones on the hook.
+ */
+export const ENTITY = "Bond Creative Studios, LLC";
 
 type Section = { heading: string; html: string };
 
