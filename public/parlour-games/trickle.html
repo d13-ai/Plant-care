@@ -15,8 +15,9 @@
  * it cannot fall back from, no audio files, no libraries. It works offline
  * once open and embeds anywhere.
  *
- * Still to come (spec §14): persistence, practice board, account sync,
- * sound/night/music, daily, embed, share, analytics, SEO.
+ * Steps 1-2 of the build order: the core game, and persistence.
+ * Still to come (spec §14): practice board, account sync, sound/night/music,
+ * daily, embed, share, analytics, SEO.
  */
 :root{
   /* PlantParlour's palette, in the roles the spec names. */
@@ -104,6 +105,8 @@ button{font:inherit;cursor:pointer}
 .hub a:hover{border-color:var(--gold-light)}
 .status{display:flex;gap:16px;justify-content:center;font-size:15px;color:var(--muted)}
 .status b{color:var(--cream);font-weight:700}
+.records{margin:-10px 0 0;font-size:14px;color:var(--muted);text-align:center}
+.records b{color:var(--gold-light);font-weight:700}
 
 .panel{
   background:var(--cream);color:var(--ink);
@@ -112,6 +115,8 @@ button{font:inherit;cursor:pointer}
 }
 .panel h2{font-family:Lora,Georgia,serif;font-size:22px;margin:0}
 .panel p{margin:0;color:#6B5A6B;font-size:15px}
+.panel #win-line{color:var(--ink);font-weight:600}
+.panel .best{color:#1F3D2B;font-weight:700}
 
 @media (prefers-reduced-motion:reduce){
   .tile svg{transition:none}
@@ -138,10 +143,12 @@ button{font:inherit;cursor:pointer}
   <div id="board" role="application" aria-label="Watering puzzle. Arrow keys move between tiles; Enter turns one."></div>
 
   <p class="status"><span>Turns <b id="moves">0</b></span><span>Flowing <b id="lit">0</b></span></p>
+  <p class="records" id="records" hidden></p>
 
   <div class="panel" id="win" hidden>
     <h2>The water's running</h2>
     <p id="win-line"></p>
+    <p id="win-tally"></p>
     <button class="btn primary" id="again" type="button">Another board</button>
   </div>
 </main>
@@ -164,6 +171,53 @@ button{font:inherit;cursor:pointer}
 
   var state = { n: 6, masks: [], turns: [], source: 0, moves: 0, done: false, focus: 0 };
   var tiles = [];
+
+  /* ---- storage --------------------------------------------------------- */
+  /* Every call is wrapped: a private window throws on access, and losing a
+     saved board is never worth losing the game over. */
+  var KEY = {
+    board: "pp_trickle_board",   /* the board in play; "" once finished */
+    done: "pp_trickle_done",     /* boards finished */
+    bySize: "pp_trickle_by_size",
+    stats: "pp_trickle_stats",
+    size: "pp_trickle_size"
+  };
+  function read(key, fallback) {
+    try {
+      var raw = window.localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    } catch (e) { return fallback; }
+  }
+  function write(key, value) {
+    try {
+      window.localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
+    } catch (e) { /* nothing to do, and nothing worth breaking for */ }
+  }
+
+  var stats = read(KEY.stats, null) || { total_turns: 0, nudges: 0, best_turns: {}, last_played: null };
+  if (!stats.best_turns) stats.best_turns = {};
+
+  function saveBoard() {
+    if (state.done) return;
+    write(KEY.board, {
+      n: state.n, masks: state.masks, turns: state.turns,
+      source: state.source, moves: state.moves, saved_at: new Date().toISOString()
+    });
+  }
+
+  /* A stored board is only usable if it is internally consistent; anything
+     older or half-written is dropped rather than half-restored. */
+  function storedBoard() {
+    var b = read(KEY.board, null);
+    if (!b || [4, 6, 8].indexOf(b.n) === -1) return null;
+    var total = b.n * b.n;
+    if (!Array.isArray(b.masks) || b.masks.length !== total) return null;
+    if (!Array.isArray(b.turns) || b.turns.length !== total) return null;
+    if (typeof b.source !== "number" || b.source < 0 || b.source >= total) return null;
+    if (typeof b.moves !== "number" || b.moves < 0) return null;
+    return b;
+  }
   function liveMask(i) { return rotate(state.masks[i], state.turns[i]); }
 
   /* ---- board: randomized DFS spanning tree ----------------------------- */
@@ -262,18 +316,27 @@ button{font:inherit;cursor:pointer}
   var winEl = document.getElementById("win");
   var winLine = document.getElementById("win-line");
 
-  function build(n) {
-    state.n = n;
-    state.masks = buildMasks(n);
-    do { state.turns = scramble(state.masks); } while (parOf(state.masks, state.turns) === 0);
-    /* Nearest the middle, so the water spreads outward rather than creeping
-       in from a corner. */
-    var mid = (n / 2) | 0;
-    state.source = mid * n + mid;
-    state.moves = 0;
+  function build(n, restored) {
+    if (restored) {
+      state.n = restored.n;
+      state.masks = restored.masks.slice();
+      state.turns = restored.turns.slice();
+      state.source = restored.source;
+      state.moves = restored.moves;
+      n = state.n;
+    } else {
+      state.n = n;
+      state.masks = buildMasks(n);
+      do { state.turns = scramble(state.masks); } while (parOf(state.masks, state.turns) === 0);
+      /* Nearest the middle, so the water spreads outward rather than creeping
+         in from a corner. */
+      var mid = (n / 2) | 0;
+      state.source = mid * n + mid;
+      state.moves = 0;
+    }
     state.done = false;
     state.focus = state.source;
-    state.par = parOf(state.masks, state.turns);
+    write(KEY.size, n);
 
     board.style.gridTemplateColumns = "repeat(" + n + ", 1fr)";
     board.dataset.n = String(n);
@@ -290,6 +353,7 @@ button{font:inherit;cursor:pointer}
     }
     winEl.hidden = true;
     paint();
+    if (!restored) saveBoard();
   }
 
   function paint() {
@@ -309,13 +373,52 @@ button{font:inherit;cursor:pointer}
     }
     movesEl.textContent = String(state.moves);
     litEl.textContent = lit + " of " + tiles.length;
-    if (!state.done && lit === tiles.length) {
-      state.done = true;
-      winLine.textContent =
-        state.n + "×" + state.n + " in " + state.moves +
-        (state.moves === 1 ? " turn" : " turns") + " · fewest possible was " + state.par + ".";
-      winEl.hidden = false;
+    showRecords();
+    if (!state.done && lit === tiles.length) finish();
+  }
+
+  /* Finishing is the only place the counters move. */
+  function finish() {
+    state.done = true;
+    var n = state.n;
+    var previousBest = stats.best_turns[n];
+    var isBest = previousBest == null || state.moves < previousBest;
+
+    var done = (read(KEY.done, 0) | 0) + 1;
+    var bySize = read(KEY.bySize, {}) || {};
+    bySize[n] = (bySize[n] | 0) + 1;
+    stats.total_turns += state.moves;
+    if (isBest) stats.best_turns[n] = state.moves;
+    stats.last_played = new Date().toISOString();
+    write(KEY.done, done);
+    write(KEY.bySize, bySize);
+    write(KEY.stats, stats);
+    write(KEY.board, "");   /* nothing in play any more */
+
+    winLine.textContent =
+      n + "×" + n + " in " + state.moves + (state.moves === 1 ? " turn" : " turns") + ".";
+    var tally = document.getElementById("win-tally");
+    var boards = done === 1 ? "Your first board." : done + " boards finished.";
+    if (isBest && previousBest != null) {
+      tally.innerHTML = '<span class="best">A new best at this size</span> — ' +
+        previousBest + " before. " + boards;
+    } else if (isBest) {
+      tally.textContent = boards;
+    } else {
+      tally.textContent = "Your best at this size is " + previousBest + ". " + boards;
     }
+    winEl.hidden = false;
+    showRecords();
+  }
+
+  /* The only two numbers worth keeping: fewest turns here, boards finished. */
+  function showRecords() {
+    var recordsEl = document.getElementById("records");
+    var best = stats.best_turns[state.n], done = read(KEY.done, 0) | 0, bits = [];
+    if (best != null) bits.push("Best at " + state.n + "×" + state.n + " <b>" + best + "</b>");
+    if (done > 0) bits.push("Finished <b>" + done + "</b>");
+    recordsEl.innerHTML = bits.join(" · ");
+    recordsEl.hidden = bits.length === 0;
   }
 
   /* ---- turning --------------------------------------------------------- */
@@ -327,6 +430,7 @@ button{font:inherit;cursor:pointer}
     state.moves += 1;
     state.focus = i;
     paint();
+    saveBoard();
   }
 
   /* Straighten one tile, free. Prefers a tile the water already touches, so
@@ -353,7 +457,10 @@ button{font:inherit;cursor:pointer}
     state.turns[pick] += r;
     state.moves += 1;   /* one turn, however far it had to go */
     state.focus = pick;
+    stats.nudges += 1;
+    write(KEY.stats, stats);
     paint();
+    saveBoard();
   }
 
   /* ---- input ----------------------------------------------------------- */
@@ -388,8 +495,13 @@ button{font:inherit;cursor:pointer}
   document.getElementById("nudge").addEventListener("click", nudge);
   document.getElementById("again").addEventListener("click", function () { build(state.n); });
 
-  document.querySelector('[data-size="6"]').classList.add("on");
-  build(6);
+  /* Resume whatever was in play; otherwise the size last chosen. */
+  var resume = storedBoard();
+  var startSize = resume ? resume.n : (read(KEY.size, 6) | 0) || 6;
+  if ([4, 6, 8].indexOf(startSize) === -1) startSize = 6;
+  var sizeBtn = document.querySelector('[data-size="' + startSize + '"]');
+  if (sizeBtn) sizeBtn.classList.add("on");
+  build(startSize, resume);
 
   /* The test script drives the page; it needs to see the state. */
   window.__game = { state: state, liveMask: liveMask, computeFlow: computeFlow };
