@@ -371,6 +371,119 @@ try {
     }
   });
 
+  // ---- practice -------------------------------------------------------
+  const learn = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const lp = await learn.newPage();
+  lp.on("pageerror", (e) => errors.push("pageerror(learn): " + e.message));
+  lp.on("console", (m) => m.type() === "error" && errors.push("console(learn): " + m.text()));
+  const lcell = (r, t) => lp.locator(`.cell[data-run="${r}"][data-tier="${t}"]`);
+  const lplace = async (need, height, r, t) => {
+    const id = await lp.evaluate(([n, h]) => {
+      const x = window.__game.tray().find((p) => p.need === n && p.height === h);
+      return x ? x.id : null;
+    }, [need, height]);
+    if (id === null) throw new Error(`practice tray has no ${need}/${height} left`);
+    await lp.locator(`.chip[data-plant="${id}"]`).click();
+    await lcell(r, t).click();
+  };
+
+  await step("practice deals the fixed board and takes its own chrome", async () => {
+    await lp.goto("http://localhost:4611/parlour-games/windowsill/learn");
+    await lp.waitForSelector(".cell");
+    const board = await lp.evaluate(() => window.__game.board());
+    if (board.w !== 2 || board.d !== 3) throw new Error(`practice dealt ${board.w}×${board.d}`);
+    if (!(await lp.evaluate(() => window.__game.learning()))) throw new Error("not in practice mode");
+    // Nothing to choose and nothing to re-deal: it is one board, on purpose.
+    if (await lp.locator(".shelves").isVisible()) throw new Error("practice offered a shelf size");
+    if (await lp.locator("#new").isVisible()) throw new Error("practice offered a new board");
+    if (await lp.locator("#learn-link").isVisible()) throw new Error("practice linked to itself");
+    // And it keeps no score.
+    if ((await lp.textContent("#moves")).trim()) throw new Error("practice counted placements");
+  });
+
+  await step("the same six plants every time, with one way out", async () => {
+    const tray = await lp.evaluate(() => window.__game.tray().map((p) => p.need + "/" + p.height));
+    await lp.reload();
+    await lp.waitForSelector(".cell");
+    const again = await lp.evaluate(() => window.__game.tray().map((p) => p.need + "/" + p.height));
+    if (JSON.stringify(tray) !== JSON.stringify(again)) throw new Error("practice shuffled itself");
+    const ways = await lp.evaluate(() => {
+      const b = window.__game.board();
+      return window.WindowsillRules.countSolutions(b.w, b.d, b.tray);
+    });
+    if (ways !== 1) throw new Error(`the practice board has ${ways} ways out, not 1`);
+  });
+
+  await step("the coaching answers what you actually did", async () => {
+    const opening = await lp.evaluate(() => window.__game.coach());
+    if (!/light/i.test(opening)) throw new Error(`it opens with "${opening}"`);
+
+    // A shade plant at the glass: the one mistake everybody makes first.
+    await lplace(1, 1, 0, 0);
+    let said = await lp.evaluate(() => window.__game.coach());
+    if (!/front of a run is always full sun/i.test(said)) throw new Error(`on a scorch it said "${said}"`);
+
+    // Take it back out again: that is the undo, and it should say so.
+    await lcell(0, 0).click();
+    await lp.locator(".chip").first().click();
+    said = await lp.evaluate(() => window.__game.coach());
+    if (!/never lost|undo/i.test(said)) throw new Error(`on taking one out it said "${said}"`);
+
+    // Starved behind the tall one, which the line should name.
+    await lp.click("#clear");
+    await lplace(3, 3, 0, 0);
+    await lplace(3, 1, 0, 1);
+    said = await lp.evaluate(() => window.__game.coach());
+    if (!/tall plant in front/i.test(said)) throw new Error(`on a starved plant it said "${said}"`);
+  });
+
+  await step("it teaches both halves of the rule, each as the board shows it", async () => {
+    await lp.click("#clear");
+    // The run of three sun-lovers: nothing shades anything.
+    await lplace(3, 1, 0, 0);
+    await lplace(3, 1, 0, 1);
+    await lplace(3, 2, 0, 2);
+    const low = await lp.evaluate(() => window.__game.coach());
+    if (!/blocks nothing|shading another/i.test(low)) throw new Error(`the low lesson read "${low}"`);
+    // And the tall one at the glass, stepping the light down.
+    await lplace(3, 3, 1, 0);
+    await lplace(2, 2, 1, 1);
+    await lplace(1, 1, 1, 2);
+    const solved = await lp.evaluate(() => window.__game.solved());
+    if (!solved) throw new Error("the one solution did not register as solved");
+    await lp.waitForSelector("#win:not([hidden])", { timeout: 5000 });
+    const end = await lp.evaluate(() => window.__game.coach());
+    if (!/built in steps/i.test(end)) throw new Error(`it finished by saying "${end}"`);
+  });
+
+  await step("finishing practice hands over to a real board and drops the URL", async () => {
+    const label = await lp.textContent("#again");
+    if (!/proper board/i.test(label)) throw new Error(`the button reads "${label}"`);
+    await lp.click("#again");
+    await lp.waitForSelector(".cell");
+    const after = await lp.evaluate(() => ({
+      learning: window.__game.learning(),
+      w: window.__game.board().w,
+      path: location.pathname + location.search,
+      coachShown: !document.getElementById("coach").hidden,
+    }));
+    if (after.learning) throw new Error("it stayed in practice");
+    if (after.w === 2) throw new Error("it dealt the practice board again");
+    if (/learn/.test(after.path)) throw new Error(`the URL still reads ${after.path}`);
+    if (after.coachShown) throw new Error("the coaching stayed on a real board");
+    // A reload now must not land back in practice.
+    await lp.reload();
+    await lp.waitForSelector(".cell");
+    if (await lp.evaluate(() => window.__game.learning())) throw new Error("a reload went back to practice");
+    await learn.close();
+  });
+
+  await step("the ordinary board offers no coaching and links to practice", async () => {
+    await page.click("#clear");
+    if (await page.locator("#coach").isVisible()) throw new Error("a real board was coaching");
+    if (!(await page.locator("#learn-link").isVisible())) throw new Error("no way in to practice");
+  });
+
   if (errors.length) throw new Error("page errors:\n  " + errors.join("\n  "));
   console.log("ALL PASSED");
 } finally {

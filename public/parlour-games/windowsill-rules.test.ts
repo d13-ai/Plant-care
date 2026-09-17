@@ -76,6 +76,34 @@ describe("light down one run", () => {
   });
 });
 
+describe("naming what is doing the shading", () => {
+  it("names nobody at the glass", () => {
+    expect(R.blockersOf([sun(3), bright(2), shade(1)], 0)).toEqual([]);
+  });
+
+  it("names the tall plant at the front, for both rows behind it", () => {
+    const run = [sun(3), bright(2), shade(1)];
+    expect(R.blockersOf(run, 1)).toEqual([0]);
+    expect(R.blockersOf(run, 2)).toEqual([0, 1]);
+  });
+
+  it("names nobody behind a low plant", () => {
+    expect(R.blockersOf([sun(1), sun(1), sun(2)], 1)).toEqual([]);
+    expect(R.blockersOf([sun(1), sun(1), sun(2)], 2)).toEqual([]);
+  });
+
+  // The count of blockers is exactly what the light subtracts, so the
+  // explanation can never disagree with the number it explains.
+  it("always accounts for the light the model takes away", () => {
+    R.fullRuns(3).forEach((run) => {
+      const lights = R.lightsFor(run);
+      run.forEach((_, t) => {
+        expect(lights[t]).toBe(Math.max(0, R.MAX_LIGHT - R.blockersOf(run, t).length));
+      });
+    });
+  });
+});
+
 describe("how a plant is doing", () => {
   it("is happy only on an exact match", () => {
     expect(R.stateOf(bright(1), 2)).toBe("happy");
@@ -226,6 +254,37 @@ describe("dealing a board", () => {
     // plant. It should not.
     const everyThird = [0, 3, 6, 9, 12].map((i) => board.tray[i].need);
     expect(everyThird.every((n) => n === 3)).toBe(false);
+  });
+});
+
+describe("the practice board", () => {
+  // The coaching is written for this exact board, so its shape and its being
+  // the only way out are both load-bearing.
+  it("is two runs of three, dealt with exactly as many plants as places", () => {
+    expect(R.PRACTICE.w).toBe(2);
+    expect(R.PRACTICE.d).toBe(3);
+    expect(R.PRACTICE.tray.length).toBe(6);
+  });
+
+  it("has exactly one way out", () => {
+    expect(R.countSolutions(R.PRACTICE.w, R.PRACTICE.d, R.PRACTICE.tray)).toBe(1);
+  });
+
+  it("teaches both halves of the rule in its one solution", () => {
+    const [shelf] = R.solutions(R.PRACTICE.w, R.PRACTICE.d, R.PRACTICE.tray, 1);
+    expect(R.isSolved(shelf)).toBe(true);
+    const fronts = shelf.map((run) => run[0].height).sort();
+    // One run led by a low plant, which shades nothing; one led by a tall
+    // plant, which shades both rows behind it.
+    expect(fronts).toEqual([1, 3]);
+    const lowRun = shelf.find((run) => run[0].height === 1)!;
+    const tallRun = shelf.find((run) => run[0].height === 3)!;
+    expect(R.lightsFor(lowRun)).toEqual([3, 3, 3]);
+    expect(R.lightsFor(tallRun)).toEqual([3, 2, 1]);
+  });
+
+  it("uses all three needs, so nothing about it is a special case", () => {
+    expect(new Set(R.PRACTICE.tray.map((p) => p.need)).size).toBe(3);
   });
 });
 

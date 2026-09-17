@@ -256,7 +256,14 @@ Each step ends somewhere it can be looked at.
    against 2.5 ms per *candidate* in Python — so difficulty costs nothing to
    set. The three shelves are exposed as the difficulty choice: Gentle
    (3 × 3), Standard (4 × 3), Deep end (5 × 3).
-3. **Practice mode** on the fixed board in §5, with the two-part lesson.
+3. ~~**Practice mode** on the fixed board in §5, with the two-part lesson.~~
+   **Done.** At `/parlour-games/windowsill/learn`. The board, its fixed tray
+   order and its one-solution guarantee live in the rules module so the tests
+   can assert them. The coaching is written against the board rather than as a
+   script of steps — whatever the player just did, the line says the most
+   useful true thing about where they are now — because a script goes wrong
+   the moment somebody takes a plant back out. Each half of the lesson is said
+   once, at the moment the board demonstrates it.
 4. **A daily board**, off the shared epoch, plus par and the end-of-round
    card.
 5. **The streak and progress sync**, through the shared harness.

@@ -42,12 +42,25 @@
     return !!plant && t + plant.height > behind;
   }
 
+  /**
+   * Which plants in a run are taking light off tier `t` -- their indices,
+   * nearest the glass first. Empty when nothing is.
+   *
+   * The count of these is what lightsFor subtracts, so the two cannot drift;
+   * this exists because "your light is 2" is a fact and "the tall one at the
+   * front is taking a level off you" is an explanation, and practice needs
+   * the second one.
+   */
+  function blockersOf(run, t) {
+    var out = [];
+    for (var u = 0; u < t; u++) if (overtops(run[u], u, t)) out.push(u);
+    return out;
+  }
+
   /** The light reaching every tier of one run, window first. */
   function lightsFor(run) {
     return run.map(function (_, t) {
-      var blocked = 0;
-      for (var u = 0; u < t; u++) if (overtops(run[u], u, t)) blocked += 1;
-      return Math.max(0, MAX_LIGHT - blocked);
+      return Math.max(0, MAX_LIGHT - blockersOf(run, t).length);
     });
   }
 
@@ -204,6 +217,30 @@
     { key: "deep", label: "Deep end", w: 5, d: 3, band: [8, 30] }
   ];
 
+  /**
+   * The practice board. Fixed, the same for everybody, and it has EXACTLY ONE
+   * solution -- asserted by exhaustive count in the tests, and arrived at
+   * independently by scripts/windowsill-model.py.
+   *
+   * Chosen to teach both halves of the rule in one board. One run is three
+   * sun-lovers stacked, none of which shades another, because a low plant
+   * stands exactly as high as the step behind it. The other puts the tall
+   * plant at the glass, where it overtops both rows behind and steps the
+   * light down 3, 2, 1. Somebody who has solved this knows the whole game.
+   *
+   * The tray is in a fixed order too: shuffling it would make the practice
+   * board different for different people, and the coaching is written for
+   * this one.
+   */
+  var PRACTICE = {
+    w: 2,
+    d: 3,
+    tray: [
+      { need: 3, height: 2 }, { need: 1, height: 1 }, { need: 3, height: 1 },
+      { need: 2, height: 2 }, { need: 3, height: 3 }, { need: 3, height: 1 }
+    ]
+  };
+
   /** Fisher-Yates, off the caller's generator so a board can be reproduced. */
   function shuffle(list, rnd) {
     for (var i = list.length - 1; i > 0; i--) {
@@ -258,6 +295,7 @@
     NEEDS: NEEDS,
     HEIGHTS: HEIGHTS,
     overtops: overtops,
+    blockersOf: blockersOf,
     lightsFor: lightsFor,
     stateOf: stateOf,
     shelfStates: shelfStates,
@@ -267,6 +305,7 @@
     countSolutions: countSolutions,
     solutions: solutions,
     SHELVES: SHELVES,
+    PRACTICE: PRACTICE,
     shuffle: shuffle,
     deal: deal,
     describe: describe

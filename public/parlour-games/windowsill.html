@@ -52,6 +52,17 @@ h1{font-family:Lora,Georgia,"Times New Roman",serif;font-weight:700;font-size:30
 /* ---- how big a shelf ---- */
 /* The three shapes are the difficulty, and they are measured rather than
    named by feel: each one deals boards with a set number of ways out. */
+/* ---- practice ---- */
+/* Its own voice: a line that answers whatever just happened, in the place
+   the eye already is. Lora, so it reads as somebody talking rather than as
+   part of the machinery. */
+#coach{
+  margin:16px 0 0;background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:13px 16px;font-family:Lora,Georgia,serif;
+  font-size:15px;line-height:1.45;color:var(--cream);min-height:3.4em;
+}
+body.learn .shelves,body.learn #new{display:none}
+
 .shelves{display:flex;gap:8px;justify-content:center;margin:16px 0 0}
 .shelves button{
   background:none;border:1px solid var(--border);border-radius:9px;
@@ -176,7 +187,9 @@ button.plain{
 <main>
   <h1>Windowsill</h1>
   <p class="tagline">Give every plant the light it actually wants.</p>
-  <p class="hub"><a href="/parlour-games">← Parlour Games</a></p>
+  <p class="hub"><a href="/parlour-games">← Parlour Games</a><span id="learn-link"> · <a href="?learn=1">How to play</a></span></p>
+
+  <p id="coach" hidden><span id="coach-line"></span></p>
 
   <div class="shelves" role="group" aria-label="How big a shelf">
     <button type="button" data-shelf="gentle">Gentle</button>
@@ -218,18 +231,25 @@ button.plain{
   var P = window.Parlour;
   var KEY = { shelf: "pp_windowsill_shelf" };
 
-  /* Boards are dealt, not fixed. A solution is planted first and then
-     forgotten -- the player is handed only the plants -- so every board is
-     solvable by construction; then the ways out are counted and anything
-     outside its band is thrown away and another dealt. Counting a candidate
-     costs a fraction of a millisecond, which is what makes the difficulty
-     something set rather than hoped for. R.SHELVES carries the bands and
-     docs/windowsill-spec.md carries the measurements behind them. */
+  /* Practice wins over anything else; the arcade reads all three modes the
+     same way for every game. */
+  var modes = P.mode();
+  var LEARN = modes.learn;
+
+  /* The practice board, its tray order and its one-solution guarantee all
+     live with the rules, where the tests can reach them. */
+  var LEARN_BOARD = R.PRACTICE;
+
   var shelfKind = R.SHELVES.find(function (s) { return s.key === P.read(KEY.shelf, "standard"); })
     || R.SHELVES[1];
   var BOARD = null;
 
   function newBoard() {
+    if (LEARN) {
+      BOARD = { w: LEARN_BOARD.w, d: LEARN_BOARD.d, ways: 1, tries: 1,
+        tray: LEARN_BOARD.tray.map(function (p) { return { need: p.need, height: p.height }; }) };
+      return;
+    }
     /* A seed rather than raw randomness, so a board has a number and the
        same one can be dealt again -- which is what the daily board will
        need, and what makes a bug report about a board reproducible. */
@@ -359,7 +379,8 @@ button.plain{
       trayEl.appendChild(chip);
     });
 
-    movesEl.textContent = placements + (placements === 1 ? " placement" : " placements") +
+    /* Practice counts towards nothing, so it does not keep score. */
+    movesEl.textContent = LEARN ? "" : placements + (placements === 1 ? " placement" : " placements") +
       " · par " + par();
     statusEl.textContent = summary(states);
     if (!done && R.isSolved(shelf)) finish();
@@ -394,10 +415,14 @@ button.plain{
     if (done) return;
     if (held && held.from === "tray" && held.plant.id === id) { held = null; paint(); return; }
     if (held && held.from === "shelf") {           /* put it back */
+      var vacated = { run: held.run, tier: held.tier };
       shelf[held.run][held.tier] = null;
       tray.push(held.plant);
       held = null;
       paint();
+      /* Taking one back out changes the board as much as putting one in, so
+         the coaching answers it too rather than leaving a stale line up. */
+      coachAfter(vacated);
       return;
     }
     var i = tray.findIndex(function (p) { return p.id === id; });
@@ -428,21 +453,116 @@ button.plain{
     placements += 1;
     held = null;
     paint();
+    coachAfter({ run: r, tier: t });
+  }
+
+  /* ---- practice coaching ----------------------------------------------- */
+  /* Written against the board rather than as a script of steps: whatever the
+     player just did, the line says the most useful true thing about where
+     they are now. A script would go wrong the moment somebody took a plant
+     back out. */
+  var coachEl = document.getElementById("coach");
+  var coachLine = document.getElementById("coach-line");
+  var taught = {};
+
+  function coach(text) { coachLine.textContent = text; }
+
+  var A = { 3: "a sun-lover", 2: "a bright-shade plant", 1: "a shade plant" };
+  var TALLNESS = { 1: "low", 2: "mid-height", 3: "tall" };
+
+  function runIsDone(r) {
+    return shelf[r].every(Boolean) && R.shelfStates(shelf)[r].every(function (s) { return s === "happy"; });
+  }
+
+  function coachAfter(where) {
+    if (!LEARN) return;
+    if (done) {
+      coach("That is the whole game. A plant only shades what it stands over, " +
+            "which is why the stand is built in steps.");
+      return;
+    }
+    if (!where) {
+      coach("Six plants, two runs. Each one wants an exact amount of light — too much " +
+            "scorches it, too little makes it leggy. Light comes in from the left.");
+      return;
+    }
+
+    var r = where.run, t = where.tier, plant = shelf[r][t];
+    if (!plant) {
+      coach("Taken back out. Nothing here is ever lost — putting it somewhere else is the undo.");
+      return;
+    }
+    var light = R.lightsFor(shelf[r])[t];
+    var state = R.stateOf(plant, light);
+
+    if (state !== "happy") {
+      var blockers = R.blockersOf(shelf[r], t);
+      if (state === "scorching" && t === 0) {
+        coach("Nothing stands in front of the glass, so the front of a run is always full " +
+              "sun. Only a sun-lover is happy there.");
+      } else if (state === "scorching") {
+        coach("Too much light: " + A[plant.need] + " in light " + light + ". It needs something " +
+              "taller in front of it, or a place further back.");
+      } else if (blockers.length) {
+        var tall = shelf[r][blockers[blockers.length - 1]];
+        coach("Not enough light: this one wants " + plant.need + " and is getting " + light +
+              ". The " + TALLNESS[tall.height] + " plant in front is standing over it.");
+      } else {
+        coach("Not enough light — though nothing is shading it. Try it nearer the glass.");
+      }
+      return;
+    }
+
+    /* The two halves of the lesson, each said once, when the board has just
+       demonstrated it. */
+    if (runIsDone(r)) {
+      var heights = shelf[r].map(function (p) { return p.height; });
+      if (!taught.low && heights[0] === 1) {
+        taught.low = true;
+        coach("Look at that run: three of them in full sun, none shading another. A low plant " +
+              "stands exactly as high as the step behind it, so it blocks nothing at all.");
+        return;
+      }
+      if (!taught.tall && heights[0] === 3) {
+        taught.tall = true;
+        coach("And there is the other half: the tall one at the glass stands over both rows " +
+              "behind it, so the light steps down 3, 2, 1.");
+        return;
+      }
+      coach("That run is right. One to go.");
+      return;
+    }
+    coach("Happy. Keep going — the light changes as you fill the run in front.");
   }
 
   function finish() {
     done = true;
     held = null;
-    winLine.textContent = placements === par()
-      ? "In " + placements + " placements — you never moved one twice."
-      : "In " + placements + " placements. Par is " + par() + ".";
+    winLine.textContent = LEARN
+      ? "Now the real thing: bigger shelves, and a board dealt fresh each time."
+      : placements === par()
+        ? "In " + placements + " placements — you never moved one twice."
+        : "In " + placements + " placements. Par is " + par() + ".";
+    document.getElementById("again").textContent = LEARN ? "Play a proper board" : "Start again";
     winEl.hidden = false;
+    coachAfter(null);
+    if (LEARN) coachAfter({ run: 0, tier: 0 });
   }
 
   /* Clearing puts the same board back in the tray; a new board deals another
      one. Both are free, and neither is ever a loss. */
   document.getElementById("clear").addEventListener("click", layOut);
-  document.getElementById("again").addEventListener("click", dealAndLay);
+  /* Finishing practice hands over to a real board and puts the URL back, so
+     a reload afterwards does not drop the player back into practice. */
+  document.getElementById("again").addEventListener("click", function () {
+    if (LEARN) {
+      LEARN = false;
+      taught = {};
+      try { history.replaceState(null, "", location.pathname.replace(/\/learn\/?$/, "")); } catch (e) { /* fine */ }
+      setChrome();
+    }
+    dealAndLay();
+  });
   document.getElementById("new").addEventListener("click", dealAndLay);
 
   function dealAndLay() { newBoard(); layOut(); }
@@ -464,8 +584,17 @@ button.plain{
     });
   }
 
+  function setChrome() {
+    document.body.classList.toggle("learn", LEARN);
+    coachEl.hidden = !LEARN;
+    document.getElementById("learn-link").hidden = LEARN;
+    document.getElementById("again").textContent = LEARN ? "Play a proper board" : "Start again";
+  }
+
+  setChrome();
   markShelf();
   dealAndLay();
+  coachAfter(null);
 
   /* The test script drives the page; it needs to see the state. */
   window.__game = {
@@ -481,6 +610,8 @@ button.plain{
     solutions: function () { return R.solutions(BOARD.w, BOARD.d, BOARD.tray, 50); },
     ways: function () { return BOARD.ways; },
     shelfKind: function () { return shelfKind; },
+    learning: function () { return LEARN; },
+    coach: function () { return coachLine.textContent; },
     newBoard: dealAndLay
   };
 })();
