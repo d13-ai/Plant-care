@@ -3,7 +3,7 @@ import { useCallback, useMemo } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DueRing } from "@/components/due-ring";
-import { LeafIcon, PersonIcon, PlusIcon } from "@/components/icons";
+import { MonsteraIcon, PersonIcon, PlusIcon } from "@/components/icons";
 import { PlantCard, summarize } from "@/components/plant-card";
 import { Body, Button, Card, Heading, Row, SectionLabel, Title } from "@/components/ui";
 import { UndoBar, useUndo } from "@/components/undo-bar";
@@ -156,7 +156,7 @@ export default function Greenhouse() {
           ListFooterComponent={
             <View style={[styles.band, { backgroundColor: t.plum, borderColor: t.hairline }]}>
               <Text style={[styles.tagline, { color: t.goldText }]}>Rare plants. Real community. Real pride.</Text>
-              <LeafIcon color={t.goldText} />
+              <MonsteraIcon color={t.goldText} />
             </View>
           }
         />
