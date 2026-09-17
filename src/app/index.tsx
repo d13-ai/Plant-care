@@ -4,6 +4,7 @@ import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-n
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DueRing } from "@/components/due-ring";
 import { MonsteraIcon, PersonIcon, PlusIcon } from "@/components/icons";
+import { GamesCard, GamesLink } from "@/components/parlour-games";
 import { PlantCard, summarize } from "@/components/plant-card";
 import { Body, Button, Card, Heading, Row, SectionLabel, Title } from "@/components/ui";
 import { UndoBar, useUndo } from "@/components/undo-bar";
@@ -144,6 +145,7 @@ export default function Greenhouse() {
                     </ScrollView>
                   </View>
                 )}
+                {needsAttention === 0 && <GamesCard />}
                 <View style={styles.listTitle}>
                   <SectionLabel>All plants</SectionLabel>
                   <Body small muted>
@@ -155,9 +157,12 @@ export default function Greenhouse() {
           }
           renderItem={({ item }) => <PlantCard item={item} onLogWater={handleLogWater} />}
           ListFooterComponent={
-            <View style={[styles.band, { backgroundColor: t.plum, borderColor: t.hairline }]}>
-              <Text style={[styles.tagline, { color: t.goldText }]}>Rare plants. Real community. Real pride.</Text>
-              <MonsteraIcon color={t.goldText} />
+            <View>
+              <View style={[styles.band, { backgroundColor: t.plum, borderColor: t.hairline }]}>
+                <Text style={[styles.tagline, { color: t.goldText }]}>Rare plants. Real community. Real pride.</Text>
+                <MonsteraIcon color={t.goldText} />
+              </View>
+              <GamesLink />
             </View>
           }
         />

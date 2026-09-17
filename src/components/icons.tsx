@@ -137,3 +137,29 @@ export function MonsteraIcon({ size = 18, color }: { size?: number; color: strin
     </Svg>
   );
 }
+
+/**
+ * The Parlour Games mark — a pipe run with the water half of it filled, the
+ * same shape the hub page draws in SVG. The link and the place it goes are
+ * meant to be recognisably the same thing.
+ */
+export function PipesIcon({
+  size = 20,
+  dry,
+  wet,
+  node,
+}: {
+  size?: number;
+  dry: string;
+  wet: string;
+  node: string;
+}) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+      <Path d="M18 18H50" stroke={dry} strokeWidth={14} strokeLinecap="round" />
+      <Path d="M50 18V50H82" stroke={wet} strokeWidth={14} strokeLinecap="round" />
+      <Path d="M50 50V82" stroke={wet} strokeWidth={14} strokeLinecap="round" />
+      <Circle cx={50} cy={50} r={11} fill={node} />
+    </Svg>
+  );
+}
