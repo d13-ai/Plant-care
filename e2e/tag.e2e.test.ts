@@ -10,15 +10,26 @@
  * It talks to the project in `.env` and writes real rows and real storage
  * objects, then deletes them again. Run it with `npm run e2e`.
  *
- * Identity: PASSPORT_E2E_EMAIL and PASSPORT_E2E_PASSWORD. Anonymous sign-ins
- * are off for this project — they let anyone mint a fresh keeper against the
- * publishable key that ships in the app — so the fallback to the app's own
- * anonymous session is only there for a project that still allows them.
+ * Identity: PASSPORT_E2E_EMAIL and PASSPORT_E2E_PASSWORD when they are set,
+ * otherwise a throwaway account signed up on the spot. It used to fall back to
+ * the app's own anonymous session, which stopped working the moment the app
+ * was gated behind accounts and anonymous sign-ins were turned off — so this
+ * whole suite has been failing in beforeAll since, which is a quiet way to
+ * lose the only automated check on the publish path. The throwaway is what
+ * e2e/sync.e2e.test.ts already does, and it means the suite runs with no
+ * configuration at all.
+ *
+ * A throwaway run leaves one empty auth.users row behind: the test holds no
+ * service role, so it can delete its own keeper row and plants but not its
+ * own account. They own nothing. Clear them out now and then with
+ *
+ *   delete from auth.users where email like 'e2e-tag-%'
+ *     and not exists (select 1 from public.plants p where p.keeper_id = id);
  */
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { addPhoto, createPlant, getPlant, logCare, migrate, propagate, resolveIssue } from "@/db";
 import { publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
-import { SUPABASE_URL, ensureSession, tagUrl, supabase, supabaseConfigured } from "@/lib/supabase";
+import { SUPABASE_URL, tagUrl, supabase, supabaseConfigured } from "@/lib/supabase";
 import { openTestDatabase, type TestDatabase } from "./node-sqlite";
 
 const KEEPER_NAME = "Tag e2e greenhouse";
@@ -49,6 +60,39 @@ async function readAsAnon(table: string) {
   return { status: response.status, body: await response.text() };
 }
 
+/** Set when this run created its own account, so afterAll can clear it up. */
+let throwawayKeeperId: string | null = null;
+
+/**
+ * The configured test account, or a fresh throwaway. A throwaway only works
+ * while email confirmation is off for the project; if it is ever turned back
+ * on, set PASSPORT_E2E_EMAIL / PASSPORT_E2E_PASSWORD to a confirmed account
+ * and this takes that path instead.
+ */
+async function signInTestAccount(): Promise<string> {
+  const email = process.env.PASSPORT_E2E_EMAIL;
+  const password = process.env.PASSPORT_E2E_PASSWORD;
+  if (email && password) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(`Test account sign-in failed: ${error.message}`);
+    return data.user!.id;
+  }
+  const fresh = `e2e-tag-${Date.now()}@plantparlour.app`;
+  const { data, error } = await supabase.auth.signUp({
+    email: fresh,
+    password: `E2e-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  });
+  if (error) throw new Error(`Sign-up failed: ${error.message}`);
+  if (!data.session) {
+    throw new Error(
+      "This project requires email confirmation, so a throwaway account can't sign in. " +
+        "Set PASSPORT_E2E_EMAIL / PASSPORT_E2E_PASSWORD to a confirmed account.",
+    );
+  }
+  throwawayKeeperId = data.user!.id;
+  return data.user!.id;
+}
+
 describe("publishing a tag to Supabase", () => {
   let local: TestDatabase;
   let keeperId: string;
@@ -66,16 +110,7 @@ describe("publishing a tag to Supabase", () => {
   beforeAll(async () => {
     expect(supabaseConfigured, "EXPO_PUBLIC_SUPABASE_URL / _KEY must be set").toBe(true);
 
-    // A dedicated test account, when one is configured; otherwise the app's
-    // own anonymous sign-in, which is what a real first publish uses.
-    const email = process.env.PASSPORT_E2E_EMAIL;
-    const password = process.env.PASSPORT_E2E_PASSWORD;
-    if (email && password) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw new Error(`Test account sign-in failed: ${error.message}`);
-    }
-    const session = await ensureSession();
-    keeperId = session.user.id;
+    keeperId = await signInTestAccount();
 
     // A plant with a history worth publishing: acquired 40 days ago, watered,
     // an issue that was treated, and a photo.
