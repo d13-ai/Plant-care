@@ -66,6 +66,11 @@ const sections = [
 </ul>`,
   },
   {
+    heading: "When you report a bug",
+    html: `<p>While PlantParlour is still being tested there is a <strong>Report a bug</strong> button on your account screen. Pressing it sends us whatever you typed, plus a technical record of what the app was doing: which screens you opened, whether syncing was working, any errors it hit, your browser and screen size, and how many plants are on this device.</p>
+<p>It does <em>not</em> send your photos, your notes, or what any of your plants are. Email addresses and access tokens are stripped out of that record before it leaves your device. Nothing is sent unless you press the button.</p>`,
+  },
+  {
     heading: "If something goes wrong",
     html: `<p>We take reasonable care to keep your records safe, but no system is perfect and we are not going to pretend otherwise. If your information is ever caught up in a security breach, we will tell you — by email, within 30 days of working out what happened, as Colorado law requires — and we will say what we know rather than what sounds best.</p>`,
   },

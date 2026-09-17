@@ -1,7 +1,7 @@
 import { Lora_400Regular_Italic, Lora_600SemiBold, Lora_700Bold } from "@expo-google-fonts/lora";
 import { SourceSans3_400Regular, SourceSans3_600SemiBold, SourceSans3_700Bold } from "@expo-google-fonts/source-sans-3";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
@@ -12,9 +12,15 @@ import { Welcome } from "@/components/welcome";
 import { migrate } from "@/db";
 import { useAccount } from "@/lib/auth";
 import { loadSyncStatus, requestSync } from "@/lib/sync";
+import { sendBugReport, watchForTrouble } from "@/lib/bug-report";
+import { leave } from "@/domain/trail";
 import { font, space, useTheme } from "@/theme";
 
 SplashScreen.preventAutoHideAsync();
+
+// Before anything renders: a bug report is only worth sending if the error
+// was caught when it happened, not when someone got round to reporting it.
+watchForTrouble();
 
 /**
  * On the web the database lives in the browser's origin-private filesystem,
@@ -61,6 +67,17 @@ function DatabaseUnavailable({
   onRetry: () => void;
 }) {
   const t = useTheme();
+  // Reporting matters most exactly here, and here there is no database to
+  // ask and no router to push a screen onto -- so it sends from the spot.
+  const [sent, setSent] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const report = useCallback(() => {
+    setSending(true);
+    sendBugReport(`Database would not open: ${detail ?? "no detail"}`, null)
+      .then((r) => setSent(r.ref))
+      .catch(() => setSent("couldn't send"))
+      .finally(() => setSending(false));
+  }, [detail]);
   return (
     <View style={{ flex: 1, backgroundColor: t.background, alignItems: "center", justifyContent: "center", padding: space.lg }}>
       <View style={{ gap: space.sm, maxWidth: 440 }}>
@@ -72,7 +89,11 @@ function DatabaseUnavailable({
         </Body>
         <Row>
           <Button title="Try again" variant="primary" onPress={onRetry} />
+          {sent ? null : (
+            <Button title={sending ? "Sending…" : "Report this"} disabled={sending} onPress={report} />
+          )}
         </Row>
+        {sent ? <Body small muted selectable>{`Report sent — ${sent}`}</Body> : null}
         {/* What actually failed. On a phone the console is out of reach, and
             "something went wrong" is not something anyone can act on or
             report — this is the line that makes a screenshot worth sending. */}
@@ -84,6 +105,24 @@ function DatabaseUnavailable({
       </View>
     </View>
   );
+}
+
+/**
+ * Which screens someone passed through, in order.
+ *
+ * Renders nothing, and deliberately is not a hook in RootLayout: usePathname
+ * re-renders its caller on every navigation, and when that caller is the one
+ * owning the <Stack>, the navigator is rebuilt mid-navigation and the push
+ * never lands. As a leaf it re-renders alone and the Stack is untouched.
+ */
+function NavigationTrail() {
+  const pathname = usePathname();
+  useEffect(() => {
+    // The id in /plant/<uuid> is an id, not content, and the scrub in
+    // trail.ts turns it into [token] anyway.
+    leave("nav", pathname);
+  }, [pathname]);
+  return null;
 }
 
 export default function RootLayout() {
@@ -146,6 +185,7 @@ export default function RootLayout() {
         requestSync(db, 0);
       }}
     >
+      <NavigationTrail />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: t.background },
@@ -162,6 +202,7 @@ export default function RootLayout() {
         <Stack.Screen name="account" options={{ title: "Account", presentation: "modal" }} />
         <Stack.Screen name="on-show" options={{ title: "What's on show", presentation: "modal" }} />
         <Stack.Screen name="rounds" options={{ title: "Your rounds", presentation: "modal" }} />
+        <Stack.Screen name="report" options={{ title: "Report a bug", presentation: "modal" }} />
       </Stack>
     </SQLiteProvider>
   );

@@ -321,6 +321,16 @@ try {
       await stranger.close();
     }
   });
+  await step("a tester can reach the bug report screen", async () => {
+    await page.goto(base + "/account", { waitUntil: "domcontentloaded" });
+    await page.getByText("Found a bug?").waitFor({ timeout: 15000 });
+    await page.getByText("Report a bug", { exact: true }).last().click();
+    await page.getByText("Something not right?").waitFor({ timeout: 15000 });
+    // Sending needs a real session, which this run does not have, so the
+    // check stops at the screen -- but it must say plainly what it collects.
+    await page.getByText("What gets sent").waitFor({ timeout: 5000 });
+    await shot("26-report");
+  });
   await step("iPhone visitors are told how to install; nobody else is", async () => {
     // The hint is the only thing standing in for an install prompt on iOS,
     // which never offers one -- and it is the one piece of this that cannot be
