@@ -12,7 +12,7 @@ export const SITE = "https://plantparlour.org";
 /** Change this when the wording changes, not when the file is touched. */
 export const UPDATED = "17 September 2026";
 /** Both pages point here. It has to be a mailbox someone actually reads. */
-export const CONTACT = "hello@plantparlour.org";
+export const CONTACT = "bondcreativestudios@gmail.com";
 
 type Section = { heading: string; html: string };
 
