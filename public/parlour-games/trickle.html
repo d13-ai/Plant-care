@@ -4,11 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2E1633">
-<title>Parlour Games — a calm watering puzzle</title>
+<title>Trickle — a calm watering puzzle</title>
 <meta name="description" content="Turn the pipes until the water reaches every plant. No timer, no score, nothing to lose. A quiet puzzle from PlantParlour.">
 <style>
 /*
- * Parlour Games — step 1 of the build order: the core game.
+ * Trickle — a calm watering puzzle, the first of the Parlour Games.
+ * Step 1 of the build order: the core game.
  *
  * Ported from the Pipe Down spec. Everything is inline on purpose: no fonts
  * it cannot fall back from, no audio files, no libraries. It works offline
@@ -98,6 +99,9 @@ button{font:inherit;cursor:pointer}
 .valve{fill:var(--gold)}
 .tile.flowing .valve{fill:var(--gold-light)}
 
+.hub{margin:0;font-size:14px}
+.hub a{color:var(--gold-light);text-decoration:none;border-bottom:1px solid var(--border)}
+.hub a:hover{border-color:var(--gold-light)}
 .status{display:flex;gap:16px;justify-content:center;font-size:15px;color:var(--muted)}
 .status b{color:var(--cream);font-weight:700}
 
@@ -117,8 +121,9 @@ button{font:inherit;cursor:pointer}
 </head>
 <body>
 <main>
-  <h1>Parlour Games</h1>
+  <h1>Trickle</h1>
   <p class="tagline">Turn the pipes until the water reaches every plant.</p>
+  <p class="hub"><a href="/parlour-games">← Parlour Games</a></p>
 
   <div class="controls">
     <div class="sizes" role="group" aria-label="Board size">

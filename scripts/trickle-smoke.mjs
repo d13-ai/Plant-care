@@ -1,11 +1,11 @@
 /**
- * Parlour Games, step 1 of the build order — the core game.
+ * Trickle, step 1 of the build order — the core game.
  *
  * Drives the real page in Chromium the way the spec's reference tests do:
  * clicking tiles until each svg's rotation is a multiple of 360°, which is
  * the solved orientation because the art is drawn solved and only rotated.
  *
- *   node scripts/parlour-games-smoke.mjs
+ *   node scripts/trickle-smoke.mjs
  *
  * CHROME=/path/to/chrome overrides the browser.
  */
@@ -13,7 +13,7 @@ import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { chromium } from "playwright";
 
-const PAGE = readFileSync("public/parlour-games.html", "utf8");
+const PAGE = readFileSync("public/parlour-games/trickle.html", "utf8");
 const server = createServer((_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.end(PAGE);
@@ -50,6 +50,13 @@ async function solve() {
 try {
   await page.goto("http://localhost:4610/");
   await page.waitForSelector(".tile");
+
+  await step("the page is Trickle and points back at the hub", async () => {
+    const h1 = await page.textContent("h1");
+    if (h1.trim() !== "Trickle") throw new Error(`heading reads "${h1}"`);
+    const back = await page.getAttribute(".hub a", "href");
+    if (back !== "/parlour-games") throw new Error(`hub link points at ${back}`);
+  });
 
   await step("a fresh board deals 36 tiles with the valve in the middle", async () => {
     const count = await page.$$eval(".tile", (t) => t.length);
