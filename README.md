@@ -120,6 +120,16 @@ blocks a cross-origin image whose response has no
 photos are local files and were never affected, so this only ever showed up
 on a *second* phone, as a greenhouse with no pictures.
 
+**The bucket's four policies** are worth keeping straight, because removing one
+broke uploads for a day. A keeper may insert, update, select and delete inside
+their own `<keeper>/` folder, and nothing else — `select` included, because the
+storage API reads back the row it writes, so without it every upload is refused
+with "new row violates row-level security policy". There is deliberately no
+policy granting anyone a view of the whole bucket: that was the enumeration
+hole. Downloads need no policy at all, the bucket being public, which is why
+losing `select` broke only new photos and left existing ones showing — and why
+it took a day to notice.
+
 **Privacy note:** the bucket is public-read (tags need it) with unguessable
 paths. Unpublishing a tag stops the link resolving but leaves the keeper's
 photos in place — they're the synced copy now — so someone who saved a
