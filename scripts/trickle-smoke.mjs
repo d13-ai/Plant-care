@@ -1,5 +1,5 @@
 /**
- * Trickle, steps 1–5 — core, persistence, practice, sync, sound and night.
+ * Trickle, steps 1–6 — core, persistence, practice, sync, sound, daily.
  *
  * Drives the real page in Chromium the way the spec's reference tests do:
  * clicking tiles until each svg's rotation is a multiple of 360°, which is
@@ -30,7 +30,29 @@ const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
 page.on("console", (m) => m.type() === "error" && errors.push("console: " + m.text()));
 
-let learn, learnCtx;
+let learn, learnCtx, dailyPage, dailyCtx;
+
+/** Solve whatever board a given page is showing. */
+async function solveOn(pg) {
+  const tiles = await pg.$$(".tile");
+  for (const tile of tiles) {
+    for (let guard = 0; guard < 5; guard++) {
+      const before = await tile.$eval("svg", (s) => s.style.transform);
+      if (/rotate\((-?\d+)deg\)/.test(before) && Number(/rotate\((-?\d+)deg\)/.exec(before)[1]) % 360 === 0) break;
+      await tile.click();
+      if ((await tile.$eval("svg", (s) => s.style.transform)) === before) break;
+    }
+  }
+}
+const dailyNumberNow = async () => {
+  const ctx = await browser.newContext();
+  const pg = await ctx.newPage();
+  await pg.goto("http://localhost:4610/?daily=1");
+  await pg.waitForSelector(".tile");
+  const n = await pg.evaluate(() => window.__game.dailyNumber());
+  await ctx.close();
+  return n;
+};
 const step = async (name, fn) => { await fn(); console.log("✓", name); };
 const rotationOf = (tile) =>
   tile.$eval("svg", (s) => {
@@ -506,6 +528,111 @@ try {
     await p2.evaluate(() => window.__setHidden(false));
     await p2.waitForFunction(() => window.__game.musicPlaying(), { timeout: 3000 });
     await audio.close();
+  });
+
+  await step("two devices deal the same board on the same day", async () => {
+    const one = await browser.newContext();
+    const two = await browser.newContext();
+    const [a, b] = [await one.newPage(), await two.newPage()];
+    for (const pg of [a, b]) {
+      await pg.goto("http://localhost:4610/?daily=1");
+      await pg.waitForSelector(".tile");
+    }
+    const boardOf = (pg) => pg.evaluate(() => {
+      const g = window.__game;
+      return { num: g.state.num, masks: g.state.masks.join(","), turns: g.state.turns.join(",") };
+    });
+    const [ba, bb] = [await boardOf(a), await boardOf(b)];
+    if (ba.masks !== bb.masks || ba.turns !== bb.turns) {
+      throw new Error("two contexts were dealt different boards on the same day");
+    }
+    // And the next day's is a different board.
+    const next = await a.evaluate((n) => {
+      const d = window.__game.dailyBoard(n + 1);
+      return { masks: d.masks.join(","), turns: d.turns.join(",") };
+    }, ba.num);
+    if (next.masks === ba.masks && next.turns === ba.turns) {
+      throw new Error("tomorrow deals the same board as today");
+    }
+    // Every board it can deal is actually solvable and actually scrambled.
+    const sane = await a.evaluate(() => {
+      const out = [];
+      for (let n = 1; n <= 60; n++) {
+        const d = window.__game.dailyBoard(n);
+        out.push(d && d.par > 0 && d.masks.length === 36 ? null : n);
+      }
+      return out.filter((v) => v !== null);
+    });
+    if (sane.length) throw new Error(`board numbers dealt badly: ${sane.join(", ")}`);
+    await one.close(); await two.close();
+  });
+
+  await step("the daily board hides what it should and names itself", async () => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    dailyPage = await ctx.newPage();
+    dailyCtx = ctx;
+    await dailyPage.goto("http://localhost:4610/?daily=1");
+    await dailyPage.waitForSelector(".tile");
+    for (const sel of [".sizes", "#new", "#daily-link"]) {
+      if ((await dailyPage.getAttribute(sel, "hidden")) === null) throw new Error(`${sel} is still showing`);
+    }
+    const tagline = await dailyPage.textContent(".tagline");
+    if (!/Board #\d+ — the same one for everybody today\./.test(tagline)) {
+      throw new Error(`the tagline reads "${tagline}"`);
+    }
+  });
+
+  await step("finishing shows par and a countdown, and does not double count", async () => {
+    await solveOn(dailyPage);
+    await dailyPage.waitForSelector("#win:not([hidden])", { timeout: 15000 });
+    const line = await dailyPage.textContent("#win-line");
+    if (!/Board #\d+ in \d+ turns? · fewest possible was \d+\./.test(line)) {
+      throw new Error(`the win line reads "${line}"`);
+    }
+    const tally = await dailyPage.textContent("#win-tally");
+    if (!/A new board in /.test(tally)) throw new Error(`no countdown: "${tally}"`);
+
+    const after = await dailyPage.evaluate(
+      () => JSON.parse(localStorage.getItem("pp_trickle_stats")).daily,
+    );
+    if (after.played !== 1 || after.streak !== 1) {
+      throw new Error(`first finish recorded ${JSON.stringify(after)}`);
+    }
+    // A reload lands on the finished board and must not count it again.
+    await dailyPage.reload();
+    await dailyPage.waitForSelector("#win:not([hidden])", { timeout: 10000 });
+    const again = await dailyPage.evaluate(
+      () => JSON.parse(localStorage.getItem("pp_trickle_stats")).daily,
+    );
+    if (again.played !== 1 || again.streak !== 1) {
+      throw new Error(`a reload counted it again: ${JSON.stringify(again)}`);
+    }
+    await dailyCtx.close();
+  });
+
+  await step("a streak runs on consecutive days and resets after a gap", async () => {
+    const run = async (previous) => {
+      const ctx = await browser.newContext();
+      await ctx.addInitScript((prev) => {
+        localStorage.setItem("pp_trickle_stats", JSON.stringify({
+          total_turns: 0, nudges: 0, best_turns: {}, last_played: null, daily: prev,
+        }));
+      }, previous);
+      const pg = await ctx.newPage();
+      await pg.goto("http://localhost:4610/?daily=1");
+      await pg.waitForSelector(".tile");
+      await solveOn(pg);
+      await pg.waitForSelector("#win:not([hidden])", { timeout: 15000 });
+      const out = await pg.evaluate(() => JSON.parse(localStorage.getItem("pp_trickle_stats")).daily);
+      const num = await pg.evaluate(() => window.__game.state.num);
+      await ctx.close();
+      return { out, num };
+    };
+    const today = await dailyNumberNow();
+    const carried = await run({ last: today - 1, streak: 1, best: 40, played: 1 });
+    if (carried.out.streak !== 2) throw new Error(`yesterday then today gave streak ${carried.out.streak}`);
+    const broken = await run({ last: today - 3, streak: 9, best: 40, played: 9 });
+    if (broken.out.streak !== 1) throw new Error(`a three-day gap kept streak ${broken.out.streak}`);
   });
 
   if (errors.length) {
