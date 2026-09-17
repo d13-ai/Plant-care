@@ -8,7 +8,7 @@ import { signOut, useAccount } from "@/lib/auth";
 import { confirm } from "@/lib/confirm";
 import { getKeeperName, setKeeperName } from "@/lib/keeper";
 import { conservatoryUrl, getHandle, setHandle } from "@/lib/conservatory";
-import { getSyncStatus, subscribeSync, syncNow, type SyncStatus } from "@/lib/sync";
+import { getSyncStatus, requestSync, subscribeSync, syncNow, type SyncStatus } from "@/lib/sync";
 import { cardTheme, font, space } from "@/theme";
 
 function ago(iso: string | null): string {
@@ -85,10 +85,19 @@ export default function AccountScreen() {
 
   // Google's redirect lands here. Start the first sync, and tidy the tokens it
   // leaves in the URL.
+  //
+  // Only the redirect forces a sync. This used to run syncNow on every mount,
+  // so each visit to this screen fired one immediately, ahead of the debounce
+  // that exists to coalesce them; an ordinary visit now asks like anywhere
+  // else and joins whatever is already pending.
   useEffect(() => {
-    syncNow(db).catch(() => {});
-    if (Platform.OS === "web" && /access_token|refresh_token|error/.test(window.location.hash)) {
+    const fromRedirect =
+      Platform.OS === "web" && /access_token|refresh_token|error/.test(window.location.hash);
+    if (fromRedirect) {
+      syncNow(db).catch(() => {});
       window.history.replaceState(null, "", window.location.pathname);
+    } else {
+      requestSync(db);
     }
   }, [db]);
 
