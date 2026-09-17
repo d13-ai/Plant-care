@@ -50,10 +50,26 @@ const ASSETS = [
   { file: "android-icon-monochrome.png", size: 1024, bg: null, color: "#FFFFFF", scale: 0.56 },
 ];
 
+/**
+ * Home-screen installs. Expo's static export writes no web manifest, so
+ * "Add to Home Screen" would fall back to a screenshot of the page on iOS
+ * and a scaled-up favicon on Android. These land in `public/`, which Expo
+ * copies to the site root. All opaque: iOS ignores transparency and
+ * composites onto black, and Android masks the maskable one to a circle.
+ */
+const PUBLIC = [
+  { file: "apple-touch-icon.png", size: 180, bg: AUBERGINE, color: LEAF, scale: 0.72 },
+  { file: "icon-192.png", size: 192, bg: AUBERGINE, color: LEAF, scale: 0.72 },
+  { file: "icon-512.png", size: 512, bg: AUBERGINE, color: LEAF, scale: 0.72 },
+  // Maskable: content must survive a circular crop, so it keeps to the middle.
+  { file: "icon-maskable-512.png", size: 512, bg: AUBERGINE, color: LEAF, scale: 0.56 },
+];
+
 const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined });
 const page = await browser.newPage();
 
-for (const a of ASSETS) {
+for (const a of [...ASSETS, ...PUBLIC]) {
+  const dir = ASSETS.includes(a) ? "assets/images" : "public";
   const body = a.scale === 0 ? "" : mark({ color: a.color, scale: a.scale });
   await page.setViewportSize({ width: a.size, height: a.size });
   await page.setContent(
@@ -62,9 +78,9 @@ for (const a of ASSETS) {
        background:${a.bg ?? "transparent"}}</style>${body}`,
   );
   const png = await page.screenshot({ omitBackground: a.bg === null });
-  const out = new URL(`../assets/images/${a.file}`, import.meta.url);
+  const out = new URL(`../${dir}/${a.file}`, import.meta.url);
   writeFileSync(out, png);
-  console.log(`${a.file.padEnd(30)} ${a.size}x${a.size}  ${png.length} bytes`);
+  console.log(`${dir}/${a.file}`.padEnd(38) + `${a.size}x${a.size}  ${png.length} bytes`);
 }
 
 await browser.close();
