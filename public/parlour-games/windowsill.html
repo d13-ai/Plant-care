@@ -61,7 +61,7 @@ h1{font-family:Lora,Georgia,"Times New Roman",serif;font-weight:700;font-size:30
   border-radius:12px;padding:13px 16px;font-family:Lora,Georgia,serif;
   font-size:15px;line-height:1.45;color:var(--cream);min-height:3.4em;
 }
-body.learn .shelves,body.learn #new{display:none}
+body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:none}
 
 .shelves{display:flex;gap:8px;justify-content:center;margin:16px 0 0}
 .shelves button{
@@ -172,6 +172,8 @@ button.quiet:focus-visible{outline:2px solid var(--gold-light);outline-offset:2p
 }
 #win h2{margin:0 0 6px;font-size:22px;color:var(--gold-light)}
 #win p{margin:0;color:var(--muted);font-size:15px}
+#win-tally{margin-top:6px;color:var(--gold-light)}
+#win-tally:empty{display:none}
 button.plain{
   margin-top:14px;background:var(--gold);color:var(--ink);border:none;
   border-radius:10px;padding:11px 18px;font:inherit;font-weight:700;cursor:pointer;min-height:44px;
@@ -187,7 +189,7 @@ button.plain{
 <main>
   <h1>Windowsill</h1>
   <p class="tagline">Give every plant the light it actually wants.</p>
-  <p class="hub"><a href="/parlour-games">← Parlour Games</a><span id="learn-link"> · <a href="?learn=1">How to play</a></span></p>
+  <p class="hub"><a href="/parlour-games">← Parlour Games</a><span id="learn-link"> · <a href="?learn=1">How to play</a></span><span id="daily-link"> · <a href="?daily=1">Today's board</a></span></p>
 
   <p id="coach" hidden><span id="coach-line"></span></p>
 
@@ -214,6 +216,7 @@ button.plain{
   <div id="win" hidden>
     <h2>Every one of them is happy.</h2>
     <p id="win-line"></p>
+    <p id="win-tally"></p>
     <button class="plain" id="again" type="button">Start again</button>
   </div>
 
@@ -229,12 +232,25 @@ button.plain{
   /* The arcade's: the seeded generator, and the storage wrappers that survive
      a browser with everything switched off. */
   var P = window.Parlour;
-  var KEY = { shelf: "pp_windowsill_shelf" };
+  var KEY = {
+    shelf: "pp_windowsill_shelf",
+    daily: "pp_windowsill_daily"   /* today's board, so a reload keeps it */
+  };
 
-  /* Practice wins over anything else; the arcade reads all three modes the
+  /* Practice wins over the daily board; the arcade reads all three modes the
      same way for every game. */
   var modes = P.mode();
   var LEARN = modes.learn;
+  var DAILY = modes.daily;
+
+  /* One board a day, the same for everyone, dealt from the arcade's own
+     calendar so "today" means the same day in every game. The shape is
+     Standard for everybody -- the daily board is not the place to choose a
+     difficulty.
+     The multiplier is Windowsill's own, so its board and Trickle's are not
+     two views of the same number on any given day. */
+  var DAILY_SHELF = "standard";
+  function dailySeed(num) { return (num * 2246822519 + 374761393) >>> 0; }
 
   /* The practice board, its tray order and its one-solution guarantee all
      live with the rules, where the tests can reach them. */
@@ -245,6 +261,13 @@ button.plain{
   var BOARD = null;
 
   function newBoard() {
+    if (DAILY) {
+      var num = P.dayNumber();
+      var shape = R.SHELVES.find(function (s) { return s.key === DAILY_SHELF; });
+      BOARD = R.deal(shape, P.mulberry32(dailySeed(num)));
+      BOARD.num = num;
+      return;
+    }
     if (LEARN) {
       BOARD = { w: LEARN_BOARD.w, d: LEARN_BOARD.d, ways: 1, tries: 1,
         tray: LEARN_BOARD.tray.map(function (p) { return { need: p.need, height: p.height }; }) };
@@ -270,6 +293,37 @@ button.plain{
      and never moves it again. It is something to aim at, not to fail. */
   function par() { return BOARD.w * BOARD.d; }
 
+  /* Today's board is kept so a reload lands back on it rather than handing
+     somebody a fresh start at the one board they only get once. Anything
+     from another day, or that does not match the board dealt for today, is
+     dropped rather than half-restored. */
+  function saveDaily() {
+    if (!DAILY) return;
+    P.write(KEY.daily, {
+      num: BOARD.num,
+      shelf: shelf.map(function (run) {
+        return run.map(function (p) { return p ? { need: p.need, height: p.height, id: p.id } : null; });
+      }),
+      tray: tray.map(function (p) { return p.id; }),
+      placements: placements,
+      done: done
+    });
+  }
+
+  function storedDaily() {
+    var saved = P.read(KEY.daily, null);
+    if (!saved || saved.num !== BOARD.num) return null;
+    if (!Array.isArray(saved.shelf) || saved.shelf.length !== BOARD.w) return null;
+    if (saved.shelf.some(function (run) { return !Array.isArray(run) || run.length !== BOARD.d; })) return null;
+    /* Every plant dealt has to be accounted for exactly once, on the shelf
+       or in the tray, or the save is from a board this is not. */
+    var seen = {}, total = BOARD.w * BOARD.d;
+    saved.shelf.forEach(function (run) { run.forEach(function (p) { if (p) seen[p.id] = 1; }); });
+    (saved.tray || []).forEach(function (id) { seen[id] = 1; });
+    if (Object.keys(seen).length !== total) return null;
+    return saved;
+  }
+
   function layOut() {
     shelf = [];
     for (var i = 0; i < BOARD.w; i++) {
@@ -282,8 +336,21 @@ button.plain{
     placements = 0;
     done = false;
     winEl.hidden = true;
+
+    var saved = DAILY ? storedDaily() : null;
+    if (saved) {
+      var byId = {};
+      tray.forEach(function (p) { byId[p.id] = p; });
+      shelf = saved.shelf.map(function (run) {
+        return run.map(function (p) { return p ? byId[p.id] : null; });
+      });
+      tray = saved.tray.map(function (id) { return byId[id]; }).filter(Boolean);
+      placements = saved.placements | 0;
+    }
+
     build();
     paint();
+    if (saved && saved.done) finish();
   }
 
   /* ---- drawing --------------------------------------------------------- */
@@ -420,6 +487,7 @@ button.plain{
       tray.push(held.plant);
       held = null;
       paint();
+      saveDaily();
       /* Taking one back out changes the board as much as putting one in, so
          the coaching answers it too rather than leaving a stale line up. */
       coachAfter(vacated);
@@ -453,6 +521,7 @@ button.plain{
     placements += 1;
     held = null;
     paint();
+    saveDaily();
     coachAfter({ run: r, tier: t });
   }
 
@@ -535,16 +604,39 @@ button.plain{
     coach("Happy. Keep going — the light changes as you fill the run in front.");
   }
 
+  /* How long today's board has left. Local midnight, because the board
+     number is worked out from the player's own calendar date. */
+  var countdownTimer = null;
+  function tickCountdown() {
+    var el = document.getElementById("countdown");
+    if (!el) return;
+    var left = Math.max(0, P.msUntilTomorrow());
+    var h = Math.floor(left / 3600000), m = Math.floor(left / 60000) % 60;
+    el.textContent = "A new board in " + (h > 0 ? h + "h " : "") + m + "m.";
+    if (!countdownTimer) countdownTimer = setInterval(tickCountdown, 30000);
+  }
+
+  function scoreLine() {
+    return placements === par()
+      ? "In " + placements + " placements — you never moved one twice."
+      : "In " + placements + " placements. Par is " + par() + ".";
+  }
+
   function finish() {
     done = true;
     held = null;
-    winLine.textContent = LEARN
-      ? "Now the real thing: bigger shelves, and a board dealt fresh each time."
-      : placements === par()
-        ? "In " + placements + " placements — you never moved one twice."
-        : "In " + placements + " placements. Par is " + par() + ".";
-    document.getElementById("again").textContent = LEARN ? "Play a proper board" : "Start again";
+    if (LEARN) {
+      winLine.textContent = "Now the real thing: bigger shelves, and a board dealt fresh each time.";
+    } else if (DAILY) {
+      winLine.textContent = "Board #" + BOARD.num + ". " + scoreLine();
+    } else {
+      winLine.textContent = scoreLine();
+    }
+    document.getElementById("win-tally").innerHTML = DAILY ? '<span id="countdown"></span>' : "";
+    document.getElementById("again").textContent =
+      LEARN ? "Play a proper board" : DAILY ? "Play a board of your own" : "Start again";
     winEl.hidden = false;
+    if (DAILY) { tickCountdown(); saveDaily(); }
     coachAfter(null);
     if (LEARN) coachAfter({ run: 0, tier: 0 });
   }
@@ -555,10 +647,14 @@ button.plain{
   /* Finishing practice hands over to a real board and puts the URL back, so
      a reload afterwards does not drop the player back into practice. */
   document.getElementById("again").addEventListener("click", function () {
-    if (LEARN) {
+    if (LEARN || DAILY) {
       LEARN = false;
+      DAILY = false;
       taught = {};
-      try { history.replaceState(null, "", location.pathname.replace(/\/learn\/?$/, "")); } catch (e) { /* fine */ }
+      if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+      try {
+        history.replaceState(null, "", location.pathname.replace(/\/(learn|daily)\/?$/, ""));
+      } catch (e) { /* fine */ }
       setChrome();
     }
     dealAndLay();
@@ -586,9 +682,15 @@ button.plain{
 
   function setChrome() {
     document.body.classList.toggle("learn", LEARN);
+    document.body.classList.toggle("daily", DAILY);
     coachEl.hidden = !LEARN;
     document.getElementById("learn-link").hidden = LEARN;
-    document.getElementById("again").textContent = LEARN ? "Play a proper board" : "Start again";
+    document.getElementById("daily-link").hidden = DAILY;
+    document.getElementById("again").textContent =
+      LEARN ? "Play a proper board" : DAILY ? "Play a board of your own" : "Start again";
+    document.querySelector(".tagline").textContent = DAILY
+      ? "Board #" + P.dayNumber() + " — the same one for everybody today."
+      : "Give every plant the light it actually wants.";
   }
 
   setChrome();
@@ -611,6 +713,8 @@ button.plain{
     ways: function () { return BOARD.ways; },
     shelfKind: function () { return shelfKind; },
     learning: function () { return LEARN; },
+    isDaily: function () { return DAILY; },
+    dayNumber: P.dayNumber,
     coach: function () { return coachLine.textContent; },
     newBoard: dealAndLay
   };

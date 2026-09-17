@@ -300,28 +300,41 @@ try {
 
   await step("a full shelf with one plant misplaced is not solved", async () => {
     await page.click("#clear");
-    const solution = (await page.evaluate(() => window.__game.solutions()))[0];
-    const order = [];
-    for (let r = 0; r < solution.length; r++) for (let t = 0; t < solution[r].length; t++) order.push([r, t]);
-    // Fill it correctly except for the last two, which go in swapped.
-    for (let i = 0; i < order.length - 2; i++) {
-      const [r, t] = order[i];
-      await place(solution[r][t].need, solution[r][t].height, r, t);
+    // A board has several ways out, so swapping any two plants can land on
+    // another perfectly good one. Ask the model for a swap that genuinely
+    // breaks it, and lay the broken arrangement out directly -- solving it
+    // first and then swapping would do nothing, because a solved board is
+    // finished and stops taking taps.
+    const broken = await page.evaluate(() => {
+      const R = window.WindowsillRules, b = window.__game.board();
+      const [sol] = R.solutions(b.w, b.d, b.tray, 1);
+      const at = [];
+      sol.forEach((run, r) => run.forEach((_, t) => at.push([r, t])));
+      for (const [r1, t1] of at) {
+        for (const [r2, t2] of at) {
+          if (r1 === r2 && t1 === t2) continue;
+          const copy = sol.map((run) => run.slice());
+          [copy[r1][t1], copy[r2][t2]] = [copy[r2][t2], copy[r1][t1]];
+          if (!R.isSolved(copy)) return copy;
+        }
+      }
+      return null;
+    });
+    if (!broken) throw new Error("no two plants on this board can be swapped wrongly");
+    for (let r = 0; r < broken.length; r++) {
+      for (let t = 0; t < broken[r].length; t++) {
+        await place(broken[r][t].need, broken[r][t].height, r, t);
+      }
     }
-    const [[r1, t1], [r2, t2]] = order.slice(-2);
-    await place(solution[r2][t2].need, solution[r2][t2].height, r1, t1);
-    await place(solution[r1][t1].need, solution[r1][t1].height, r2, t2);
     const full = await page.evaluate(() => window.__game.shelf().flat().every(Boolean));
     if (!full) throw new Error("the shelf did not fill");
     if (await page.evaluate(() => window.__game.solved())) {
-      // Only a real failure if the swap actually changed anything -- two
-      // identical plants swap to the same board.
-      const same = await page.evaluate(([a, b, c, d]) => {
-        const s = window.__game.shelf();
-        return s[a][b].need === s[c][d].need && s[a][b].height === s[c][d].height;
-      }, [r1, t1, r2, t2]);
-      if (!same) throw new Error("a misplaced plant still counted as solved");
+      throw new Error("a misplaced plant still counted as solved");
     }
+    if (!(await page.locator("#win").isHidden())) throw new Error("the win panel came up on a broken board");
+    const unhappy = await page.evaluate(() => Array.from(document.querySelectorAll(".verdict"))
+      .filter((el) => el.textContent.trim()).length);
+    if (unhappy === 0) throw new Error("nothing on a broken board reads as unhappy");
   });
 
   await step("every cell and chip says out loud what it is", async () => {
@@ -478,10 +491,149 @@ try {
     await learn.close();
   });
 
+  // ---- the daily board ------------------------------------------------
+  const daily = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const dp = await daily.newPage();
+  dp.on("pageerror", (e) => errors.push("pageerror(daily): " + e.message));
+  dp.on("console", (m) => m.type() === "error" && errors.push("console(daily): " + m.text()));
+  const dsolve = async () => {
+    const sol = (await dp.evaluate(() => window.__game.solutions()))[0];
+    for (let r = 0; r < sol.length; r++) {
+      for (let t = 0; t < sol[r].length; t++) {
+        const id = await dp.evaluate(([n, h]) => {
+          const x = window.__game.tray().find((p) => p.need === n && p.height === h);
+          return x ? x.id : null;
+        }, [sol[r][t].need, sol[r][t].height]);
+        if (id === null) throw new Error("the daily solution wants a plant the tray has not got");
+        await dp.locator(`.chip[data-plant="${id}"]`).click();
+        await dp.locator(`.cell[data-run="${r}"][data-tier="${t}"]`).click();
+      }
+    }
+  };
+
+  await step("the daily board names itself and hides what it should", async () => {
+    await dp.goto("http://localhost:4611/parlour-games/windowsill/daily");
+    await dp.waitForSelector(".cell");
+    if (!(await dp.evaluate(() => window.__game.isDaily()))) throw new Error("not in daily mode");
+    const num = await dp.evaluate(() => window.__game.dayNumber());
+    const tagline = await dp.textContent(".tagline");
+    if (!tagline.includes("Board #" + num)) throw new Error(`the tagline reads "${tagline}"`);
+    if (!/same one for everybody/.test(tagline)) throw new Error("it does not say the board is shared");
+    // One board, one shape: nothing to choose and nothing to re-deal.
+    if (await dp.locator(".shelves").isVisible()) throw new Error("the daily offered a shelf size");
+    if (await dp.locator("#new").isVisible()) throw new Error("the daily offered a new board");
+    if (await dp.locator("#daily-link").isVisible()) throw new Error("the daily linked to itself");
+    if (await dp.locator("#coach").isVisible()) throw new Error("the daily was coaching");
+  });
+
+  await step("two devices are dealt the same board on the same day", async () => {
+    const other = await browser.newContext();
+    const op = await other.newPage();
+    await op.goto("http://localhost:4611/parlour-games/windowsill?daily=1");
+    await op.waitForSelector(".cell");
+    const a = await dp.evaluate(() => JSON.stringify(window.__game.board().tray));
+    const b = await op.evaluate(() => JSON.stringify(window.__game.board().tray));
+    if (a !== b) throw new Error("two devices were dealt different boards on the same day");
+    const nums = await op.evaluate(() => [window.__game.board().num, window.__game.dayNumber()]);
+    if (nums[0] !== nums[1]) throw new Error(`the board is numbered ${nums[0]} on day ${nums[1]}`);
+    await other.close();
+  });
+
+  await step("tomorrow's board is not today's", async () => {
+    const differs = await dp.evaluate(() => {
+      const R = window.WindowsillRules, P = window.Parlour;
+      const shape = R.SHELVES.find((s) => s.key === "standard");
+      const seed = (n) => (n * 2246822519 + 374761393) >>> 0;
+      const trayOf = (n) => JSON.stringify(R.deal(shape, P.mulberry32(seed(n))).tray);
+      const seen = new Set();
+      for (let n = 1; n <= 60; n++) seen.add(trayOf(n));
+      return seen.size;
+    });
+    if (differs < 55) throw new Error(`sixty days produced only ${differs} different boards`);
+  });
+
+  await step("a part-played daily board comes back after a reload", async () => {
+    const sol = (await dp.evaluate(() => window.__game.solutions()))[0];
+    const id = await dp.evaluate(([n, h]) => {
+      const x = window.__game.tray().find((p) => p.need === n && p.height === h);
+      return x ? x.id : null;
+    }, [sol[0][0].need, sol[0][0].height]);
+    await dp.locator(`.chip[data-plant="${id}"]`).click();
+    await dp.locator('.cell[data-run="0"][data-tier="0"]').click();
+    const before = await dp.evaluate(() => ({
+      placements: window.__game.placements(),
+      shelf: JSON.stringify(window.__game.shelf()),
+    }));
+    await dp.reload();
+    await dp.waitForSelector(".cell");
+    const after = await dp.evaluate(() => ({
+      placements: window.__game.placements(),
+      shelf: JSON.stringify(window.__game.shelf()),
+    }));
+    if (after.shelf !== before.shelf) throw new Error("the board came back different");
+    if (after.placements !== before.placements) throw new Error(`placements went ${before.placements} → ${after.placements}`);
+  });
+
+  await step("a saved board from another day is ignored, not half-restored", async () => {
+    await dp.evaluate(() => {
+      const saved = window.Parlour.read("pp_windowsill_daily", null);
+      saved.num -= 1;                       // yesterday's
+      window.Parlour.write("pp_windowsill_daily", saved);
+    });
+    await dp.reload();
+    await dp.waitForSelector(".cell");
+    const state = await dp.evaluate(() => ({
+      placements: window.__game.placements(),
+      onShelf: window.__game.shelf().flat().filter(Boolean).length,
+    }));
+    if (state.placements !== 0 || state.onShelf !== 0) {
+      throw new Error(`yesterday's board leaked through: ${JSON.stringify(state)}`);
+    }
+  });
+
+  await step("finishing shows the board number, par and a countdown", async () => {
+    await dsolve();
+    await dp.waitForSelector("#win:not([hidden])", { timeout: 10000 });
+    const num = await dp.evaluate(() => window.__game.dayNumber());
+    const line = await dp.textContent("#win-line");
+    if (!line.includes("Board #" + num)) throw new Error(`the win line reads "${line}"`);
+    if (!/never moved one twice|Par is \d+/.test(line)) throw new Error(`no score in "${line}"`);
+    const tally = await dp.textContent("#win-tally");
+    if (!/A new board in /.test(tally)) throw new Error(`no countdown: "${tally}"`);
+  });
+
+  await step("a reload lands back on the finished board rather than a fresh one", async () => {
+    await dp.reload();
+    await dp.waitForSelector("#win:not([hidden])", { timeout: 10000 });
+    if (!(await dp.evaluate(() => window.__game.solved()))) throw new Error("it came back unsolved");
+    const line = await dp.textContent("#win-line");
+    if (!/Board #/.test(line)) throw new Error(`the win line reads "${line}" after a reload`);
+  });
+
+  await step("leaving the daily board deals one of your own and drops the URL", async () => {
+    await dp.click("#again");
+    await dp.waitForSelector(".cell");
+    const after = await dp.evaluate(() => ({
+      daily: window.__game.isDaily(),
+      path: location.pathname + location.search,
+      num: window.__game.board().num,
+      shelves: !!document.querySelector(".shelves").offsetParent,
+    }));
+    if (after.daily) throw new Error("it stayed on the daily board");
+    if (/daily/.test(after.path)) throw new Error(`the URL still reads ${after.path}`);
+    if (after.num !== undefined) throw new Error("the new board is still numbered");
+    if (!after.shelves) throw new Error("the shelf sizes did not come back");
+    await dp.reload();
+    await dp.waitForSelector(".cell");
+    if (await dp.evaluate(() => window.__game.isDaily())) throw new Error("a reload went back to the daily");
+    await daily.close();
+  });
+
   await step("the ordinary board offers no coaching and links to practice", async () => {
     await page.click("#clear");
     if (await page.locator("#coach").isVisible()) throw new Error("a real board was coaching");
     if (!(await page.locator("#learn-link").isVisible())) throw new Error("no way in to practice");
+    if (!(await page.locator("#daily-link").isVisible())) throw new Error("no way in to today's board");
   });
 
   if (errors.length) throw new Error("page errors:\n  " + errors.join("\n  "));

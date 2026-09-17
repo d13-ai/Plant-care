@@ -264,8 +264,17 @@ Each step ends somewhere it can be looked at.
    useful true thing about where they are now — because a script goes wrong
    the moment somebody takes a plant back out. Each half of the lesson is said
    once, at the moment the board demonstrates it.
-4. **A daily board**, off the shared epoch, plus par and the end-of-round
-   card.
+4. ~~**A daily board**, off the shared epoch, plus par and the end-of-round
+   card.~~ **Done.** At `/parlour-games/windowsill/daily`, dealt from the
+   harness's calendar so "today" means the same day here as in Trickle, and
+   always at Standard — the daily board is not the place to pick a
+   difficulty. Its seed uses Windowsill's own multiplier, so its board and
+   Trickle's are not two views of the same number.
+
+   Today's board is kept, so a reload lands back on it rather than handing
+   somebody a fresh start at the one board they get once a day. A save from
+   another day, or one whose plants do not account for the board dealt for
+   today, is dropped rather than half-restored.
 5. **The streak and progress sync**, through the shared harness.
 6. **Sound and night mode**, from the harness.
 7. **Art pass** — the nine silhouettes, the window, the stepped stand.
