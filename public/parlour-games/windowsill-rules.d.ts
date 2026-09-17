@@ -23,4 +23,15 @@ export declare const SHELVES: Shelf3[];
 export declare const PRACTICE: { w: number; d: number; tray: Plant[] };
 export declare function shuffle<T>(list: T[], rnd: () => number): T[];
 export declare function deal(shelf: Shelf3, rnd: () => number, tries?: number): Board;
+export type Daily = { num: number; placements: number; done: boolean } & Record<string, unknown>;
+export type Progress = {
+  done: number;
+  byShelf: Record<string, number>;
+  best: Record<string, number>;
+  dailyBest: number | null;
+  daily: Daily | null;
+};
+export declare function emptyProgress(): Progress;
+export declare function laterDaily(a: Daily | null, b: Daily | null): Daily | null;
+export declare function mergeProgress(local: Progress, remote: Progress | null): Progress;
 export declare function describe(plant: Plant | null): string;

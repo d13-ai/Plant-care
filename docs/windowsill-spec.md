@@ -275,7 +275,18 @@ Each step ends somewhere it can be looked at.
    somebody a fresh start at the one board they get once a day. A save from
    another day, or one whose plants do not account for the board dealt for
    today, is dropped rather than half-restored.
-5. **The streak and progress sync**, through the shared harness.
+5. ~~**The streak and progress sync**, through the shared harness.~~ **Done.**
+   The first second game to use the harness, so it is also the first real
+   test of the `(user_id, game)` keying and the shared streak — both checked
+   against the live project, as two keepers, inside a transaction that was
+   rolled back.
+
+   Windowsill keeps its progress in one blob in the shape the account holds
+   it, so there is nothing to translate between the two, and the merge lives
+   in the rules module where a test can reach it. Counts take the larger,
+   fewest placements the smaller, and two saved daily boards are never
+   blended: one whole board is chosen over the other, because half of one
+   arrangement and half of another is not a position anybody played.
 6. **Sound and night mode**, from the harness.
 7. **Art pass** — the nine silhouettes, the window, the stepped stand.
 8. **The hub entry**, the smoke test, and the embed build.
