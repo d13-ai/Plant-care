@@ -1,5 +1,5 @@
 /**
- * Trickle, steps 1–3 of the build order — core, persistence, practice.
+ * Trickle, steps 1–4 — core, persistence, practice, account sync.
  *
  * Drives the real page in Chromium the way the spec's reference tests do:
  * clicking tiles until each svg's rotation is a multiple of 360°, which is
@@ -291,6 +291,118 @@ try {
   });
 
   await learnCtx.close();
+
+  await step("signed out, nothing is sent anywhere", async () => {
+    const quiet = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const calls = [];
+    await quiet.route("**://*.supabase.co/**", (route) => {
+      calls.push(route.request().url());
+      route.abort();
+    });
+    const p2 = await quiet.newPage();
+    await p2.goto("http://localhost:4610/");
+    await p2.waitForSelector(".tile");
+    for (const t of (await p2.$$(".tile")).slice(0, 4)) await t.click();
+    await p2.waitForTimeout(2200);   // past the 1.5s debounce
+    if (calls.length) throw new Error(`${calls.length} requests while signed out: ${calls[0]}`);
+    const line = await p2.textContent("#save");
+    if (!/Sign in/.test(line)) throw new Error(`the save line reads "${line}"`);
+    await quiet.close();
+  });
+
+  await step("merging keeps the better half of every pair", async () => {
+    const cases = await page.evaluate(() => {
+      const m = window.__game.mergeProgress;
+      const base = { done: 0, bySize: {}, stats: { total_turns: 0, nudges: 0, best_turns: {} }, board: null };
+      return {
+        // counts and totals: larger wins, whichever side holds it
+        countLocal: m({ ...base, done: 9 }, { boards_finished: 3, stats: {} }).done,
+        countRemote: m({ ...base, done: 3 }, { boards_finished: 9, stats: {} }).done,
+        totals: m({ ...base, stats: { total_turns: 120, nudges: 2, best_turns: {} } },
+                  { stats: { total_turns: 400, nudges: 9 } }).stats,
+        // fewest turns: smaller wins
+        bestLocal: m({ ...base, stats: { best_turns: { 6: 21 } } }, { stats: { best_turns: { 6: 44 } } })
+          .stats.best_turns[6],
+        bestRemote: m({ ...base, stats: { best_turns: { 6: 44 } } }, { stats: { best_turns: { 6: 21 } } })
+          .stats.best_turns[6],
+        // a size only one side knows about survives
+        bySize: m({ ...base, bySize: { 4: 2 } }, { boards_by_size: { 8: 5 }, stats: {} }).bySize,
+        // an untouched board never displaces a played one
+        untouched: m({ ...base, board: { n: 6, moves: 0, saved_at: "2026-09-17T10:00:00Z" } },
+                     { current_board: { n: 4, moves: 12, saved_at: "2026-09-01T10:00:00Z" }, stats: {} }).board,
+        // between two played boards, the later one wins
+        later: m({ ...base, board: { n: 6, moves: 3, saved_at: "2026-09-17T10:00:00Z" } },
+                 { current_board: { n: 4, moves: 12, saved_at: "2026-09-01T10:00:00Z" }, stats: {} }).board,
+        // nothing on the account at all leaves local untouched
+        noRemote: m({ ...base, done: 7 }, null).done,
+      };
+    });
+    const want = (label, got, expected) => {
+      if (JSON.stringify(got) !== JSON.stringify(expected)) {
+        throw new Error(`${label}: got ${JSON.stringify(got)}, expected ${JSON.stringify(expected)}`);
+      }
+    };
+    want("larger count (local)", cases.countLocal, 9);
+    want("larger count (remote)", cases.countRemote, 9);
+    want("totals take the max", { t: cases.totals.total_turns, n: cases.totals.nudges }, { t: 400, n: 9 });
+    want("fewest turns (local better)", cases.bestLocal, 21);
+    want("fewest turns (remote better)", cases.bestRemote, 21);
+    want("per-size counts union", cases.bySize, { 4: 2, 8: 5 });
+    want("played board beats untouched", cases.untouched.n, 4);
+    want("later played board wins", cases.later.n, 6);
+    want("no account row", cases.noRemote, 7);
+  });
+
+  await step("signed in, the account is read and the merge is written back", async () => {
+    const signed = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const posted = [];
+    await signed.addInitScript(() => {
+      localStorage.setItem("sb-ixagjvntbgyqemxxinqe-auth-token", JSON.stringify({
+        access_token: "test-token",
+        refresh_token: "test-refresh",
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        user: { id: "00000000-0000-4000-8000-00000000abcd" },
+      }));
+      // Something worth merging: fewer boards here, a better record here.
+      localStorage.setItem("pp_trickle_done", "2");
+      localStorage.setItem("pp_trickle_stats", JSON.stringify({
+        total_turns: 50, nudges: 1, best_turns: { 6: 19 }, last_played: "2026-09-16T00:00:00Z",
+      }));
+    });
+    await signed.route("**://*.supabase.co/rest/v1/game_progress**", async (route) => {
+      if (route.request().method() === "GET") {
+        return route.fulfill({
+          status: 200, contentType: "application/json",
+          body: JSON.stringify([{
+            boards_finished: 11, boards_by_size: { 8: 4 }, current_board: null,
+            stats: { total_turns: 900, nudges: 12, best_turns: { 6: 30, 8: 55 } },
+          }]),
+        });
+      }
+      posted.push(JSON.parse(route.request().postData() || "{}"));
+      return route.fulfill({ status: 201, body: "" });
+    });
+    const p2 = await signed.newPage();
+    await p2.goto("http://localhost:4610/");
+    await p2.waitForSelector(".tile");
+    await p2.waitForFunction(() => Number(localStorage.getItem("pp_trickle_done")) === 11, { timeout: 5000 });
+
+    const best = await p2.evaluate(
+      () => JSON.parse(localStorage.getItem("pp_trickle_stats")).best_turns,
+    );
+    if (best["6"] !== 19) throw new Error(`the better record was lost: ${JSON.stringify(best)}`);
+    if (best["8"] !== 55) throw new Error(`a record only the account had was dropped`);
+    const line = await p2.textContent("#save");
+    if (!/Saved to your account/.test(line)) throw new Error(`the save line reads "${line}"`);
+
+    await p2.waitForFunction(() => true);
+    if (!posted.length) throw new Error("the merge was never written back");
+    const body = posted[posted.length - 1];
+    if (body.boards_finished !== 11) throw new Error(`pushed boards_finished ${body.boards_finished}`);
+    if (body.stats.best_turns["6"] !== 19) throw new Error("pushed the worse record");
+    if (body.user_id !== "00000000-0000-4000-8000-00000000abcd") throw new Error("pushed the wrong user");
+    await signed.close();
+  });
 
   if (errors.length) {
     console.log("Browser errors:");
