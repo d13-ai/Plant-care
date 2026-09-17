@@ -35,7 +35,11 @@
   }
   function write(key, value) {
     try {
-      window.localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
+      /* Always JSON, because read() always JSON.parses. Writing strings raw
+         and reading them back as JSON is a pair that looks fine and silently
+         loses every string value -- which is exactly what it did to
+         Windowsill's remembered shelf size. */
+      window.localStorage.setItem(key, JSON.stringify(value));
     } catch (e) { /* nothing to do, and nothing worth breaking for */ }
   }
 

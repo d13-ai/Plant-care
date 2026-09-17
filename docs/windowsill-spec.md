@@ -245,9 +245,17 @@ Each step ends somewhere it can be looked at.
    first draft got this wrong and only the screenshot showed it. And the CSS
    step height and the plant height unit are the same custom property on
    purpose: if they drift, the picture says one thing and the rules another.
-2. **The generator**, with the solution counter and the difficulty bands.
-   Prove it: deal a few hundred boards at each shape and assert every one is
-   solvable, full, and inside its band.
+2. ~~**The generator**, with the solution counter and the difficulty bands.~~
+   **Done.** `deal()` plants a solution, forgets it, counts the ways out and
+   rejects anything outside the band. 200 boards at every shape, in unit
+   tests and again in the browser: all full, all solvable, none outside their
+   band, and never more than nine deals to find one.
+
+   In JavaScript it is far quicker than the Python model suggested —
+   **0.5 ms** to deal the largest shelf including the counting and rejecting,
+   against 2.5 ms per *candidate* in Python — so difficulty costs nothing to
+   set. The three shelves are exposed as the difficulty choice: Gentle
+   (3 × 3), Standard (4 × 3), Deep end (5 × 3).
 3. **Practice mode** on the fixed board in §5, with the two-part lesson.
 4. **A daily board**, off the shared epoch, plus par and the end-of-round
    card.

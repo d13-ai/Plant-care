@@ -19,6 +19,48 @@ type Streak = { last: number | null; streak: number; longest: number; played: nu
 const streak = (last: number | null, s: number, longest = s, played = s): Streak =>
   ({ last, streak: s, longest, played });
 
+describe("keeping something between visits", () => {
+  const withStore = <T>(fn: () => T) => {
+    const store: Record<string, string> = {};
+    const g = globalThis as Record<string, unknown>;
+    const before = g.window;
+    g.window = { localStorage: {
+      getItem: (k: string) => (k in store ? store[k] : null),
+      setItem: (k: string, v: string) => { store[k] = v; },
+    } };
+    try { return fn(); } finally { g.window = before; }
+  };
+
+  // Strings used to be written raw and read back through JSON.parse, which
+  // throws, so every string value silently came back as its fallback. It cost
+  // Windowsill its remembered shelf size before anything noticed.
+  it("gives back what it was given, strings included", () => {
+    withStore(() => {
+      for (const value of ["gentle", "", 0, 7, true, false, null, { a: 1 }, [1, 2]]) {
+        Parlour.write("k", value);
+        expect(Parlour.read("k", "FALLBACK")).toEqual(value);
+      }
+    });
+  });
+
+  it("falls back when there is nothing stored", () => {
+    withStore(() => expect(Parlour.read("never-set", "FALLBACK")).toBe("FALLBACK"));
+  });
+
+  it("falls back rather than throwing where storage is shut off", () => {
+    const g = globalThis as Record<string, unknown>;
+    const before = g.window;
+    g.window = { localStorage: {
+      getItem: () => { throw new Error("denied"); },
+      setItem: () => { throw new Error("denied"); },
+    } };
+    try {
+      expect(() => Parlour.write("k", 1)).not.toThrow();
+      expect(Parlour.read("k", "FALLBACK")).toBe("FALLBACK");
+    } finally { g.window = before; }
+  });
+});
+
 describe("the shared calendar", () => {
   it("counts day 1 from the epoch", () => {
     expect(Parlour.dayNumber(new Date(2026, 8, 17))).toBe(1);
