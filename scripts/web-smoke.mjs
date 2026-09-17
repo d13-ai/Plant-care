@@ -204,6 +204,13 @@ try {
     if (i > j) throw new Error("Big Monstera (needs fertilizer) should sort before the fresh cutting");
     await page.getByText("Needs fertilizer").first().waitFor();
     await page.getByText("All good").first().waitFor();
+    // The games link is at the foot of the list on every visit; the card is
+    // only for a day when nothing is asking for anything, and today one of
+    // them is.
+    if (await page.getByLabel("Parlour Games").count() !== 1)
+      throw new Error("expected exactly the footer link to Parlour Games");
+    if ((await page.locator("body").innerText()).includes("Nothing needs you today"))
+      throw new Error("the games card showed while a plant needed attention");
   });
   await shot("05-list");
   await step("the card's drop logs water without leaving the greenhouse", async () => {
@@ -257,6 +264,28 @@ try {
     await page.getByText("Big Monstera").waitFor();
     if (await page.getByText("Cutting #1").count()) throw new Error("removed plant came back after reload");
   });
+  await step("with nothing due, the greenhouse offers Parlour Games", async () => {
+    await page.getByText("Big Monstera").first().click();
+    await page.getByText("Fertilized", { exact: true }).first().click();
+    await page.getByText("Add to history").click();
+    await page.waitForFunction(() => !document.body.innerText.includes("Needs fertilizer"));
+    await page.goto(base + "/");
+    await page.getByText("1 plant · all good").waitFor({ timeout: 20000 });
+    await page.getByText("Nothing needs you today.").waitFor();
+    if (await page.getByLabel("Parlour Games").count() !== 2)
+      throw new Error("expected both the card and the footer link");
+  });
+  await shot("06-games");
+  await step("it goes to the hub, in the same tab", async () => {
+    const tabs = context.pages().length;
+    await page.getByLabel("Parlour Games").first().click();
+    await page.waitForURL("**/parlour-games");
+    await page.getByText("Trickle").first().waitFor({ timeout: 20000 });
+    if (context.pages().length !== tabs) throw new Error("opened a new tab instead of navigating");
+    await page.goto(base + "/");
+    await page.getByText("All plants").waitFor({ timeout: 20000 });
+  });
+
   await step("what's on show lists the greenhouse with a switch each", async () => {
     // Publishing itself needs the server, which this run doesn't have; what is
     // checked here is that the screen is reachable and lists every plant with
