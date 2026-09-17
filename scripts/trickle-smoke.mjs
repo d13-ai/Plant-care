@@ -1,5 +1,5 @@
 /**
- * Trickle, steps 1–4 — core, persistence, practice, account sync.
+ * Trickle, steps 1–5 — core, persistence, practice, sync, sound and night.
  *
  * Drives the real page in Chromium the way the spec's reference tests do:
  * clicking tiles until each svg's rotation is a multiple of 360°, which is
@@ -19,7 +19,12 @@ const server = createServer((_req, res) => {
   res.end(PAGE);
 }).listen(4610);
 
-const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined });
+const browser = await chromium.launch({
+  executablePath: process.env.CHROME || undefined,
+  // Headless Chromium will not start an AudioContext without this, and the
+  // audio here cannot be judged by ear from a test run -- only measured.
+  args: ["--autoplay-policy=no-user-gesture-required"],
+});
 const errors = [];
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
@@ -402,6 +407,105 @@ try {
     if (body.stats.best_turns["6"] !== 19) throw new Error("pushed the worse record");
     if (body.user_id !== "00000000-0000-4000-8000-00000000abcd") throw new Error("pushed the wrong user");
     await signed.close();
+  });
+
+  await step("night flips the palette and the theme colour", async () => {
+    const before = await page.evaluate(() => ({
+      night: document.body.classList.contains("night"),
+      theme: document.querySelector('meta[name="theme-color"]').content,
+      ink: getComputedStyle(document.body).backgroundColor,
+    }));
+    await page.click("#night");
+    // The page colour is transitioned over 0.8s, so sampling it straight away
+    // reads the old value and the assertion passes or fails on timing alone.
+    await page.waitForFunction(
+      (was) => getComputedStyle(document.body).backgroundColor !== was,
+      before.ink,
+      { timeout: 3000 },
+    );
+    const after = await page.evaluate(() => ({
+      night: document.body.classList.contains("night"),
+      theme: document.querySelector('meta[name="theme-color"]').content,
+      ink: getComputedStyle(document.body).backgroundColor,
+      pressed: document.getElementById("night").getAttribute("aria-pressed"),
+    }));
+    if (after.night === before.night) throw new Error("night did not change");
+    if (after.theme === before.theme) throw new Error(`theme-color stayed ${after.theme}`);
+    if (after.ink === before.ink) throw new Error("the page colour did not move");
+    if (after.pressed !== String(after.night)) throw new Error("aria-pressed disagrees with the state");
+    // And it is remembered rather than re-read from the clock.
+    const stored = await page.evaluate(() => localStorage.getItem("pp_trickle_night"));
+    if (stored !== String(after.night)) throw new Error(`night stored as ${stored}`);
+  });
+
+  await step("the music is audible, calm, and nowhere near clipping", async () => {
+    const audio = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await audio.addInitScript(() => localStorage.setItem("pp_trickle_music", "true"));
+    const p2 = await audio.newPage();
+    await p2.goto("http://localhost:4610/");
+    await p2.waitForSelector(".tile");
+
+    // A remembered preference waits for a gesture: nothing plays until a tap.
+    if (await p2.evaluate(() => window.__game.musicPlaying())) {
+      throw new Error("music started with no gesture, which a browser would have blocked anyway");
+    }
+    await (await p2.$(".tile")).click();
+    await p2.waitForFunction(() => window.__game.musicPlaying(), { timeout: 5000 });
+
+    await p2.waitForTimeout(3000);                    // past the 2.5s fade-in
+    const readings = await p2.evaluate(async () => {
+      const out = [];
+      for (let i = 0; i < 40; i++) {
+        out.push(window.__game.levels());
+        await new Promise((r) => setTimeout(r, 25));
+      }
+      return out;
+    });
+    const usable = readings.filter(Boolean);
+    if (usable.length < 20) throw new Error("no analyser readings; the audio graph never ran");
+    const peak = Math.max(...usable.map((r) => r.peak));
+    const rms = usable.reduce((a, r) => a + r.rms, 0) / usable.length;
+    console.log(`  (peak ${peak.toFixed(3)}, mean RMS ${rms.toFixed(3)})`);
+    // The spec's reference measures peak 0.30 and mean RMS 0.06. The band is
+    // wide enough for the 8% random sparkle to move it between runs and tight
+    // enough to catch a mix that has drifted inaudible or loud.
+    if (peak === 0) throw new Error("silence: the music is not reaching the bus");
+    if (peak >= 0.8) throw new Error(`peak ${peak.toFixed(3)} is close to clipping`);
+    if (peak < 0.08) throw new Error(`peak ${peak.toFixed(3)} is far below the reference 0.30`);
+    if (rms < 0.02) throw new Error(`mean RMS ${rms.toFixed(4)} is too quiet to hear`);
+    if (rms > 0.12) throw new Error(`mean RMS ${rms.toFixed(3)} is louder than a background should be`);
+
+    // Turning it off stops scheduling anything further.
+    await p2.click("#music");
+    if (await p2.evaluate(() => window.__game.musicPlaying())) throw new Error("music kept scheduling");
+    await p2.waitForTimeout(1600);                    // past the 1.2s fade-out
+    const after = await p2.evaluate(() => window.__game.levels());
+    if (after.rms > 0.01) throw new Error(`still playing after the fade: RMS ${after.rms.toFixed(3)}`);
+    await audio.close();
+  });
+
+  await step("a tab nobody is looking at goes quiet", async () => {
+    const audio = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await audio.addInitScript(() => {
+      localStorage.setItem("pp_trickle_music", "true");
+      // document.hidden is read-only, so it is made settable for the test.
+      let hidden = false;
+      Object.defineProperty(document, "hidden", { configurable: true, get: () => hidden });
+      window.__setHidden = (v) => { hidden = v; document.dispatchEvent(new Event("visibilitychange")); };
+    });
+    const p2 = await audio.newPage();
+    await p2.goto("http://localhost:4610/");
+    await p2.waitForSelector(".tile");
+    await (await p2.$(".tile")).click();
+    await p2.waitForFunction(() => window.__game.musicPlaying(), { timeout: 5000 });
+
+    await p2.evaluate(() => window.__setHidden(true));
+    if (await p2.evaluate(() => window.__game.musicPlaying())) {
+      throw new Error("the schedule kept running with the tab hidden");
+    }
+    await p2.evaluate(() => window.__setHidden(false));
+    await p2.waitForFunction(() => window.__game.musicPlaying(), { timeout: 3000 });
+    await audio.close();
   });
 
   if (errors.length) {

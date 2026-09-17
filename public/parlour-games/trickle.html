@@ -15,9 +15,8 @@
  * it cannot fall back from, no audio files, no libraries. It works offline
  * once open and embeds anywhere.
  *
- * Steps 1-4: core game, persistence, practice, account sync.
- * Still to come (spec §14): sound/night/music, daily, embed, share,
- * analytics, SEO.
+ * Steps 1-5: core game, persistence, practice, account sync, sound and
+ * night. Still to come (spec §14): daily, embed, share, analytics, SEO.
  */
 :root{
   /* PlantParlour's palette, in the roles the spec names. */
@@ -36,6 +35,23 @@
   --water:#FBF7EE;
   --focus:#E6C46B;
 }
+/* Night: the same roles, turned right down. Measured rather than eyeballed --
+   muted text 4.99:1 on the page (4.5 needed), and dry against wet pipes
+   3.91:1, over the 3:1 a graphic needs to stay legible. */
+body.night{
+  --ink:#140A17;
+  --card:#1E1023;
+  --border:rgba(201,162,75,.18);
+  --gold:#8C6F35;
+  --gold-light:#A98A4A;
+  --cream:#BFB3B9;
+  --muted:#8D7D88;
+  --pipe-dry:#2E1F33;
+  --pipe-wet:#5E8A69;
+  --water:#A9B8AC;
+  --focus:#A98A4A;
+}
+body{transition:background .8s,color .8s}
 *{box-sizing:border-box}
 [hidden]{display:none !important}   /* .controls sets display:flex, which otherwise wins */
 html,body{margin:0;background:var(--ink);color:var(--cream)}
@@ -152,6 +168,9 @@ button{font:inherit;cursor:pointer}
     </div>
     <button class="btn" id="new" type="button">New board</button>
     <button class="btn" id="nudge" type="button">Nudge a tile</button>
+    <button class="btn" id="sound" type="button" aria-pressed="false">Sound</button>
+    <button class="btn" id="music" type="button" aria-pressed="false">Music</button>
+    <button class="btn" id="night" type="button" aria-pressed="false">Night</button>
   </div>
 
   <div id="board" role="application" aria-label="Watering puzzle. Arrow keys move between tiles; Enter turns one."></div>
@@ -209,7 +228,10 @@ button{font:inherit;cursor:pointer}
     done: "pp_trickle_done",     /* boards finished */
     bySize: "pp_trickle_by_size",
     stats: "pp_trickle_stats",
-    size: "pp_trickle_size"
+    size: "pp_trickle_size",
+    sound: "pp_trickle_sound",
+    night: "pp_trickle_night",   /* unset means follow the clock */
+    music: "pp_trickle_music"
   };
   function read(key, fallback) {
     try {
@@ -397,6 +419,157 @@ button{font:inherit;cursor:pointer}
       ? "Saved to your account."
       : '<a href="' + SIGN_IN_URL + '">Sign in</a> to keep your progress across devices.';
   }
+
+  /* ---- sound ----------------------------------------------------------- */
+  /* Everything is synthesised: nothing to download, nothing to fail. A
+     browser only starts audio after a gesture, so the context is created on
+     the first tap and a suspended one is resumed. */
+  var AC = null, master = null, analyser = null, wet = null;
+  var soundOn = read(KEY.sound, false) === true;
+  var musicPref = read(KEY.music, null);          /* null: never chosen */
+  var musicOn = false, musicTimer = null, step16 = 0, nextNoteAt = 0, pass = 0;
+
+  var BPM = 66, STEP = 60 / BPM / 2, D3 = 146.83;
+  /* One dial for the whole mix. The spec's reference measures peak 0.30 and
+     mean RMS 0.06 on the master bus; the first pass here came out at 0.068
+     and 0.015, which is on but inaudible. Tuned against the analyser rather
+     than by ear, since there is no ear in a test run. */
+  var MIX = 4;
+  var MOTIF = [19, 16, 14, 12, 14, 16, 19, 21, 19, 16, 14, 12, null, 14, 12, null];
+  var CHORDS = [[0, 4, 7], [-3, 0, 4], [-7, -3, 0], [-5, -1, 2]];   /* D Bm G A */
+  var BLIPS = [329.63, 392, 440, 523.25, 587.33];
+  var hz = function (semi) { return D3 * Math.pow(2, semi / 12); };
+
+  function audio() {
+    if (AC) return AC;
+    var Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
+    try { AC = new Ctor(); } catch (e) { return null; }
+    master = AC.createGain();
+    master.gain.value = 1;
+    /* A delay alongside the dry signal, then a low-pass, so nothing is
+       sharp enough to jar. */
+    var lp = AC.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 1600; lp.Q.value = 0.4;
+    var delay = AC.createDelay(1);
+    delay.delayTime.value = 0.41;
+    var fb = AC.createGain(); fb.gain.value = 0.32;
+    wet = AC.createGain(); wet.gain.value = 0.28;
+    master.connect(lp);
+    master.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(lp);
+    analyser = AC.createAnalyser();
+    analyser.fftSize = 2048;
+    lp.connect(analyser);
+    analyser.connect(AC.destination);
+    return AC;
+  }
+  function wake() {
+    var ac = audio();
+    if (ac && ac.state === "suspended") ac.resume();
+    return ac;
+  }
+
+  function blip(i) {
+    if (!soundOn) return;
+    var ac = wake(); if (!ac) return;
+    var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    o.frequency.value = BLIPS[i % BLIPS.length];
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.05 * MIX, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + 0.25);
+  }
+  function fanfare() {
+    if (!soundOn) return;
+    var ac = wake(); if (!ac) return;
+    [0, 1, 2, 3].forEach(function (k) {
+      var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + k * 0.11;
+      o.type = "sine";
+      o.frequency.value = BLIPS[k + 1] || BLIPS[BLIPS.length - 1];
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.06 * MIX, t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t + 0.4);
+    });
+  }
+
+  /* One voice: an oscillator with a slow swell, so nothing ever clicks. */
+  function voice(type, frequency, at, dur, peak, attack, detune) {
+    var o = AC.createOscillator(), g = AC.createGain();
+    o.type = type;
+    o.frequency.value = frequency;
+    if (detune) o.detune.value = detune;
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.linearRampToValueAtTime(peak, at + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    o.connect(g); g.connect(master);
+    o.start(at); o.stop(at + dur + 0.05);
+  }
+
+  /* Scheduled half a second ahead on a short interval: WebAudio keeps time,
+     setInterval only decides what to hand it. */
+  function schedule() {
+    if (!musicOn || !AC) return;
+    while (nextNoteAt < AC.currentTime + 0.5) {
+      var at = Math.max(nextNoteAt, AC.currentTime + 0.02);
+      var semi = MOTIF[step16];
+      if (semi != null) {
+        voice("sine", hz(semi), at, 0.9, 0.05 * MIX, 0.02, 0);
+        /* Every fourth pass answers an octave up, quieter. */
+        if (pass % 4 === 3) voice("sine", hz(semi + 12), at, 0.7, 0.022 * MIX, 0.02, 0);
+        /* And now and then a fifth above, a half-step behind, as a glint. */
+        if (Math.random() < 0.08) voice("sine", hz(semi + 19), at + 0.5 * STEP, 0.5, 0.018 * MIX, 0.02, 0);
+      }
+      if (step16 === 0) {
+        var chord = CHORDS[(pass % CHORDS.length + CHORDS.length) % CHORDS.length];
+        var bar = STEP * 16;
+        chord.forEach(function (n) {
+          voice("triangle", hz(n), at, bar, 0.016 * MIX, 1.6, 5);
+          voice("triangle", hz(n), at, bar, 0.016 * MIX, 1.6, -5);
+        });
+        voice("sine", hz(chord[0] - 12), at, bar, 0.03 * MIX, 0.6, 0);
+      }
+      nextNoteAt = at + STEP;
+      step16 += 1;
+      if (step16 === 16) { step16 = 0; pass += 1; }
+    }
+  }
+
+  function startMusic() {
+    var ac = wake(); if (!ac) return;
+    if (musicOn) return;
+    musicOn = true;
+    step16 = 0; pass = 0;
+    nextNoteAt = ac.currentTime + 0.1;
+    master.gain.cancelScheduledValues(ac.currentTime);
+    master.gain.setValueAtTime(Math.max(master.gain.value, 0.0001), ac.currentTime);
+    master.gain.linearRampToValueAtTime(1, ac.currentTime + 2.5);
+    musicTimer = setInterval(schedule, 120);
+    schedule();
+  }
+  function stopMusic() {
+    musicOn = false;
+    if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
+    if (AC && master) {
+      master.gain.cancelScheduledValues(AC.currentTime);
+      master.gain.setValueAtTime(master.gain.value, AC.currentTime);
+      master.gain.linearRampToValueAtTime(0.0001, AC.currentTime + 1.2);
+      setTimeout(function () { if (!musicOn && master) master.gain.value = 1; }, 1300);
+    }
+  }
+
+  /* A tab nobody is looking at should be silent. */
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
+    } else if (musicOn && !musicTimer) {
+      if (AC) nextNoteAt = AC.currentTime + 0.1;
+      musicTimer = setInterval(schedule, 120);
+    }
+  });
 
   function saveBoard() {
     if (state.done) return;
@@ -631,6 +804,7 @@ button{font:inherit;cursor:pointer}
         "Practice does not count towards anything. Ready for a real board?";
       document.getElementById("again").textContent = "Play a board";
       winEl.hidden = false;
+      fanfare();
       return;
     }
     var previousBest = stats.best_turns[n];
@@ -662,6 +836,7 @@ button{font:inherit;cursor:pointer}
     }
     winEl.hidden = false;
     showRecords();
+    fanfare();
   }
 
   /* The only two numbers worth keeping: fewest turns here, boards finished. */
@@ -680,6 +855,8 @@ button{font:inherit;cursor:pointer}
     /* A cross looks the same every way up, so turning it is not a move. */
     if (rotate(state.masks[i], 1) === state.masks[i]) return;
     var wanted = LEARN ? hintTile() : -1;
+    blip(i);
+    if (musicShouldPlay() && !musicOn) startMusic();   /* a remembered choice, waiting for a tap */
     state.turns[i] += 1;
     state.moves += 1;
     state.focus = i;
@@ -757,6 +934,63 @@ button{font:inherit;cursor:pointer}
   document.getElementById("nudge").addEventListener("click", nudge);
   document.getElementById("again").addEventListener("click", function () { build(state.n); });
 
+  /* ---- night ----------------------------------------------------------- */
+  /* Unset follows the clock, so the first evening visit is already dark
+     without anybody choosing. Choosing once wins from then on. */
+  function clockSaysNight() {
+    var h = new Date().getHours();
+    return h >= 21 || h < 6;
+  }
+  var nightPref = read(KEY.night, null);
+  function nightIsOn() { return nightPref == null ? clockSaysNight() : nightPref === true; }
+  function applyNight() {
+    var on = nightIsOn();
+    document.body.classList.toggle("night", on);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", on ? "#140A17" : "#2E1633");
+    document.getElementById("night").classList.toggle("on", on);
+    document.getElementById("night").setAttribute("aria-pressed", String(on));
+  }
+
+  function setToggle(id, on) {
+    var b = document.getElementById(id);
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", String(on));
+  }
+
+  /* Music follows Night unless somebody has turned it off on purpose. It
+     cannot start without a gesture, so a remembered preference waits for the
+     first tap rather than failing silently. */
+  function musicShouldPlay() { return musicPref === true || (musicPref == null && nightIsOn()); }
+  function refreshMusic(fromGesture) {
+    var want = musicShouldPlay();
+    setToggle("music", want);
+    if (want && fromGesture) startMusic();
+    else if (!want && musicOn) stopMusic();
+  }
+
+  document.getElementById("sound").addEventListener("click", function () {
+    soundOn = !soundOn;
+    write(KEY.sound, soundOn);
+    setToggle("sound", soundOn);
+    if (soundOn) blip(0);
+  });
+  document.getElementById("music").addEventListener("click", function () {
+    musicPref = !musicShouldPlay();
+    write(KEY.music, musicPref);
+    refreshMusic(true);
+  });
+  document.getElementById("night").addEventListener("click", function () {
+    nightPref = !nightIsOn();
+    write(KEY.night, nightPref);
+    applyNight();
+    refreshMusic(true);
+  });
+
+  applyNight();
+  setToggle("sound", soundOn);
+  setToggle("music", musicShouldPlay());
+
   /* Practice has no sizes, no new board and no way back into itself. */
   function setChrome() {
     document.querySelector(".sizes").hidden = LEARN;
@@ -796,7 +1030,19 @@ button{font:inherit;cursor:pointer}
   if (!LEARN) pullProgress();
 
   /* The test script drives the page; it needs to see the state. */
-  window.__game = { state: state, liveMask: liveMask, computeFlow: computeFlow, mergeProgress: mergeProgress };
+  /* The test needs to measure the bus rather than take its level on trust. */
+  window.__game = {
+    state: state, liveMask: liveMask, computeFlow: computeFlow, mergeProgress: mergeProgress,
+    musicPlaying: function () { return musicOn && !!musicTimer; },
+    levels: function () {
+      if (!analyser) return null;
+      var buf = new Float32Array(analyser.fftSize);
+      analyser.getFloatTimeDomainData(buf);
+      var peak = 0, sum = 0;
+      for (var i = 0; i < buf.length; i++) { var v = Math.abs(buf[i]); if (v > peak) peak = v; sum += buf[i] * buf[i]; }
+      return { peak: peak, rms: Math.sqrt(sum / buf.length) };
+    }
+  };
 })();
 </script>
 </body>
