@@ -98,6 +98,10 @@
       "destination": "/parlour-games/windowsill"
     },
     {
+      "source": "/parlour-games/windowsill/daily",
+      "destination": "/parlour-games/windowsill"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }
