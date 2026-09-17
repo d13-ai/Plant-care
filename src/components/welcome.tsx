@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { MonsteraIcon } from "@/components/icons";
 import { InstallHint } from "@/components/install-hint";
 import { SignIn } from "@/components/sign-in";
@@ -89,6 +89,24 @@ export function Welcome() {
         Already have one? The same button. Your plants follow you to any phone you sign into, and a
         photo taken without a signal uploads the next time you have one.
       </Text>
+
+      {/* Served as plain HTML outside the app, so they're readable without an
+          account -- which is what anyone checking them needs. */}
+      <Text style={[styles.footnote, { color: t.muted }]}>
+        <Text
+          style={styles.legalLink}
+          onPress={() => Linking.openURL("/privacy").catch(() => {})}
+        >
+          Privacy
+        </Text>
+        {"  ·  "}
+        <Text
+          style={styles.legalLink}
+          onPress={() => Linking.openURL("/terms").catch(() => {})}
+        >
+          Terms
+        </Text>
+      </Text>
     </ScrollView>
   );
 }
@@ -108,6 +126,7 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
+  legalLink: { textDecorationLine: "underline" },
   masthead: { alignItems: "center", gap: space.sm },
   wordmark: { fontFamily: font.serifBold, fontSize: 36, lineHeight: 44, textAlign: "center" },
   tagline: { fontFamily: font.serifItalic, fontSize: 18, lineHeight: 26, textAlign: "center" },

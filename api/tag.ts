@@ -69,6 +69,7 @@ table{width:100%;border-collapse:collapse}td{padding:7px 0;border-top:1px solid 
 a{color:var(--gold-deep);font-weight:600}.hero{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;display:block}
 ul{margin:0;padding-left:18px}
 .foot{background-color:var(--plum);background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.045) 0 2px,transparent 2px 7px);padding:12px 14px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:Lora,Georgia,serif;font-style:italic;font-size:13px;line-height:17px;color:var(--gold-light)}
+.foot a{color:var(--gold-light)}
 </style></head><body><main>${body}</main></body></html>`;
   return { status, html };
 }
