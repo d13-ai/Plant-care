@@ -78,17 +78,26 @@ function environment(): Record<string, unknown> {
   };
 }
 
-/** How much is on this device, so a report says whether it synced. */
-async function localCounts(db: SQLiteDatabase | null): Promise<Record<string, unknown>> {
+/**
+ * How much is on this device, so a report says whether it synced.
+ *
+ * Against the local schema, not the server's: a deleted plant is removed from
+ * `plants` here and recorded in `sync_tombstones`, so there is no deleted_at
+ * column to filter on. Asking for one is what the first real bug report
+ * caught — it degraded to "unreadable" rather than failing, which is why the
+ * report still arrived, but every report was missing its counts.
+ */
+export async function localCounts(db: SQLiteDatabase | null): Promise<Record<string, unknown>> {
   if (!db) return { db: "unavailable" };
   try {
-    const plants = await db.getFirstAsync<{ n: number }>(
-      "select count(*) as n from plants where deleted_at is null",
-    );
-    const dirty = await db.getFirstAsync<{ n: number }>(
-      "select count(*) as n from plants where dirty = 1",
-    );
-    return { plants: plants?.n ?? 0, dirtyPlants: dirty?.n ?? 0 };
+    const one = async (sql: string) => (await db.getFirstAsync<{ n: number }>(sql))?.n ?? 0;
+    return {
+      plants: await one("select count(*) as n from plants"),
+      dirtyPlants: await one("select count(*) as n from plants where dirty = 1"),
+      photos: await one("select count(*) as n from photos"),
+      dirtyPhotos: await one("select count(*) as n from photos where dirty = 1"),
+      pendingDeletes: await one("select count(*) as n from sync_tombstones"),
+    };
   } catch (e) {
     return { db: "unreadable", dbError: e instanceof Error ? e.message : String(e) };
   }
