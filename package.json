@@ -17,7 +17,8 @@
     "trickle:smoke": "node scripts/trickle-smoke.mjs",
     "icons": "node scripts/make-icons.mjs",
     "e2e": "vitest run --config vitest.e2e.config.ts",
-    "start:tunnel": "expo start --tunnel"
+    "start:tunnel": "expo start --tunnel",
+    "windowsill:smoke": "node scripts/windowsill-smoke.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/lora": "^0.4.2",

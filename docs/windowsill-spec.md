@@ -231,10 +231,20 @@ blocker — Amanda is on the logo.
 
 Each step ends somewhere it can be looked at.
 
-1. **The shelf renders and the rules are right.** A fixed board, plants
-   placed by tapping, light recomputed live, happy/scorched/leggy per plant,
-   win detected. No generator, no daily, no sound. Unit tests for the light
-   model first, including the two worked examples in §1.
+1. ~~**The shelf renders and the rules are right.**~~ **Done.**
+   `windowsill-rules.js` holds the light model with 25 unit tests, including
+   both worked examples from §1; `windowsill.html` draws the stand and places
+   plants; `npm run windowsill:smoke` plays it. The JS arrives at the same 27
+   filled runs and 5 need-patterns the Python model does, by a different
+   route.
+
+   Two things worth carrying forward. The stand is drawn as one continuous
+   staircase with no gaps, because the question a player has to answer by
+   looking is "does this plant's head clear the step behind it", and separate
+   boxes with air between them make that the one thing you cannot see — the
+   first draft got this wrong and only the screenshot showed it. And the CSS
+   step height and the plant height unit are the same custom property on
+   purpose: if they drift, the picture says one thing and the rules another.
 2. **The generator**, with the solution counter and the difficulty bands.
    Prove it: deal a few hundred boards at each shape and assert every one is
    solvable, full, and inside its band.

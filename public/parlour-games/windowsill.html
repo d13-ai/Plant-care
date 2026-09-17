@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2E1633">
+<title>Windowsill — a calm light puzzle</title>
+<meta name="description" content="Arrange the plants on a stepped windowsill so every one of them gets the light it wants. No timers, no scores, nothing to lose. From PlantParlour.">
+<link rel="canonical" href="https://plantparlour.org/parlour-games/windowsill">
+<style>
+/*
+ * Windowsill, step 1: the shelf, the rules, and nothing else. One fixed
+ * board, no generator, no daily, no sound, no account.
+ *
+ * The geometry is the game, so it is worth saying plainly: --unit is BOTH
+ * the height of one step of the stand and the height of one unit of plant.
+ * They have to be the same number. A low plant (one unit) standing on the
+ * front tier reaches exactly the height of the next tier's floor and so
+ * shades nothing, which is the rule the whole puzzle turns on -- and if the
+ * two measurements drifted apart, the picture would say one thing and the
+ * rules another.
+ */
+:root{
+  --ink:#2E1633;
+  --card:#3A1C41;
+  --border:rgba(201,162,75,.32);
+  --edge:rgba(201,162,75,.6);
+  --gold:#C9A24B;
+  --gold-light:#E6C46B;
+  --cream:#F3ECDD;
+  --muted:#C8B8C2;
+  --leaf:#8FC79E;
+  --unit:22px;          /* one step of the stand == one unit of plant */
+  --sun:#E6C46B;
+  --bright:#9FD3AC;
+  --shade:#6FA9A0;
+  --bad:#E08BA6;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--cream)}
+body{
+  font-family:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16px;line-height:1.5;padding:24px 16px 48px;
+  -webkit-font-smoothing:antialiased;
+}
+main{max-width:520px;margin:0 auto}
+h1{font-family:Lora,Georgia,"Times New Roman",serif;font-weight:700;font-size:30px;margin:0;text-align:center}
+.tagline{font-family:Lora,Georgia,serif;font-style:italic;color:var(--muted);margin:6px 0 0;text-align:center;font-size:16px}
+.hub{text-align:center;font-size:14px;margin:14px 0 0}
+.hub a{color:var(--gold-light)}
+
+/* ---- the shelf ---- */
+/* Light comes in from the left, so a "run" is a row: one line of cells going
+   back from the glass, and the runs are independent of each other.
+   The stand is drawn as one continuous staircase with no gaps between the
+   cells, because the question a player has to be able to answer by looking
+   is "does this plant's head clear the step behind it" -- and separate boxes
+   with air between them make that exactly the thing you cannot see. */
+#shelf{margin:22px 0 0;display:grid;gap:14px}
+.run{display:flex;align-items:flex-end;gap:0;border-radius:6px;overflow:hidden}
+.glass{
+  width:16px;align-self:stretch;flex:none;
+  background:linear-gradient(100deg,#F6E7B4,rgba(246,231,180,.12));
+  box-shadow:0 0 22px rgba(230,196,107,.4);
+}
+.cell{
+  flex:1;position:relative;display:block;padding:0;min-width:0;
+  height:calc(var(--unit) * 5 + 46px);
+  background:none;border:none;color:inherit;font:inherit;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+/* One step of the stand. No side borders, so the three of them read as a
+   single piece of furniture rather than three pedestals. */
+.plinth{
+  position:absolute;left:0;right:0;bottom:0;
+  background:#3A1C41;border-top:2px solid var(--edge);
+}
+.cell:focus-visible{outline:2px solid var(--gold-light);outline-offset:-2px;border-radius:4px}
+.cell[data-held="1"] .plinth{background:#5A2A50;border-top-color:var(--gold)}
+
+/* The plant stands ON its step, so its foot is that step's top edge and its
+   head is (tier + height) units up -- which is exactly what the rule
+   measures. A pot and a rounded crown, so a plant never reads as furniture. */
+.plant{position:absolute;left:27%;right:27%;display:flex;flex-direction:column;justify-content:flex-end}
+/* `hidden` sets display:none from the UA sheet, which an author display:flex
+   silently beats -- so an empty cell drew an empty pot until this was here. */
+.plant[hidden]{display:none}
+.crown{
+  border-radius:40% 40% 18% 18%;background:var(--leaf);
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.08);
+}
+.pot{height:9px;margin:0 16%;border-radius:0 0 5px 5px;background:#8A5A3B;flex:none}
+.plant[data-need="3"] .crown{background:var(--sun)}
+.plant[data-need="2"] .crown{background:var(--bright)}
+.plant[data-need="1"] .crown{background:var(--shade)}
+/* What the plant wants, said above it rather than written on it: a low plant
+   is one unit tall and there is simply no room on it for a word. */
+.want{
+  position:absolute;top:16px;left:0;right:0;text-align:center;
+  font-size:11px;font-weight:700;color:var(--cream);
+}
+.want i{font-style:normal;font-size:12px}
+/* Light reaching this cell, as pips, at the top. */
+.pips{position:absolute;top:2px;left:0;right:0;text-align:center;font-size:11px;letter-spacing:2px;color:var(--gold-light)}
+.pips b{opacity:.2;font-weight:400}
+/* How the plant is doing. Symbol and word, never colour alone. */
+.verdict{position:absolute;top:32px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;line-height:1.2}
+.verdict.happy{color:var(--leaf)}
+.verdict.scorching,.verdict.leggy{color:var(--bad)}
+/* Sits on the step it belongs to, not floating in the middle of the cell. */
+.empty-label{position:absolute;left:0;right:0;text-align:center;font-size:10px;color:var(--muted);opacity:.55;text-transform:uppercase;letter-spacing:.08em}
+
+/* ---- the tray ---- */
+h2{font-family:Lora,Georgia,serif;font-size:17px;margin:24px 0 8px}
+#tray{display:flex;flex-wrap:wrap;gap:8px;min-height:56px}
+.chip{
+  display:flex;align-items:center;gap:8px;
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:8px 12px;min-height:44px;color:inherit;font:inherit;cursor:pointer;
+}
+.chip[data-held="1"]{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.chip:focus-visible{outline:2px solid var(--gold-light);outline-offset:2px}
+.swatch{width:10px;border-radius:3px;flex:none}
+.chip[data-need="3"] .swatch{background:var(--sun)}
+.chip[data-need="2"] .swatch{background:var(--bright)}
+.chip[data-need="1"] .swatch{background:var(--shade)}
+.chip small{color:var(--muted);font-size:12px}
+#tray-empty{color:var(--muted);font-size:14px;margin:0;align-self:center}
+
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px;font-size:14px;color:var(--muted)}
+/* Always there, because taking the whole thing apart and starting over is a
+   normal thing to want and should not need finishing first. */
+button.quiet{
+  background:none;border:1px solid var(--border);border-radius:9px;
+  color:var(--gold-light);font:inherit;font-size:13px;padding:6px 12px;
+  min-height:36px;cursor:pointer;
+}
+button.quiet:hover{border-color:var(--gold)}
+button.quiet:focus-visible{outline:2px solid var(--gold-light);outline-offset:2px}
+#status{margin:10px 0 0;font-size:14px;color:var(--muted);min-height:1.5em}
+#win{
+  margin-top:18px;background:var(--card);border:1px solid var(--edge);
+  border-radius:14px;padding:18px;text-align:center;
+}
+#win h2{margin:0 0 6px;font-size:22px;color:var(--gold-light)}
+#win p{margin:0;color:var(--muted);font-size:15px}
+button.plain{
+  margin-top:14px;background:var(--gold);color:var(--ink);border:none;
+  border-radius:10px;padding:11px 18px;font:inherit;font-weight:700;cursor:pointer;min-height:44px;
+}
+.foot{text-align:center;font-size:13px;color:var(--muted);margin:26px 0 0}
+.foot a{color:var(--gold-light)}
+@media (prefers-reduced-motion: no-preference){
+  .stem{transition:height .18s ease}
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Windowsill</h1>
+  <p class="tagline">Give every plant the light it actually wants.</p>
+  <p class="hub"><a href="/parlour-games">← Parlour Games</a></p>
+
+  <div id="shelf"></div>
+
+  <div class="bar">
+    <span id="moves">0 placed</span>
+    <button class="quiet" id="clear" type="button">Clear the shelf</button>
+  </div>
+  <p id="status"></p>
+
+  <h2>Still to go in</h2>
+  <div id="tray"></div>
+
+  <div id="win" hidden>
+    <h2>Every one of them is happy.</h2>
+    <p id="win-line"></p>
+    <button class="plain" id="again" type="button">Start again</button>
+  </div>
+
+  <p class="foot">A quiet puzzle from <a href="/">PlantParlour</a>.</p>
+</main>
+
+<script src="/parlour-games/windowsill-rules.js"></script>
+<script>
+(function () {
+  "use strict";
+  var R = window.WindowsillRules;
+
+  /* Step 1 is one fixed board, picked with the model in
+     scripts/windowsill-model.py: three ways to solve it, all three needs and
+     all three heights in the tray.
+     It teaches the rule three ways over. Whichever solution a player finds,
+     one run has a low plant at the glass shading nothing behind it, one has a
+     mid plant shading the tier behind it but not the one behind that, and one
+     has a tall plant stepping the light all the way down 3, 2, 1.
+     Note that the tidiest of the three solutions puts the same three plants
+     in two of the runs -- the board was dealt from three different runs, but
+     its plants can be laid out with two alike, and that is a perfectly good
+     answer. */
+  var BOARD = {
+    w: 3,
+    d: 3,
+    tray: [
+      { need: 2, height: 1 }, { need: 1, height: 3 }, { need: 3, height: 3 },
+      { need: 2, height: 1 }, { need: 3, height: 2 }, { need: 3, height: 1 },
+      { need: 3, height: 1 }, { need: 2, height: 3 }, { need: 3, height: 2 }
+    ]
+  };
+
+  var shelf = [], tray = [], held = null, placements = 0, done = false;
+  var shelfEl = document.getElementById("shelf");
+  var trayEl = document.getElementById("tray");
+  var movesEl = document.getElementById("moves");
+  var statusEl = document.getElementById("status");
+  var winEl = document.getElementById("win");
+  var winLine = document.getElementById("win-line");
+
+  /* Par is one placement per plant: a perfect round sets each one down once
+     and never moves it again. It is something to aim at, not to fail. */
+  function par() { return BOARD.w * BOARD.d; }
+
+  function deal() {
+    shelf = [];
+    for (var i = 0; i < BOARD.w; i++) {
+      var run = [];
+      for (var t = 0; t < BOARD.d; t++) run.push(null);
+      shelf.push(run);
+    }
+    tray = BOARD.tray.map(function (p, i) { return { need: p.need, height: p.height, id: i }; });
+    held = null;
+    placements = 0;
+    done = false;
+    winEl.hidden = true;
+    build();
+    paint();
+  }
+
+  /* ---- drawing --------------------------------------------------------- */
+  function build() {
+    shelfEl.innerHTML = "";
+    shelf.forEach(function (run, r) {
+      var row = document.createElement("div");
+      row.className = "run";
+      var glass = document.createElement("div");
+      glass.className = "glass";
+      glass.setAttribute("aria-hidden", "true");
+      row.appendChild(glass);
+      run.forEach(function (_, t) {
+        var cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "cell";
+        cell.dataset.run = String(r);
+        cell.dataset.tier = String(t);
+        cell.innerHTML =
+          '<div class="pips"></div><div class="verdict"></div>' +
+          '<div class="want"></div><div class="plinth"></div>' +
+          '<div class="plant"><div class="crown"></div><div class="pot"></div></div>' +
+          '<div class="empty-label"></div>';
+        cell.addEventListener("click", function () { tapCell(r, t); });
+        row.appendChild(cell);
+      });
+      shelfEl.appendChild(row);
+    });
+  }
+
+  var WORD = { happy: "happy", scorching: "scorching", leggy: "leggy" };
+
+  function paint() {
+    var lights = R.shelfLights(shelf), states = R.shelfStates(shelf);
+    Array.prototype.forEach.call(shelfEl.querySelectorAll(".cell"), function (cell) {
+      var r = +cell.dataset.run, t = +cell.dataset.tier;
+      var plant = shelf[r][t], light = lights[r][t], state = states[r][t];
+
+      /* The plinth is the stand: tier t sits t steps up. The plant stands on
+         top of it, so its foot is the plinth's top and its head is t + height
+         steps up -- which is exactly what the rule measures. */
+      var floor = "calc(var(--unit) * " + t + " + 10px)";
+      cell.querySelector(".plinth").style.height = floor;
+      var plantEl = cell.querySelector(".plant");
+      plantEl.style.bottom = floor;
+      plantEl.hidden = !plant;
+      if (plant) {
+        plantEl.dataset.need = String(plant.need);
+        /* The crown takes the height less the pot, so the plant's overall
+           head height is exactly `height` units above its own step. */
+        plantEl.querySelector(".crown").style.height = "calc(var(--unit) * " + plant.height + " - 9px)";
+      }
+      cell.querySelector(".want").innerHTML = plant
+        ? '<i>' + (state === "happy" ? "✓" : "✗") + '</i> ' + R.NEEDS[plant.need]
+        : "";
+      cell.querySelector(".empty-label").style.bottom = "calc(" + floor + " + 6px)";
+
+      cell.querySelector(".pips").innerHTML =
+        [3, 2, 1].map(function (n) { return n <= light ? "●" : "<b>●</b>"; }).join("");
+      var v = cell.querySelector(".verdict");
+      /* Only said when something is wrong -- which is exactly when a player
+         is looking at this cell to find out why. */
+      v.textContent = state && state !== "happy" ? WORD[state] : "";
+      v.className = "verdict " + (state || "");
+      cell.querySelector(".empty-label").textContent = plant ? "" : "empty";
+      cell.dataset.held = held && held.from === "shelf" && held.run === r && held.tier === t ? "1" : "0";
+
+      cell.setAttribute("aria-label",
+        "Run " + (r + 1) + ", " + (t === 0 ? "at the window" : t + " back") +
+        ". Light " + light + " of 3. " +
+        (plant ? R.describe(plant) + " — " + (state === "happy" ? "happy"
+          : state === "scorching" ? "getting too much light" : "wants more light") : "empty."));
+    });
+
+    trayEl.innerHTML = "";
+    if (!tray.length) {
+      var none = document.createElement("p");
+      none.id = "tray-empty";
+      none.textContent = "All of them are on the shelf.";
+      trayEl.appendChild(none);
+    }
+    tray.forEach(function (plant) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.dataset.need = String(plant.need);
+      chip.dataset.plant = String(plant.id);
+      chip.dataset.held = held && held.from === "tray" && held.plant.id === plant.id ? "1" : "0";
+      chip.innerHTML = '<span class="swatch" aria-hidden="true"></span><span>' +
+        R.NEEDS[plant.need] + ' <small>' + R.HEIGHTS[plant.height] + '</small></span>';
+      chip.setAttribute("aria-label", R.describe(plant) + ". Pick up.");
+      chip.addEventListener("click", function () { tapTray(plant.id); });
+      trayEl.appendChild(chip);
+    });
+
+    movesEl.textContent = placements + (placements === 1 ? " placement" : " placements") +
+      " · par " + par();
+    statusEl.textContent = summary(states);
+    if (!done && R.isSolved(shelf)) finish();
+  }
+
+  /* What is wrong, in words, so nothing depends on telling two colours
+     apart. Silent when there is nothing to say. */
+  function summary(states) {
+    if (held) return "Holding " + R.describe(held.plant) + ". Tap a place on the shelf.";
+    var scorching = 0, leggy = 0, empty = 0;
+    states.forEach(function (run, r) {
+      run.forEach(function (s, t) {
+        if (s === "scorching") scorching += 1;
+        else if (s === "leggy") leggy += 1;
+        else if (!shelf[r][t]) empty += 1;
+      });
+    });
+    if (done) return "";
+    var bits = [];
+    if (scorching) bits.push(scorching + (scorching === 1 ? " is" : " are") + " getting too much light");
+    if (leggy) bits.push(leggy + (leggy === 1 ? " wants" : " want") + " more");
+    if (empty && !bits.length) return empty + (empty === 1 ? " space" : " spaces") + " left.";
+    return bits.join(", ") + (bits.length ? "." : "");
+  }
+
+  /* ---- placing --------------------------------------------------------- */
+  /* Tap to pick up, tap to put down. Tapping a cell that already has
+     something in it swaps: what was there comes into your hand. Nothing is
+     ever lost and nothing is ever wrong for good, so there is no undo to
+     write -- moving it back is the undo. */
+  function tapTray(id) {
+    if (done) return;
+    if (held && held.from === "tray" && held.plant.id === id) { held = null; paint(); return; }
+    if (held && held.from === "shelf") {           /* put it back */
+      shelf[held.run][held.tier] = null;
+      tray.push(held.plant);
+      held = null;
+      paint();
+      return;
+    }
+    var i = tray.findIndex(function (p) { return p.id === id; });
+    if (i === -1) return;
+    held = { from: "tray", plant: tray[i] };
+    paint();
+  }
+
+  function tapCell(r, t) {
+    if (done) return;
+    var sitting = shelf[r][t];
+    if (!held) {
+      if (!sitting) return;
+      held = { from: "shelf", run: r, tier: t, plant: sitting };
+      paint();
+      return;
+    }
+    if (held.from === "shelf" && held.run === r && held.tier === t) { held = null; paint(); return; }
+
+    if (held.from === "tray") {
+      tray = tray.filter(function (p) { return p.id !== held.plant.id; });
+      shelf[r][t] = held.plant;
+      if (sitting) tray.push(sitting);
+    } else {
+      shelf[held.run][held.tier] = sitting || null;   /* swap, or vacate */
+      shelf[r][t] = held.plant;
+    }
+    placements += 1;
+    held = null;
+    paint();
+  }
+
+  function finish() {
+    done = true;
+    held = null;
+    winLine.textContent = placements === par()
+      ? "In " + placements + " placements — you never moved one twice."
+      : "In " + placements + " placements. Par is " + par() + ".";
+    winEl.hidden = false;
+  }
+
+  document.getElementById("again").addEventListener("click", deal);
+  document.getElementById("clear").addEventListener("click", deal);
+
+  deal();
+
+  /* The test script drives the page; it needs to see the state. */
+  window.__game = {
+    shelf: function () { return shelf; },
+    tray: function () { return tray; },
+    held: function () { return held; },
+    placements: function () { return placements; },
+    lights: function () { return R.shelfLights(shelf); },
+    states: function () { return R.shelfStates(shelf); },
+    solved: function () { return R.isSolved(shelf); },
+    board: BOARD,
+    /* Somewhere to solve it from, so a test does not have to search. */
+    solutions: function () {
+      var runs = R.fullRuns(BOARD.d), want = {}, out = [];
+      BOARD.tray.forEach(function (p) { want[p.need + "x" + p.height] = (want[p.need + "x" + p.height] | 0) + 1; });
+      (function walk(from, chosen, left) {
+        if (chosen.length === BOARD.w) {
+          if (Object.keys(left).every(function (k) { return !left[k]; })) out.push(chosen.map(function (c) { return c.slice(); }));
+          return;
+        }
+        for (var i = from; i < runs.length; i++) {
+          var run = runs[i], ok = true, used = {};
+          run.forEach(function (p) { used[p.need + "x" + p.height] = (used[p.need + "x" + p.height] | 0) + 1; });
+          Object.keys(used).forEach(function (k) { if ((left[k] | 0) < used[k]) ok = false; });
+          if (!ok) continue;
+          Object.keys(used).forEach(function (k) { left[k] -= used[k]; });
+          chosen.push(run);
+          walk(i, chosen, left);
+          chosen.pop();
+          Object.keys(used).forEach(function (k) { left[k] += used[k]; });
+        }
+      })(0, [], Object.assign({}, want));
+      return out;
+    }
+  };
+})();
+</script>
+</body>
+</html>
