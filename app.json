@@ -8,7 +8,6 @@
     "scheme": "plantparlour",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
       "infoPlist": {
         "NSCameraUsageDescription": "Take photos of your plants for their care record.",
         "NSPhotoLibraryUsageDescription": "Choose photos of your plants for their care record."
@@ -17,7 +16,7 @@
     "android": {
       "package": "com.d13ai.plantparlour",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4EA",
+        "backgroundColor": "#2E1633",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"

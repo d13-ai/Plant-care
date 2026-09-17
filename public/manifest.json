@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "PlantParlour",
+  "short_name": "PlantParlour",
+  "description": "A room for the plants you're proud of.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2E1633",
+  "theme_color": "#2E1633",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

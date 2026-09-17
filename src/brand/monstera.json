@@ -1,0 +1,18 @@
+{
+  "_note": "PLACEHOLDER MARK. A stylised monstera, standing in until Amanda's logo lands. This file is the single source: src/components/icons.tsx draws it in the app, scripts/make-icons.mjs bakes it into the PNG assets, and api/tag.ts inlines it on the public pages. Change it here, then run `npm run icons`.",
+  "viewBox": "0 0 100 100",
+  "blade": "M50 8C64 9 95 25 95 48c0 22-19 38-40 44-2 1-4-1-5-4-1 3-3 5-5 4C29 86 5 70 5 48 5 25 36 9 50 8z",
+  "petiole": "M50 86v9",
+  "petioleWidth": 5,
+  "notch": "M50 94V84",
+  "notchWidth": 8,
+  "splitWidth": 7,
+  "splits": [
+    "M56 29L86 20",
+    "M57 48L94 47",
+    "M55 67L85 76",
+    "M44 29L14 20",
+    "M43 48L6 47",
+    "M45 67L15 76"
+  ]
+}

@@ -1,4 +1,6 @@
-import Svg, { Circle, Path } from "react-native-svg";
+import Svg, { Circle, Defs, Mask, Path } from "react-native-svg";
+
+import monstera from "@/brand/monstera.json";
 
 type IconProps = { size?: number; color: string; strokeWidth?: number };
 
@@ -73,17 +75,43 @@ export function CloseIcon({ size = 14, color, strokeWidth = 2.2 }: IconProps) {
   );
 }
 
-export function LeafIcon({ size = 18, color, strokeWidth = 1.5 }: IconProps) {
+/**
+ * PLACEHOLDER MARK — a monstera leaf, standing in until Amanda's logo lands.
+ * The geometry lives in `src/brand/monstera.json` so the app, the PNG assets
+ * (`npm run icons`) and the public pages all draw the same shape. Swap that
+ * file for the real logo and rerun `npm run icons`.
+ */
+export function MonsteraIcon({ size = 18, color }: { size?: number; color: string }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Svg width={size} height={size} viewBox={monstera.viewBox} fill="none">
+      <Defs>
+        {/* White keeps the blade; black cuts the lobes and the basal notch clean through. */}
+        <Mask id="pp-monstera">
+          <Path d={monstera.blade} fill="#fff" />
+          {monstera.splits.map((d) => (
+            <Path
+              key={d}
+              d={d}
+              stroke="#000"
+              strokeWidth={monstera.splitWidth}
+              strokeLinecap="round"
+            />
+          ))}
+          <Path
+            d={monstera.notch}
+            stroke="#000"
+            strokeWidth={monstera.notchWidth}
+            strokeLinecap="round"
+          />
+        </Mask>
+      </Defs>
       <Path
-        d="M12 21C7 21 4 17 4 12 4 8 8 4 13 3c4-1 7 0 7 0s-1 4-2 9c-1 5-3 9-6 9z"
+        d={monstera.petiole}
         stroke={color}
-        strokeWidth={strokeWidth}
+        strokeWidth={monstera.petioleWidth}
         strokeLinecap="round"
-        strokeLinejoin="round"
       />
-      <Path d="M12 21c1-6 3-10 7-16" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+      <Path d={monstera.blade} fill={color} mask="url(#pp-monstera)" />
     </Svg>
   );
 }

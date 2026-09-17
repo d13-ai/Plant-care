@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { LeafIcon } from "@/components/icons";
+import { MonsteraIcon } from "@/components/icons";
 import { SignIn } from "@/components/sign-in";
 import { Body, Card, SectionLabel } from "@/components/ui";
 import { font, space, useTheme } from "@/theme";
@@ -49,7 +49,7 @@ export function Welcome() {
   return (
     <ScrollView contentContainerStyle={[styles.page, { backgroundColor: t.background }]}>
       <View style={styles.masthead}>
-        <LeafIcon size={44} color={t.leaf} />
+        <MonsteraIcon size={44} color={t.leaf} />
         <Text style={[styles.wordmark, { color: t.text }]}>PlantParlour</Text>
         <Text style={[styles.tagline, { color: t.muted }]}>A room for the plants you're proud of.</Text>
       </View>
