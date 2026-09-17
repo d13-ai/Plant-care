@@ -118,7 +118,8 @@ export default function Greenhouse() {
             <Heading>Start your parlour</Heading>
             <Body muted>
               Add a plant with a photo. Log when you water, feed or repot it, and it'll tell you
-              what's due. Everything stays on this phone.
+              what's due. It's all kept in your account, so it follows you to any phone you sign
+              into.
             </Body>
             <Button
               title="Add your first plant"
