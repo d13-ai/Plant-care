@@ -473,6 +473,49 @@ conservatory is refused; an unknown handle is refused; and with a follower
 holding a card, every photo the rounds hand back belongs to a published plant
 (`photos_from_private_plants: 0`). The card that needed was deleted afterwards.
 
+## Parlour Games
+
+`/parlour-games` is a corner of the site with puzzles in it. It exists because
+PlantParlour's long-term value depends on keepers coming back and a plant app
+only genuinely needs you every few days; the games fill the days in between
+without inventing fake plant chores.
+
+They are plain static HTML under `public/parlour-games/` — no bundle, no
+sign-in, nothing fetched — so they load on a bad connection and a stranger can
+play one without an account. Trickle is the first: rotate the pipes until the
+water reaches every plant, with a daily board everyone shares, a streak, a
+practice mode, and an embeddable build at `/parlour-games/trickle/embed`
+(the only route on the site allowed to be framed — everything else sends
+`frame-ancestors 'none'`). Progress syncs through `game_progress`, RLS'd to
+its owner like everything else.
+
+What the games share lives in `public/parlour-games/harness.js`, loaded from
+that absolute path because each game is served at several URLs and a relative
+`src` would resolve differently at each: the calendar the daily boards are
+counted from, the streak, the account sync, night mode, the sound engine, and
+the storage wrappers. It is the only thing a game fetches; everything else
+stays inline. Its pure rules are unit-tested in `harness.test.ts`, which is
+what the extraction was for — the streak merge that lived inside Trickle
+dropped a signed-in keeper's streak on every pull, and nothing could see it
+until the code came out where a test could reach it.
+
+`game_progress` is keyed `(user_id, game)` with one opaque `progress` blob per
+game; the reserved name `parlour` holds the streak, which is shared across
+every game rather than kept per game.
+
+The way in from the app is two links in the greenhouse: a card shown only when
+nothing needs attention, and a permanent one at the foot of the plant list.
+Both point at the hub rather than at a game, so the destination stays right as
+games are added — a link shipped in a released build is expensive to repoint.
+
+The house rules, stated on the hub: no timers, no scores, nothing to lose. A
+game that punishes you is a game people quit, and coming back is the entire
+point.
+
+Roadmap and what is planned next: `docs/PARLOUR_GAMES.md`. The next game is
+specced in `docs/windowsill-spec.md`, with its design claims reproducible via
+`python3 scripts/windowsill-model.py`.
+
 ## The welcome page
 
 `/` is the welcome: what PlantParlour is, who made it, and the sign-in. It is

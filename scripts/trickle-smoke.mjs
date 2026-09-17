@@ -15,7 +15,18 @@ import { readFile } from "node:fs/promises";
 import { chromium } from "playwright";
 
 const PAGE = readFileSync("public/parlour-games/trickle.html", "utf8");
-const server = createServer((_req, res) => {
+const HARNESS = readFileSync("public/parlour-games/harness.js", "utf8");
+// The page is served at several paths (the game, practice, daily, embed) and
+// the harness at exactly one, the absolute path the page asks for -- so this
+// has to route rather than answer everything with the HTML. It did answer
+// everything with the HTML, which is how the harness first arrived as a
+// text/html 200 and took the board down with it.
+const server = createServer((req, res) => {
+  if (new URL(req.url, "http://x").pathname === "/parlour-games/harness.js") {
+    res.setHeader("Content-Type", "text/javascript; charset=utf-8");
+    res.end(HARNESS);
+    return;
+  }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.end(PAGE);
 }).listen(4610);
@@ -344,8 +355,8 @@ try {
       const base = { done: 0, bySize: {}, stats: { total_turns: 0, nudges: 0, best_turns: {} }, board: null };
       return {
         // counts and totals: larger wins, whichever side holds it
-        countLocal: m({ ...base, done: 9 }, { boards_finished: 3, stats: {} }).done,
-        countRemote: m({ ...base, done: 3 }, { boards_finished: 9, stats: {} }).done,
+        countLocal: m({ ...base, done: 9 }, { ...base, done: 3 }).done,
+        countRemote: m({ ...base, done: 3 }, { ...base, done: 9 }).done,
         totals: m({ ...base, stats: { total_turns: 120, nudges: 2, best_turns: {} } },
                   { stats: { total_turns: 400, nudges: 9 } }).stats,
         // fewest turns: smaller wins
@@ -354,13 +365,16 @@ try {
         bestRemote: m({ ...base, stats: { best_turns: { 6: 44 } } }, { stats: { best_turns: { 6: 21 } } })
           .stats.best_turns[6],
         // a size only one side knows about survives
-        bySize: m({ ...base, bySize: { 4: 2 } }, { boards_by_size: { 8: 5 }, stats: {} }).bySize,
+        bySize: m({ ...base, bySize: { 4: 2 } }, { ...base, bySize: { 8: 5 } }).bySize,
         // an untouched board never displaces a played one
         untouched: m({ ...base, board: { n: 6, moves: 0, saved_at: "2026-09-17T10:00:00Z" } },
-                     { current_board: { n: 4, moves: 12, saved_at: "2026-09-01T10:00:00Z" }, stats: {} }).board,
+                     { ...base, board: { n: 4, moves: 12, saved_at: "2026-09-01T10:00:00Z" } }).board,
         // between two played boards, the later one wins
         later: m({ ...base, board: { n: 6, moves: 3, saved_at: "2026-09-17T10:00:00Z" } },
-                 { current_board: { n: 4, moves: 12, saved_at: "2026-09-01T10:00:00Z" }, stats: {} }).board,
+                 { ...base, board: { n: 4, moves: 12, saved_at: "2026-09-01T10:00:00Z" } }).board,
+        // fewest turns on the daily board: smaller wins, like the per-size best
+        dailyBest: m({ ...base, stats: { ...base.stats, daily_best: 14 } },
+                     { ...base, stats: { ...base.stats, daily_best: 9 } }).stats.daily_best,
         // nothing on the account at all leaves local untouched
         noRemote: m({ ...base, done: 7 }, null).done,
       };
@@ -376,6 +390,7 @@ try {
     want("fewest turns (local better)", cases.bestLocal, 21);
     want("fewest turns (remote better)", cases.bestRemote, 21);
     want("per-size counts union", cases.bySize, { 4: 2, 8: 5 });
+    want("fewest turns on the daily board", cases.dailyBest, 9);
     want("played board beats untouched", cases.untouched.n, 4);
     want("later played board wins", cases.later.n, 6);
     want("no account row", cases.noRemote, 7);
@@ -396,14 +411,22 @@ try {
       localStorage.setItem("pp_trickle_stats", JSON.stringify({
         total_turns: 50, nudges: 1, best_turns: { 6: 19 }, last_played: "2026-09-16T00:00:00Z",
       }));
+      // A run going on this device that the account has never heard of. It
+      // has to survive the pull: the version of this that lived inside the
+      // game rebuilt the stats object field by field and dropped the streak
+      // every time, which reset a signed-in keeper to day one daily.
+      localStorage.setItem("pp_streak", JSON.stringify({ last: 40, streak: 6, longest: 6, played: 6 }));
     });
     await signed.route("**://*.supabase.co/rest/v1/game_progress**", async (route) => {
       if (route.request().method() === "GET") {
         return route.fulfill({
           status: 200, contentType: "application/json",
           body: JSON.stringify([{
-            boards_finished: 11, boards_by_size: { 8: 4 }, current_board: null,
-            stats: { total_turns: 900, nudges: 12, best_turns: { 6: 30, 8: 55 } },
+            game: "trickle",
+            progress: {
+              done: 11, bySize: { 8: 4 }, board: null,
+              stats: { total_turns: 900, nudges: 12, best_turns: { 6: 30, 8: 55 } },
+            },
           }]),
         });
       }
@@ -420,16 +443,59 @@ try {
     );
     if (best["6"] !== 19) throw new Error(`the better record was lost: ${JSON.stringify(best)}`);
     if (best["8"] !== 55) throw new Error(`a record only the account had was dropped`);
+    const kept = await p2.evaluate(() => window.__game.streak());
+    if (kept.streak !== 6) throw new Error(`the pull reset the streak to ${kept.streak}`);
     const line = await p2.textContent("#save");
     if (!/Saved to your account/.test(line)) throw new Error(`the save line reads "${line}"`);
 
     await p2.waitForFunction(() => true);
     if (!posted.length) throw new Error("the merge was never written back");
-    const body = posted[posted.length - 1];
-    if (body.boards_finished !== 11) throw new Error(`pushed boards_finished ${body.boards_finished}`);
-    if (body.stats.best_turns["6"] !== 19) throw new Error("pushed the worse record");
-    if (body.user_id !== "00000000-0000-4000-8000-00000000abcd") throw new Error("pushed the wrong user");
+    const rows = posted[posted.length - 1];
+    if (!Array.isArray(rows)) throw new Error("the push is one row per game, so it sends an array");
+    const mine = rows.find((r) => r.game === "trickle");
+    const arcade = rows.find((r) => r.game === "parlour");
+    if (!mine) throw new Error(`no trickle row in ${JSON.stringify(rows.map((r) => r.game))}`);
+    if (mine.progress.done !== 11) throw new Error(`pushed done ${mine.progress.done}`);
+    if (mine.progress.stats.best_turns["6"] !== 19) throw new Error("pushed the worse record");
+    if (mine.user_id !== "00000000-0000-4000-8000-00000000abcd") throw new Error("pushed the wrong user");
+    if (!arcade || arcade.progress.streak !== 6) throw new Error("the streak was not written back");
     await signed.close();
+  });
+
+  await step("the streak is the arcade's, and one game cannot spend it", async () => {
+    // Two things at once: a streak the account holds and this device does
+    // not is taken up, and the game's own row coming back empty does not
+    // take the streak down with it.
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await ctx.addInitScript(() => {
+      localStorage.setItem("sb-ixagjvntbgyqemxxinqe-auth-token", JSON.stringify({
+        access_token: "test-token", refresh_token: "test-refresh",
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        user: { id: "00000000-0000-4000-8000-00000000abcd" },
+      }));
+    });
+    await ctx.route("**://*.supabase.co/rest/v1/game_progress**", async (route) => {
+      if (route.request().method() === "GET") {
+        return route.fulfill({
+          status: 200, contentType: "application/json",
+          body: JSON.stringify([{ game: "parlour", progress: { last: 12, streak: 4, longest: 7, played: 30 } }]),
+        });
+      }
+      return route.fulfill({ status: 201, body: "" });
+    });
+    const pg = await ctx.newPage();
+    await pg.goto("http://localhost:4610/");
+    await pg.waitForSelector(".tile");
+    await pg.waitForFunction(() => window.__game.streak().streak === 4, { timeout: 5000 });
+    const got = await pg.evaluate(() => window.__game.streak());
+    if (got.longest !== 7) throw new Error(`the longest run was lost: ${JSON.stringify(got)}`);
+    // The GET named both rows in one request rather than one request each.
+    const asked = await pg.evaluate(() => performance.getEntriesByType("resource")
+      .map((e) => e.name).filter((n) => /game_progress/.test(n)));
+    if (!asked.some((n) => /game=in\./.test(n))) {
+      throw new Error(`the pull did not ask for both rows at once: ${asked.join(", ")}`);
+    }
+    await ctx.close();
   });
 
   await step("night flips the palette and the theme colour", async () => {
@@ -593,18 +659,14 @@ try {
     const tally = await dailyPage.textContent("#win-tally");
     if (!/A new board in /.test(tally)) throw new Error(`no countdown: "${tally}"`);
 
-    const after = await dailyPage.evaluate(
-      () => JSON.parse(localStorage.getItem("pp_trickle_stats")).daily,
-    );
+    const after = await dailyPage.evaluate(() => window.__game.streak());
     if (after.played !== 1 || after.streak !== 1) {
       throw new Error(`first finish recorded ${JSON.stringify(after)}`);
     }
     // A reload lands on the finished board and must not count it again.
     await dailyPage.reload();
     await dailyPage.waitForSelector("#win:not([hidden])", { timeout: 10000 });
-    const again = await dailyPage.evaluate(
-      () => JSON.parse(localStorage.getItem("pp_trickle_stats")).daily,
-    );
+    const again = await dailyPage.evaluate(() => window.__game.streak());
     if (again.played !== 1 || again.streak !== 1) {
       throw new Error(`a reload counted it again: ${JSON.stringify(again)}`);
     }
@@ -612,28 +674,39 @@ try {
   });
 
   await step("a streak runs on consecutive days and resets after a gap", async () => {
-    const run = async (previous) => {
+    const run = async (seed) => {
       const ctx = await browser.newContext();
-      await ctx.addInitScript((prev) => {
-        localStorage.setItem("pp_trickle_stats", JSON.stringify({
-          total_turns: 0, nudges: 0, best_turns: {}, last_played: null, daily: prev,
-        }));
-      }, previous);
+      await ctx.addInitScript((s) => {
+        if (s.streak) localStorage.setItem("pp_streak", JSON.stringify(s.streak));
+        if (s.legacy) {
+          localStorage.setItem("pp_trickle_stats", JSON.stringify({
+            total_turns: 0, nudges: 0, best_turns: {}, last_played: null, daily: s.legacy,
+          }));
+        }
+      }, seed);
       const pg = await ctx.newPage();
       await pg.goto("http://localhost:4610/?daily=1");
       await pg.waitForSelector(".tile");
       await solveOn(pg);
       await pg.waitForSelector("#win:not([hidden])", { timeout: 15000 });
-      const out = await pg.evaluate(() => JSON.parse(localStorage.getItem("pp_trickle_stats")).daily);
-      const num = await pg.evaluate(() => window.__game.state.num);
+      const out = await pg.evaluate(() => window.__game.streak());
+      const stats = await pg.evaluate(() => JSON.parse(localStorage.getItem("pp_trickle_stats")));
       await ctx.close();
-      return { out, num };
+      return { out, stats };
     };
     const today = await dailyNumberNow();
-    const carried = await run({ last: today - 1, streak: 1, best: 40, played: 1 });
+    const carried = await run({ streak: { last: today - 1, streak: 1, longest: 1, played: 1 } });
     if (carried.out.streak !== 2) throw new Error(`yesterday then today gave streak ${carried.out.streak}`);
-    const broken = await run({ last: today - 3, streak: 9, best: 40, played: 9 });
+    const broken = await run({ streak: { last: today - 3, streak: 9, longest: 9, played: 9 } });
     if (broken.out.streak !== 1) throw new Error(`a three-day gap kept streak ${broken.out.streak}`);
+    if (broken.out.longest !== 9) throw new Error(`a broken run forgot its longest: ${broken.out.longest}`);
+
+    // Anybody mid-run when this shipped had their streak inside the game's
+    // own stats. It has to be carried across, not dropped on the floor.
+    const lifted = await run({ legacy: { last: today - 1, streak: 5, best: 31, played: 5 } });
+    if (lifted.out.streak !== 6) throw new Error(`an old run did not carry over: ${lifted.out.streak}`);
+    if (lifted.stats.daily) throw new Error("the old streak is still being kept in two places");
+    if (lifted.stats.daily_best !== 31) throw new Error(`the old daily best was lost: ${lifted.stats.daily_best}`);
   });
 
   await step("embedded, it loses its chrome and keeps its game", async () => {
