@@ -66,6 +66,10 @@ const sections = [
 </ul>`,
   },
   {
+    heading: "If something goes wrong",
+    html: `<p>We take reasonable care to keep your records safe, but no system is perfect and we are not going to pretend otherwise. If your information is ever caught up in a security breach, we will tell you — by email, within 30 days of working out what happened, as Colorado law requires — and we will say what we know rather than what sounds best.</p>`,
+  },
+  {
     heading: "Children",
     html: `<p>PlantParlour is not intended for children under 13, and we do not knowingly keep information from them. If you believe a child has made an account, email us and we will remove it.</p>`,
   },

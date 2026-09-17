@@ -3,7 +3,7 @@
 // Deliberately short, and deliberately blunt about the AI: identification
 // and care guides are generated, and the toxicity field in a care guide is
 // the one place where trusting a wrong answer could hurt somebody.
-import { CONTACT, legalPage, serve } from "./legal";
+import { CONTACT, legalPage, serve, UPDATED } from "./legal";
 
 const sections = [
   {
@@ -50,6 +50,22 @@ const sections = [
     html: `<p>You can stop using PlantParlour at any time. To have your account and everything in it erased, email <a href="mailto:${CONTACT}">${CONTACT}</a> from the address you signed up with — see the <a href="/privacy">privacy page</a> for what that covers and how long it takes.</p>`,
   },
   {
+    heading: "Colorado law, and settling disagreements",
+    html: `<p>These terms, and any dispute arising out of them or out of your use of PlantParlour, are governed by the laws of the State of Colorado, without regard to its conflict-of-laws rules.</p>
+<p><strong>Talk to us first.</strong> Almost everything is fixable by email. Before starting anything formal, send a description of the problem to <a href="mailto:${CONTACT}">${CONTACT}</a> and give us 30 days to put it right. Most of the time that will be the end of it.</p>
+<p><strong>Arbitration.</strong> If it is not, you and we agree that the dispute will be resolved by binding arbitration before a single arbitrator, rather than in court, administered by the American Arbitration Association under its Consumer Arbitration Rules. It can be heard in Colorado, remotely, or in the county where you live — your choice. The Federal Arbitration Act governs this section, and judgment on the award may be entered in any court with jurisdiction.</p>
+<p><strong>We pay for small claims.</strong> For any claim under $10,000, we will pay the arbitration filing fee and the arbitrator's fees, unless the arbitrator decides the claim was frivolous. Arbitration should not be more expensive for you than court.</p>
+<p><strong>Small claims court is still open.</strong> Either of us may bring a qualifying claim in small claims court instead of arbitration.</p>
+<p><strong>Individually, not as a class.</strong> Claims must be brought in your own name, not as a plaintiff or class member in any class, collective or representative action, and the arbitrator may not consolidate more than one person's claims. If this paragraph is found unenforceable, the whole of this arbitration section does not apply.</p>
+<p><strong>You can opt out, and it costs you nothing.</strong> Email <a href="mailto:${CONTACT}">${CONTACT}</a> with the subject line <em>Arbitration opt-out</em> within 30 days of first agreeing to these terms, and this section will not apply to you. If you already had an account before ${UPDATED}, your 30 days run from that date. Opting out changes nothing else about your account, and we will not hold it against you.</p>`,
+  },
+  {
+    heading: "Odds and ends",
+    html: `<p>If any part of these terms turns out to be unenforceable, the rest of them still stand.</p>
+<p>These terms, together with the <a href="/privacy">privacy page</a>, are the whole agreement between us about PlantParlour, and replace anything said before.</p>
+<p>Your account is yours and cannot be transferred to someone else. If PlantParlour itself ever changes hands, we will tell you before it does, and you will have the chance to take your records and go.</p>`,
+  },
+  {
     heading: "Changes",
     html: `<p>If these terms change, we will update this page and the date at the top, and say so in the app if the change is significant. Carrying on using PlantParlour after that means the new version applies.</p>`,
   },
@@ -59,7 +75,7 @@ export default function handler(req: Parameters<typeof serve>[0], res: Parameter
   serve(req, res, () =>
     legalPage(
       "Terms",
-      "The short version: your plants are yours, we will look after them, the AI is a helpful guess rather than an expert, and you can leave with your records whenever you like.",
+      "The short version: your plants are yours, we will look after them, the AI is a helpful guess rather than an expert, and you can leave with your records whenever you like. These terms are governed by Colorado law and include an <strong>agreement to arbitrate</strong> rather than go to court, which you may opt out of within 30 days.",
       sections,
       "The terms of using PlantParlour: your content, what the AI can and cannot be trusted with, and how to leave.",
     ),
