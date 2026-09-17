@@ -2,7 +2,7 @@ import { Stack, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { Platform, ScrollView, Share, StyleSheet } from "react-native";
-import { Badge, Body, Button, Card, Field, Heading, Row } from "@/components/ui";
+import { Badge, Body, Button, Card, Field, Heading, Row, SectionLabel } from "@/components/ui";
 import { pendingChanges } from "@/db";
 import { signOut, useAccount } from "@/lib/auth";
 import { confirm } from "@/lib/confirm";
@@ -230,6 +230,16 @@ export default function AccountScreen() {
       {/* Landing here from a sign-in redirect is a fresh page load, so there is
           no history to go back to and the modal's own dismiss never appears.
           Without this the screen is a dead end. */}
+      {/* While this is still being tested, the way to tell us something broke
+          should be somewhere obvious rather than somewhere clever. */}
+      <Card>
+        <SectionLabel>Found a bug?</SectionLabel>
+        <Body small muted>
+          Tell us, and the report brings along what the app was doing at the time.
+        </Body>
+        <Button title="Report a bug" small onPress={() => router.push("/report")} />
+      </Card>
+
       <Row>
         <Button
           title="Go to the parlour"

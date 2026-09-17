@@ -1,5 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
 import type { SQLiteDatabase } from "expo-sqlite";
+import { leave } from "@/domain/trail";
 import {
   applyRemoteEvent,
   applyRemotePhoto,
@@ -87,7 +88,13 @@ let status: SyncStatus = { state: "idle", lastSyncedAt: null, error: null, versi
 const listeners = new Set<(s: SyncStatus) => void>();
 
 function setStatus(patch: Partial<SyncStatus>) {
+  const was = status.state;
   status = { ...status, ...patch };
+  // The one choke point every sync transition passes through, so a bug
+  // report can say whether syncing was working when things went wrong.
+  if (patch.state && patch.state !== was) {
+    leave("sync", patch.state, patch.state === "error" ? { error: status.error ?? "" } : undefined);
+  }
   for (const listener of listeners) listener(status);
 }
 

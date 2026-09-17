@@ -6,7 +6,7 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/((?!tag$|@|api/|plant-photos/).*)",
+      "source": "/((?!tag$|@|api/|plant-photos/|privacy$|terms$).*)",
       "headers": [
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -55,6 +55,14 @@
     {
       "source": "/plant/:id",
       "destination": "/plant/_id"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/api/privacy"
+    },
+    {
+      "source": "/terms",
+      "destination": "/api/terms"
     },
     {
       "source": "/(.*)",

@@ -15,7 +15,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { zodOutputFormat } from "npm:@anthropic-ai/sdk/helpers/zod";
 import { z } from "npm:zod";
-import { boundedText, claimAiCall, refundAiCall, today } from "../_shared/cap.ts";
+import { boundedText, claimAiCall, claimPhotoCall, refundAiCall, refundPhotoCall, today } from "../_shared/cap.ts";
 
 // Model and effort can be overridden by function secrets without a
 // redeploy: AI_MODEL (claude-opus-5 | claude-sonnet-5 | claude-haiku-4-5)
@@ -137,8 +137,17 @@ Deno.serve(async (req: Request) => {
   // recorded refuses the call instead of lifting the cap.
   const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const day = today();
+  // The lifetime trial first: it is the one a keeper runs out of, and being
+  // told so before the day's budget is spent on them is the clearer message.
+  const photos = await claimPhotoCall(admin, user.id);
+  if (!photos.ok) return json({ error: photos.error }, photos.status);
+
   const claim = await claimAiCall(admin, user.id, day, "photos");
-  if (!claim.ok) return json({ error: claim.error }, claim.status);
+  if (!claim.ok) {
+    // The day's budget stopped this, not the trial — so put the trial back.
+    await refundPhotoCall(admin, user.id);
+    return json({ error: claim.error }, claim.status);
+  }
 
   const ask =
     mode === "health"
@@ -182,10 +191,11 @@ Deno.serve(async (req: Request) => {
     const cost_usd = costOf(MODEL, input_tokens, output_tokens);
     console.log(JSON.stringify({ fn: "analyze", model: MODEL, effort: EFFORT, mode, photos: images.length, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)) }));
     await admin.rpc("record_ai_usage", { p_keeper: user.id, p_day: day, p_input: input_tokens, p_output: output_tokens, p_cost: cost_usd });
-    return json({ verdict: response.parsed_output, remaining: claim.remaining, model: MODEL, effort: EFFORT, usage: { input_tokens, output_tokens }, cost_usd });
+    return json({ verdict: response.parsed_output, remaining: claim.remaining, photos_left: photos.left, model: MODEL, effort: EFFORT, usage: { input_tokens, output_tokens }, cost_usd });
   } catch (err) {
     // Nothing was generated, so the slot goes back.
     await refundAiCall(admin, user.id, day);
+    await refundPhotoCall(admin, user.id);
     if (err instanceof Anthropic.AuthenticationError) return json({ error: "The AI key for this project isn't valid." }, 503);
     if (err instanceof Anthropic.RateLimitError) return json({ error: "The AI is busy — try again in a minute." }, 503);
     return json({ error: err instanceof Error ? err.message : "Analysis failed." }, 502);
