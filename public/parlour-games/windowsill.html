@@ -36,6 +36,26 @@
   --shade:#6FA9A0;
   --bad:#E08BA6;
 }
+/* Night: the same roles, turned right down. Measured rather than eyeballed --
+   every pair below is checked in the smoke test against the same bars the
+   day palette meets. */
+body.night{
+  --ink:#140A17;
+  --card:#1E1023;
+  --border:rgba(201,162,75,.18);
+  --edge:rgba(201,162,75,.6);   /* .42 left the stand's edge at 2.31:1 on the darker page */
+  --gold:#8C6F35;
+  --gold-light:#A98A4A;
+  --cream:#BFB3B9;
+  --muted:#8D7D88;
+  --leaf:#6E9B79;
+  --sun:#B49A54;
+  --bright:#7BA686;
+  --shade:#5C8A83;   /* 4.49:1 at #56827B, a hair under the 4.5 the word on it needs */
+  --bad:#AE6A80;
+}
+body{transition:background .8s,color .8s}
+[hidden]{display:none !important}   /* .actions sets display:flex, which otherwise wins */
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--ink);color:var(--cream)}
 body{
@@ -165,6 +185,9 @@ button.quiet{
 }
 button.quiet:hover{border-color:var(--gold)}
 button.quiet:focus-visible{outline:2px solid var(--gold-light);outline-offset:2px}
+button.quiet.on{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:700}
+.toggles{display:flex;gap:8px;justify-content:center;margin-top:14px}
+.toggles .quiet{min-height:44px}
 #status{margin:10px 0 0;font-size:14px;color:var(--muted);min-height:1.5em}
 #records{margin:6px 0 0;font-size:14px;color:var(--muted)}
 #records b{color:var(--gold-light)}
@@ -212,6 +235,12 @@ button.plain{
       <button class="quiet" id="new" type="button">New board</button>
     </span>
   </div>
+  <div class="toggles">
+    <button class="quiet" id="sound" type="button" aria-pressed="false">Sound</button>
+    <button class="quiet" id="music" type="button" aria-pressed="false">Music</button>
+    <button class="quiet" id="night" type="button" aria-pressed="false">Night</button>
+  </div>
+
   <p id="status"></p>
   <p id="records" hidden></p>
   <p id="save"></p>
@@ -243,7 +272,10 @@ button.plain{
     /* Everything worth keeping, in one blob, in the shape the account holds
        it -- so what is sent is what is stored and there is nothing to
        translate between the two. */
-    progress: "pp_windowsill_progress"
+    progress: "pp_windowsill_progress",
+    sound: "pp_windowsill_sound",
+    music: "pp_windowsill_music",
+    night: "pp_windowsill_night"    /* unset means follow the clock */
   };
 
   /* Practice wins over the daily board; the arcade reads all three modes the
@@ -289,6 +321,30 @@ button.plain{
     BOARD = R.deal(shelfKind, P.mulberry32(seed));
     BOARD.seed = seed;
   }
+
+  /* ---- sound ----------------------------------------------------------- */
+  /* The engine is the harness's -- oscillators, the delay, the scheduler, one
+     dial for the whole bus. What is here is the tune, because that is the part
+     that is this game's rather than the arcade's.
+     Where Trickle is in D and descends, this sits in C and drifts upward with
+     more air in it, on two chords rather than four: a windowsill in the
+     afternoon rather than water finding its way down.
+     The mix is tuned against the analyser, not by ear, since there is no ear
+     in a test run: at 5 it peaked around 0.42 against Trickle's 0.26, which
+     is the same arcade at two different volumes. At 4 it measures 0.275 to
+     0.298 peak and 0.042 to 0.045 mean RMS over a full bar -- and it has to
+     be a full bar, because at 58bpm one is eight seconds long and the chord
+     lands on its first step. */
+  var snd = P.sound({
+    key: KEY.sound,
+    mix: 4,
+    bpm: 58,
+    root: 130.81,                                                   /* C3 */
+    motif: [12, null, 16, null, 19, null, 16, null, 14, null, 12, null, null, 16, null, null],
+    chords: [[0, 4, 7, 11], [-7, -3, 0, 4]],                        /* Cmaj7, Fmaj7 */
+    blips: [523.25, 587.33, 659.25, 783.99, 880]
+  });
+  var musicPref = P.read(KEY.music, null);          /* null: never chosen */
 
   var progress = P.read(KEY.progress, null) || R.emptyProgress();
   if (!progress.byShelf) progress.byShelf = {};
@@ -540,6 +596,10 @@ button.plain{
     }
     placements += 1;
     held = null;
+    /* One note per plant set down, rising with the light it is getting, so a
+       run being filled in sounds like it is going somewhere. */
+    snd.blip(R.lightsFor(shelf[r])[t] - 1 + r);
+    if (musicShouldPlay() && !snd.musicRunning()) snd.startMusic();
     paint();
     saveDaily(false);
     coachAfter({ run: r, tier: t });
@@ -661,6 +721,45 @@ button.plain{
       : "In " + placements + " placements. Par is " + par() + ".";
   }
 
+  /* ---- night ----------------------------------------------------------- */
+  /* Unset follows the clock, so the first evening visit is already dark
+     without anybody choosing. Choosing once wins from then on. */
+  var night = P.night({
+    key: KEY.night,
+    onApply: function (on) { setToggle("night", on); }
+  });
+
+  function setToggle(id, on) {
+    var b = document.getElementById(id);
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", String(on));
+  }
+
+  /* Music follows Night unless somebody has turned it off on purpose. It
+     cannot start without a gesture, so a remembered preference waits for the
+     first tap rather than failing silently. */
+  function musicShouldPlay() { return musicPref === true || (musicPref == null && night.isOn()); }
+  function refreshMusic(fromGesture) {
+    setToggle("music", musicShouldPlay());
+    if (musicShouldPlay() && fromGesture) snd.startMusic();
+    else if (!musicShouldPlay() && snd.musicRunning()) snd.stopMusic();
+  }
+
+  document.getElementById("sound").addEventListener("click", function () {
+    snd.setOn(!snd.isOn());
+    setToggle("sound", snd.isOn());
+    if (snd.isOn()) snd.blip(0);
+  });
+  document.getElementById("music").addEventListener("click", function () {
+    musicPref = !musicShouldPlay();
+    P.write(KEY.music, musicPref);
+    refreshMusic(true);
+  });
+  document.getElementById("night").addEventListener("click", function () {
+    night.toggle();
+    refreshMusic(true);
+  });
+
   /* The only two numbers worth showing: fewest placements here, and how many
      boards have been finished. */
   function showRecords() {
@@ -721,6 +820,7 @@ button.plain{
       LEARN ? "Play a proper board" : DAILY ? "Play a board of your own" : "Start again";
     winEl.hidden = false;
     showRecords();
+    if (!restored) snd.fanfare();
     if (DAILY) { tickCountdown(); saveDaily(true); }
     coachAfter(null);
     if (LEARN) coachAfter({ run: 0, tier: 0 });
@@ -778,6 +878,10 @@ button.plain{
       : "Give every plant the light it actually wants.";
   }
 
+  night.apply();
+  setToggle("sound", snd.isOn());
+  setToggle("music", musicShouldPlay());
+
   setChrome();
   markShelf();
   dealAndLay();
@@ -806,6 +910,8 @@ button.plain{
     dayNumber: P.dayNumber,
     progress: function () { return progress; },
     streak: P.getStreak,
+    musicPlaying: snd.musicAudible,
+    levels: snd.levels,
     coach: function () { return coachLine.textContent; },
     newBoard: dealAndLay
   };

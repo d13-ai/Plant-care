@@ -34,7 +34,12 @@ const server = createServer((req, res) => {
   res.end(/^\/parlour-games\/trickle(\/|$)/.test(path) ? TRICKLE : PAGE);
 }).listen(4611);
 
-const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined });
+const browser = await chromium.launch({
+  executablePath: process.env.CHROME || undefined,
+  // Headless Chromium will not start an AudioContext without this, and the
+  // audio here cannot be judged by ear from a test run -- only measured.
+  args: ["--autoplay-policy=no-user-gesture-required"],
+});
 const errors = [];
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
@@ -790,6 +795,144 @@ try {
     if (!/Best on standard/.test(line)) throw new Error(`the records line reads "${line}"`);
     if (!/Finished/.test(line)) throw new Error(`no count of finished boards in "${line}"`);
     await ctx.close();
+  });
+
+  await step("night turns the palette down and says so", async () => {
+    await page.click("#clear");
+    const before = await page.evaluate(() => ({
+      night: document.body.classList.contains("night"),
+      ink: getComputedStyle(document.body).backgroundColor,
+    }));
+    await page.click("#night");
+    // The page colour is transitioned over 0.8s, so sampling it straight away
+    // reads the old value and the check passes or fails on timing alone.
+    await page.waitForFunction(
+      (was) => getComputedStyle(document.body).backgroundColor !== was,
+      before.ink, { timeout: 3000 },
+    );
+    const after = await page.evaluate(() => ({
+      night: document.body.classList.contains("night"),
+      pressed: document.getElementById("night").getAttribute("aria-pressed"),
+      ink: getComputedStyle(document.body).backgroundColor,
+    }));
+    if (after.night === before.night) throw new Error("night did not change");
+    if (after.pressed !== String(after.night)) throw new Error("the button does not say what it did");
+    if (after.ink === before.ink) throw new Error("the page colour did not move");
+  });
+
+  await step("both palettes keep every pair readable, measured not eyeballed", async () => {
+    // Measured for day AND night explicitly, by reading the variables under
+    // each, rather than by toggling and hoping. Night follows the clock when
+    // nobody has chosen, so which one a toggle lands on depends on the hour
+    // the tests happen to run -- and an earlier version of this measured the
+    // day palette twice and called it night.
+    const both = await page.evaluate(() => {
+      const parse = (raw) => {
+        const v = raw.trim();
+        let m = /^#([0-9a-f]{3})$/i.exec(v);
+        if (m) return [...m[1]].map((c) => parseInt(c + c, 16)).concat(1);
+        m = /^#([0-9a-f]{6})$/i.exec(v);
+        if (m) return [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)).concat(1);
+        m = /^rgba?\(([^)]+)\)$/i.exec(v);
+        if (m) {
+          const n = m[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+          return [n[0], n[1], n[2], n.length > 3 ? n[3] : 1];
+        }
+        throw new Error("cannot read the colour " + raw);
+      };
+      const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+      const L = (c) => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
+      const over = (fg, bg) => [0, 1, 2].map((i) => fg[3] * fg[i] + (1 - fg[3]) * bg[i]).concat(1);
+      const ratio = (a, b) => {
+        const fg = a[3] < 1 ? over(a, b) : a;
+        const [x, y] = [L(fg), L(b)];
+        return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+      };
+      const read = () => {
+        const css = (n) => parse(getComputedStyle(document.body).getPropertyValue(n));
+        const ink = css("--ink"), card = css("--card");
+        return {
+          text: {
+            cream: ratio(css("--cream"), ink),
+            muted: ratio(css("--muted"), ink),
+            goldLight: ratio(css("--gold-light"), card),
+            bad: ratio(css("--bad"), ink),
+            leaf: ratio(css("--leaf"), ink),
+            onSun: ratio(ink, css("--sun")),
+            onBright: ratio(ink, css("--bright")),
+            onShade: ratio(ink, css("--shade")),
+          },
+          graphic: {
+            sunOnCard: ratio(css("--sun"), card),
+            brightOnCard: ratio(css("--bright"), card),
+            shadeOnCard: ratio(css("--shade"), card),
+            edge: ratio(css("--edge"), ink),
+          },
+        };
+      };
+      const was = document.body.classList.contains("night");
+      document.body.classList.remove("night");
+      const day = read();
+      document.body.classList.add("night");
+      const night = read();
+      document.body.classList.toggle("night", was);
+      return { day, night };
+    });
+
+    for (const [when, sets] of Object.entries(both)) {
+      const worst = (o) => Object.entries(o).reduce((a, b) => (b[1] < a[1] ? b : a));
+      const [wt, wtv] = worst(sets.text);
+      const [wg, wgv] = worst(sets.graphic);
+      console.log(`  (${when}: worst text ${wt} ${wtv.toFixed(2)}:1, worst graphic ${wg} ${wgv.toFixed(2)}:1)`);
+      Object.entries(sets.text).forEach(([k, v]) => {
+        if (v < 4.5) throw new Error(`${k} is ${v.toFixed(2)}:1 by ${when}, under 4.5`);
+      });
+      Object.entries(sets.graphic).forEach(([k, v]) => {
+        if (v < 3) throw new Error(`${k} is ${v.toFixed(2)}:1 by ${when}, under 3`);
+      });
+    }
+  });
+
+  await step("the music is audible, calm, and nowhere near clipping", async () => {
+    await page.click("#sound");
+    if (!(await page.evaluate(() => window.__game.musicPlaying()))) {
+      await page.click("#music");
+    }
+    await page.waitForFunction(() => window.__game.musicPlaying(), { timeout: 5000 });
+    // A bar here is sixteen steps at 58bpm -- a little over eight seconds --
+    // and the chord lands on the first step of it, so a short sample can miss
+    // the loudest moment entirely and call the music inaudible. Sample across
+    // a whole bar.
+    await page.waitForTimeout(2000);
+    const runs = [];
+    for (let i = 0; i < 18; i++) {
+      await page.waitForTimeout(500);
+      runs.push(await page.evaluate(() => window.__game.levels()));
+    }
+    const peak = Math.max(...runs.map((r) => r.peak));
+    const rms = runs.reduce((t, r) => t + r.rms, 0) / runs.length;
+    console.log(`  (peak ${peak.toFixed(3)}, mean RMS ${rms.toFixed(3)})`);
+    // The band is drawn round what this tune actually measures over three
+    // runs -- peak 0.275 to 0.298, mean RMS 0.042 to 0.045 -- which sits
+    // within a hair of Trickle's 0.259 and 0.048, so the two games play at
+    // the same volume.
+    if (peak > 0.45) throw new Error(`peak ${peak.toFixed(3)} is louder than the rest of the arcade`);
+    if (peak < 0.18) throw new Error(`peak ${peak.toFixed(3)} is on but inaudible`);
+    if (rms < 0.028) throw new Error(`mean RMS ${rms.toFixed(3)} is too quiet to hear`);
+    if (rms > 0.09) throw new Error(`mean RMS ${rms.toFixed(3)} is louder than calm`);
+  });
+
+  await step("a tab nobody is looking at goes quiet", async () => {
+    await page.evaluate(() => {
+      Object.defineProperty(document, "hidden", { value: true, configurable: true });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await page.waitForFunction(() => !window.__game.musicPlaying(), { timeout: 3000 });
+    await page.evaluate(() => {
+      Object.defineProperty(document, "hidden", { value: false, configurable: true });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await page.waitForFunction(() => window.__game.musicPlaying(), { timeout: 3000 });
   });
 
   await step("one streak across the arcade: Trickle feeds it, Windowsill keeps it", async () => {
