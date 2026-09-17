@@ -31,7 +31,10 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files. `.env` is ignored too: it used to be committed, which
+# meant the next secret added to it would have been committed as well.
+# Real values live in .env.local; .env.example documents what goes in it.
+.env
 .env*.local
 
 # typescript

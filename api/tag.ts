@@ -70,6 +70,9 @@ a{color:var(--gold-deep);font-weight:600}.hero{width:100%;aspect-ratio:4/3;objec
 ul{margin:0;padding-left:18px}
 .foot{background-color:var(--plum);background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.045) 0 2px,transparent 2px 7px);padding:12px 14px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:Lora,Georgia,serif;font-style:italic;font-size:13px;line-height:17px;color:var(--gold-light)}
 .foot a{color:var(--gold-light)}
+/* Warranty and liability terms have to be conspicuous to bind; a tinted
+   rule-marked block does that without a wall of capitals nobody reads. */
+.legal{background:var(--neu-bg);border-left:3px solid var(--gold);padding:10px 12px;border-radius:0 8px 8px 0}
 </style></head><body><main>${body}</main></body></html>`;
   return { status, html };
 }
