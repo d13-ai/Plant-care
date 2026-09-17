@@ -115,7 +115,7 @@ export default function Greenhouse() {
       {data && data.length === 0 ? (
         <View style={styles.empty}>
           <Card>
-            <Heading>Start your parlour</Heading>
+            <Heading>Your parlour's empty</Heading>
             <Body muted>
               Add a plant with a photo. Log when you water, feed or repot it, and it'll tell you
               what's due. It's all kept in your account, so it follows you to any phone you sign
