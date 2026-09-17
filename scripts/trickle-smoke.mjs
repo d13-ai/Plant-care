@@ -1,5 +1,5 @@
 /**
- * Trickle, steps 1–6 — core, persistence, practice, sync, sound, daily.
+ * Trickle, steps 1–7 — core, persistence, practice, sync, sound, daily, embed.
  *
  * Drives the real page in Chromium the way the spec's reference tests do:
  * clicking tiles until each svg's rotation is a multiple of 360°, which is
@@ -11,6 +11,7 @@
  */
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { chromium } from "playwright";
 
 const PAGE = readFileSync("public/parlour-games/trickle.html", "utf8");
@@ -633,6 +634,75 @@ try {
     if (carried.out.streak !== 2) throw new Error(`yesterday then today gave streak ${carried.out.streak}`);
     const broken = await run({ last: today - 3, streak: 9, best: 40, played: 9 });
     if (broken.out.streak !== 1) throw new Error(`a three-day gap kept streak ${broken.out.streak}`);
+  });
+
+  await step("embedded, it loses its chrome and keeps its game", async () => {
+    const ctx = await browser.newContext({ viewport: { width: 560, height: 900 } });
+    const host = await ctx.newPage();
+    // A page that frames it, the way somebody else's site would.
+    await host.setContent(`<!doctype html><title>Host</title>
+      <p>Someone else's page.</p>
+      <iframe src="http://localhost:4610/?embed=1" width="100%" height="700"
+              style="border:0" title="Trickle"></iframe>`);
+    const frame = host.frameLocator("iframe");
+    await frame.locator(".tile").first().waitFor({ timeout: 10000 });
+
+    // Evaluated inside the frame: the host page is a different origin, so
+    // reaching in through contentDocument gets null.
+    const inner = host.frames().find((f) => f.url().includes("embed=1"));
+    if (!inner) throw new Error("the iframe never loaded");
+    const hidden = await inner.evaluate(() => {
+      const gone = (sel) => {
+        const el = document.querySelector(sel);
+        return !el || getComputedStyle(el).display === "none" || el.hidden;
+      };
+      return {
+        masthead: gone("h1"),
+        tagline: gone(".tagline"),
+        nav: gone(".hub"),
+        save: gone(".save"),
+        credit: !document.getElementById("credit").hidden,
+        targets: [...document.querySelectorAll("a")].every((a) => a.target === "_blank"),
+      };
+    });
+    for (const [what, ok] of Object.entries(hidden)) {
+      if (!ok) throw new Error(`embed: ${what} is wrong`);
+    }
+
+    // And it is still a game, not a picture of one.
+    const before = await frame.locator("#moves").textContent();
+    await frame.locator(".tile").nth(3).click();
+    const after = await frame.locator("#moves").textContent();
+    if (after === before) throw new Error("the framed board does not respond to a tap");
+    await ctx.close();
+  });
+
+  await step("only the embed route is allowed to be framed", async () => {
+    // The header lives in vercel.json, which the local server does not run,
+    // so this asserts the config rather than a live response. The live check
+    // happens against the deploy.
+    const config = JSON.parse(await readFile("vercel.json", "utf8"));
+    const embed = config.headers.find((h) => h.source === "/parlour-games/trickle/embed");
+    if (!embed) throw new Error("no header rule for the embed route");
+    const csp = embed.headers.find((h) => h.key === "Content-Security-Policy");
+    if (!csp || !/frame-ancestors \*/.test(csp.value)) {
+      throw new Error(`the embed route's CSP reads ${JSON.stringify(csp && csp.value)}`);
+    }
+    const app = config.headers[0];
+    const appCsp = app.headers.find((h) => h.key === "Content-Security-Policy");
+    if (!appCsp || !/frame-ancestors 'none'/.test(appCsp.value)) {
+      throw new Error("the app's own routes are still framable");
+    }
+    // The app block must exclude the embed route, or both rules fight over it.
+    if (!app.source.includes("parlour-games/trickle/embed$")) {
+      throw new Error("the embed route is not excluded from the app's header rule");
+    }
+    const rewrite = config.rewrites.find((r) => r.source === "/parlour-games/trickle/embed");
+    if (!rewrite) throw new Error("no rewrite for the embed route");
+    const catchAll = config.rewrites.findIndex((r) => r.source === "/(.*)");
+    if (config.rewrites.indexOf(rewrite) > catchAll) {
+      throw new Error("the embed rewrite sits after the catch-all, so it never runs");
+    }
   });
 
   if (errors.length) {

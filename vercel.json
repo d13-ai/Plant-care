@@ -6,7 +6,7 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/((?!tag$|@|api/|plant-photos/|privacy$|terms$).*)",
+      "source": "/((?!tag$|@|api/|plant-photos/|privacy$|terms$|parlour-games/trickle/embed$).*)",
       "headers": [
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -15,6 +15,10 @@
         {
           "key": "Cross-Origin-Embedder-Policy",
           "value": "require-corp"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'none'"
         }
       ]
     },
@@ -24,6 +28,19 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/parlour-games/trickle/embed",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors *"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "ALLOWALL"
         }
       ]
     }
@@ -63,6 +80,18 @@
     {
       "source": "/terms",
       "destination": "/api/terms"
+    },
+    {
+      "source": "/parlour-games/trickle/embed",
+      "destination": "/parlour-games/trickle"
+    },
+    {
+      "source": "/parlour-games/trickle/learn",
+      "destination": "/parlour-games/trickle"
+    },
+    {
+      "source": "/parlour-games/trickle/daily",
+      "destination": "/parlour-games/trickle"
     },
     {
       "source": "/(.*)",
