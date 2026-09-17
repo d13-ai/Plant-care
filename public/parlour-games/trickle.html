@@ -198,9 +198,16 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
   </div>
 </main>
 
+<script src="/parlour-games/harness.js"></script>
 <script>
 (function () {
   "use strict";
+
+  /* Everything that is the arcade's rather than this game's: the shared
+     calendar, the streak, the account sync, night, the sound engine. The one
+     thing this page fetches. */
+  var P = window.Parlour;
+  var read = P.read, write = P.write;
 
   /* ---- tile model: four bits, one per opening -------------------------- */
   var DIRS = [
@@ -214,9 +221,11 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
     return ((mask << r) | (mask >> (4 - r))) & 15;
   }
 
-  /* Modes are read from the URL at startup. Only practice so far; daily and
-     embed join it later, and practice wins over both. */
-  var LEARN = /[?&]learn=1/.test(location.search) || /\/learn\/?$/.test(location.pathname);
+  /* Practice wins over the daily board; embed combines with either rather
+     than replacing them. Every game has the same three, so the reading of
+     them is the harness's. */
+  var modes = P.mode();
+  var LEARN = modes.learn;
 
   /* The practice board is fixed, so the coaching can be written for it: six
      taps, and exactly one tile two turns off so "one more turn" happens once.
@@ -228,33 +237,20 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
     source: 4
   };
 
-  var DAILY = !LEARN && (/[?&]daily=1/.test(location.search) || /\/daily\/?$/.test(location.pathname));
-  /* Embed combines with either of the other two rather than replacing them. */
-  var EMBED = /[?&]embed=1/.test(location.search) || /\/embed\/?$/.test(location.pathname);
+  var DAILY = modes.daily;
+  var EMBED = modes.embed;
 
-  /* One board a day, the same for everyone.
-   *
-   * DAILY_EPOCH is board #1. Changing it re-deals every past board, so it is
-   * fixed at the day this shipped and must not move once anyone has played.
-   * The PRNG is the spec's mulberry32 for the same reason. */
-  var DAILY_N = 6, DAILY_EPOCH = Date.UTC(2026, 8, 17);
-  function dailyNumber(when) {
-    var d = when || new Date();
-    return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - DAILY_EPOCH) / 86400000) + 1;
-  }
-  function mulberry32(a) {
-    return function () {
-      a |= 0; a = a + 0x6D2B79F5 | 0;
-      var t = Math.imul(a ^ a >>> 15, 1 | a);
-      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-      return ((t ^ t >>> 14) >>> 0) / 4294967296;
-    };
-  }
+  /* One board a day, the same for everyone. The calendar and the PRNG are
+     the arcade's: day 1 is the same day in every game, so "today's board"
+     means one thing across Parlour Games, and a board dealt here matches one
+     dealt by any other port of the spec on the same day. */
+  var DAILY_N = 6;
+  var dailyNumber = P.dayNumber;
   function dailyBoard(num) {
     /* A board that scrambles into a solved state is no board at all, so try
        the next salt rather than handing somebody a finished puzzle. */
     for (var salt = 0; salt < 8; salt++) {
-      var rnd = mulberry32((num * 2654435761 + salt * 97) >>> 0);
+      var rnd = P.mulberry32((num * 2654435761 + salt * 97) >>> 0);
       var masks = buildMasks(DAILY_N, rnd), turns = scramble(masks, rnd), par = parOf(masks, turns);
       if (par > 0) {
         /* Source 14 is the spec's, so a board here matches one dealt by any
@@ -269,8 +265,9 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
   var tiles = [];
 
   /* ---- storage --------------------------------------------------------- */
-  /* Every call is wrapped: a private window throws on access, and losing a
-     saved board is never worth losing the game over. */
+  /* read and write come from the harness, wrapped: a private window throws
+     on access, and losing a saved board is never worth losing the game
+     over. */
   var KEY = {
     board: "pp_trickle_board",   /* the board in play; "" once finished */
     done: "pp_trickle_done",     /* boards finished */
@@ -282,106 +279,81 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
     music: "pp_trickle_music",
     daily: "pp_trickle_daily"
   };
-  function read(key, fallback) {
-    try {
-      var raw = window.localStorage.getItem(key);
-      if (!raw) return fallback;
-      return JSON.parse(raw);
-    } catch (e) { return fallback; }
-  }
-  function write(key, value) {
-    try {
-      window.localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
-    } catch (e) { /* nothing to do, and nothing worth breaking for */ }
-  }
 
   var stats = read(KEY.stats, null) || { total_turns: 0, nudges: 0, best_turns: {}, last_played: null };
   if (!stats.best_turns) stats.best_turns = {};
 
-  /* ---- account sync ---------------------------------------------------- */
-  /* Same origin as the app, so the session it already holds is right here.
-     Signing in must never make things worse, so nothing is ever replaced --
-     the two sides are merged and the better half of each pair wins. */
-  var SB_URL = "https://ixagjvntbgyqemxxinqe.supabase.co";
-  var SB_KEY = "sb_publishable__A5fA6nyI8nrSqJWfaaJBQ_vqEZdRn6";
-  var SB_SESSION_KEY = "sb-ixagjvntbgyqemxxinqe-auth-token";
-  var SIGN_IN_URL = "/account";
+  /* The streak used to live in here, before there was an arcade to keep it
+     for. Lift anyone's existing run across once, then stop carrying it, so
+     nobody's run resets on the day this ships. */
+  if (stats.daily) {
+    P.adoptLegacyStreak(stats.daily);
+    if (stats.daily.best != null && stats.daily_best == null) stats.daily_best = stats.daily.best;
+    delete stats.daily;
+    write(KEY.stats, stats);
+  }
 
+  /* ---- account sync ---------------------------------------------------- */
+  /* The transport, the row and the streak belong to the harness. What this
+     game owns is how two copies of its own progress fold together, because
+     only it knows which of its numbers wants the larger and which the
+     smaller. Signing in must never make things worse, so nothing is ever
+     replaced -- the two sides are merged and the better half of each pair
+     wins. */
   var bigger = function (a, b) { return Math.max(a | 0, b | 0); };
 
   /**
-   * Merge what is on this device with what the account holds.
+   * Merge what is on this device with what the account holds. Both sides are
+   * now the same shape, which they were not while the remote half was a row
+   * of columns.
    * Counts and totals take the larger; fewest-turns takes the smaller; a
    * board nobody has touched never displaces one somebody played.
    */
   function mergeProgress(local, remote) {
     if (!remote) return local;
+    var rStats = remote.stats || {};
     var out = {
-      done: bigger(local.done, remote.boards_finished),
+      done: bigger(local.done, remote.done),
       bySize: {},
       stats: {
-        total_turns: bigger(local.stats.total_turns, (remote.stats || {}).total_turns),
-        nudges: bigger(local.stats.nudges, (remote.stats || {}).nudges),
+        total_turns: bigger(local.stats.total_turns, rStats.total_turns),
+        nudges: bigger(local.stats.nudges, rStats.nudges),
         best_turns: {},
-        last_played: null
+        last_played: null,
+        daily_best: null
       },
       board: null
     };
 
-    var sizes = {}, rBySize = remote.boards_by_size || {};
+    var sizes = {}, rBySize = remote.bySize || {};
     Object.keys(local.bySize || {}).forEach(function (k) { sizes[k] = 1; });
     Object.keys(rBySize).forEach(function (k) { sizes[k] = 1; });
     Object.keys(sizes).forEach(function (k) {
       out.bySize[k] = bigger((local.bySize || {})[k], rBySize[k]);
     });
 
-    /* Fewest turns is the one number where smaller wins. */
-    var lBest = local.stats.best_turns || {}, rBest = (remote.stats || {}).best_turns || {}, bests = {};
+    /* Fewest turns is the one number where smaller wins -- at each size, and
+       on the daily board. */
+    var lBest = local.stats.best_turns || {}, rBest = rStats.best_turns || {}, bests = {};
     Object.keys(lBest).forEach(function (k) { bests[k] = 1; });
     Object.keys(rBest).forEach(function (k) { bests[k] = 1; });
     Object.keys(bests).forEach(function (k) {
       var a = lBest[k], b = rBest[k];
       out.stats.best_turns[k] = a == null ? b : b == null ? a : Math.min(a, b);
     });
+    var lDaily = local.stats.daily_best, rDaily = rStats.daily_best;
+    out.stats.daily_best = lDaily == null ? rDaily : rDaily == null ? lDaily : Math.min(lDaily, rDaily);
 
-    var lPlayed = local.stats.last_played, rPlayed = (remote.stats || {}).last_played;
+    var lPlayed = local.stats.last_played, rPlayed = rStats.last_played;
     out.stats.last_played = !lPlayed ? rPlayed : !rPlayed ? lPlayed : (lPlayed > rPlayed ? lPlayed : rPlayed);
 
     /* A board just dealt on load has no moves in it; it must not push aside
        one somebody actually played on another device. */
     var lb = local.board && local.board.moves > 0 ? local.board : null;
-    var rb = remote.current_board && remote.current_board.moves > 0 ? remote.current_board : null;
+    var rb = remote.board && remote.board.moves > 0 ? remote.board : null;
     if (lb && rb) out.board = (lb.saved_at || "") >= (rb.saved_at || "") ? lb : rb;
-    else out.board = lb || rb || local.board || remote.current_board || null;
+    else out.board = lb || rb || local.board || remote.board || null;
     return out;
-  }
-
-  /* The session the app already put in localStorage. Signed out, this is
-     null and nothing is ever sent. */
-  function session() {
-    var raw = read(SB_SESSION_KEY, null);
-    return raw && raw.access_token && raw.user && raw.user.id ? raw : null;
-  }
-
-  /* An expired token is refreshed and written back in the same shape, so the
-     app picks up the refreshed session too. */
-  async function token() {
-    var s = session();
-    if (!s) return null;
-    var now = Math.floor(Date.now() / 1000);
-    if (!s.expires_at || s.expires_at - 60 > now) return s.access_token;
-    try {
-      var res = await fetch(SB_URL + "/auth/v1/token?grant_type=refresh_token", {
-        method: "POST",
-        headers: { apikey: SB_KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token: s.refresh_token })
-      });
-      if (!res.ok) return null;
-      var next = await res.json();
-      if (!next.access_token) return null;
-      write(SB_SESSION_KEY, next);
-      return next.access_token;
-    } catch (e) { return null; }
   }
 
   function localProgress() {
@@ -400,225 +372,56 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
     stats = merged.stats;
     write(KEY.stats, stats);
     showRecords();
+
+    /* A board from another device is only taken up when nothing is in play
+       here, so it can never interrupt a game mid-turn. */
+    if (merged.board && !state.done && state.moves === 0 && !LEARN && !DAILY) {
+      if (merged.board.n && merged.board.moves > 0) {
+        write(KEY.board, merged.board);
+        build(merged.board.n, merged.board);
+      }
+    }
   }
 
-  async function pushProgress() {
-    var access = await token();
-    if (!access) return;
-    var p = localProgress();
-    try {
-      await fetch(SB_URL + "/rest/v1/game_progress", {
-        method: "POST",
-        headers: {
-          apikey: SB_KEY,
-          Authorization: "Bearer " + access,
-          "Content-Type": "application/json",
-          Prefer: "resolution=merge-duplicates,return=minimal"
-        },
-        body: JSON.stringify({
-          user_id: session().user.id,
-          boards_finished: p.done,
-          boards_by_size: p.bySize,
-          current_board: p.board,
-          stats: p.stats,
-          updated_at: new Date().toISOString()
-        })
-      });
-    } catch (e) { /* the local copy is still right; try again next time */ }
-  }
+  var progress = P.sync({
+    game: "trickle",
+    local: localProgress,
+    merge: mergeProgress,
+    apply: applyProgress,
+    onStatus: showSaveLine
+  });
 
   /* Board saves are debounced; a finished board goes at once. */
-  var pushTimer = null;
-  function schedulePush(immediate) {
-    if (!session()) return;
-    if (pushTimer) clearTimeout(pushTimer);
-    if (immediate) { pushProgress(); return; }
-    pushTimer = setTimeout(function () { pushTimer = null; pushProgress(); }, 1500);
-  }
+  function schedulePush(immediate) { progress.push(immediate); }
 
-  async function pullProgress() {
-    var access = await token();
-    if (!access) { showSaveLine(); return; }
-    try {
-      var res = await fetch(
-        SB_URL + "/rest/v1/game_progress?select=*&user_id=eq." + encodeURIComponent(session().user.id),
-        { headers: { apikey: SB_KEY, Authorization: "Bearer " + access } }
-      );
-      if (!res.ok) { showSaveLine(); return; }
-      var rows = await res.json();
-      var merged = mergeProgress(localProgress(), rows && rows[0]);
-      applyProgress(merged);
-      /* A board from another device is only taken up when nothing is in play
-         here, so it can never interrupt a game mid-turn. */
-      if (merged.board && !state.done && state.moves === 0 && !LEARN) {
-        if (merged.board.n && merged.board.moves > 0) {
-          write(KEY.board, merged.board);
-          build(merged.board.n, merged.board);
-        }
-      }
-      showSaveLine();
-      pushProgress();
-    } catch (e) { showSaveLine(); }
-  }
-
-  function showSaveLine() {
+  function showSaveLine(signedIn) {
     var el = document.getElementById("save");
     if (LEARN || EMBED) { el.textContent = ""; return; }
-    el.innerHTML = session()
+    el.innerHTML = signedIn
       ? "Saved to your account."
-      : '<a href="' + SIGN_IN_URL + '">Sign in</a> to keep your progress across devices.';
+      : '<a href="' + P.signInUrl + '">Sign in</a> to keep your progress across devices.';
   }
 
   /* ---- sound ----------------------------------------------------------- */
-  /* Everything is synthesised: nothing to download, nothing to fail. A
-     browser only starts audio after a gesture, so the context is created on
-     the first tap and a suspended one is resumed. */
-  var AC = null, master = null, analyser = null, wet = null;
-  var soundOn = read(KEY.sound, false) === true;
-  var musicPref = read(KEY.music, null);          /* null: never chosen */
-  var musicOn = false, musicTimer = null, step16 = 0, nextNoteAt = 0, pass = 0;
-
-  var BPM = 66, STEP = 60 / BPM / 2, D3 = 146.83;
-  /* One dial for the whole mix. The spec's reference measures peak 0.30 and
-     mean RMS 0.06 on the master bus; the first pass here came out at 0.068
-     and 0.015, which is on but inaudible. Tuned against the analyser rather
-     than by ear, since there is no ear in a test run. */
-  var MIX = 4;
-  var MOTIF = [19, 16, 14, 12, 14, 16, 19, 21, 19, 16, 14, 12, null, 14, 12, null];
-  var CHORDS = [[0, 4, 7], [-3, 0, 4], [-7, -3, 0], [-5, -1, 2]];   /* D Bm G A */
-  var BLIPS = [329.63, 392, 440, 523.25, 587.33];
-  var hz = function (semi) { return D3 * Math.pow(2, semi / 12); };
-
-  function audio() {
-    if (AC) return AC;
-    var Ctor = window.AudioContext || window.webkitAudioContext;
-    if (!Ctor) return null;
-    try { AC = new Ctor(); } catch (e) { return null; }
-    master = AC.createGain();
-    master.gain.value = 1;
-    /* A delay alongside the dry signal, then a low-pass, so nothing is
-       sharp enough to jar. */
-    var lp = AC.createBiquadFilter();
-    lp.type = "lowpass"; lp.frequency.value = 1600; lp.Q.value = 0.4;
-    var delay = AC.createDelay(1);
-    delay.delayTime.value = 0.41;
-    var fb = AC.createGain(); fb.gain.value = 0.32;
-    wet = AC.createGain(); wet.gain.value = 0.28;
-    master.connect(lp);
-    master.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(lp);
-    analyser = AC.createAnalyser();
-    analyser.fftSize = 2048;
-    lp.connect(analyser);
-    analyser.connect(AC.destination);
-    return AC;
-  }
-  function wake() {
-    var ac = audio();
-    if (ac && ac.state === "suspended") ac.resume();
-    return ac;
-  }
-
-  function blip(i) {
-    if (!soundOn) return;
-    var ac = wake(); if (!ac) return;
-    var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
-    o.type = "sine";
-    o.frequency.value = BLIPS[i % BLIPS.length];
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(0.05 * MIX, t + 0.015);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
-    o.connect(g); g.connect(master);
-    o.start(t); o.stop(t + 0.25);
-  }
-  function fanfare() {
-    if (!soundOn) return;
-    var ac = wake(); if (!ac) return;
-    [0, 1, 2, 3].forEach(function (k) {
-      var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + k * 0.11;
-      o.type = "sine";
-      o.frequency.value = BLIPS[k + 1] || BLIPS[BLIPS.length - 1];
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.linearRampToValueAtTime(0.06 * MIX, t + 0.015);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
-      o.connect(g); g.connect(master);
-      o.start(t); o.stop(t + 0.4);
-    });
-  }
-
-  /* One voice: an oscillator with a slow swell, so nothing ever clicks. */
-  function voice(type, frequency, at, dur, peak, attack, detune) {
-    var o = AC.createOscillator(), g = AC.createGain();
-    o.type = type;
-    o.frequency.value = frequency;
-    if (detune) o.detune.value = detune;
-    g.gain.setValueAtTime(0.0001, at);
-    g.gain.linearRampToValueAtTime(peak, at + attack);
-    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
-    o.connect(g); g.connect(master);
-    o.start(at); o.stop(at + dur + 0.05);
-  }
-
-  /* Scheduled half a second ahead on a short interval: WebAudio keeps time,
-     setInterval only decides what to hand it. */
-  function schedule() {
-    if (!musicOn || !AC) return;
-    while (nextNoteAt < AC.currentTime + 0.5) {
-      var at = Math.max(nextNoteAt, AC.currentTime + 0.02);
-      var semi = MOTIF[step16];
-      if (semi != null) {
-        voice("sine", hz(semi), at, 0.9, 0.05 * MIX, 0.02, 0);
-        /* Every fourth pass answers an octave up, quieter. */
-        if (pass % 4 === 3) voice("sine", hz(semi + 12), at, 0.7, 0.022 * MIX, 0.02, 0);
-        /* And now and then a fifth above, a half-step behind, as a glint. */
-        if (Math.random() < 0.08) voice("sine", hz(semi + 19), at + 0.5 * STEP, 0.5, 0.018 * MIX, 0.02, 0);
-      }
-      if (step16 === 0) {
-        var chord = CHORDS[(pass % CHORDS.length + CHORDS.length) % CHORDS.length];
-        var bar = STEP * 16;
-        chord.forEach(function (n) {
-          voice("triangle", hz(n), at, bar, 0.016 * MIX, 1.6, 5);
-          voice("triangle", hz(n), at, bar, 0.016 * MIX, 1.6, -5);
-        });
-        voice("sine", hz(chord[0] - 12), at, bar, 0.03 * MIX, 0.6, 0);
-      }
-      nextNoteAt = at + STEP;
-      step16 += 1;
-      if (step16 === 16) { step16 = 0; pass += 1; }
-    }
-  }
-
-  function startMusic() {
-    var ac = wake(); if (!ac) return;
-    if (musicOn) return;
-    musicOn = true;
-    step16 = 0; pass = 0;
-    nextNoteAt = ac.currentTime + 0.1;
-    master.gain.cancelScheduledValues(ac.currentTime);
-    master.gain.setValueAtTime(Math.max(master.gain.value, 0.0001), ac.currentTime);
-    master.gain.linearRampToValueAtTime(1, ac.currentTime + 2.5);
-    musicTimer = setInterval(schedule, 120);
-    schedule();
-  }
-  function stopMusic() {
-    musicOn = false;
-    if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
-    if (AC && master) {
-      master.gain.cancelScheduledValues(AC.currentTime);
-      master.gain.setValueAtTime(master.gain.value, AC.currentTime);
-      master.gain.linearRampToValueAtTime(0.0001, AC.currentTime + 1.2);
-      setTimeout(function () { if (!musicOn && master) master.gain.value = 1; }, 1300);
-    }
-  }
-
-  /* A tab nobody is looking at should be silent. */
-  document.addEventListener("visibilitychange", function () {
-    if (document.hidden) {
-      if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
-    } else if (musicOn && !musicTimer) {
-      if (AC) nextNoteAt = AC.currentTime + 0.1;
-      musicTimer = setInterval(schedule, 120);
-    }
+  /* The engine is the harness's -- oscillators, the delay, the scheduler,
+     one dial for the whole bus. What stays here is the tune, because that is
+     the part that is Trickle's.
+     MIX is tuned against the analyser rather than by ear, since there is no
+     ear in a test run: the spec's reference measures peak 0.30 and mean RMS
+     0.06 on the master bus, and the first pass came out at 0.068 and 0.015,
+     which is on but inaudible. */
+  var snd = P.sound({
+    key: KEY.sound,
+    mix: 4,
+    bpm: 66,
+    root: 146.83,                                                  /* D3 */
+    motif: [19, 16, 14, 12, 14, 16, 19, 21, 19, 16, 14, 12, null, 14, 12, null],
+    chords: [[0, 4, 7], [-3, 0, 4], [-7, -3, 0], [-5, -1, 2]],      /* D Bm G A */
+    blips: [329.63, 392, 440, 523.25, 587.33]
   });
+  var musicPref = read(KEY.music, null);          /* null: never chosen */
+  function blip(i) { snd.blip(i); }
+  function fanfare() { snd.fanfare(); }
 
   function saveDaily() {
     write(KEY.daily, {
@@ -873,21 +676,19 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
     var n = state.n;
 
     if (DAILY) {
-      var d = stats.daily || { last: null, streak: 0, best: null, played: 0 };
       /* Only the first finish of a day counts, so a reload cannot inflate
-         anything. */
+         anything. The streak itself is the arcade's -- playing any Parlour
+         game today keeps it alive -- so it is recorded rather than worked
+         out here, and this page never writes it. */
       if (!state.alreadyDone && !wasDone) {
-        /* A streak is consecutive day numbers; a gap ends it. */
-        d.streak = d.last === state.num - 1 ? (d.streak | 0) + 1 : 1;
-        d.last = state.num;
-        d.played = (d.played | 0) + 1;
-        if (d.best == null || state.moves < d.best) d.best = state.moves;
-        stats.daily = d;
+        P.recordPlay(state.num);
+        if (stats.daily_best == null || state.moves < stats.daily_best) stats.daily_best = state.moves;
         stats.total_turns += state.moves;
         stats.last_played = new Date().toISOString();
         write(KEY.stats, stats);
         state.alreadyDone = true;
       }
+      var d = P.getStreak();
       saveDaily();
       schedulePush(true);
       winLine.textContent =
@@ -952,9 +753,7 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
   function tickCountdown() {
     var el = document.getElementById("countdown");
     if (!el) return;
-    var now = new Date();
-    var midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    var left = Math.max(0, midnight - now);
+    var left = Math.max(0, P.msUntilTomorrow());
     var h = Math.floor(left / 3600000), m = Math.floor(left / 60000) % 60;
     el.textContent = "A new board in " + (h > 0 ? h + "h " : "") + m + "m.";
     if (!countdownTimer) countdownTimer = setInterval(tickCountdown, 30000);
@@ -977,7 +776,7 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
     if (rotate(state.masks[i], 1) === state.masks[i]) return;
     var wanted = LEARN ? hintTile() : -1;
     blip(i);
-    if (musicShouldPlay() && !musicOn) startMusic();   /* a remembered choice, waiting for a tap */
+    if (musicShouldPlay() && !snd.musicRunning()) snd.startMusic();  /* a remembered choice, waiting for a tap */
     state.turns[i] += 1;
     state.moves += 1;
     state.focus = i;
@@ -1058,20 +857,12 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
   /* ---- night ----------------------------------------------------------- */
   /* Unset follows the clock, so the first evening visit is already dark
      without anybody choosing. Choosing once wins from then on. */
-  function clockSaysNight() {
-    var h = new Date().getHours();
-    return h >= 21 || h < 6;
-  }
-  var nightPref = read(KEY.night, null);
-  function nightIsOn() { return nightPref == null ? clockSaysNight() : nightPref === true; }
-  function applyNight() {
-    var on = nightIsOn();
-    document.body.classList.toggle("night", on);
-    var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", on ? "#140A17" : "#2E1633");
-    document.getElementById("night").classList.toggle("on", on);
-    document.getElementById("night").setAttribute("aria-pressed", String(on));
-  }
+  var night = P.night({
+    key: KEY.night,
+    onApply: function (on) { setToggle("night", on); }
+  });
+  var nightIsOn = night.isOn;
+  var applyNight = night.apply;
 
   function setToggle(id, on) {
     var b = document.getElementById(id);
@@ -1086,15 +877,14 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
   function refreshMusic(fromGesture) {
     var want = musicShouldPlay();
     setToggle("music", want);
-    if (want && fromGesture) startMusic();
-    else if (!want && musicOn) stopMusic();
+    if (want && fromGesture) snd.startMusic();
+    else if (!want && snd.musicRunning()) snd.stopMusic();
   }
 
   document.getElementById("sound").addEventListener("click", function () {
-    soundOn = !soundOn;
-    write(KEY.sound, soundOn);
-    setToggle("sound", soundOn);
-    if (soundOn) blip(0);
+    snd.setOn(!snd.isOn());
+    setToggle("sound", snd.isOn());
+    if (snd.isOn()) blip(0);
   });
   document.getElementById("music").addEventListener("click", function () {
     musicPref = !musicShouldPlay();
@@ -1102,14 +892,12 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
     refreshMusic(true);
   });
   document.getElementById("night").addEventListener("click", function () {
-    nightPref = !nightIsOn();
-    write(KEY.night, nightPref);
-    applyNight();
+    night.toggle();
     refreshMusic(true);
   });
 
   applyNight();
-  setToggle("sound", soundOn);
+  setToggle("sound", snd.isOn());
   setToggle("music", musicShouldPlay());
 
   /* Practice has no sizes, no new board and no way back into itself. */
@@ -1168,23 +956,20 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed .save{display:none}
     if (sizeBtn) sizeBtn.classList.add("on");
     build(startSize, resume);
   }
-  showSaveLine();
-  if (!LEARN) pullProgress();
+  /* Drawn from the session already in hand, so somebody signed in is not
+     told to sign in for the second it takes the pull to answer. */
+  showSaveLine(!!P.session());
+  if (!LEARN) progress.pull();
 
   /* The test script drives the page; it needs to see the state. */
   /* The test needs to measure the bus rather than take its level on trust. */
   window.__game = {
     state: state, liveMask: liveMask, computeFlow: computeFlow, mergeProgress: mergeProgress,
-    musicPlaying: function () { return musicOn && !!musicTimer; },
+    musicPlaying: snd.musicAudible,
     dailyNumber: dailyNumber, dailyBoard: dailyBoard,
-    levels: function () {
-      if (!analyser) return null;
-      var buf = new Float32Array(analyser.fftSize);
-      analyser.getFloatTimeDomainData(buf);
-      var peak = 0, sum = 0;
-      for (var i = 0; i < buf.length; i++) { var v = Math.abs(buf[i]); if (v > peak) peak = v; sum += buf[i] * buf[i]; }
-      return { peak: peak, rms: Math.sqrt(sum / buf.length) };
-    }
+    streak: P.getStreak,
+    /* The test measures the bus rather than taking its level on trust. */
+    levels: snd.levels
   };
 })();
 </script>

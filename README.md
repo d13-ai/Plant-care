@@ -489,6 +489,20 @@ practice mode, and an embeddable build at `/parlour-games/trickle/embed`
 `frame-ancestors 'none'`). Progress syncs through `game_progress`, RLS'd to
 its owner like everything else.
 
+What the games share lives in `public/parlour-games/harness.js`, loaded from
+that absolute path because each game is served at several URLs and a relative
+`src` would resolve differently at each: the calendar the daily boards are
+counted from, the streak, the account sync, night mode, the sound engine, and
+the storage wrappers. It is the only thing a game fetches; everything else
+stays inline. Its pure rules are unit-tested in `harness.test.ts`, which is
+what the extraction was for — the streak merge that lived inside Trickle
+dropped a signed-in keeper's streak on every pull, and nothing could see it
+until the code came out where a test could reach it.
+
+`game_progress` is keyed `(user_id, game)` with one opaque `progress` blob per
+game; the reserved name `parlour` holds the streak, which is shared across
+every game rather than kept per game.
+
 The way in from the app is two links in the greenhouse: a card shown only when
 nothing needs attention, and a permanent one at the foot of the plant list.
 Both point at the hub rather than at a game, so the destination stays right as

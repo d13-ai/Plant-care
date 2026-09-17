@@ -44,12 +44,19 @@ Two decisions that follow from this:
    for the platforms that want one. Blocked *only* on the analytics half of
    Trickle step 8 — the share half has no such dependency and should be split
    out and shipped.
-2. **Extract the shared harness.** Roughly 400 lines currently live inside
-   `trickle.html`: the seeded daily board, the streak, progress sync against
-   `game_progress`, the sound engine, night mode, and the storage wrappers
-   that swallow a locked-down browser. Copy that into a second game and the
-   third one becomes a maintenance problem. Extract once, and game two costs
-   about half what Trickle cost.
+2. ~~**Extract the shared harness.**~~ **Done.** `public/parlour-games/harness.js`
+   holds the shared calendar, the streak, the account sync, night mode, the
+   sound engine and the storage wrappers; Trickle lost 217 lines and gained a
+   single `<script src>`. `game_progress` is now keyed `(user_id, game)` with
+   one opaque `progress` blob per game, so a second game needs no migration
+   of its own.
+
+   It paid for itself immediately. Trickle's merge rebuilt its stats object
+   field by field and silently dropped `stats.daily`, so **every pull wiped a
+   signed-in keeper's streak and then pushed the wipe to the server** — the
+   streak worked only for people who were signed out, which is why the smoke
+   test never saw it. The streak now belongs to the harness and no game can
+   reach it; there is a test that breaks if one can.
 3. **Windowsill.** Next game. Spec in `docs/windowsill-spec.md`.
 4. **Thicket.** Later.
 5. **Roots.** Later.
