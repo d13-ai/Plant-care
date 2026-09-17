@@ -150,8 +150,11 @@ try {
   });
 
   await step("finishing clears the board in play and counts it", async () => {
-    const stored = await page.evaluate(() => localStorage.getItem("pp_trickle_board"));
-    if (stored !== "") throw new Error(`a finished board is still saved: ${JSON.stringify(stored)}`);
+    // Asked of the harness rather than of the raw string, because how a
+    // value is encoded on the way in is its business -- what matters is that
+    // nothing is left to restore.
+    const stored = await page.evaluate(() => window.Parlour.read("pp_trickle_board", null));
+    if (stored) throw new Error(`a finished board is still saved: ${JSON.stringify(stored)}`);
     const done = await page.evaluate(() => Number(localStorage.getItem("pp_trickle_done")));
     if (done < 1) throw new Error(`boards finished reads ${done}`);
     const bySize = await page.evaluate(() => JSON.parse(localStorage.getItem("pp_trickle_by_size")));

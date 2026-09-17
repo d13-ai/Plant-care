@@ -94,6 +94,10 @@
       "destination": "/parlour-games/trickle"
     },
     {
+      "source": "/parlour-games/windowsill/learn",
+      "destination": "/parlour-games/windowsill"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }

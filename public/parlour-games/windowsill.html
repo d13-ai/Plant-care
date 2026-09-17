@@ -49,6 +49,30 @@ h1{font-family:Lora,Georgia,"Times New Roman",serif;font-weight:700;font-size:30
 .hub{text-align:center;font-size:14px;margin:14px 0 0}
 .hub a{color:var(--gold-light)}
 
+/* ---- how big a shelf ---- */
+/* The three shapes are the difficulty, and they are measured rather than
+   named by feel: each one deals boards with a set number of ways out. */
+/* ---- practice ---- */
+/* Its own voice: a line that answers whatever just happened, in the place
+   the eye already is. Lora, so it reads as somebody talking rather than as
+   part of the machinery. */
+#coach{
+  margin:16px 0 0;background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:13px 16px;font-family:Lora,Georgia,serif;
+  font-size:15px;line-height:1.45;color:var(--cream);min-height:3.4em;
+}
+body.learn .shelves,body.learn #new{display:none}
+
+.shelves{display:flex;gap:8px;justify-content:center;margin:16px 0 0}
+.shelves button{
+  background:none;border:1px solid var(--border);border-radius:9px;
+  color:var(--muted);font:inherit;font-size:14px;padding:8px 14px;
+  min-height:44px;cursor:pointer;
+}
+.shelves button.on{border-color:var(--gold);color:var(--gold-light);font-weight:700}
+.shelves button:focus-visible{outline:2px solid var(--gold-light);outline-offset:2px}
+.actions{display:flex;gap:8px;white-space:nowrap}
+
 /* ---- the shelf ---- */
 /* Light comes in from the left, so a "run" is a row: one line of cells going
    back from the glass, and the runs are independent of each other.
@@ -127,7 +151,11 @@ h2{font-family:Lora,Georgia,serif;font-size:17px;margin:24px 0 8px}
 .chip small{color:var(--muted);font-size:12px}
 #tray-empty{color:var(--muted);font-size:14px;margin:0;align-self:center}
 
-.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px;font-size:14px;color:var(--muted)}
+/* Wraps rather than squeezing: at 390px with two buttons in it, "9
+   placements · par 15" was breaking across two lines mid-phrase. */
+.bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px 12px;margin-top:18px;font-size:14px;color:var(--muted)}
+.bar #moves{white-space:nowrap}
+.actions{margin-left:auto}
 /* Always there, because taking the whole thing apart and starting over is a
    normal thing to want and should not need finishing first. */
 button.quiet{
@@ -159,13 +187,24 @@ button.plain{
 <main>
   <h1>Windowsill</h1>
   <p class="tagline">Give every plant the light it actually wants.</p>
-  <p class="hub"><a href="/parlour-games">← Parlour Games</a></p>
+  <p class="hub"><a href="/parlour-games">← Parlour Games</a><span id="learn-link"> · <a href="?learn=1">How to play</a></span></p>
+
+  <p id="coach" hidden><span id="coach-line"></span></p>
+
+  <div class="shelves" role="group" aria-label="How big a shelf">
+    <button type="button" data-shelf="gentle">Gentle</button>
+    <button type="button" data-shelf="standard">Standard</button>
+    <button type="button" data-shelf="deep">Deep end</button>
+  </div>
 
   <div id="shelf"></div>
 
   <div class="bar">
     <span id="moves">0 placed</span>
-    <button class="quiet" id="clear" type="button">Clear the shelf</button>
+    <span class="actions">
+      <button class="quiet" id="clear" type="button">Clear the shelf</button>
+      <button class="quiet" id="new" type="button">New board</button>
+    </span>
   </div>
   <p id="status"></p>
 
@@ -181,32 +220,43 @@ button.plain{
   <p class="foot">A quiet puzzle from <a href="/">PlantParlour</a>.</p>
 </main>
 
+<script src="/parlour-games/harness.js"></script>
 <script src="/parlour-games/windowsill-rules.js"></script>
 <script>
 (function () {
   "use strict";
   var R = window.WindowsillRules;
+  /* The arcade's: the seeded generator, and the storage wrappers that survive
+     a browser with everything switched off. */
+  var P = window.Parlour;
+  var KEY = { shelf: "pp_windowsill_shelf" };
 
-  /* Step 1 is one fixed board, picked with the model in
-     scripts/windowsill-model.py: three ways to solve it, all three needs and
-     all three heights in the tray.
-     It teaches the rule three ways over. Whichever solution a player finds,
-     one run has a low plant at the glass shading nothing behind it, one has a
-     mid plant shading the tier behind it but not the one behind that, and one
-     has a tall plant stepping the light all the way down 3, 2, 1.
-     Note that the tidiest of the three solutions puts the same three plants
-     in two of the runs -- the board was dealt from three different runs, but
-     its plants can be laid out with two alike, and that is a perfectly good
-     answer. */
-  var BOARD = {
-    w: 3,
-    d: 3,
-    tray: [
-      { need: 2, height: 1 }, { need: 1, height: 3 }, { need: 3, height: 3 },
-      { need: 2, height: 1 }, { need: 3, height: 2 }, { need: 3, height: 1 },
-      { need: 3, height: 1 }, { need: 2, height: 3 }, { need: 3, height: 2 }
-    ]
-  };
+  /* Practice wins over anything else; the arcade reads all three modes the
+     same way for every game. */
+  var modes = P.mode();
+  var LEARN = modes.learn;
+
+  /* The practice board, its tray order and its one-solution guarantee all
+     live with the rules, where the tests can reach them. */
+  var LEARN_BOARD = R.PRACTICE;
+
+  var shelfKind = R.SHELVES.find(function (s) { return s.key === P.read(KEY.shelf, "standard"); })
+    || R.SHELVES[1];
+  var BOARD = null;
+
+  function newBoard() {
+    if (LEARN) {
+      BOARD = { w: LEARN_BOARD.w, d: LEARN_BOARD.d, ways: 1, tries: 1,
+        tray: LEARN_BOARD.tray.map(function (p) { return { need: p.need, height: p.height }; }) };
+      return;
+    }
+    /* A seed rather than raw randomness, so a board has a number and the
+       same one can be dealt again -- which is what the daily board will
+       need, and what makes a bug report about a board reproducible. */
+    var seed = (Math.random() * 4294967296) >>> 0;
+    BOARD = R.deal(shelfKind, P.mulberry32(seed));
+    BOARD.seed = seed;
+  }
 
   var shelf = [], tray = [], held = null, placements = 0, done = false;
   var shelfEl = document.getElementById("shelf");
@@ -220,7 +270,7 @@ button.plain{
      and never moves it again. It is something to aim at, not to fail. */
   function par() { return BOARD.w * BOARD.d; }
 
-  function deal() {
+  function layOut() {
     shelf = [];
     for (var i = 0; i < BOARD.w; i++) {
       var run = [];
@@ -329,7 +379,8 @@ button.plain{
       trayEl.appendChild(chip);
     });
 
-    movesEl.textContent = placements + (placements === 1 ? " placement" : " placements") +
+    /* Practice counts towards nothing, so it does not keep score. */
+    movesEl.textContent = LEARN ? "" : placements + (placements === 1 ? " placement" : " placements") +
       " · par " + par();
     statusEl.textContent = summary(states);
     if (!done && R.isSolved(shelf)) finish();
@@ -364,10 +415,14 @@ button.plain{
     if (done) return;
     if (held && held.from === "tray" && held.plant.id === id) { held = null; paint(); return; }
     if (held && held.from === "shelf") {           /* put it back */
+      var vacated = { run: held.run, tier: held.tier };
       shelf[held.run][held.tier] = null;
       tray.push(held.plant);
       held = null;
       paint();
+      /* Taking one back out changes the board as much as putting one in, so
+         the coaching answers it too rather than leaving a stale line up. */
+      coachAfter(vacated);
       return;
     }
     var i = tray.findIndex(function (p) { return p.id === id; });
@@ -398,21 +453,148 @@ button.plain{
     placements += 1;
     held = null;
     paint();
+    coachAfter({ run: r, tier: t });
+  }
+
+  /* ---- practice coaching ----------------------------------------------- */
+  /* Written against the board rather than as a script of steps: whatever the
+     player just did, the line says the most useful true thing about where
+     they are now. A script would go wrong the moment somebody took a plant
+     back out. */
+  var coachEl = document.getElementById("coach");
+  var coachLine = document.getElementById("coach-line");
+  var taught = {};
+
+  function coach(text) { coachLine.textContent = text; }
+
+  var A = { 3: "a sun-lover", 2: "a bright-shade plant", 1: "a shade plant" };
+  var TALLNESS = { 1: "low", 2: "mid-height", 3: "tall" };
+
+  function runIsDone(r) {
+    return shelf[r].every(Boolean) && R.shelfStates(shelf)[r].every(function (s) { return s === "happy"; });
+  }
+
+  function coachAfter(where) {
+    if (!LEARN) return;
+    if (done) {
+      coach("That is the whole game. A plant only shades what it stands over, " +
+            "which is why the stand is built in steps.");
+      return;
+    }
+    if (!where) {
+      coach("Six plants, two runs. Each one wants an exact amount of light — too much " +
+            "scorches it, too little makes it leggy. Light comes in from the left.");
+      return;
+    }
+
+    var r = where.run, t = where.tier, plant = shelf[r][t];
+    if (!plant) {
+      coach("Taken back out. Nothing here is ever lost — putting it somewhere else is the undo.");
+      return;
+    }
+    var light = R.lightsFor(shelf[r])[t];
+    var state = R.stateOf(plant, light);
+
+    if (state !== "happy") {
+      var blockers = R.blockersOf(shelf[r], t);
+      if (state === "scorching" && t === 0) {
+        coach("Nothing stands in front of the glass, so the front of a run is always full " +
+              "sun. Only a sun-lover is happy there.");
+      } else if (state === "scorching") {
+        coach("Too much light: " + A[plant.need] + " in light " + light + ". It needs something " +
+              "taller in front of it, or a place further back.");
+      } else if (blockers.length) {
+        var tall = shelf[r][blockers[blockers.length - 1]];
+        coach("Not enough light: this one wants " + plant.need + " and is getting " + light +
+              ". The " + TALLNESS[tall.height] + " plant in front is standing over it.");
+      } else {
+        coach("Not enough light — though nothing is shading it. Try it nearer the glass.");
+      }
+      return;
+    }
+
+    /* The two halves of the lesson, each said once, when the board has just
+       demonstrated it. */
+    if (runIsDone(r)) {
+      var heights = shelf[r].map(function (p) { return p.height; });
+      if (!taught.low && heights[0] === 1) {
+        taught.low = true;
+        coach("Look at that run: three of them in full sun, none shading another. A low plant " +
+              "stands exactly as high as the step behind it, so it blocks nothing at all.");
+        return;
+      }
+      if (!taught.tall && heights[0] === 3) {
+        taught.tall = true;
+        coach("And there is the other half: the tall one at the glass stands over both rows " +
+              "behind it, so the light steps down 3, 2, 1.");
+        return;
+      }
+      coach("That run is right. One to go.");
+      return;
+    }
+    coach("Happy. Keep going — the light changes as you fill the run in front.");
   }
 
   function finish() {
     done = true;
     held = null;
-    winLine.textContent = placements === par()
-      ? "In " + placements + " placements — you never moved one twice."
-      : "In " + placements + " placements. Par is " + par() + ".";
+    winLine.textContent = LEARN
+      ? "Now the real thing: bigger shelves, and a board dealt fresh each time."
+      : placements === par()
+        ? "In " + placements + " placements — you never moved one twice."
+        : "In " + placements + " placements. Par is " + par() + ".";
+    document.getElementById("again").textContent = LEARN ? "Play a proper board" : "Start again";
     winEl.hidden = false;
+    coachAfter(null);
+    if (LEARN) coachAfter({ run: 0, tier: 0 });
   }
 
-  document.getElementById("again").addEventListener("click", deal);
-  document.getElementById("clear").addEventListener("click", deal);
+  /* Clearing puts the same board back in the tray; a new board deals another
+     one. Both are free, and neither is ever a loss. */
+  document.getElementById("clear").addEventListener("click", layOut);
+  /* Finishing practice hands over to a real board and puts the URL back, so
+     a reload afterwards does not drop the player back into practice. */
+  document.getElementById("again").addEventListener("click", function () {
+    if (LEARN) {
+      LEARN = false;
+      taught = {};
+      try { history.replaceState(null, "", location.pathname.replace(/\/learn\/?$/, "")); } catch (e) { /* fine */ }
+      setChrome();
+    }
+    dealAndLay();
+  });
+  document.getElementById("new").addEventListener("click", dealAndLay);
 
-  deal();
+  function dealAndLay() { newBoard(); layOut(); }
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-shelf]"), function (b) {
+    b.addEventListener("click", function () {
+      shelfKind = R.SHELVES.find(function (s) { return s.key === b.dataset.shelf; }) || shelfKind;
+      P.write(KEY.shelf, shelfKind.key);
+      markShelf();
+      dealAndLay();
+    });
+  });
+
+  function markShelf() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-shelf]"), function (b) {
+      var on = b.dataset.shelf === shelfKind.key;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+  }
+
+  function setChrome() {
+    document.body.classList.toggle("learn", LEARN);
+    coachEl.hidden = !LEARN;
+    document.getElementById("learn-link").hidden = LEARN;
+    document.getElementById("again").textContent = LEARN ? "Play a proper board" : "Start again";
+  }
+
+  setChrome();
+  markShelf();
+  dealAndLay();
+  coachAfter(null);
 
   /* The test script drives the page; it needs to see the state. */
   window.__game = {
@@ -423,30 +605,14 @@ button.plain{
     lights: function () { return R.shelfLights(shelf); },
     states: function () { return R.shelfStates(shelf); },
     solved: function () { return R.isSolved(shelf); },
-    board: BOARD,
+    board: function () { return BOARD; },
     /* Somewhere to solve it from, so a test does not have to search. */
-    solutions: function () {
-      var runs = R.fullRuns(BOARD.d), want = {}, out = [];
-      BOARD.tray.forEach(function (p) { want[p.need + "x" + p.height] = (want[p.need + "x" + p.height] | 0) + 1; });
-      (function walk(from, chosen, left) {
-        if (chosen.length === BOARD.w) {
-          if (Object.keys(left).every(function (k) { return !left[k]; })) out.push(chosen.map(function (c) { return c.slice(); }));
-          return;
-        }
-        for (var i = from; i < runs.length; i++) {
-          var run = runs[i], ok = true, used = {};
-          run.forEach(function (p) { used[p.need + "x" + p.height] = (used[p.need + "x" + p.height] | 0) + 1; });
-          Object.keys(used).forEach(function (k) { if ((left[k] | 0) < used[k]) ok = false; });
-          if (!ok) continue;
-          Object.keys(used).forEach(function (k) { left[k] -= used[k]; });
-          chosen.push(run);
-          walk(i, chosen, left);
-          chosen.pop();
-          Object.keys(used).forEach(function (k) { left[k] += used[k]; });
-        }
-      })(0, [], Object.assign({}, want));
-      return out;
-    }
+    solutions: function () { return R.solutions(BOARD.w, BOARD.d, BOARD.tray, 50); },
+    ways: function () { return BOARD.ways; },
+    shelfKind: function () { return shelfKind; },
+    learning: function () { return LEARN; },
+    coach: function () { return coachLine.textContent; },
+    newBoard: dealAndLay
   };
 })();
 </script>

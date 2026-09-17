@@ -57,8 +57,9 @@ Two decisions that follow from this:
    streak worked only for people who were signed out, which is why the smoke
    test never saw it. The streak now belongs to the harness and no game can
    reach it; there is a test that breaks if one can.
-3. **Windowsill.** In progress — step 1 of 8 done (the shelf, the rules, and
-   placing). Spec and build plan in `docs/windowsill-spec.md`.
+3. **Windowsill.** In progress — steps 1 to 3 of 8 done (the shelf, the rules,
+   placing, the generator, and practice). Spec and build plan in
+   `docs/windowsill-spec.md`.
 4. **Thicket.** Later.
 5. **Roots.** Later.
 
