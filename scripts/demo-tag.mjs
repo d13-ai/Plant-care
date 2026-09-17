@@ -14,13 +14,17 @@ import fs from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { chromium } from "playwright";
 
+// .env.local is where real values live now; .env is kept as a fallback for
+// a checkout that still has one.
+const envFile = [".env.local", ".env"].find((f) => fs.existsSync(f));
+if (!envFile) throw new Error("No .env.local (or .env) — copy .env.example to .env.local.");
 const env = Object.fromEntries(
-  fs.readFileSync(".env", "utf8").split("\n")
+  fs.readFileSync(envFile, "utf8").split("\n")
     .filter((l) => l.includes("=") && !l.trim().startsWith("#"))
     .map((l) => { const i = l.indexOf("="); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }),
 );
 const URL_ = env.EXPO_PUBLIC_SUPABASE_URL, KEY = env.EXPO_PUBLIC_SUPABASE_KEY;
-if (!URL_ || !KEY) throw new Error("EXPO_PUBLIC_SUPABASE_URL / _KEY missing from .env");
+if (!URL_ || !KEY) throw new Error(`EXPO_PUBLIC_SUPABASE_URL / _KEY missing from ${envFile}`);
 
 const now = Date.now();
 const ago = (days) => new Date(now - days * 86_400_000).toISOString();
