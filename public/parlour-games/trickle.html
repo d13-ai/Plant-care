@@ -15,9 +15,9 @@
  * it cannot fall back from, no audio files, no libraries. It works offline
  * once open and embeds anywhere.
  *
- * Steps 1-3 of the build order: the core game, persistence, practice.
- * Still to come (spec §14): account sync, sound/night/music, daily, embed,
- * share, analytics, SEO.
+ * Steps 1-4: core game, persistence, practice, account sync.
+ * Still to come (spec §14): sound/night/music, daily, embed, share,
+ * analytics, SEO.
  */
 :root{
   /* PlantParlour's palette, in the roles the spec names. */
@@ -116,6 +116,8 @@ button{font:inherit;cursor:pointer}
 .status b{color:var(--cream);font-weight:700}
 .records{margin:-10px 0 0;font-size:14px;color:var(--muted);text-align:center}
 .records b{color:var(--gold-light);font-weight:700}
+.save{margin:-8px 0 0;font-size:13px;color:var(--muted);text-align:center;min-height:18px}
+.save a{color:var(--gold-light)}
 
 .panel{
   background:var(--cream);color:var(--ink);
@@ -156,6 +158,7 @@ button{font:inherit;cursor:pointer}
 
   <p class="status"><span>Turns <b id="moves">0</b></span><span>Flowing <b id="lit">0</b></span></p>
   <p class="records" id="records" hidden></p>
+  <p class="save" id="save"></p>
 
   <div class="panel" id="win" hidden>
     <h2>The water's running</h2>
@@ -224,12 +227,184 @@ button{font:inherit;cursor:pointer}
   var stats = read(KEY.stats, null) || { total_turns: 0, nudges: 0, best_turns: {}, last_played: null };
   if (!stats.best_turns) stats.best_turns = {};
 
+  /* ---- account sync ---------------------------------------------------- */
+  /* Same origin as the app, so the session it already holds is right here.
+     Signing in must never make things worse, so nothing is ever replaced --
+     the two sides are merged and the better half of each pair wins. */
+  var SB_URL = "https://ixagjvntbgyqemxxinqe.supabase.co";
+  var SB_KEY = "sb_publishable__A5fA6nyI8nrSqJWfaaJBQ_vqEZdRn6";
+  var SB_SESSION_KEY = "sb-ixagjvntbgyqemxxinqe-auth-token";
+  var SIGN_IN_URL = "/account";
+
+  var bigger = function (a, b) { return Math.max(a | 0, b | 0); };
+
+  /**
+   * Merge what is on this device with what the account holds.
+   * Counts and totals take the larger; fewest-turns takes the smaller; a
+   * board nobody has touched never displaces one somebody played.
+   */
+  function mergeProgress(local, remote) {
+    if (!remote) return local;
+    var out = {
+      done: bigger(local.done, remote.boards_finished),
+      bySize: {},
+      stats: {
+        total_turns: bigger(local.stats.total_turns, (remote.stats || {}).total_turns),
+        nudges: bigger(local.stats.nudges, (remote.stats || {}).nudges),
+        best_turns: {},
+        last_played: null
+      },
+      board: null
+    };
+
+    var sizes = {}, rBySize = remote.boards_by_size || {};
+    Object.keys(local.bySize || {}).forEach(function (k) { sizes[k] = 1; });
+    Object.keys(rBySize).forEach(function (k) { sizes[k] = 1; });
+    Object.keys(sizes).forEach(function (k) {
+      out.bySize[k] = bigger((local.bySize || {})[k], rBySize[k]);
+    });
+
+    /* Fewest turns is the one number where smaller wins. */
+    var lBest = local.stats.best_turns || {}, rBest = (remote.stats || {}).best_turns || {}, bests = {};
+    Object.keys(lBest).forEach(function (k) { bests[k] = 1; });
+    Object.keys(rBest).forEach(function (k) { bests[k] = 1; });
+    Object.keys(bests).forEach(function (k) {
+      var a = lBest[k], b = rBest[k];
+      out.stats.best_turns[k] = a == null ? b : b == null ? a : Math.min(a, b);
+    });
+
+    var lPlayed = local.stats.last_played, rPlayed = (remote.stats || {}).last_played;
+    out.stats.last_played = !lPlayed ? rPlayed : !rPlayed ? lPlayed : (lPlayed > rPlayed ? lPlayed : rPlayed);
+
+    /* A board just dealt on load has no moves in it; it must not push aside
+       one somebody actually played on another device. */
+    var lb = local.board && local.board.moves > 0 ? local.board : null;
+    var rb = remote.current_board && remote.current_board.moves > 0 ? remote.current_board : null;
+    if (lb && rb) out.board = (lb.saved_at || "") >= (rb.saved_at || "") ? lb : rb;
+    else out.board = lb || rb || local.board || remote.current_board || null;
+    return out;
+  }
+
+  /* The session the app already put in localStorage. Signed out, this is
+     null and nothing is ever sent. */
+  function session() {
+    var raw = read(SB_SESSION_KEY, null);
+    return raw && raw.access_token && raw.user && raw.user.id ? raw : null;
+  }
+
+  /* An expired token is refreshed and written back in the same shape, so the
+     app picks up the refreshed session too. */
+  async function token() {
+    var s = session();
+    if (!s) return null;
+    var now = Math.floor(Date.now() / 1000);
+    if (!s.expires_at || s.expires_at - 60 > now) return s.access_token;
+    try {
+      var res = await fetch(SB_URL + "/auth/v1/token?grant_type=refresh_token", {
+        method: "POST",
+        headers: { apikey: SB_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: s.refresh_token })
+      });
+      if (!res.ok) return null;
+      var next = await res.json();
+      if (!next.access_token) return null;
+      write(SB_SESSION_KEY, next);
+      return next.access_token;
+    } catch (e) { return null; }
+  }
+
+  function localProgress() {
+    return {
+      done: read(KEY.done, 0) | 0,
+      bySize: read(KEY.bySize, {}) || {},
+      stats: stats,
+      board: storedBoard()
+    };
+  }
+
+  /* Whatever the merge decided is what both sides end up holding. */
+  function applyProgress(merged) {
+    write(KEY.done, merged.done);
+    write(KEY.bySize, merged.bySize);
+    stats = merged.stats;
+    write(KEY.stats, stats);
+    showRecords();
+  }
+
+  async function pushProgress() {
+    var access = await token();
+    if (!access) return;
+    var p = localProgress();
+    try {
+      await fetch(SB_URL + "/rest/v1/game_progress", {
+        method: "POST",
+        headers: {
+          apikey: SB_KEY,
+          Authorization: "Bearer " + access,
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates,return=minimal"
+        },
+        body: JSON.stringify({
+          user_id: session().user.id,
+          boards_finished: p.done,
+          boards_by_size: p.bySize,
+          current_board: p.board,
+          stats: p.stats,
+          updated_at: new Date().toISOString()
+        })
+      });
+    } catch (e) { /* the local copy is still right; try again next time */ }
+  }
+
+  /* Board saves are debounced; a finished board goes at once. */
+  var pushTimer = null;
+  function schedulePush(immediate) {
+    if (!session()) return;
+    if (pushTimer) clearTimeout(pushTimer);
+    if (immediate) { pushProgress(); return; }
+    pushTimer = setTimeout(function () { pushTimer = null; pushProgress(); }, 1500);
+  }
+
+  async function pullProgress() {
+    var access = await token();
+    if (!access) { showSaveLine(); return; }
+    try {
+      var res = await fetch(
+        SB_URL + "/rest/v1/game_progress?select=*&user_id=eq." + encodeURIComponent(session().user.id),
+        { headers: { apikey: SB_KEY, Authorization: "Bearer " + access } }
+      );
+      if (!res.ok) { showSaveLine(); return; }
+      var rows = await res.json();
+      var merged = mergeProgress(localProgress(), rows && rows[0]);
+      applyProgress(merged);
+      /* A board from another device is only taken up when nothing is in play
+         here, so it can never interrupt a game mid-turn. */
+      if (merged.board && !state.done && state.moves === 0 && !LEARN) {
+        if (merged.board.n && merged.board.moves > 0) {
+          write(KEY.board, merged.board);
+          build(merged.board.n, merged.board);
+        }
+      }
+      showSaveLine();
+      pushProgress();
+    } catch (e) { showSaveLine(); }
+  }
+
+  function showSaveLine() {
+    var el = document.getElementById("save");
+    if (LEARN) { el.textContent = ""; return; }
+    el.innerHTML = session()
+      ? "Saved to your account."
+      : '<a href="' + SIGN_IN_URL + '">Sign in</a> to keep your progress across devices.';
+  }
+
   function saveBoard() {
     if (state.done) return;
     write(KEY.board, {
       n: state.n, masks: state.masks, turns: state.turns,
       source: state.source, moves: state.moves, saved_at: new Date().toISOString()
     });
+    schedulePush(false);
   }
 
   /* A stored board is only usable if it is internally consistent; anything
@@ -471,6 +646,7 @@ button{font:inherit;cursor:pointer}
     write(KEY.bySize, bySize);
     write(KEY.stats, stats);
     write(KEY.board, "");   /* nothing in play any more */
+    schedulePush(true);     /* a finished board does not wait */
 
     winLine.textContent =
       n + "×" + n + " in " + state.moves + (state.moves === 1 ? " turn" : " turns") + ".";
@@ -616,9 +792,11 @@ button{font:inherit;cursor:pointer}
     if (sizeBtn) sizeBtn.classList.add("on");
     build(startSize, resume);
   }
+  showSaveLine();
+  if (!LEARN) pullProgress();
 
   /* The test script drives the page; it needs to see the state. */
-  window.__game = { state: state, liveMask: liveMask, computeFlow: computeFlow };
+  window.__game = { state: state, liveMask: liveMask, computeFlow: computeFlow, mergeProgress: mergeProgress };
 })();
 </script>
 </body>
