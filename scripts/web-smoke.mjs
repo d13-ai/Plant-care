@@ -321,6 +321,33 @@ try {
       await stranger.close();
     }
   });
+  await step("iPhone visitors are told how to install; nobody else is", async () => {
+    // The hint is the only thing standing in for an install prompt on iOS,
+    // which never offers one -- and it is the one piece of this that cannot be
+    // checked on a real iPhone from here. So check the decision itself: an
+    // iPhone user agent sees it, a desktop one must not.
+    const IPHONE =
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 " +
+      "(KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1";
+    for (const [label, userAgent, expected] of [
+      ["iPhone", IPHONE, true],
+      ["desktop", undefined, false],
+    ]) {
+      const ctx = await browser.newContext({ viewport: { width: 420, height: 860 }, userAgent });
+      try {
+        const visitor = await ctx.newPage();
+        await visitor.goto(base + "/", { waitUntil: "domcontentloaded" });
+        await visitor.getByText("Start your parlour").waitFor({ timeout: 15000 });
+        const hint = visitor.getByText("Add to Home Screen");
+        if (expected) await hint.waitFor({ timeout: 15000 });
+        // The hint decides after mount, so give it the same beat before
+        // concluding it stayed away.
+        else if (await hint.count()) throw new Error("install hint shown to a " + label + " visitor");
+      } finally {
+        await ctx.close();
+      }
+    }
+  });
 } finally {
   await browser.close();
   server.close();

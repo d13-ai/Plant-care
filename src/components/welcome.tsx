@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { MonsteraIcon } from "@/components/icons";
+import { InstallHint } from "@/components/install-hint";
 import { SignIn } from "@/components/sign-in";
 import { Body, Card, SectionLabel } from "@/components/ui";
 import { font, space, useTheme } from "@/theme";
@@ -81,6 +82,8 @@ export function Welcome() {
       <Card>
         <SignIn heading="Start your parlour" />
       </Card>
+
+      <InstallHint />
 
       <Text style={[styles.footnote, { color: t.muted }]}>
         Already have one? The same button. Your plants follow you to any phone you sign into, and a
