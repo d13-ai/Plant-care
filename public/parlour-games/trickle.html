@@ -15,9 +15,9 @@
  * it cannot fall back from, no audio files, no libraries. It works offline
  * once open and embeds anywhere.
  *
- * Steps 1-2 of the build order: the core game, and persistence.
- * Still to come (spec §14): practice board, account sync, sound/night/music,
- * daily, embed, share, analytics, SEO.
+ * Steps 1-3 of the build order: the core game, persistence, practice.
+ * Still to come (spec §14): account sync, sound/night/music, daily, embed,
+ * share, analytics, SEO.
  */
 :root{
   /* PlantParlour's palette, in the roles the spec names. */
@@ -101,6 +101,15 @@ button{font:inherit;cursor:pointer}
 .tile.flowing .valve{fill:var(--gold-light)}
 
 .hub{margin:0;font-size:14px}
+.coach{
+  background:var(--card);border:1px solid var(--border);border-left:3px solid var(--gold);
+  border-radius:0 12px 12px 0;padding:12px 14px;width:100%;
+}
+.coach p{margin:0;font-size:15px;color:var(--cream)}
+/* The next pipe the water can reach. Steady under reduced motion; the
+   outline alone still says which one. */
+.tile.hint{outline:2px solid var(--gold-light);outline-offset:-3px;border-radius:8px;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{outline-color:var(--gold-light)}50%{outline-color:rgba(230,196,107,.25)}}
 .hub a{color:var(--gold-light);text-decoration:none;border-bottom:1px solid var(--border)}
 .hub a:hover{border-color:var(--gold-light)}
 .status{display:flex;gap:16px;justify-content:center;font-size:15px;color:var(--muted)}
@@ -121,6 +130,7 @@ button{font:inherit;cursor:pointer}
 @media (prefers-reduced-motion:reduce){
   .tile svg{transition:none}
   .tile.flowing .flow path{animation:none}
+  .tile.hint{animation:none}
 }
 </style>
 </head>
@@ -128,7 +138,9 @@ button{font:inherit;cursor:pointer}
 <main>
   <h1>Trickle</h1>
   <p class="tagline">Turn the pipes until the water reaches every plant.</p>
-  <p class="hub"><a href="/parlour-games">← Parlour Games</a></p>
+  <p class="hub"><a href="/parlour-games">← Parlour Games</a> <span id="learn-link"> · <a href="?learn=1">How to play</a></span></p>
+
+  <div class="coach" id="coach" hidden><p id="coach-line"></p></div>
 
   <div class="controls">
     <div class="sizes" role="group" aria-label="Board size">
@@ -168,6 +180,20 @@ button{font:inherit;cursor:pointer}
     r = ((r % 4) + 4) % 4;
     return ((mask << r) | (mask >> (4 - r))) & 15;
   }
+
+  /* Modes are read from the URL at startup. Only practice so far; daily and
+     embed join it later, and practice wins over both. */
+  var LEARN = /[?&]learn=1/.test(location.search) || /\/learn\/?$/.test(location.pathname);
+
+  /* The practice board is fixed, so the coaching can be written for it: six
+     taps, and exactly one tile two turns off so "one more turn" happens once.
+     Verified: par 6, tile 6 is the two-turn one, solved reaches all nine. */
+  var LEARN_BOARD = {
+    n: 3,
+    masks: [2, 14, 12, 4, 1, 5, 3, 10, 9],
+    turns: [3, 0, 3, 0, 3, 0, 2, 0, 3],
+    source: 4
+  };
 
   var state = { n: 6, masks: [], turns: [], source: 0, moves: 0, done: false, focus: 0 };
   var tiles = [];
@@ -317,7 +343,14 @@ button{font:inherit;cursor:pointer}
   var winLine = document.getElementById("win-line");
 
   function build(n, restored) {
-    if (restored) {
+    if (LEARN) {
+      state.n = LEARN_BOARD.n;
+      state.masks = LEARN_BOARD.masks.slice();
+      state.turns = LEARN_BOARD.turns.slice();
+      state.source = LEARN_BOARD.source;
+      state.moves = 0;
+      n = state.n;
+    } else if (restored) {
       state.n = restored.n;
       state.masks = restored.masks.slice();
       state.turns = restored.turns.slice();
@@ -336,7 +369,7 @@ button{font:inherit;cursor:pointer}
     }
     state.done = false;
     state.focus = state.source;
-    write(KEY.size, n);
+    if (!LEARN) write(KEY.size, n);
 
     board.style.gridTemplateColumns = "repeat(" + n + ", 1fr)";
     board.dataset.n = String(n);
@@ -353,7 +386,37 @@ button{font:inherit;cursor:pointer}
     }
     winEl.hidden = true;
     paint();
-    if (!restored) saveBoard();
+    if (LEARN) coach("Tap a pipe to turn it a quarter turn. The glowing one is next to join.");
+    else if (!restored) saveBoard();
+  }
+
+  /* One line of coaching, which only practice ever shows. */
+  var coachEl = document.getElementById("coach");
+  var coachLine = document.getElementById("coach-line");
+  function coach(text) {
+    coachLine.textContent = text;
+    coachEl.hidden = !LEARN;
+  }
+
+  /* The next pipe worth turning: a misaligned tile that, straightened, gets
+     the water further than it is now. Tested by actually straightening it and
+     counting.
+     
+     Counting rather than asking whether that tile ends up flowing: the source
+     is always flowing, so "does it flow" says yes for the source whatever it
+     is pointing at, and the first move on the practice board is the source. */
+  function hintTile() {
+    var reach = computeFlow().filter(Boolean).length;
+    for (var i = 0; i < state.masks.length; i++) {
+      if (liveMask(i) === state.masks[i]) continue;
+      var was = state.turns[i], r = 0;
+      while (r < 4 && rotate(state.masks[i], state.turns[i] + r) !== state.masks[i]) r++;
+      state.turns[i] += r;
+      var gained = computeFlow().filter(Boolean).length > reach;
+      state.turns[i] = was;
+      if (gained) return i;
+    }
+    return -1;
   }
 
   function paint() {
@@ -374,6 +437,10 @@ button{font:inherit;cursor:pointer}
     movesEl.textContent = String(state.moves);
     litEl.textContent = lit + " of " + tiles.length;
     showRecords();
+    if (LEARN && !state.done) {
+      var hint = hintTile();
+      for (var h = 0; h < tiles.length; h++) tiles[h].classList.toggle("hint", h === hint);
+    }
     if (!state.done && lit === tiles.length) finish();
   }
 
@@ -381,6 +448,16 @@ button{font:inherit;cursor:pointer}
   function finish() {
     state.done = true;
     var n = state.n;
+    if (LEARN) {
+      for (var h = 0; h < tiles.length; h++) tiles[h].classList.remove("hint");
+      coach("That is the whole game. No timer, no score, and boards you cannot lose.");
+      winLine.textContent = "Six turns, and the water reached every plant.";
+      document.getElementById("win-tally").textContent =
+        "Practice does not count towards anything. Ready for a real board?";
+      document.getElementById("again").textContent = "Play a board";
+      winEl.hidden = false;
+      return;
+    }
     var previousBest = stats.best_turns[n];
     var isBest = previousBest == null || state.moves < previousBest;
 
@@ -426,11 +503,21 @@ button{font:inherit;cursor:pointer}
     if (state.done) return;
     /* A cross looks the same every way up, so turning it is not a move. */
     if (rotate(state.masks[i], 1) === state.masks[i]) return;
+    var wanted = LEARN ? hintTile() : -1;
     state.turns[i] += 1;
     state.moves += 1;
     state.focus = i;
+    if (LEARN && !state.done) {
+      if (i !== wanted) {
+        coach("That one can wait — it is not where the water is. Try the glowing pipe.");
+      } else if (liveMask(i) === state.masks[i]) {
+        coach("That's it. The water moved on.");
+      } else {
+        coach("Nearly — that one needs one more turn.");
+      }
+    }
     paint();
-    saveBoard();
+    if (!LEARN) saveBoard();
   }
 
   /* Straighten one tile, free. Prefers a tile the water already touches, so
@@ -457,10 +544,9 @@ button{font:inherit;cursor:pointer}
     state.turns[pick] += r;
     state.moves += 1;   /* one turn, however far it had to go */
     state.focus = pick;
-    stats.nudges += 1;
-    write(KEY.stats, stats);
+    if (!LEARN) { stats.nudges += 1; write(KEY.stats, stats); }
     paint();
-    saveBoard();
+    if (!LEARN) saveBoard();
   }
 
   /* ---- input ----------------------------------------------------------- */
@@ -495,13 +581,41 @@ button{font:inherit;cursor:pointer}
   document.getElementById("nudge").addEventListener("click", nudge);
   document.getElementById("again").addEventListener("click", function () { build(state.n); });
 
-  /* Resume whatever was in play; otherwise the size last chosen. */
-  var resume = storedBoard();
-  var startSize = resume ? resume.n : (read(KEY.size, 6) | 0) || 6;
-  if ([4, 6, 8].indexOf(startSize) === -1) startSize = 6;
-  var sizeBtn = document.querySelector('[data-size="' + startSize + '"]');
-  if (sizeBtn) sizeBtn.classList.add("on");
-  build(startSize, resume);
+  /* Practice has no sizes, no new board and no way back into itself. */
+  function setChrome() {
+    document.querySelector(".sizes").hidden = LEARN;
+    document.getElementById("new").hidden = LEARN;
+    document.getElementById("learn-link").hidden = LEARN;
+    coachEl.hidden = !LEARN;
+  }
+
+  /* Finishing practice hands over to a real board and puts the URL back, so
+     a reload afterwards does not drop the player into practice again. */
+  document.getElementById("again").addEventListener("click", function () {
+    if (!LEARN) return;
+    LEARN = false;
+    try { history.replaceState(null, "", location.pathname); } catch (e) { /* fine */ }
+    document.getElementById("again").textContent = "Another board";
+    setChrome();
+    var size = (read(KEY.size, 6) | 0) || 6;
+    if ([4, 6, 8].indexOf(size) === -1) size = 6;
+    var btn = document.querySelector('[data-size="' + size + '"]');
+    if (btn) { document.querySelectorAll("[data-size]").forEach(function (o) { o.classList.remove("on"); }); btn.classList.add("on"); }
+    build(size);
+  });
+
+  setChrome();
+  if (LEARN) {
+    build(3);
+  } else {
+    /* Resume whatever was in play; otherwise the size last chosen. */
+    var resume = storedBoard();
+    var startSize = resume ? resume.n : (read(KEY.size, 6) | 0) || 6;
+    if ([4, 6, 8].indexOf(startSize) === -1) startSize = 6;
+    var sizeBtn = document.querySelector('[data-size="' + startSize + '"]');
+    if (sizeBtn) sizeBtn.classList.add("on");
+    build(startSize, resume);
+  }
 
   /* The test script drives the page; it needs to see the state. */
   window.__game = { state: state, liveMask: liveMask, computeFlow: computeFlow };

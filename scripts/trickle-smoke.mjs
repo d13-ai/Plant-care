@@ -1,5 +1,5 @@
 /**
- * Trickle, steps 1–2 of the build order — the core game, and persistence.
+ * Trickle, steps 1–3 of the build order — core, persistence, practice.
  *
  * Drives the real page in Chromium the way the spec's reference tests do:
  * clicking tiles until each svg's rotation is a multiple of 360°, which is
@@ -25,6 +25,7 @@ const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
 page.on("console", (m) => m.type() === "error" && errors.push("console: " + m.text()));
 
+let learn, learnCtx;
 const step = async (name, fn) => { await fn(); console.log("✓", name); };
 const rotationOf = (tile) =>
   tile.$eval("svg", (s) => {
@@ -215,6 +216,81 @@ try {
     if (broke.length) throw new Error(`storage errors reached the page: ${broke[0]}`);
     await locked.close();
   });
+
+  await step("practice deals a fixed 3×3 with its own chrome", async () => {
+    // A fresh context: practice must not inherit a size or a saved board.
+    const fresh = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    learn = await fresh.newPage();
+    learnCtx = fresh;
+    learn.on("pageerror", (e) => errors.push("learn pageerror: " + e.message));
+    await learn.goto("http://localhost:4610/?learn=1");
+    await learn.waitForSelector(".tile");
+    const count = await learn.$$eval(".tile", (t) => t.length);
+    if (count !== 9) throw new Error(`practice dealt ${count} tiles`);
+    for (const sel of [".sizes", "#new", "#learn-link"]) {
+      if ((await learn.getAttribute(sel, "hidden")) === null) throw new Error(`${sel} is still showing`);
+    }
+    if ((await learn.getAttribute("#coach", "hidden")) !== null) throw new Error("no coaching card");
+    const hints = await learn.$$eval(".tile.hint", (t) => t.length);
+    if (hints !== 1) throw new Error(`${hints} tiles are highlighted, expected 1`);
+  });
+
+  await step("the coaching reacts to what you tap", async () => {
+    const intro = await learn.textContent("#coach-line");
+    if (!/glowing/.test(intro)) throw new Error(`intro reads "${intro}"`);
+
+    // A tile that is not the hinted one gets told so.
+    const hinted = await learn.$eval(".tile.hint", (t) => Number(t.dataset.i));
+    const other = await learn.$$eval(".tile", (t, h) =>
+      t.map((x) => Number(x.dataset.i)).find((i) => i !== h), hinted);
+    await learn.click(`.tile[data-i="${other}"]`);
+    const wrong = await learn.textContent("#coach-line");
+    if (!/can wait/.test(wrong)) throw new Error(`tapping elsewhere said "${wrong}"`);
+
+    // The two-turn tile is the one that ever says "one more turn".
+    const lines = new Set();
+    for (let i = 0; i < 8; i++) {
+      const hint = await learn.$(".tile.hint");
+      if (!hint) break;
+      await hint.click();
+      lines.add((await learn.textContent("#coach-line")).trim());
+    }
+    if (![...lines].some((l) => /moved on/.test(l))) throw new Error("never said the water moved on");
+    if (![...lines].some((l) => /one more turn/.test(l))) {
+      throw new Error("the two-turn tile never asked for another turn");
+    }
+  });
+
+  await step("practice finishes in six taps and counts towards nothing", async () => {
+    const fresh = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const p2 = await fresh.newPage();
+    await p2.goto("http://localhost:4610/?learn=1");
+    await p2.waitForSelector(".tile");
+    let taps = 0;
+    while (taps < 12) {
+      const hint = await p2.$(".tile.hint");
+      if (!hint) break;
+      await hint.click();
+      taps++;
+      if (await p2.$("#win:not([hidden])")) break;
+    }
+    await p2.waitForSelector("#win:not([hidden])", { timeout: 5000 });
+    if (taps !== 6) throw new Error(`practice took ${taps} taps, expected 6`);
+    const done = await p2.evaluate(() => localStorage.getItem("pp_trickle_done"));
+    if (done !== null) throw new Error(`practice moved the boards-finished count to ${done}`);
+    const board = await p2.evaluate(() => localStorage.getItem("pp_trickle_board"));
+    if (board !== null) throw new Error("practice saved a board in play");
+
+    // And it hands off to a real board, with the URL back at the base.
+    await p2.click("#again");
+    await p2.waitForFunction(() => document.querySelectorAll(".tile").length === 36);
+    if (new URL(p2.url()).search !== "") throw new Error(`the URL kept ${p2.url()}`);
+    if ((await p2.getAttribute(".sizes", "hidden")) !== null) throw new Error("the size picker stayed hidden");
+    if ((await p2.getAttribute("#coach", "hidden")) === null) throw new Error("the coaching card stayed");
+    await fresh.close();
+  });
+
+  await learnCtx.close();
 
   if (errors.length) {
     console.log("Browser errors:");
