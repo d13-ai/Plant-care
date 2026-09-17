@@ -19,6 +19,8 @@ export const CONTACT = "bondcreativestudios@gmail.com";
  * that the individuals are the ones on the hook.
  */
 export const ENTITY = "Bond Creative Studios, LLC";
+/** The formal description, for the first mention on each page. */
+export const ENTITY_FULL = `${ENTITY}, a Colorado limited liability company`;
 
 type Section = { heading: string; html: string };
 

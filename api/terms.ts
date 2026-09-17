@@ -3,13 +3,13 @@
 // Deliberately short, and deliberately blunt about the AI: identification
 // and care guides are generated, and the toxicity field in a care guide is
 // the one place where trusting a wrong answer could hurt somebody.
-import { CONTACT, ENTITY, legalPage, serve, UPDATED } from "./legal";
+import { CONTACT, ENTITY, ENTITY_FULL, legalPage, serve, UPDATED } from "./legal";
 
 const sections = [
   {
     heading: "What this is",
     html: `<p>PlantParlour is a place to keep the record of your plants — what they are, what you have done for them, and the story you would want to pass on with a cutting. It is free to use, and it is a small operation: there is no support desk, just us.</p>
-<p>PlantParlour is operated by <strong>${ENTITY}</strong> ("we", "us", "our"). These terms are a binding agreement between you and ${ENTITY}. By making an account or using the service, you accept them. If you do not, please do not use it.</p>`,
+<p>PlantParlour is operated by <strong>${ENTITY_FULL}</strong> ("we", "us", "our"). These terms are a binding agreement between you and ${ENTITY}. By making an account or using the service, you accept them. If you do not, please do not use it.</p>`,
   },
   {
     heading: "Your account",
