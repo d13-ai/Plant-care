@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2E1633">
 <title>Parlour Games — quiet puzzles from PlantParlour</title>
-<meta name="description" content="Small, calm puzzles to sit with for a minute. No timers, no scores, nothing to lose. From PlantParlour.">
+<meta name="description" content="Trickle and Windowsill: small, calm puzzles to sit with for a minute. No timers, no scores, nothing to lose. From PlantParlour.">
 <link rel="canonical" href="https://plantparlour.org/parlour-games">
 <style>
 /*
- * The Parlour Games hub. One game so far; the shape is here for the rest.
+ * The Parlour Games hub.
  *
  * Same rules as the games themselves: everything inline, no fonts it cannot
  * fall back from, nothing fetched. The brand faces are named first and
@@ -55,6 +55,12 @@ h1{
   border:1px dashed var(--border);border-radius:14px;padding:18px 20px;
   color:var(--muted);font-size:15px;
 }
+/* One streak across the whole corner, so it belongs on the hub rather than
+   inside any one game. Only shown once there is a run worth showing. */
+.streak{
+  text-align:center;margin:0;font-size:15px;color:var(--muted);
+}
+.streak b{color:var(--gold-light)}
 .foot{text-align:center;font-size:14px;color:var(--muted);margin:0}
 .foot a{color:var(--gold-light)}
 
@@ -78,9 +84,17 @@ h1{
   <h1>Parlour Games</h1>
   <p class="tagline">Somewhere to sit for a minute. No timers, no scores, nothing to lose.</p>
 
+  <p class="streak" id="streak" hidden></p>
+
   <a class="game" href="/parlour-games/trickle">
     <h2>Trickle</h2>
     <p>Turn the pipes until the water reaches every plant. Boards are always solvable, hints are free, and there is no way to lose.</p>
+    <span class="go">Play →</span>
+  </a>
+
+  <a class="game" href="/parlour-games/windowsill">
+    <h2>Windowsill</h2>
+    <p>Arrange the plants on a stepped shelf so every one of them gets the light it wants. Too much scorches, too little goes leggy — and a low plant shades nothing at all.</p>
     <span class="go">Play →</span>
   </a>
 
@@ -88,5 +102,28 @@ h1{
 
   <p class="foot">From <a href="/">PlantParlour</a> — a room for the plants you're proud of.</p>
 </main>
+<script src="/parlour-games/harness.js"></script>
+<script>
+  /* The streak belongs to the arcade rather than to any one game, so the hub
+     is where it is worth saying out loud: playing any of these today keeps
+     it going. Read only -- the hub never records a play. */
+  (function () {
+    /* The hub is a list of links first and foremost. If the harness does not
+       load, the streak line simply does not appear -- it must not take the
+       page down with it. */
+    if (!window.Parlour) return;
+    var s = window.Parlour.getStreak();
+    if (!s || (s.streak | 0) < 2) return;
+    var today = window.Parlour.dayNumber();
+    /* A run that already missed a day is over; saying otherwise would be a
+       lie the moment somebody looked. */
+    if (s.last !== today && s.last !== today - 1) return;
+    var el = document.getElementById("streak");
+    el.innerHTML = s.last === today
+      ? "<b>" + s.streak + "</b> days running. Today is done."
+      : "<b>" + s.streak + "</b> days running. Play anything today to keep it.";
+    el.hidden = false;
+  })();
+</script>
 </body>
 </html>

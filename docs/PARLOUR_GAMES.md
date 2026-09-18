@@ -15,7 +15,9 @@ back.
 | | |
 |---|---|
 | **The hub** | `/parlour-games` — lists the games, links back to the app. |
-| **Trickle** | `/parlour-games/trickle` — rotate the pipes until the water reaches every plant. Free boards, a daily board everyone shares, a streak, a practice mode, and an embeddable build at `/parlour-games/trickle/embed`. |
+| **Trickle** | `/parlour-games/trickle` — rotate the pipes until the water reaches every plant. Free boards, a daily board everyone shares, a practice mode, and an embeddable build at `/parlour-games/trickle/embed`. |
+| **Windowsill** | `/parlour-games/windowsill` — arrange the plants on a stepped shelf so every one of them gets the light it wants. Three shelf sizes, boards dealt to a measured difficulty, practice, a daily board and an embed, all on the same routes Trickle uses. |
+| **The streak** | One run across the whole corner, shown on the hub: playing any of these today keeps it alive. |
 | **The way in** | A card on the greenhouse shown only when nothing needs attention, plus a permanent link at the foot of the plant list. Both point at the hub, not at a game. |
 
 ## What actually drives the habit
@@ -57,18 +59,17 @@ Two decisions that follow from this:
    streak worked only for people who were signed out, which is why the smoke
    test never saw it. The streak now belongs to the harness and no game can
    reach it; there is a test that breaks if one can.
-3. **Windowsill.** In progress — steps 1 to 7 of 8 done: the shelf, the rules,
-   placing, the generator, practice, the daily board, progress sync, sound,
-   night and the art. The
-   shared streak is now genuinely shared — playing Trickle's daily board and
-   then opening Windowsill continues the same run, which the smoke test plays
-   out rather than asserts. Spec and build plan in `docs/windowsill-spec.md`.
+3. ~~**Windowsill.**~~ **Shipped.** All eight steps of
+   `docs/windowsill-spec.md` are done, and the streak is genuinely shared:
+   playing Trickle's daily board and then opening Windowsill continues the
+   same run, which the smoke test plays out rather than asserts.
+
 4. **Thicket.** Later.
 5. **Roots.** Later.
 
 ## The games
 
-### Windowsill — *next*
+### Windowsill — *shipped*
 
 Arrange plants on a tiered windowsill so every one of them gets the light it
 wants. Too much scorches, too little goes leggy, and a tall plant at the front
@@ -76,7 +77,15 @@ shades what is behind it — but a short one does not shade the raised row
 behind, which is the whole reason plant stands are built in steps.
 
 The one game on this list that teaches something true about keeping plants.
-Spec and measured design in `docs/windowsill-spec.md`.
+Spec, measured design and the eight build steps in `docs/windowsill-spec.md`.
+
+Two things it leaves behind for whatever comes next. The light model and the
+board generator live in `windowsill-rules.js` rather than inside the page, so
+they are tested rather than trusted — which is how the generator's difficulty
+bands and the practice board's single solution are known rather than hoped.
+And the art is drawn in the same unit space as the rule, so a plant cannot be
+drawn to a height the game does not count; the check that enforces that found
+a whole family of plants a quarter of a unit short.
 
 ### Thicket — *later*
 

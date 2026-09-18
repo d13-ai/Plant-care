@@ -6,7 +6,7 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/((?!tag$|@|api/|plant-photos/|privacy$|terms$|parlour-games/trickle/embed$).*)",
+      "source": "/((?!tag$|@|api/|plant-photos/|privacy$|terms$|parlour-games/trickle/embed$|parlour-games/windowsill/embed$).*)",
       "headers": [
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -32,7 +32,7 @@
       ]
     },
     {
-      "source": "/parlour-games/trickle/embed",
+      "source": "/parlour-games/:game(trickle|windowsill)/embed",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -99,6 +99,10 @@
     },
     {
       "source": "/parlour-games/windowsill/daily",
+      "destination": "/parlour-games/windowsill"
+    },
+    {
+      "source": "/parlour-games/windowsill/embed",
       "destination": "/parlour-games/windowsill"
     },
     {

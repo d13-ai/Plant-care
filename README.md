@@ -481,13 +481,24 @@ only genuinely needs you every few days; the games fill the days in between
 without inventing fake plant chores.
 
 They are plain static HTML under `public/parlour-games/` — no bundle, no
-sign-in, nothing fetched — so they load on a bad connection and a stranger can
-play one without an account. Trickle is the first: rotate the pipes until the
-water reaches every plant, with a daily board everyone shares, a streak, a
-practice mode, and an embeddable build at `/parlour-games/trickle/embed`
-(the only route on the site allowed to be framed — everything else sends
-`frame-ancestors 'none'`). Progress syncs through `game_progress`, RLS'd to
-its owner like everything else.
+sign-in, and one small shared script each — so they load on a bad connection
+and a stranger can play one without an account. There are two.
+
+**Trickle**: rotate the pipes until the water reaches every plant.
+**Windowsill**: arrange plants on a stepped shelf so each gets the light it
+wants, where a tall plant at the glass shades two rows back and a low one
+shades nothing, because it stands exactly as high as the step behind it.
+
+Both have a daily board everyone shares, a practice mode, three difficulties
+or sizes, and an embeddable build at `/parlour-games/<game>/embed` — the only
+routes on the site allowed to be framed, everything else sending
+`frame-ancestors 'none'`. Progress syncs through `game_progress`, keyed
+`(user_id, game)` and RLS'd to its owner like everything else.
+
+The **streak is one run across the whole corner**, not one per game: playing
+either of them today keeps it alive, and the hub is where it is shown. It
+lives in the harness where no game can reach it, because the version that
+lived inside Trickle dropped it on every pull for as long as it existed.
 
 What the games share lives in `public/parlour-games/harness.js`, loaded from
 that absolute path because each game is served at several URLs and a relative

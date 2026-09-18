@@ -321,7 +321,18 @@ Each step ends somewhere it can be looked at.
    Weakest of the three is `bright` at mid and tall, which reads a little like
    lily pads. If Amanda ever draws real plants they drop into the same nine
    slots with the same contract: reach y=0, have width at the top.
-8. **The hub entry**, the smoke test, and the embed build.
+8. ~~**The hub entry**, the smoke test, and the embed build.~~ **Done.** The
+   hub lists both games and carries the streak, since one streak across the
+   arcade belongs there rather than inside either game — and it says what
+   keeps it, or that today is already done, and says nothing at all about a
+   run that has already lapsed.
 
-Steps 1 and 2 are the ones that decide whether the game is any good. Stop
-after each and look.
+   `/parlour-games/windowsill/embed` is framable and nothing else is; the
+   frame-ancestors rule now names both games rather than one. Inside a frame
+   it drops the masthead, the ways in and out and the account line, keeps a
+   credit back to Parlour Games, and sends every link out of the frame rather
+   than replacing it.
+
+All eight steps are done. Steps 1 and 2 were the ones that decided whether
+the game was any good; every step after them stopped to look, and the looking
+is what found the faults.

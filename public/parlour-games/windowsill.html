@@ -212,6 +212,13 @@ button.plain{
   margin-top:14px;background:var(--gold);color:var(--ink);border:none;
   border-radius:10px;padding:11px 18px;font:inherit;font-weight:700;cursor:pointer;min-height:44px;
 }
+/* Embedded on somebody else's page: the game and nothing else. The masthead,
+   the ways in and out, and the account line all belong to this site rather
+   than to whoever is framing it. */
+body.embed{padding:12px 10px 16px}
+body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .foot{display:none}
+.credit{margin:10px 0 0;font-size:13px;color:var(--muted);text-align:center}
+.credit a{color:var(--gold-light)}
 .foot{text-align:center;font-size:13px;color:var(--muted);margin:26px 0 0}
 .foot a{color:var(--gold-light)}
 @media (prefers-reduced-motion: no-preference){
@@ -262,6 +269,11 @@ button.plain{
     <button class="plain" id="again" type="button">Start again</button>
   </div>
 
+  <p class="credit" id="credit" hidden>
+    <strong>Windowsill</strong> — a calm light puzzle from
+    <a href="/parlour-games">Parlour Games</a>.
+  </p>
+
   <p class="foot">A quiet puzzle from <a href="/">PlantParlour</a>.</p>
 </main>
 
@@ -290,6 +302,8 @@ button.plain{
   var modes = P.mode();
   var LEARN = modes.learn;
   var DAILY = modes.daily;
+  /* Embed combines with either of the other two rather than replacing them. */
+  var EMBED = modes.embed;
 
   /* One board a day, the same for everyone, dealt from the arcade's own
      calendar so "today" means the same day in every game. The shape is
@@ -906,7 +920,7 @@ button.plain{
 
   function showSaveLine(signedIn) {
     var el = document.getElementById("save");
-    if (LEARN) { el.textContent = ""; return; }
+    if (LEARN || EMBED) { el.textContent = ""; return; }
     el.innerHTML = signedIn
       ? "Saved to your account."
       : '<a href="' + P.signInUrl + '">Sign in</a> to keep your progress across devices.';
@@ -995,6 +1009,16 @@ button.plain{
   function setChrome() {
     document.body.classList.toggle("learn", LEARN);
     document.body.classList.toggle("daily", DAILY);
+    document.body.classList.toggle("embed", EMBED);
+    document.getElementById("credit").hidden = !EMBED;
+    if (EMBED) {
+      /* A link inside a frame that replaces the frame is a dead end for
+         whoever is reading the page around it. */
+      Array.prototype.forEach.call(document.querySelectorAll("a"), function (a) {
+        a.setAttribute("target", "_blank");
+        a.setAttribute("rel", "noopener");
+      });
+    }
     coachEl.hidden = !LEARN;
     document.getElementById("learn-link").hidden = LEARN;
     document.getElementById("daily-link").hidden = DAILY;
@@ -1034,6 +1058,7 @@ button.plain{
     shelfKind: function () { return shelfKind; },
     learning: function () { return LEARN; },
     isDaily: function () { return DAILY; },
+    isEmbed: function () { return EMBED; },
     dayNumber: P.dayNumber,
     progress: function () { return progress; },
     streak: P.getStreak,
