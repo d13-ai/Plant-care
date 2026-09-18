@@ -305,7 +305,22 @@ Each step ends somewhere it can be looked at.
    a toggle lands on depends on the hour the tests happen to run, and an
    earlier version of this measured the day palette twice and called it
    night.
-7. **Art pass** — the nine silhouettes, the window, the stepped stand.
+7. ~~**Art pass** — the nine silhouettes, the window, the stepped stand.~~
+   **Done.** Nine drawn silhouettes in three families that are true to the
+   light — sun is succulents and cacti, bright is broad leaves on stalks,
+   shade is ferns and blades — so they can be told apart by shape rather than
+   by colour and size alone.
+
+   Everything is authored in unit space (100 across is one step, the box is
+   2.4 units wide), so the art and the rule are the same measurement, and
+   every plant's foliage reaches exactly y=0. That is checked: the smoke test
+   measures each plant's ink against its own box and fails if any is short,
+   tall, or comes to a point. It found the whole `bright` family drawn a
+   quarter of a unit short, which nothing about the picture gave away.
+
+   Weakest of the three is `bright` at mid and tall, which reads a little like
+   lily pads. If Amanda ever draws real plants they drop into the same nine
+   slots with the same contract: reach y=0, have width at the top.
 8. **The hub entry**, the smoke test, and the embed build.
 
 Steps 1 and 2 are the ones that decide whether the game is any good. Stop

@@ -203,7 +203,9 @@ try {
     const geometry = await page.evaluate(() => {
       const box = (sel) => { const r = document.querySelector(sel).getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; };
       return {
-        midHead: box('.cell[data-run="0"][data-tier="0"] .crown').top,
+        // The plant's own ink, not its box: what a player compares against
+        // the step behind it is where the leaves actually end.
+        midHead: box('.cell[data-run="0"][data-tier="0"] .foliage').top,
         tier1Floor: box('.cell[data-run="0"][data-tier="1"] .plinth').top,
         tier2Floor: box('.cell[data-run="0"][data-tier="2"] .plinth').top,
       };
@@ -797,6 +799,87 @@ try {
     await ctx.close();
   });
 
+  await step("every plant is drawn to exactly the height the rule counts", async () => {
+    // The art's load-bearing property. A plant that is drawn a little short
+    // of its own height makes the game lie about the one thing it is about,
+    // and nothing about it looks wrong -- the whole `bright` family was a
+    // quarter of a unit short and only this measurement found it.
+    const rows = await page.evaluate(() => {
+      const host = document.createElement("div");
+      host.style.cssText = "position:fixed;left:0;top:0;opacity:0;pointer-events:none";
+      document.body.appendChild(host);
+      const unit = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--unit"));
+      const out = [];
+      for (const need of [3, 2, 1]) for (const height of [1, 2, 3]) {
+        const box = document.createElement("div");
+        box.className = "plant";
+        box.dataset.need = String(need);
+        box.style.cssText =
+          `position:relative;left:auto;transform:none;width:${unit * 2.4}px;height:${unit * height}px`;
+        box.innerHTML = window.__game.art(need, height);
+        host.appendChild(box);
+        const rect = box.getBoundingClientRect();
+        const path = box.querySelector(".foliage");
+        const vb = box.querySelector("svg").viewBox.baseVal;
+        // How wide the ink is across the topmost slice, so the top of a plant
+        // reads as an edge to compare against a step, not as a single point.
+        const band = vb.height * 0.06;
+        let lo = vb.width, hi = 0;
+        for (let x = 0; x <= vb.width; x += 1) {
+          for (let y = 0; y <= band; y += 1) {
+            if (path.isPointInFill(new DOMPoint(x, y))) { lo = Math.min(lo, x); hi = Math.max(hi, x); break; }
+          }
+        }
+        out.push({
+          plant: `${need}/${height}`,
+          shortBy: path.getBoundingClientRect().top - rect.top,
+          overflow: rect.bottom - box.querySelector(".pot").getBoundingClientRect().bottom,
+          topWidth: hi >= lo ? ((hi - lo) / vb.width) * 100 : 0,
+        });
+        host.removeChild(box);
+      }
+      host.remove();
+      return out;
+    });
+    rows.forEach((r) => {
+      if (r.shortBy > 0.6) {
+        throw new Error(`${r.plant} is drawn ${r.shortBy.toFixed(2)}px short of the height the rule gives it`);
+      }
+      if (r.shortBy < -0.6) {
+        throw new Error(`${r.plant} is drawn ${(-r.shortBy).toFixed(2)}px taller than the rule gives it`);
+      }
+      if (r.overflow < -0.6) throw new Error(`${r.plant} hangs ${(-r.overflow).toFixed(2)}px below its own pot`);
+      if (r.topWidth < 15) {
+        throw new Error(`${r.plant} comes to a point: only ${r.topWidth.toFixed(0)}% of it is at full height`);
+      }
+    });
+    const widths = rows.map((r) => Math.round(r.topWidth));
+    console.log(`  (all nine reach their exact height; tops span ${Math.min(...widths)}–${Math.max(...widths)}% of the plant)`);
+  });
+
+  await step("the nine plants are nine different shapes, not one shape resized", async () => {
+    const shapes = await page.evaluate(() => {
+      const out = {};
+      for (const need of [3, 2, 1]) for (const height of [1, 2, 3]) {
+        out[`${need}/${height}`] = window.__game.art(need, height)
+          .replace(/viewBox="[^"]*"/, "").match(/class="foliage" d="([^"]*)"/)[1];
+      }
+      return out;
+    });
+    const seen = new Map();
+    for (const [plant, d] of Object.entries(shapes)) {
+      if (seen.has(d)) throw new Error(`${plant} is drawn identically to ${seen.get(d)}`);
+      seen.set(d, plant);
+    }
+    // And the three families should not be interchangeable either: count the
+    // subpaths, which is a rough stand-in for "is this the same kind of plant".
+    const parts = (d) => (d.match(/M/g) || []).length;
+    const byNeed = { 3: parts(shapes["3/2"]), 2: parts(shapes["2/2"]), 1: parts(shapes["1/2"]) };
+    if (new Set(Object.values(byNeed)).size < 2) {
+      throw new Error(`the three families are built the same way: ${JSON.stringify(byNeed)}`);
+    }
+  });
+
   await step("night turns the palette down and says so", async () => {
     await page.click("#clear");
     const before = await page.evaluate(() => ({
@@ -866,6 +949,7 @@ try {
             sunOnCard: ratio(css("--sun"), card),
             brightOnCard: ratio(css("--bright"), card),
             shadeOnCard: ratio(css("--shade"), card),
+            potOnCard: ratio(css("--pot"), card),
             edge: ratio(css("--edge"), ink),
           },
         };

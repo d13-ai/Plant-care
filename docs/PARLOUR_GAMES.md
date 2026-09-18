@@ -57,9 +57,9 @@ Two decisions that follow from this:
    streak worked only for people who were signed out, which is why the smoke
    test never saw it. The streak now belongs to the harness and no game can
    reach it; there is a test that breaks if one can.
-3. **Windowsill.** In progress — steps 1 to 6 of 8 done: the shelf, the rules,
-   placing, the generator, practice, the daily board, progress sync, sound and
-   night. The
+3. **Windowsill.** In progress — steps 1 to 7 of 8 done: the shelf, the rules,
+   placing, the generator, practice, the daily board, progress sync, sound,
+   night and the art. The
    shared streak is now genuinely shared — playing Trickle's daily board and
    then opening Windowsill continues the same run, which the smoke test plays
    out rather than asserts. Spec and build plan in `docs/windowsill-spec.md`.
@@ -106,5 +106,9 @@ every board is solvable by construction.
   would make that page false. Unresolved, and it is a decision rather than a
   task. Until it is resolved we are building on judgement, which argues for
   cheap-if-wrong choices.
-- **Art.** Windowsill wants nine plant silhouettes. Simple SVG is fine to
-  start; it is the one game here with a real art dependency.
+- **Art.** Windowsill's nine plants are drawn, in three families true to the
+  light they want. They are functional rather than beautiful: what they owe
+  the game is that height reads in units and the top of a plant reads as an
+  edge to compare against a step, both of which are measured in the tests. If
+  Amanda draws real ones they drop into the same nine slots under the same
+  contract.
