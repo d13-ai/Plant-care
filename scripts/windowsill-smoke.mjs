@@ -79,7 +79,10 @@ try {
   await page.waitForSelector(".cell");
 
   await step("the page is Windowsill and points back at the hub", async () => {
-    if ((await page.title()) !== "Windowsill — a calm light puzzle") {
+    // The rest of the title is search copy and gets retuned; what this test
+    // cares about is that the right document loaded, so it checks the name
+    // rather than pinning a sentence somebody will reword.
+    if (!(await page.title()).startsWith("Windowsill")) {
       throw new Error(`the title reads "${await page.title()}"`);
     }
     const href = await page.getAttribute('.hub a', "href");

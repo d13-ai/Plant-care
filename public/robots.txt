@@ -1,0 +1,198 @@
+# https://plantparlour.org
+#
+# Everything is open to crawlers except the API and published plant tags.
+# A tag link is unlisted by design — a keeper shares it with one person, so
+# it must not turn up in a search result. See docs/SEO.md.
+#
+# Every group repeats the full Disallow list, because a crawler that matches
+# its own user-agent line ignores the wildcard group entirely: a rule written
+# only under `User-agent: *` would not apply to GPTBot at all.
+#
+# Googlebot and Bingbot are the exception, and deliberately so. `noindex`
+# lives inside the page, so a crawler has to FETCH a tag to be told not to
+# list it. Disallowing them would mean they never read that instruction --
+# and a disallowed URL can still be listed as a bare link if somebody posts
+# it publicly, which is the one outcome this file exists to prevent. Letting
+# those two in is what keeps tags out of search results.
+#
+# Every other group keeps `Disallow: /tag`. `noindex` is an instruction to
+# search indexes; a crawler collecting text for a model has no index to be
+# excluded from, so the only thing that binds it is not being allowed to
+# fetch the page at all.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Claude-User
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+# must fetch a tag to read its noindex -- see the note at the top
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: GoogleOther
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Applebot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+# must fetch a tag to read its noindex -- see the note at the top
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Bytespider
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: CCBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: cohere-ai
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Meta-ExternalAgent
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: FacebookBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: DuckAssistBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Amazonbot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: MistralAI-User
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+Sitemap: https://plantparlour.org/sitemap.xml

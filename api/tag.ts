@@ -45,12 +45,24 @@ const photoUrl = (path: string) => `${SUPABASE_URL}/storage/v1/object/public/pla
  * rule, Lora and Source Sans 3. `head` is extra markup for the document head —
  * a conservatory is meant to be found and shared and carries description and social
  * tags; a tag page is one keeper's unlisted record and carries none.
+ *
+ * `noindex` keeps a page out of search results. Anything that isn't a 200 is
+ * noindexed by default; a published tag asks for it explicitly, because the
+ * link is unlisted — the keeper hands it to one person, and a search result
+ * would be exactly the discovery we promised it wouldn't be. robots.txt says
+ * the same thing for crawlers that read it before fetching.
  */
-export function page(title: string, body: string, status = 200, head = ""): { status: number; html: string } {
+export function page(
+  title: string,
+  body: string,
+  status = 200,
+  head = "",
+  noindex = status !== 200,
+): { status: number; html: string } {
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#2E1633">
 <title>${esc(title)}</title>
-${status === 200 ? "" : '<meta name="robots" content="noindex">'}
+${noindex ? '<meta name="robots" content="noindex, nofollow">' : ""}
 ${head}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap">
@@ -127,7 +139,7 @@ export async function tagPage(token: string): Promise<{ status: number; html: st
   if (!res.ok) return page("Plant Tag", `<section><h2 class="caps">Something went wrong</h2><p class="muted">The record couldn't be read right now (${res.status}).</p></section>`, 502);
   const data = (await res.json()) as Tag | null;
   if (!data) return page("Plant Tag", `<section><h2 class="caps">No tag here</h2><p class="muted">This plant isn't published, or the link is wrong.</p></section>`, 404);
-  return page(`${data.plant.nickname} · Plant Tag`, render(data));
+  return page(`${data.plant.nickname} · Plant Tag`, render(data), 200, "", true);
 }
 
 // Vercel's Node request/response, typed only as far as this handler uses them.

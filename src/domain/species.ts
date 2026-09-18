@@ -70,6 +70,11 @@ const CATALOGUE: { group: string; rows: Row[] }[] = [
     ["Dracaena", "fragrans", ["Corn plant"], 10, 30, 730],
     ["Dracaena", "angolensis", ["Cylindrical snake plant", "Sansevieria cylindrica"], 21, 60, 730],
   ["Dracaena", "masoniana", ["Whale fin snake plant", "Sansevieria masoniana"], 21, 60, 730],
+    // Lucky bamboo is this, not a bamboo. It used to sit on Bambusa vulgaris,
+    // which sent anyone searching the name to a true bamboo -- and the two
+    // differ on the one fact a keeper looks up: this is toxic to cats and
+    // dogs, and Bambusa is not.
+    ["Dracaena", "sanderiana", ["Lucky bamboo", "Ribbon plant", "Curly bamboo"], 7, 60, 730],
     ["Yucca", "elephantipes", ["Spineless yucca"], 14, 60, 730],
     ["Pachira", "aquatica", ["Money tree"], 8, 30, 540],
     ["Crassula", "ovata", ["Jade plant", "Money plant"], 14, 60, 730],
@@ -184,7 +189,7 @@ const CATALOGUE: { group: string; rows: Row[] }[] = [
     ["Cyperus", "alternifolius", ["Umbrella papyrus"], 3, 30, 365],
     ["Soleirolia", "soleirolii", ["Baby's tears"], 3, 30, 365],
     ["Asparagus", "setaceus", ["Asparagus fern"], 5, 30, 365],
-    ["Bambusa", "vulgaris", ["Lucky bamboo", "Bamboo"], 5, 30, 730],
+    ["Bambusa", "vulgaris", ["Bamboo", "Common bamboo"], 5, 30, 730],
   ] },
 ];
 

@@ -83,4 +83,43 @@ for (const a of [...ASSETS, ...PUBLIC]) {
   console.log(`${dir}/${a.file}`.padEnd(38) + `${a.size}x${a.size}  ${png.length} bytes`);
 }
 
+/**
+ * Social cards. These are what unfurl in a chat thread, in Slack and on X,
+ * and what `og:image` points at. 1200x630 is the size every one of those
+ * crops from without letterboxing. One per surface, because a link to a
+ * puzzle that previews as the app's front page tells nobody anything.
+ */
+const CARDS = [
+  { file: "og-image.png", title: "PlantParlour", line: "A record for every plant you keep &mdash; and it goes with the plant.", accent: LEAF },
+  { file: "og-games.png", title: "Parlour Games", line: "Small, calm puzzles. No timers, no scores, nothing to lose.", accent: "#C9A24B" },
+  { file: "og-trickle.png", title: "Trickle", line: "Turn the pipes until the water reaches every plant.", accent: LEAF },
+  { file: "og-windowsill.png", title: "Windowsill", line: "Give every plant the light it actually wants.", accent: "#E6C46B" },
+];
+
+for (const c of CARDS) {
+  await page.setViewportSize({ width: 1200, height: 630 });
+  await page.setContent(
+    `<!doctype html><meta charset="utf-8">
+     <style>
+       html,body{margin:0;width:1200px;height:630px;background:${AUBERGINE};
+         display:flex;align-items:center;justify-content:center;gap:48px;
+         font-family:Lora,Georgia,"Times New Roman",serif;color:#F3ECDD}
+       .mark{width:190px;height:190px;flex:none}
+       .words{max-width:640px}
+       h1{font-size:74px;line-height:1;margin:0 0 18px;font-weight:600}
+       p{font-size:31px;line-height:1.35;margin:0;color:${c.accent};font-style:italic}
+       .from{font-size:22px;margin-top:22px;color:#C8B8C2;font-style:normal}
+     </style>
+     <div class="mark">${mark({ color: c.accent, scale: 1 })}</div>
+     <div class="words">
+       <h1>${c.title}</h1>
+       <p>${c.line}</p>
+       ${c.file === "og-image.png" ? "" : '<p class="from">plantparlour.org</p>'}
+     </div>`,
+  );
+  const png = await page.screenshot();
+  writeFileSync(new URL(`../public/${c.file}`, import.meta.url), png);
+  console.log(`public/${c.file}`.padEnd(38) + `1200x630  ${png.length} bytes`);
+}
+
 await browser.close();
