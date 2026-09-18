@@ -333,6 +333,27 @@ Each step ends somewhere it can be looked at.
    credit back to Parlour Games, and sends every link out of the frame rather
    than replacing it.
 
+### A fault the eight steps missed
+
+Every screenshot taken while building this was `fullPage`, which stitches the
+whole document into one image. It never shows where the fold is — so the game
+shipped with its tray 1139px down a 1433px page, below a screen 640 to 830px
+tall. The game is *tap a plant, then tap a place*, so with the plants off
+screen there was no game. Eight of nine viewport-and-shelf combinations were
+unplayable, and nothing in the suite noticed, because nothing in the suite
+ever looked at a viewport.
+
+The tray is now docked to the bottom of the screen as a single row that
+scrolls sideways, so it costs the same height whether six plants are left or
+fifteen; `--unit` came down from 22 to 18 and the chrome tightened. There is a
+check for it now, across three real phone viewports and all three shelf sizes,
+asking not "does it render" but "can you reach a plant and a place without
+scrolling between the two halves of a move".
+
+The lesson is narrower than "test on a phone": **a fullPage screenshot is not
+a screenshot of a screen**, and every design check in here that used one was
+answering a question nobody asked.
+
 All eight steps are done. Steps 1 and 2 were the ones that decided whether
 the game was any good; every step after them stopped to look, and the looking
 is what found the faults.

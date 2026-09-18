@@ -30,7 +30,8 @@
   --cream:#F3ECDD;
   --muted:#C8B8C2;
   --leaf:#8FC79E;
-  --unit:22px;          /* one step of the stand == one unit of plant */
+  --unit:18px;          /* one step of the stand == one unit of plant */
+  --dock:76px;          /* the tray, docked to the bottom of the screen */
   --sun:#E6C46B;
   --bright:#9FD3AC;
   --shade:#6FA9A0;
@@ -64,13 +65,16 @@ body{transition:background .8s,color .8s}
 html,body{margin:0;background:var(--ink);color:var(--cream)}
 body{
   font-family:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
-  font-size:16px;line-height:1.5;padding:24px 16px 48px;
+  font-size:16px;line-height:1.5;
+  /* The tray is docked to the bottom of the screen, so the page has to end
+     above it rather than behind it. */
+  padding:16px 16px calc(var(--dock) + 20px);
   -webkit-font-smoothing:antialiased;
 }
 main{max-width:520px;margin:0 auto}
-h1{font-family:Lora,Georgia,"Times New Roman",serif;font-weight:700;font-size:30px;margin:0;text-align:center}
-.tagline{font-family:Lora,Georgia,serif;font-style:italic;color:var(--muted);margin:6px 0 0;text-align:center;font-size:16px}
-.hub{text-align:center;font-size:14px;margin:14px 0 0}
+h1{font-family:Lora,Georgia,"Times New Roman",serif;font-weight:700;font-size:25px;margin:0;text-align:center;line-height:1.15}
+.tagline{font-family:Lora,Georgia,serif;font-style:italic;color:var(--muted);margin:4px 0 0;text-align:center;font-size:15px;line-height:1.3}
+.hub{text-align:center;font-size:14px;margin:8px 0 0}
 .hub a{color:var(--gold-light)}
 
 /* ---- how big a shelf ---- */
@@ -81,13 +85,13 @@ h1{font-family:Lora,Georgia,"Times New Roman",serif;font-weight:700;font-size:30
    the eye already is. Lora, so it reads as somebody talking rather than as
    part of the machinery. */
 #coach{
-  margin:16px 0 0;background:var(--card);border:1px solid var(--border);
-  border-radius:12px;padding:13px 16px;font-family:Lora,Georgia,serif;
-  font-size:15px;line-height:1.45;color:var(--cream);min-height:3.4em;
+  margin:12px 0 0;background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:10px 14px;font-family:Lora,Georgia,serif;
+  font-size:15px;line-height:1.4;color:var(--cream);min-height:2.8em;
 }
 body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:none}
 
-.shelves{display:flex;gap:8px;justify-content:center;margin:16px 0 0}
+.shelves{display:flex;gap:8px;justify-content:center;margin:12px 0 0}
 .shelves button{
   background:none;border:1px solid var(--border);border-radius:9px;
   color:var(--muted);font:inherit;font-size:14px;padding:8px 14px;
@@ -104,7 +108,7 @@ body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:
    cells, because the question a player has to be able to answer by looking
    is "does this plant's head clear the step behind it" -- and separate boxes
    with air between them make that exactly the thing you cannot see. */
-#shelf{margin:22px 0 0;display:grid;gap:14px}
+#shelf{margin:14px 0 0;display:grid;gap:10px}
 .run{display:flex;align-items:flex-end;gap:0;border-radius:6px;overflow:hidden}
 .glass{
   width:16px;align-self:stretch;flex:none;
@@ -162,21 +166,45 @@ body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:
 .empty-label{position:absolute;left:0;right:0;text-align:center;font-size:10px;color:var(--muted);opacity:.55;text-transform:uppercase;letter-spacing:.08em}
 
 /* ---- the tray ---- */
-h2{font-family:Lora,Georgia,serif;font-size:17px;margin:24px 0 8px}
-#tray{display:flex;flex-wrap:wrap;gap:8px;min-height:56px}
+/* Docked to the bottom of the screen rather than sitting at the end of the
+   page. The game is tap a plant, then tap a place: if the plants are below
+   the fold there is no game, and a deep shelf is well over a screen tall on
+   any phone. One row that scrolls sideways, so it costs the same height
+   whether there are six plants left or fifteen. */
+#dock{
+  position:fixed;left:0;right:0;bottom:0;z-index:5;
+  background:var(--ink);border-top:1px solid var(--border);
+  padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 -10px 22px rgba(0,0,0,.28);
+}
+#dock .inner{max-width:520px;margin:0 auto;display:flex;align-items:center;gap:10px;position:relative}
+/* Fades at both edges, so a row that runs off the screen looks like one that
+   runs off the screen rather than one that stops there -- and a chip half cut
+   off at the left reads as scrolled rather than broken. */
+#dock .inner::after,#dock .inner::before{
+  content:"";position:absolute;top:0;bottom:0;width:22px;pointer-events:none;z-index:1;
+}
+#dock .inner::after{right:0;background:linear-gradient(90deg,transparent,var(--ink))}
+#dock .inner::before{left:74px;background:linear-gradient(270deg,transparent,var(--ink))}
+#tray-label{
+  font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+  flex:none;max-width:64px;line-height:1.15;
+}
+#tray{display:flex;gap:8px;overflow-x:auto;padding:2px 0;flex:1;scrollbar-width:none}
+#tray::-webkit-scrollbar{display:none}
 .chip{
-  display:flex;align-items:center;gap:8px;
+  display:flex;align-items:center;gap:8px;flex:none;
   background:var(--card);border:1px solid var(--border);border-radius:10px;
-  padding:8px 12px;min-height:44px;color:inherit;font:inherit;cursor:pointer;
+  padding:6px 11px;min-height:44px;color:inherit;font:inherit;cursor:pointer;
 }
 .chip[data-held="1"]{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
 .chip:focus-visible{outline:2px solid var(--gold-light);outline-offset:2px}
-.swatch{width:10px;border-radius:3px;flex:none}
+.swatch{width:10px;align-self:stretch;border-radius:3px;flex:none}
 .chip[data-need="3"] .swatch{background:var(--sun)}
 .chip[data-need="2"] .swatch{background:var(--bright)}
 .chip[data-need="1"] .swatch{background:var(--shade)}
 .chip small{color:var(--muted);font-size:12px}
-#tray-empty{color:var(--muted);font-size:14px;margin:0;align-self:center}
+#tray-empty{color:var(--muted);font-size:14px;margin:0;align-self:center;white-space:nowrap}
 
 /* Wraps rather than squeezing: at 390px with two buttons in it, "9
    placements · par 15" was breaking across two lines mid-phrase. */
@@ -259,9 +287,6 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
   <p id="records" hidden></p>
   <p id="save"></p>
 
-  <h2>Still to go in</h2>
-  <div id="tray"></div>
-
   <div id="win" hidden>
     <h2>Every one of them is happy.</h2>
     <p id="win-line"></p>
@@ -276,6 +301,13 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
 
   <p class="foot">A quiet puzzle from <a href="/">PlantParlour</a>.</p>
 </main>
+
+<div id="dock">
+  <div class="inner">
+    <span id="tray-label">Still to go in</span>
+    <div id="tray" role="group" aria-label="Plants still to go in"></div>
+  </div>
+</div>
 
 <script src="/parlour-games/harness.js"></script>
 <script src="/parlour-games/windowsill-rules.js"></script>

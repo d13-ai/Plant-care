@@ -369,6 +369,57 @@ try {
     if (!/(sun|bright|shade), (low|mid|tall)/.test(chip)) throw new Error(`a chip reads "${chip}"`);
   });
 
+  await step("you can reach a plant and a place at the same time, on a real phone", async () => {
+    /*
+     * The check that was missing, and the one that matters most.
+     *
+     * Every screenshot of this game was taken fullPage, which stitches the
+     * whole document into one image and so never shows where the fold is. On
+     * an actual phone the tray sat 1139px down a 1433px page, below a 640 to
+     * 830px screen -- and the game is tap a plant, then tap a place, so with
+     * the plants off screen there was no game. It shipped that way.
+     *
+     * So: real viewports, no fullPage, every shelf size, and the question is
+     * not "does it render" but "can you play it without scrolling between
+     * the two halves of a move".
+     */
+    const VIEWPORTS = [["small android", 360, 640], ["iphone 13", 390, 664], ["typical", 393, 830]];
+    const worst = [];
+    for (const [label, width, height] of VIEWPORTS) {
+      const ctx = await browser.newContext({ viewport: { width, height } });
+      const vp = await ctx.newPage();
+      for (const shelf of ["gentle", "standard", "deep"]) {
+        await vp.goto("http://localhost:4611/parlour-games/windowsill");
+        await vp.waitForSelector(".cell");
+        await vp.click(`[data-shelf="${shelf}"]`);
+        await vp.waitForSelector(".chip");
+        const m = await vp.evaluate((vh) => {
+          const dock = document.getElementById("dock").getBoundingClientRect();
+          const cells = [...document.querySelectorAll(".cell")].map((c) => c.getBoundingClientRect());
+          const chip = document.querySelector(".chip").getBoundingClientRect();
+          return {
+            dockPinned: dock.bottom > vh - 2 && dock.top < vh,
+            reachable: cells.filter((r) => r.top < dock.top && r.bottom > 0).length,
+            cellW: Math.min(...cells.map((r) => r.width)),
+            cellH: Math.min(...cells.map((r) => r.height)),
+            chipH: chip.height,
+            sideScroll: document.documentElement.scrollWidth - window.innerWidth,
+          };
+        }, height);
+        const where = `${label} / ${shelf}`;
+        if (!m.dockPinned) throw new Error(`${where}: the tray is not pinned to the bottom of the screen`);
+        if (m.reachable < 1) throw new Error(`${where}: no place on the shelf is visible above the tray`);
+        if (m.chipH < 44) throw new Error(`${where}: tray chips are ${m.chipH.toFixed(0)}px tall`);
+        if (m.cellW < 44 || m.cellH < 44) throw new Error(`${where}: cells are ${m.cellW}x${m.cellH}`);
+        if (m.sideScroll > 0) throw new Error(`${where}: the page scrolls sideways by ${m.sideScroll}px`);
+        worst.push({ where, reachable: m.reachable });
+      }
+      await ctx.close();
+    }
+    const tight = worst.reduce((a, b) => (b.reachable < a.reachable ? b : a));
+    console.log(`  (tray pinned on every size; fewest places in view at once: ${tight.reachable}, on ${tight.where})`);
+  });
+
   await step("it fits a 390px phone with tap targets over 44px", async () => {
     await page.click("#clear");
     const sizes = await page.evaluate(() => {
