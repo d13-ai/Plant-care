@@ -601,6 +601,8 @@ src/lib/            sync engine, auth, tag publishing, AI, photos, calendar save
 src/components/     small UI kit + plant card
 e2e/                live tag publish and two-phone sync checks (npm run e2e)
 docs/PRODUCT.md     product brief and roadmap
+docs/COMPETITION.md where we stand against the other plant apps
+docs/PRICING.md     what a keeper costs to serve, and what to charge
 ```
 
 ## Where the idea came from
