@@ -758,8 +758,12 @@ try {
     // so this asserts the config rather than a live response. The live check
     // happens against the deploy.
     const config = JSON.parse(await readFile("vercel.json", "utf8"));
-    const embed = config.headers.find((h) => h.source === "/parlour-games/trickle/embed");
-    if (!embed) throw new Error("no header rule for the embed route");
+    // The rule covers every game's embed route, not just this one, so it is
+    // matched on mentioning trickle rather than on being exactly its path.
+    const embed = config.headers.find(
+      (h) => /embed/.test(h.source) && /trickle/.test(h.source) && !h.source.startsWith("/((?!"),
+    );
+    if (!embed) throw new Error("no header rule covering this game's embed route");
     const csp = embed.headers.find((h) => h.key === "Content-Security-Policy");
     if (!csp || !/frame-ancestors \*/.test(csp.value)) {
       throw new Error(`the embed route's CSP reads ${JSON.stringify(csp && csp.value)}`);

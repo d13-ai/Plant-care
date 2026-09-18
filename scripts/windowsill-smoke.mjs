@@ -22,6 +22,7 @@ const PAGE = readFileSync("public/parlour-games/windowsill.html", "utf8");
 // Trickle is served here too, at its own paths, so the one claim that spans
 // both games -- a single streak -- can actually be played rather than argued.
 const TRICKLE = readFileSync("public/parlour-games/trickle.html", "utf8");
+const HUB = readFileSync("public/parlour-games/index.html", "utf8");
 const server = createServer((req, res) => {
   const path = new URL(req.url, "http://x").pathname;
   const js = FILES[path];
@@ -31,6 +32,7 @@ const server = createServer((req, res) => {
     return;
   }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
+  if (/^\/parlour-games\/?$/.test(path)) { res.end(HUB); return; }
   res.end(/^\/parlour-games\/trickle(\/|$)/.test(path) ? TRICKLE : PAGE);
 }).listen(4611);
 
@@ -1054,6 +1056,139 @@ try {
     const after = await wp.evaluate(() => window.__game.streak());
     if (after.streak !== 1 || after.played !== 1) {
       throw new Error(`a second game the same day counted again: ${JSON.stringify(after)}`);
+    }
+    await ctx.close();
+  });
+
+  // ---- embedded, and the hub ------------------------------------------
+  await step("embedded, it loses its chrome and keeps its game", async () => {
+    const ctx = await browser.newContext({ viewport: { width: 560, height: 900 } });
+    const host = await ctx.newPage();
+    // A page that frames it, the way somebody else's site would.
+    await host.setContent(`<!doctype html><title>Host</title>
+      <p>Someone else's page.</p>
+      <iframe src="http://localhost:4611/parlour-games/windowsill/embed"
+              width="520" height="700" style="border:0"></iframe>`);
+    const frame = host.frameLocator("iframe");
+    await frame.locator(".cell").first().waitFor({ timeout: 20000 });
+
+    const inside = await host.frames()[1].evaluate(() => ({
+      embed: window.__game.isEmbed(),
+      masthead: !!document.querySelector("h1").offsetParent,
+      hub: !!document.querySelector(".hub").offsetParent,
+      credit: !!document.getElementById("credit").offsetParent,
+      save: document.getElementById("save").textContent.trim(),
+      foot: !!document.querySelector(".foot").offsetParent,
+      // Every link has to leave the frame rather than replace it.
+      links: Array.from(document.querySelectorAll("a")).map((a) => a.target),
+      cells: document.querySelectorAll(".cell").length,
+    }));
+    if (!inside.embed) throw new Error("it did not come up in embed mode");
+    if (inside.masthead || inside.hub || inside.foot) throw new Error("the site's own chrome came with it");
+    if (!inside.credit) throw new Error("no credit back to Parlour Games");
+    if (inside.save) throw new Error(`it asked to be signed into: "${inside.save}"`);
+    if (!inside.cells) throw new Error("no shelf");
+    if (inside.links.some((t) => t !== "_blank")) {
+      throw new Error("a link inside the frame would replace the frame");
+    }
+
+    // And it is still a game inside the frame: a tall plant at the glass has
+    // to take light off the row behind it, same as anywhere else.
+    const tall = await host.frames()[1].evaluate(() => {
+      const t = window.__game.tray().find((p) => p.height === 3);
+      return t ? t.id : null;
+    });
+    if (tall === null) throw new Error("this board dealt nothing tall to test with");
+    await frame.locator(`.chip[data-plant="${tall}"]`).click();
+    await frame.locator('.cell[data-run="0"][data-tier="0"]').click();
+    const after = await host.frames()[1].evaluate(() => ({
+      placed: window.__game.shelf()[0][0] !== null,
+      behind: window.__game.lights()[0][1],
+    }));
+    if (!after.placed) throw new Error("it would not take a plant inside a frame");
+    if (after.behind !== 2) throw new Error(`a tall plant at the glass left light ${after.behind} behind it`);
+    console.log("  (framed, playable, and the rule still holds inside the frame)");
+    await ctx.close();
+  });
+
+  await step("only the embed route says it may be framed", async () => {
+    // vercel.json is the thing that decides this, so it is what gets read:
+    // the app's block must not claim the embed route, and the frame block
+    // must cover both games.
+    const { readFileSync } = await import("node:fs");
+    const cfg = JSON.parse(readFileSync("vercel.json", "utf8"));
+    const app = cfg.headers.find((h) => h.source.startsWith("/((?!"));
+    const framed = cfg.headers.find((h) => /embed/.test(h.source) && !h.source.startsWith("/((?!"));
+    if (!/parlour-games\/windowsill\/embed\$/.test(app.source)) {
+      throw new Error("the app's frame-ancestors block still claims the windowsill embed");
+    }
+    const csp = app.headers.find((h) => h.key === "Content-Security-Policy");
+    if (!/frame-ancestors 'none'/.test(csp.value)) {
+      throw new Error(`everything else should refuse framing, not "${csp.value}"`);
+    }
+    if (!framed || !/windowsill/.test(framed.source) || !/trickle/.test(framed.source)) {
+      throw new Error(`the frame block covers ${framed ? framed.source : "nothing"}`);
+    }
+    if (!framed.headers.some((h) => h.key === "Content-Security-Policy" && /frame-ancestors \*/.test(h.value))) {
+      throw new Error("the embed route does not allow framing");
+    }
+    const rw = cfg.rewrites.map((r) => r.source);
+    ["learn", "daily", "embed"].forEach((mode) => {
+      const route = `/parlour-games/windowsill/${mode}`;
+      if (!rw.includes(route)) throw new Error(`${route} has no rewrite`);
+      if (rw.indexOf(route) > rw.indexOf("/(.*)")) throw new Error(`${route} sits after the catch-all`);
+    });
+  });
+
+  await step("the hub lists it, and carries the streak for both games", async () => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const today = Math.floor(
+      (Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) -
+       Date.UTC(2026, 8, 17)) / 86400000) + 1;
+    const hp = await ctx.newPage();
+    hp.on("pageerror", (e) => errors.push("pageerror(hub): " + e.message));
+
+    await hp.goto("http://localhost:4611/parlour-games");
+    await hp.waitForSelector(".game");
+    // The hub is a list of links first: it must survive the harness failing.
+    const brave = await ctx.newPage();
+    await brave.route("**/parlour-games/harness.js", (r) => r.fulfill({ status: 404, body: "" }));
+    await brave.goto("http://localhost:4611/parlour-games");
+    await brave.waitForSelector(".game");
+    if ((await brave.locator(".game").count()) < 2) throw new Error("the hub lost its games without the harness");
+    await brave.close();
+    const games = await hp.$$eval(".game", (els) => els.map((e) => ({
+      name: e.querySelector("h2").textContent, href: e.getAttribute("href"),
+    })));
+    if (!games.some((g) => g.name === "Windowsill" && g.href === "/parlour-games/windowsill")) {
+      throw new Error(`the hub lists ${JSON.stringify(games)}`);
+    }
+    // Nothing played: no streak line, rather than a zero.
+    if (await hp.locator("#streak").isVisible()) throw new Error("the hub showed a streak of nothing");
+
+    // A live run shows, and says what keeps it.
+    await hp.evaluate((day) => localStorage.setItem("pp_streak", JSON.stringify(
+      { last: day - 1, streak: 6, longest: 6, played: 6 })), today);
+    await hp.reload();
+    await hp.waitForSelector("#streak:not([hidden])");
+    const live = await hp.textContent("#streak");
+    if (!/6 days running/.test(live) || !/keep it/.test(live)) throw new Error(`it reads "${live}"`);
+
+    // Already played today: it says so rather than nagging.
+    await hp.evaluate((day) => localStorage.setItem("pp_streak", JSON.stringify(
+      { last: day, streak: 7, longest: 7, played: 7 })), today);
+    await hp.reload();
+    await hp.waitForSelector("#streak:not([hidden])");
+    const done = await hp.textContent("#streak");
+    if (!/Today is done/.test(done)) throw new Error(`having played, it reads "${done}"`);
+
+    // A run that already lapsed is over, and saying otherwise would be a lie.
+    await hp.evaluate((day) => localStorage.setItem("pp_streak", JSON.stringify(
+      { last: day - 3, streak: 9, longest: 9, played: 9 })), today);
+    await hp.reload();
+    await hp.waitForSelector(".game");
+    if (await hp.locator("#streak").isVisible()) {
+      throw new Error(`a lapsed run still claims "${await hp.textContent("#streak")}"`);
     }
     await ctx.close();
   });
