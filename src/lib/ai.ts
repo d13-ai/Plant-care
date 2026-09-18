@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImageManipulator from "expo-image-manipulator";
+import { afterScanLine, PHOTO_TRIAL, type Allowance } from "@/domain/allowance";
 import { KNOWN_CULTIVARS } from "@/domain/species";
 import { ensureSession, supabase, supabaseConfigured } from "./supabase";
 
@@ -69,20 +70,45 @@ export async function clearLastScan(): Promise<void> {
   await AsyncStorage.removeItem(LAST_SCAN_KEY).catch(() => {});
 }
 
-/** One line for the screen: what this answer cost, or that it was free. */
-export function describeCost(a: Answer): string {
-  if (a.cached) return "Remembered from before — no charge.";
-  const cents = a.cost_usd != null ? Math.max(1, Math.round(a.cost_usd * 100)) : null;
+/**
+ * One line for the screen after a scan: what is left, not what it cost.
+ *
+ * It used to lead with the price — "This scan cost about 4c" — which answers
+ * a question the owner has and the keeper does not. `ai_usage` records every
+ * cent, so nothing is lost by keeping it out of the app; what a keeper needs
+ * to know is how many identifications remain, and they now see that before
+ * the button as well as after the answer.
+ */
+export function describeScan(a: Answer): string | null {
   // Report whichever allowance actually binds. For a keeper on the trial that
   // is the trial -- being told "17 of 20 left today" while three identifications
   // remain in total would be worse than saying nothing.
-  const left =
-    typeof a.photosLeft === "number"
-      ? ` · ${a.photosLeft} ${a.photosLeft === 1 ? "identification" : "identifications"} left`
-      : Number.isFinite(a.remaining)
-        ? ` · ${a.remaining} of 20 scans left today`
-        : "";
-  return cents != null ? `This scan cost about ${cents}¢${left}.` : `Scan done${left}.`;
+  if (a.cached) return afterScanLine({ left: a.photosLeft ?? null, cached: true });
+  if (typeof a.photosLeft === "number") return afterScanLine({ left: a.photosLeft });
+  if (a.photosLeft === null) return null; // unlimited keeper
+  return Number.isFinite(a.remaining) ? `${a.remaining} of 20 scans left today.` : null;
+}
+
+/**
+ * What the keeper has left, read from their own row rather than remembered
+ * from the last answer — so a phone that has never scanned still knows, and
+ * two phones agree. Falls back to the default when there is no session or
+ * the read fails: saying "5 free identifications" to somebody who has four
+ * is a smaller wrong than saying nothing at all.
+ */
+export async function photoAllowance(): Promise<Allowance> {
+  const { data: session } = await supabase.auth.getSession();
+  const id = session.session?.user?.id;
+  if (!id) return { left: null };
+  const { data, error } = await supabase
+    .from("keepers")
+    .select("photo_calls, ai_unlimited")
+    .eq("id", id)
+    .maybeSingle();
+  if (error || !data) return { left: null };
+  const row = data as { photo_calls: number | null; ai_unlimited: boolean | null };
+  if (row.ai_unlimited) return { left: null, unlimited: true };
+  return { left: Math.max(0, PHOTO_TRIAL - (row.photo_calls ?? 0)) };
 }
 
 /**

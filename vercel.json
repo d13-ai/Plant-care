@@ -6,7 +6,7 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/((?!tag$|@|api/|plant-photos/|privacy$|terms$|parlour-games/trickle/embed$|parlour-games/windowsill/embed$).*)",
+      "source": "/((?!tag$|@|api/|plant-photos/|plant-thumb/|privacy$|terms$|parlour-games/trickle/embed$|parlour-games/windowsill/embed$).*)",
       "headers": [
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -19,6 +19,15 @@
         {
           "key": "Content-Security-Policy",
           "value": "frame-ancestors 'none'"
+        }
+      ]
+    },
+    {
+      "source": "/plant-thumb/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     },
@@ -53,6 +62,10 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/plant-thumb/(.*)",
+      "destination": "https://ixagjvntbgyqemxxinqe.supabase.co/storage/v1/render/image/public/plant-photos/$1"
+    },
     {
       "source": "/plant-photos/(.*)",
       "destination": "https://ixagjvntbgyqemxxinqe.supabase.co/storage/v1/object/public/plant-photos/$1"

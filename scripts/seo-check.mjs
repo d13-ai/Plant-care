@@ -249,6 +249,19 @@ if (!existsSync(join(PUBLIC, "robots.txt"))) {
   }
 }
 
+// --- a public page never serves a full-size photo into a small box.
+// Supabase resizes on the way out; asking for the raw object instead means a
+// 704 KB original filling a 320px square. Every <img> on a server-rendered
+// page has to name the size it draws.
+for (const file of ["tag.ts", "conservatory.ts"]) {
+  const src = readFileSync(join(ROOT, "api", file), "utf8");
+  for (const [, call] of src.matchAll(/<img[^>]*?photoUrl\(([^)]*)\)/g)) {
+    if (!/,/.test(call)) {
+      err(`api/${file}`, `an <img> asks for photoUrl(${call.trim()}) at full size — name the size it is drawn at`);
+    }
+  }
+}
+
 // --- llms.txt exists and doesn't advertise anything unlisted
 if (!existsSync(join(PUBLIC, "llms.txt"))) {
   err("llms.txt", "missing");

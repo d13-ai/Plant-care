@@ -25,6 +25,21 @@ import { boundedText, claimAiCall, claimPhotoCall, refundAiCall, refundPhotoCall
 // photo versus 1¢ — the difference a collector notices is worth it.
 const MODELS = ["claude-sonnet-5", "claude-opus-5", "claude-haiku-4-5"] as const;
 const DEFAULT_MODEL = MODELS.find((m) => m === Deno.env.get("AI_MODEL")) ?? "claude-opus-5";
+/**
+ * A health check on a plant the keeper has already named does not need the
+ * skill Opus is here for. What made Opus the default is cultivar-grade
+ * identification -- naming a Thai Constellation rather than an Albo -- and a
+ * keeper asking "why are the leaves yellowing on my Monstera" has already
+ * told us which plant it is. Reading a leaf is the cheaper job.
+ *
+ * So `mode: "health"` runs on Sonnet: $2/$10 per million against $5/$25, or
+ * about 40% of the cost, on what will be the commonest scan once somebody's
+ * collection is photographed. Identification keeps Opus.
+ *
+ * Overridable with AI_HEALTH_MODEL, and an explicit `model` in the request
+ * still wins over both, so the two can be compared on the same photo.
+ */
+const HEALTH_MODEL = MODELS.find((m) => m === Deno.env.get("AI_HEALTH_MODEL")) ?? "claude-sonnet-5";
 // Anthropic list prices, $ per million tokens, so each answer can say what
 // it cost and the day's spend adds up in ai_usage. Update when prices move.
 const PRICES: Record<string, { input: number; output: number }> = {
@@ -130,7 +145,8 @@ Deno.serve(async (req: Request) => {
     : [];
   // A request may pick a model from the allow-list — for comparing answers on
   // the same photo. The daily cap bounds what that can cost.
-  const MODEL = MODELS.find((m) => m === body.model) ?? DEFAULT_MODEL;
+  const MODEL = MODELS.find((m) => m === body.model)
+    ?? (mode === "health" ? HEALTH_MODEL : DEFAULT_MODEL);
 
   // Daily cap, claimed before the call so a burst can't slip past it. One
   // locked statement checks and increments, and a claim that can't be
@@ -151,7 +167,7 @@ Deno.serve(async (req: Request) => {
 
   const ask =
     mode === "health"
-      ? `Focus on this plant's health.${species_hint ? ` The keeper says it's a ${species_hint}; still identify it, but weight your health reading to that.` : ""}`
+      ? `Focus on this plant's health.${species_hint ? ` The keeper keeps it as a ${species_hint} — take that as given and read its health in that light, rather than re-identifying it.` : ""}`
       : mode === "identify"
         ? "Focus on identifying this plant."
         : `Identify this plant and read its health.${species_hint ? ` The keeper thinks it's a ${species_hint}.` : ""}`;
