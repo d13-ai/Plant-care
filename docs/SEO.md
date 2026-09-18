@@ -129,11 +129,22 @@ README calls those links unlisted, so they are:
 
 That takes two different mechanisms, because it is two different problems.
 
-- `api/tag.ts` renders a published tag with `robots: noindex, nofollow`.
-  `noindex` is what actually keeps it out of search results. `nofollow`
-  matters because the only links on a tag page are to other tags — a
-  keeper's mother plant and its cuttings — so following them would walk a
-  whole lineage. There is nothing else on the page to follow.
+- `api/tag.ts` renders a published tag with
+  `robots: noindex, nofollow, noimageindex`. `noindex` is what actually keeps
+  it out of search results. `nofollow` matters because the only links on a tag
+  page are to other tags — a keeper's mother plant and its cuttings — so
+  following them would walk a whole lineage. There is nothing else on the page
+  to follow.
+
+  `noimageindex` covers what `noindex` does not. A page directive keeps the
+  page out of results and says nothing about the images on it, and those
+  images are a keeper's photographs of their own home. They are served from
+  the Supabase storage host, which answers **404 to `/robots.txt`** — which a
+  crawler reads as permission for everything — so there is no rule over there
+  to fall back on. Without this directive a tag's photos could be indexed into
+  image search while the page itself stayed out: the promise kept in the
+  letter and broken in the substance. It was missed when the search crawlers
+  were first let in, and is asserted now rather than remembered.
 - `robots.txt` disallows `/tag` in every group **except `Googlebot` and
   `Bingbot`**, which are deliberately allowed to fetch one.
 

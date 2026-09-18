@@ -49,8 +49,24 @@ const photoUrl = (path: string) => `${SUPABASE_URL}/storage/v1/object/public/pla
  * `noindex` keeps a page out of search results. Anything that isn't a 200 is
  * noindexed by default; a published tag asks for it explicitly, because the
  * link is unlisted — the keeper hands it to one person, and a search result
- * would be exactly the discovery we promised it wouldn't be. robots.txt says
- * the same thing for crawlers that read it before fetching.
+ * would be exactly the discovery we promised it wouldn't be.
+ *
+ * `noimageindex` covers the half `noindex` does not. It keeps the page out of
+ * results; it says nothing about the images ON the page, which are a keeper's
+ * photographs of their own home. Those are served from the Supabase storage
+ * host, which answers 404 to /robots.txt — read by a crawler as permission for
+ * everything — so nothing over there refuses them either. Without this a tag's
+ * photos could be indexed into image search while the page itself stayed out,
+ * which is the promise kept in the letter and broken in the substance.
+ *
+ * `nofollow` is the third: the only links on a tag page go to other tags, a
+ * keeper's mother plant and its cuttings, so following them walks a lineage
+ * and gains nothing.
+ *
+ * robots.txt carries the other half of this, and the two are deliberately
+ * different: the search crawlers are ALLOWED to fetch a tag, because a crawler
+ * that cannot fetch the page never reads any of these directives. See
+ * docs/SEO.md §5.
  */
 export function page(
   title: string,
@@ -62,7 +78,7 @@ export function page(
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#2E1633">
 <title>${esc(title)}</title>
-${noindex ? '<meta name="robots" content="noindex, nofollow">' : ""}
+${noindex ? '<meta name="robots" content="noindex, nofollow, noimageindex">' : ""}
 ${head}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap">

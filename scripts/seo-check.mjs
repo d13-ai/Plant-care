@@ -217,6 +217,13 @@ if (!existsSync(join(PUBLIC, "robots.txt"))) {
   if (!/content="noindex/.test(tagSrc)) {
     err("api/tag.ts", "no longer emits a noindex robots meta tag");
   }
+  // `noindex` keeps the PAGE out of results and says nothing about the
+  // photographs on it, which are served from a host whose robots.txt is a 404
+  // -- permission for everything, as a crawler reads it. Losing this directive
+  // would leave a keeper's photos indexable while the page stayed hidden.
+  if (!/content="noindex[^"]*noimageindex/.test(tagSrc)) {
+    err("api/tag.ts", "a tag's photos are no longer marked noimageindex");
+  }
   if (!/render\(data\)[^;]*\btrue\b/.test(tagSrc)) {
     err("api/tag.ts", "a published tag no longer asks to be noindexed");
   }
