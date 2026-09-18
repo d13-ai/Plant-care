@@ -2436,4 +2436,20 @@ export const PLANTS = {
       ["Is lucky bamboo the same as real bamboo?", "No. Lucky bamboo — the stems sold standing in pebbles and water, sometimes spiralled — is Dracaena sanderiana, a member of the asparagus family. True bamboos are grasses and will not grow in a vase of water. The practical difference that matters at home: lucky bamboo is toxic to cats and dogs, and true bamboo is not."],
     ],
   },
+  "dracaena-sanderiana": {
+    blurb:
+      "Lucky bamboo: the upright or spiralled green stems sold standing in a vase of pebbles and water. It is not a bamboo — it is a dracaena, in the asparagus family, and the resemblance is only in the jointed stem. That matters in a house with animals, because this is toxic to cats and dogs and true bamboo is not.",
+    size: "30–90 cm, taller in soil than in water",
+    origin: "Central Africa; the vase-grown form is a horticultural trade",
+    difficulty: "Easy-going",
+    lightLong:
+      "Bright indirect light, and never direct sun — the leaves of a plant grown in water scorch faster than one in compost. It survives a dim corner, but pales and stops putting out new leaves.",
+    waterHow:
+      "Grown in water: keep the roots covered, change the water every week or two, and use rainwater, filtered or tap water left standing overnight. It is unusually sensitive to the fluoride and chlorine in fresh tap water, which shows as burnt tips. Grown in compost: keep it evenly damp, and let only the top centimetre dry.",
+    faq: [
+      ["Can lucky bamboo live in water forever?", "Yes, and most do. It will stay smaller and needs a drop of weak feed every couple of months, since pebbles hold nothing for it to eat. Moving it to compost makes it grow faster and larger, and it will not go back happily once it has rooted in soil."],
+      ["Why are the leaves turning yellow?", "Usually the water. Fluoride, chlorine and salts build up in a vase that is topped up rather than emptied, and this plant is more sensitive to them than most. Empty and refill rather than topping up, and use filtered or stood water. Yellow that starts at the stem base instead is rot, and that part will not recover — cut above it and re-root the green section."],
+      ["Is lucky bamboo poisonous to cats?", "Yes. Like other dracaenas it contains saponins, which cause vomiting, drooling and dilated pupils in cats. It is not usually dangerous beyond that, but a cat that chews it will be unwell. True bamboo, which this is often mistaken for, is not toxic."],
+    ],
+  },
 };
