@@ -30,7 +30,8 @@ const sections = [
     html: `<p>Nothing you keep is visible to anyone else until you choose to publish it.</p>
 <ul>
 <li><strong>Publishing a plant</strong> creates a tag link with 32 random characters in it. Anyone holding that link can read that one plant: its species, dates, notes, care history and photos. It is unlisted, not secret. Unpublishing stops the link working.</li>
-<li><strong>Claiming a handle</strong> creates a conservatory page at plantparlour.org/@yourhandle. That page <em>is</em> public and meant to be found and shared. It shows only the plants you have already published, plus your display name and the date you joined.</li>
+<li><strong>Unlisted means we keep it out of search.</strong> Search engines are told not to list a tag page and not to index the photographs on it, and the crawlers that collect text to train AI models are refused it outright. What we cannot control is a link once you have sent it: anyone you give it to can pass it on, and a tag link posted somewhere public is public.</li>
+<li><strong>Claiming a handle</strong> creates a conservatory page at plantparlour.org/@yourhandle. That page <em>is</em> public and meant to be found and shared. It shows only the plants you have already published, plus your display name and the date you joined. Because it is meant to be found, it is open to search engines and to AI crawlers in the ordinary way. If you would rather not be findable, publish plants without claiming a handle — the tag links work either way.</li>
 </ul>
 <p>Plants you have not published never appear on either, and are never shown to another keeper.</p>`,
   },

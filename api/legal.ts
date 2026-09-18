@@ -9,8 +9,13 @@
 import { page } from "./tag";
 
 export const SITE = "https://plantparlour.org";
-/** Change this when the wording changes, not when the file is touched. */
-export const UPDATED = "17 September 2026";
+/**
+ * Change a page's date when ITS wording changes, not when the file is touched
+ * and not when the other page changes. One shared date meant editing the
+ * privacy notice silently re-dated the terms, which tells a keeper something
+ * changed in an agreement that did not change at all.
+ */
+export const UPDATED = { privacy: "18 September 2026", terms: "17 September 2026" };
 /** Both pages point here. It has to be a mailbox someone actually reads. */
 export const CONTACT = "bondcreativestudios@gmail.com";
 /**
@@ -26,18 +31,19 @@ type Section = { heading: string; html: string };
 
 /** Renders one legal page: masthead, dated intro, sections, footer. */
 export function legalPage(
-  title: string,
+  title: "Privacy" | "Terms",
   intro: string,
   sections: Section[],
   description: string,
 ): { status: number; html: string } {
+  const updated = title === "Privacy" ? UPDATED.privacy : UPDATED.terms;
   const head = `<meta name="description" content="${description}">
 <link rel="canonical" href="${SITE}/${title === "Privacy" ? "privacy" : "terms"}">`;
   const body = `<div class="top">
   <h1>${title}</h1>
   <span class="brand">PlantParlour</span>
 </div>
-<p class="sub">Last updated ${UPDATED}</p>
+<p class="sub">Last updated ${updated}</p>
 <section><p>${intro}</p></section>
 ${sections
   .map((s) => `<section><h2 class="caps">${s.heading}</h2>${s.html}</section>`)
