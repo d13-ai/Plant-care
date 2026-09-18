@@ -31,6 +31,12 @@ const FIXED_MONTHLY = 25 /* Supabase Pro */ + 20 /* Vercel Pro */;
 /** The free trial as the code actually implements it: PHOTO_TRIAL, lifetime. */
 const FREE_SCANS_LIFETIME = 5;
 
+/** Share of keepers who subscribe. Pure assumption — nothing measures this. */
+const CONVERSION_NOTE = 0.03;
+
+/** How long the keepers at a given size are assumed to have arrived over. */
+const RAMP_MONTHS = 12;
+
 const PRICES = {
   monthly: 5.99,
   annual: 39.99,
@@ -126,28 +132,36 @@ for (const n of [20, 30, 40, 50, 79, 100]) {
   console.log(`  ${String(n).padStart(9)}   ${cell(id)} ${cell(he)} ${cell(mix)}`);
 }
 
-console.log("\n=== the whole business, at three sizes ===");
-console.log("  Assumes: signups arrive, 3% of them subscribe, and the paid mix is");
-console.log("  70% annual / 30% monthly. Free keepers spend their 5-scan trial once.");
-const CONVERSION = 0.03;
+console.log("\n=== the whole business, at four sizes ===");
+console.log("  A KEEPER is anyone with an account: free, costs their 5-scan trial once");
+console.log("  (" + usd(FREE_SCANS_LIFETIME * SCAN.identify) + ") and about nothing after that.");
+console.log("  A SUBSCRIBER is a keeper who pays: " + pct(CONVERSION_NOTE) + " of them, by assumption.");
+console.log("\n  Every column is PER MONTH. The trial is a one-off per keeper, so it is");
+console.log("  charged here over the " + RAMP_MONTHS + " months those keepers are assumed to arrive in —");
+console.log("  which is what makes it a growth cost rather than a running one.");
+const CONVERSION = CONVERSION_NOTE;
 const ANNUAL_SHARE = 0.7;
-console.log("\n  keepers   subscribers   revenue/mo   AI cost/mo   fixed/mo   free trials (one-off)   profit/mo");
+console.log("\n  keepers   subs   revenue/mo   subs AI/mo   trials/mo   fixed/mo   profit/mo   (trials, total one-off)");
 for (const keepers of [100, 1000, 10000, 50000]) {
   const subs = Math.round(keepers * CONVERSION);
   const revenue = subs * (ANNUAL_SHARE * netMonthly.annual + (1 - ANNUAL_SHARE) * netMonthly.monthly);
   const aiPaid = subs * blended.steady;
-  // A free keeper costs their trial once, not monthly. Shown separately
-  // because it is an acquisition cost, not a running one.
-  const trials = (keepers - subs) * FREE_SCANS_LIFETIME * SCAN.identify;
-  const profit = revenue - aiPaid - FIXED_MONTHLY;
+  const trialsTotal = (keepers - subs) * FREE_SCANS_LIFETIME * SCAN.identify;
+  const trialsMonthly = trialsTotal / RAMP_MONTHS;
+  const profit = revenue - aiPaid - trialsMonthly - FIXED_MONTHLY;
   console.log(
-    `  ${String(keepers).padStart(7)}   ${String(subs).padStart(11)}   ${usd(revenue).padStart(10)}   ` +
-      `${usd(aiPaid).padStart(10)}   ${usd(FIXED_MONTHLY).padStart(8)}   ${usd(trials).padStart(21)}   ${usd(profit).padStart(9)}`,
+    `  ${String(keepers).padStart(7)}   ${String(subs).padStart(4)}   ${usd(revenue).padStart(10)}   ` +
+      `${usd(aiPaid).padStart(10)}   ${usd(trialsMonthly).padStart(9)}   ${usd(FIXED_MONTHLY).padStart(8)}   ` +
+      `${usd(profit).padStart(9)}   ${usd(trialsTotal).padStart(22)}`,
   );
 }
+console.log("\n  Once growth stops the trials column goes to zero and the profit column");
+console.log("  gains it back. Growing costs money here; standing still does not.");
 
 console.log("\n=== what $1,000/month takes ===");
 const perSub = ANNUAL_SHARE * netMonthly.annual + (1 - ANNUAL_SHARE) * netMonthly.monthly - blended.steady;
-const need = Math.ceil((1000 + FIXED_MONTHLY) / perSub);
-console.log(`  ${usd(perSub)} profit per subscriber per month`);
+const trialDragPerSub = ((1 / CONVERSION_NOTE) - 1) * FREE_SCANS_LIFETIME * SCAN.identify / RAMP_MONTHS;
+const need = Math.ceil((1000 + FIXED_MONTHLY) / (perSub - trialDragPerSub));
+console.log(`  ${usd(perSub)} per subscriber per month, before the trials of the keepers who did not subscribe`);
+console.log(`  ${usd(trialDragPerSub)} of trial cost rides on each subscriber while growing at this rate`);
 console.log(`  -> ${need} subscribers, which at ${pct(CONVERSION)} conversion is ${Math.ceil(need / CONVERSION).toLocaleString()} keepers`);

@@ -103,29 +103,48 @@ uses four scans and the cap could be fifty without anybody noticing:
 and the loss-making corner needs somebody running fifty *identifications* a
 month, every month — which is not a keeper, it is a script.
 
+## Keeper, subscriber, and which one costs what
+
+Two words this page keeps using, because they are not the same person:
+
+| | Costs | Pays |
+|---|---|---|
+| **Keeper** — anyone with an account | **35¢ once**, their five-scan trial, then about nothing: care guides are cached and shared, storage is pennies | nothing |
+| **Subscriber** — a keeper who pays | **17¢ a month** | $3.90/month, blended across plans |
+
+Revenue scales with subscribers. The trial cost scales with *everybody*. At ten
+thousand keepers, three hundred pay — and the other 9,700 each spent 35¢ on
+their way in. That is the whole shape of this business.
+
 ## The free trial is the real cost, not the paid cap
 
-At any size worth having, the dominant AI cost is people who never pay:
+Every column below is **per month**. The trial is a one-off per keeper, so it
+is charged over the twelve months those keepers are assumed to arrive in —
+which is what makes it a cost of *growing* rather than of running.
 
-| Keepers | Subscribers (3%) | Revenue/mo | AI for subscribers | Free trials (one-off) | Profit/mo |
-|---|---|---|---|---|---|
-| 100 | 3 | $11.71 | $0.51 | $33.95 | **−$33.80** |
-| 1,000 | 30 | $117.07 | $5.12 | $339.50 | $66.95 |
-| 10,000 | 300 | $1,170.75 | $51.24 | **$3,395.00** | $1,074.51 |
-| 50,000 | 1,500 | $5,853.73 | $256.20 | **$16,975.00** | $5,552.53 |
+| Keepers | Subs (3%) | Revenue/mo | Subs' AI/mo | Trials/mo | Fixed/mo | **Profit/mo** | (Trials, total) |
+|---|---|---|---|---|---|---|---|
+| 100 | 3 | $11.71 | $0.51 | $2.83 | $45.00 | **−$36.63** | $33.95 |
+| 1,000 | 30 | $117.07 | $5.12 | $28.29 | $45.00 | **$38.66** | $339.50 |
+| 10,000 | 300 | $1,170.75 | $51.24 | $282.92 | $45.00 | **$791.59** | $3,395.00 |
+| 50,000 | 1,500 | $5,853.73 | $256.20 | $1,414.58 | $45.00 | **$4,137.95** | $16,975.00 |
 
-At ten thousand keepers, serving every paying subscriber costs **$51 a month**
-and the free trials cost **$3,395** — sixty-six times more. That is the number
-to manage, and there are three ways to:
+Serving every paying subscriber at ten thousand keepers costs **$51 a month**.
+The trials of the keepers who did *not* subscribe cost **$283 a month** at that
+growth rate — five and a half times more. Once growth stops, that column goes
+to zero and the profit column gains it back. **Growing costs money here;
+standing still does not.**
+
+Three ways to manage it:
 
 - **Five scans to three.** 35¢ a signup becomes 21¢, and three is still enough
   to photograph the plants somebody cares most about.
 - **Spend the first scan well and the rest cheaply.** Run trial scan one on
   Opus — it is the moment the app proves itself — and the rest on Sonnet. 35¢
   becomes about 18¢ with the wow intact.
-- **Watch it, and be ready.** It is an acquisition cost, and 21–35¢ a signup
-  is cheap next to any advertising. It only becomes a problem if a post goes
-  wide and the people it brings never come back.
+- **Or leave it.** 21–35¢ a signup is cheap next to any advertising, and this
+  is an acquisition cost with a conversion rate attached. It only hurts if a
+  post goes wide and nobody who arrives comes back.
 
 ## What to charge
 
@@ -148,9 +167,10 @@ price is not what arrives.
 - **Break-even is about 13 subscribers**, or roughly 430 keepers at 3%
   conversion. Below that the $45 of fixed cost is the whole story: at 100
   keepers this loses $34 a month, which is the price of being open.
-- **$1,000/month profit needs 281 subscribers** — about **9,400 keepers** at
-  3% conversion. That is the target, and it is a distribution problem, not a
-  pricing one.
+- **$1,000/month profit needs 375 subscribers** — about **12,500 keepers** at
+  3% conversion, once each subscriber carries 94¢ of trial cost for the
+  keepers who did not subscribe. That is the target, and it is a distribution
+  problem, not a pricing one.
 
 ## Everything else is cheap
 
@@ -208,8 +228,8 @@ as Paddle, is a decision that comes with the first paid keeper, not later.
 
 ## The number that matters
 
-**$1,000/month of profit is 281 subscribers** — about 9,400 keepers at 3%
-conversion — once the free trials are paid for. `scripts/pricing-model.mjs`
+**$1,000/month of profit is 375 subscribers** — about 12,500 keepers at 3%
+conversion, with the free trials paid for. `scripts/pricing-model.mjs`
 prints it, and will print a different one when the assumptions change.
 
 Which reframes everything above: none of it matters until the funnel that
