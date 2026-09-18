@@ -38,7 +38,25 @@ const esc = (s: unknown) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 const day = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—";
-const photoUrl = (path: string) => `${SUPABASE_URL}/storage/v1/object/public/plant-photos/${path}`;
+/**
+ * A photo, at the size this page draws it. Supabase resizes on the way out,
+ * and the saving is the difference between a page and a download: one real
+ * photo in the bucket is 1600x3463 and 704 KB, and comes back as 10 KB at
+ * 320px square, 144 KB at 900px wide. A tag with a dozen photos was several
+ * megabytes of full-size originals to fill thumbnails a centimetre across.
+ *
+ * `hero` keeps the photo's shape; the strip below crops to squares, which is
+ * what the grid draws anyway.
+ */
+const SIZES = {
+  hero: "width=900&resize=contain&quality=75",
+  grid: "width=320&height=320&resize=cover&quality=65",
+} as const;
+
+const photoUrl = (path: string, size: keyof typeof SIZES | "raw" = "raw") =>
+  size === "raw"
+    ? `${SUPABASE_URL}/storage/v1/object/public/plant-photos/${path}`
+    : `${SUPABASE_URL}/storage/v1/render/image/public/plant-photos/${path}?${SIZES[size]}`;
 
 /**
  * The PlantParlour look: aubergine page, one cream card with the double gold
@@ -120,7 +138,7 @@ export function render(p: Tag): string {
   return `
 <div class="top"><div class="caps">Plant tag</div><div class="brand">PlantParlour</div></div>
 <header><h1>${esc(plant.nickname)}</h1><div class="sub">${esc(plant.species || "Species not listed")}</div></header>
-${hero ? `<img class="hero" src="${esc(photoUrl(hero.path))}" alt="${esc(plant.nickname)}">` : ""}
+${hero ? `<img class="hero" src="${esc(photoUrl(hero.path, "hero"))}" alt="${esc(plant.nickname)}">` : ""}
 <div class="badges">
   <span class="badge ${plant.status === "ACTIVE" ? "ok" : ""}">${esc(plant.status.toLowerCase())}</span>
   <span class="badge ${open ? "bad" : "ok"}">${open ? `${open} open issue${open === 1 ? "" : "s"}` : "No open issues"}</span>
@@ -139,7 +157,7 @@ ${hero ? `<img class="hero" src="${esc(photoUrl(hero.path))}" alt="${esc(plant.n
 <section><h2 class="caps">Health &amp; handling</h2>
   ${health.length ? `<table>${health.map((e) => `<tr><td>${day(e.occurred_at)}</td><td>${esc(LABELS[e.type] ?? e.type)}${e.type === "ISSUE" ? (e.resolved_at ? ` · resolved ${day(e.resolved_at)}` : " · <strong>unresolved</strong>") : ""}${e.notes ? `<br><span class="small muted">${esc(e.notes)}</span>` : ""}</td></tr>`).join("")}</table>` : `<p class="muted">Nothing reported — no issues, treatments or repottings on record.</p>`}
 </section>
-${photos.length > 1 ? `<section><h2 class="caps">Photos over time</h2><div class="photos">${photos.map((ph) => `<figure style="margin:0"><img src="${esc(photoUrl(ph.path))}" alt="" loading="lazy"><figcaption class="small muted">${day(ph.taken_at)}${ph.caption ? ` · ${esc(ph.caption)}` : ""}</figcaption></figure>`).join("")}</div></section>` : ""}
+${photos.length > 1 ? `<section><h2 class="caps">Photos over time</h2><div class="photos">${photos.map((ph) => `<figure style="margin:0"><img src="${esc(photoUrl(ph.path, "grid"))}" alt="" loading="lazy"><figcaption class="small muted">${day(ph.taken_at)}${ph.caption ? ` · ${esc(ph.caption)}` : ""}</figcaption></figure>`).join("")}</div></section>` : ""}
 ${plant.notes ? `<section><h2 class="caps">Notes</h2><p>${esc(plant.notes)}</p></section>` : ""}
 <div class="foot"><span>Self-reported by the plant's keeper · published ${day(plant.published_at)}</span>${LEAF}</div>`;
 }

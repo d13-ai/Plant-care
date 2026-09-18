@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Body, Button, Card, Field, Row, Title } from "@/components/ui";
 import { confirm } from "@/lib/confirm";
+import { PHOTO_SIZES } from "@/domain/photo-uri";
 import { displayPhotoUri } from "@/lib/photo-uri";
 import { leaveCard, myRounds, takeCardBack, type Round } from "@/lib/rounds";
 import { photoUrl } from "@/lib/sync";
@@ -125,7 +126,7 @@ export default function Rounds() {
                   {r.photos.map((path) => (
                     <Image
                       key={path}
-                      source={{ uri: displayPhotoUri(photoUrl(path)) }}
+                      source={{ uri: displayPhotoUri(photoUrl(path), PHOTO_SIZES.thumb) }}
                       style={styles.shot}
                       resizeMode="cover"
                     />

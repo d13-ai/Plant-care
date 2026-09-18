@@ -1,6 +1,7 @@
 import { Image, type ImageContentPosition } from "expo-image";
 import { useState, type ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { PHOTO_SIZES } from "@/domain/photo-uri";
 import { displayPhotoUri } from "@/lib/photo-uri";
 import { radius, useTheme } from "@/theme";
 
@@ -24,7 +25,14 @@ export function PlantPhoto({
 }) {
   // A photo pulled from another phone is a bucket URL; on the web it has to
   // come through our own origin to survive the page's embedder policy.
-  const uri = displayPhotoUri(stored);
+  //
+  // It is also asked for at the size it will be drawn. A thumbnail is a
+  // 320px square (10 KB) rather than the stored 1600px original (704 KB);
+  // a hero keeps the photo's shape, because the aspect ratio below is read
+  // off the image that actually loads, and a cropped square would report a
+  // square. The full-size viewer reuses the hero's URL so opening a photo
+  // costs nothing to fetch.
+  const uri = displayPhotoUri(stored, mode === "thumb" ? PHOTO_SIZES.thumb : PHOTO_SIZES.full);
   const t = useTheme();
   const [ratio, setRatio] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
