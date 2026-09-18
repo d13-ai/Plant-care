@@ -369,6 +369,48 @@ try {
     if (!/(sun|bright|shade), (low|mid|tall)/.test(chip)) throw new Error(`a chip reads "${chip}"`);
   });
 
+  await step("a whole move works by finger, not just by mouse", async () => {
+    // Every check in here used mouse clicks until now. A phone sends touch,
+    // and the two are not the same event.
+    const ctx = await browser.newContext({
+      viewport: { width: 393, height: 830 }, hasTouch: true, isMobile: true,
+    });
+    const tp = await ctx.newPage();
+    tp.on("pageerror", (e) => errors.push("pageerror(touch): " + e.message));
+    await tp.goto("http://localhost:4611/parlour-games/windowsill");
+    await tp.waitForSelector(".chip");
+
+    // The first thing anybody does is tap the board, and being answered with
+    // nothing at all is indistinguishable from the game being broken.
+    const opening = await tp.evaluate(() => window.__game.status());
+    if (!/Tap a plant/.test(opening)) throw new Error(`it opens saying "${opening}"`);
+    await tp.locator('.cell[data-run="0"][data-tier="0"]').tap();
+    const answered = await tp.evaluate(() => ({
+      said: window.__game.status(),
+      pointed: document.getElementById("dock").classList.contains("asking"),
+    }));
+    if (!/Tap a plant/.test(answered.said)) {
+      throw new Error(`an empty-handed tap on an empty place said "${answered.said}"`);
+    }
+    if (!answered.pointed) throw new Error("it did not point at the tray");
+
+    // And the move itself, by finger.
+    await tp.locator(".chip").first().tap();
+    if (!/Holding/.test(await tp.evaluate(() => window.__game.status()))) {
+      throw new Error("tapping a plant did not pick it up");
+    }
+    await tp.locator('.cell[data-run="0"][data-tier="0"]').tap();
+    if ((await tp.evaluate(() => window.__game.shelf().flat().filter(Boolean).length)) !== 1) {
+      throw new Error("tapping a place did not put the plant down");
+    }
+    // Taking it back out again, also by finger.
+    await tp.locator('.cell[data-run="0"][data-tier="0"]').tap();
+    if (!(await tp.evaluate(() => !!window.__game.held()))) {
+      throw new Error("tapping a placed plant did not pick it back up");
+    }
+    await ctx.close();
+  });
+
   await step("you can reach a plant and a place at the same time, on a real phone", async () => {
     /*
      * The check that was missing, and the one that matters most.

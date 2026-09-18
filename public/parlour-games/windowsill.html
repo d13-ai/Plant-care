@@ -178,6 +178,11 @@ body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:
   box-shadow:0 -10px 22px rgba(0,0,0,.28);
 }
 #dock .inner{max-width:520px;margin:0 auto;display:flex;align-items:center;gap:10px;position:relative}
+#dock.asking{border-top-color:var(--gold);background:var(--card)}
+#dock.asking #tray-label{color:var(--gold-light)}
+@media (prefers-reduced-motion: no-preference){
+  #dock{transition:background .25s,border-color .25s}
+}
 /* Fades at both edges, so a row that runs off the screen looks like one that
    runs off the screen rather than one that stops there -- and a chip half cut
    off at the left reads as scrolled rather than broken. */
@@ -706,6 +711,11 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
      apart. Silent when there is nothing to say. */
   function summary(states) {
     if (held) return "Holding " + R.describe(held.plant) + ". Tap a place on the shelf.";
+    if (!done && !placements && tray.length === BOARD.w * BOARD.d) {
+      /* Nothing tried yet: say how the game is played rather than how many
+         holes are left, which tells a newcomer nothing. */
+      return "Tap a plant at the bottom, then tap a place on the shelf.";
+    }
     var scorching = 0, leggy = 0, empty = 0;
     states.forEach(function (run, r) {
       run.forEach(function (s, t) {
@@ -752,7 +762,13 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
     if (done) return;
     var sitting = shelf[r][t];
     if (!held) {
-      if (!sitting) return;
+      if (!sitting) {
+        /* The most natural first move in the game is to tap a place on the
+           shelf, and doing nothing at all in reply is indistinguishable from
+           being broken. Say what to do instead, and point at where. */
+        askForAPlant();
+        return;
+      }
       held = { from: "shelf", run: r, tier: t, plant: sitting };
       paint();
       return;
@@ -977,6 +993,19 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
     onStatus: function (signedIn) { showSaveLine(signedIn); showRecords(); }
   });
 
+  /* Points at the tray rather than only talking about it: the dock is at the
+     bottom of the screen where it can read as a caption rather than a row of
+     things to tap. */
+  var askTimer = null;
+  function askForAPlant() {
+    statusEl.textContent = "Tap a plant at the bottom to pick it up, then tap a place.";
+    if (LEARN) coach("Start at the bottom: tap one of the plants, then tap where you want it.");
+    var dock = document.getElementById("dock");
+    dock.classList.add("asking");
+    if (askTimer) clearTimeout(askTimer);
+    askTimer = setTimeout(function () { dock.classList.remove("asking"); }, 1400);
+  }
+
   function finish(restored) {
     done = true;
     held = null;
@@ -1093,6 +1122,7 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
     isEmbed: function () { return EMBED; },
     dayNumber: P.dayNumber,
     progress: function () { return progress; },
+    status: function () { return statusEl.textContent; },
     streak: P.getStreak,
     musicPlaying: snd.musicAudible,
     /* So the art can be laid out as a sheet and judged all at once. */
