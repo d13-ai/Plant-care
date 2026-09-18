@@ -564,6 +564,48 @@ try {
     if (!(await lp.locator("#key").isVisible())) throw new Error("no key for the light dots");
   });
 
+  await step("the tray fades only where there is more to see", async () => {
+    // A fade sitting permanently over the start of the row dims the first
+    // plant for no reason, which reads as the graphic being cut off -- and
+    // was reported as exactly that.
+    const ctx = await browser.newContext({ viewport: { width: 393, height: 830 }, hasTouch: true, isMobile: true });
+    const fp = await ctx.newPage();
+    await fp.goto("http://localhost:4611/parlour-games/windowsill");
+    await fp.waitForSelector(".chip");
+    await fp.click('[data-shelf="deep"]');
+    await fp.waitForSelector(".chip");
+
+    const edges = async () => {
+      // The fades cross-fade over 0.15s, so read them after they have settled.
+      await fp.waitForTimeout(260);
+      return fp.evaluate(() => {
+        const d = document.getElementById("dock");
+        return {
+          left: +getComputedStyle(d.querySelector(".inner"), "::before").opacity,
+          right: +getComputedStyle(d.querySelector(".inner"), "::after").opacity,
+          state: d.dataset.moreLeft + "/" + d.dataset.moreRight,
+        };
+      });
+    };
+    const rest = await edges();
+    if (rest.left !== 0) throw new Error("the first plant is faded before anything is scrolled past");
+    if (rest.right !== 1) throw new Error("a row that runs off the screen does not say so");
+
+    await fp.evaluate(() => { document.getElementById("tray").scrollLeft = 140; });
+    await fp.waitForTimeout(250);
+    const moved = await edges();
+    if (moved.left !== 1) throw new Error("scrolled, but nothing shows there is more back that way");
+
+    // And the plants in the tray are big enough to read as plants.
+    const art = await fp.evaluate(() => [...document.querySelectorAll(".chip-art svg")].map((s) => {
+      const pot = s.querySelector(".pot").getBoundingClientRect();
+      return { w: s.getBoundingClientRect().width, pot: pot.height };
+    }));
+    if (art.some((a) => a.w < 30)) throw new Error(`the plants in the tray are only ${art[0].w.toFixed(0)}px wide`);
+    if (art.some((a) => a.pot < 4)) throw new Error("a pot in the tray is too small to read as a pot");
+    await ctx.close();
+  });
+
   await step("a plant in the tray looks like the plant it is", async () => {
     // "sun mid" is two words of jargon on a coloured bar. The chip now
     // carries the drawing, at the height the plant will stand.

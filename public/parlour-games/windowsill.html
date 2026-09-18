@@ -192,7 +192,9 @@ body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:
 #dock{
   position:fixed;left:0;right:0;bottom:0;z-index:5;
   background:var(--ink);border-top:1px solid var(--border);
-  padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));
+  /* A little more room at the foot than the head: on a phone this sits
+     directly above the system navigation bar. */
+  padding:8px 12px calc(12px + env(safe-area-inset-bottom,0px));
   box-shadow:0 -10px 22px rgba(0,0,0,.28);
 }
 #dock .inner{max-width:520px;margin:0 auto;display:flex;align-items:center;gap:10px;position:relative}
@@ -201,14 +203,17 @@ body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:
 @media (prefers-reduced-motion: no-preference){
   #dock{transition:background .25s,border-color .25s}
 }
-/* Fades at both edges, so a row that runs off the screen looks like one that
-   runs off the screen rather than one that stops there -- and a chip half cut
-   off at the left reads as scrolled rather than broken. */
+/* Fades only where there is actually more to see. A fade sitting permanently
+   over the start of the row dims the first plant for no reason, which reads
+   as the graphic being cut off -- which is exactly what it was reported as. */
 #dock .inner::after,#dock .inner::before{
   content:"";position:absolute;top:0;bottom:0;width:22px;pointer-events:none;z-index:1;
+  opacity:0;transition:opacity .15s;
 }
 #dock .inner::after{right:0;background:linear-gradient(90deg,transparent,var(--ink))}
 #dock .inner::before{left:74px;background:linear-gradient(270deg,transparent,var(--ink))}
+#dock[data-more-right="1"] .inner::after{opacity:1}
+#dock[data-more-left="1"] .inner::before{opacity:1}
 #tray-label{
   font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
   flex:none;max-width:64px;line-height:1.15;
@@ -220,7 +225,7 @@ body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:
   background:var(--card);border:1px solid var(--border);border-radius:10px;
   padding:5px 10px;min-height:44px;color:inherit;font:inherit;cursor:pointer;
 }
-.chip-art{display:flex;align-items:flex-end;width:26px;flex:none}
+.chip-art{display:flex;align-items:flex-end;width:36px;flex:none}
 .chip-art svg{width:100%;display:block}
 .chip-words{display:flex;flex-direction:column;line-height:1.05;text-align:left;padding-bottom:3px}
 .chip[data-held="1"]{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
@@ -231,7 +236,9 @@ body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:
 .chip[data-need="1"] .foliage{fill:var(--shade)}
 .chip .pot{fill:var(--pot)}
 .chip small{color:var(--muted);font-size:11px}
-#tray-empty{color:var(--muted);font-size:14px;margin:0;align-self:center;white-space:nowrap}
+/* With the tray empty there is nothing to scroll past, so it sits clear of
+   where the fades would be rather than starting underneath one. */
+#tray-empty{color:var(--muted);font-size:14px;margin:0 0 0 4px;align-self:center;white-space:nowrap}
 
 /* Wraps rather than squeezing: at 390px with two buttons in it, "9
    placements · par 15" was breaking across two lines mid-phrase. */
@@ -707,6 +714,14 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
     });
 
     trayEl.innerHTML = "";
+    /* Whether either edge has more beyond it, so the fades appear only when
+       there is something to fade. Measured after the chips are laid out. */
+    var markEdges = function () {
+      var dock = document.getElementById("dock");
+      var more = trayEl.scrollWidth - trayEl.clientWidth - trayEl.scrollLeft;
+      dock.dataset.moreLeft = trayEl.scrollLeft > 2 ? "1" : "0";
+      dock.dataset.moreRight = more > 2 ? "1" : "0";
+    };
     if (!tray.length) {
       var none = document.createElement("p");
       none.id = "tray-empty";
@@ -727,7 +742,7 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
         '<span class="chip-art" aria-hidden="true">' + plantArt(plant.need, plant.height) + '</span>' +
         '<span class="chip-words">' + R.NEEDS[plant.need] +
         '<small>' + R.HEIGHTS[plant.height] + '</small></span>';
-      chip.querySelector(".chip-art svg").style.height = (9 + plant.height * 7) + "px";
+      chip.querySelector(".chip-art svg").style.height = (12 + plant.height * 9) + "px";
       chip.setAttribute("aria-label",
         "Wants " + R.NEEDS[plant.need] + ", " + R.HEIGHTS[plant.height] + " height. Pick up.");
       chip.addEventListener("click", function () { tapTray(plant.id); });
@@ -736,6 +751,12 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
 
     /* Practice counts towards nothing, so it does not keep score. */
     pointAt();
+    markEdges();
+    if (!trayEl.dataset.watching) {
+      trayEl.dataset.watching = "1";
+      trayEl.addEventListener("scroll", markEdges, { passive: true });
+      window.addEventListener("resize", markEdges);
+    }
     movesEl.textContent = LEARN ? "" : placements + (placements === 1 ? " placement" : " placements") +
       " · par " + par();
     statusEl.textContent = summary(states);
