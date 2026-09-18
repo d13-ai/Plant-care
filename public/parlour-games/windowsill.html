@@ -108,6 +108,13 @@ body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:
    cells, because the question a player has to be able to answer by looking
    is "does this plant's head clear the step behind it" -- and separate boxes
    with air between them make that exactly the thing you cannot see. */
+/* Nothing on the board said what the dots were, so nobody could read it. */
+#key{
+  margin:12px 0 0;font-size:13px;color:var(--muted);text-align:center;
+  display:flex;align-items:baseline;justify-content:center;gap:7px;
+}
+#key .key-pips{font-size:12px;letter-spacing:2px;color:var(--gold-light);flex:none}
+
 #shelf{margin:14px 0 0;display:grid;gap:10px}
 .run{display:flex;align-items:flex-end;gap:0;border-radius:6px;overflow:hidden}
 .glass{
@@ -129,6 +136,17 @@ body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:
 }
 .cell:focus-visible{outline:2px solid var(--gold-light);outline-offset:-2px;border-radius:4px}
 .cell[data-held="1"] .plinth{background:#5A2A50;border-top-color:var(--gold)}
+/* Practice rings the next thing to tap: a rule nobody can act on is not a
+   lesson. */
+.cell.point::after,.chip.point::after{
+  content:"";position:absolute;left:2px;right:2px;top:2px;bottom:2px;
+  border:2px solid var(--gold-light);border-radius:8px;pointer-events:none;
+}
+.chip.point{border-color:var(--gold-light)}
+@media (prefers-reduced-motion: no-preference){
+  .cell.point::after,.chip.point::after{animation:beckon 1.5s ease-in-out infinite}
+}
+@keyframes beckon{0%,100%{opacity:.35}50%{opacity:1}}
 
 /* The plant stands ON its step, so its foot is that step's top edge and its
    head is exactly (tier + height) units up -- which is what the rule measures,
@@ -198,17 +216,21 @@ body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:
 #tray{display:flex;gap:8px;overflow-x:auto;padding:2px 0;flex:1;scrollbar-width:none}
 #tray::-webkit-scrollbar{display:none}
 .chip{
-  display:flex;align-items:center;gap:8px;flex:none;
+  display:flex;align-items:flex-end;gap:7px;flex:none;position:relative;
   background:var(--card);border:1px solid var(--border);border-radius:10px;
-  padding:6px 11px;min-height:44px;color:inherit;font:inherit;cursor:pointer;
+  padding:5px 10px;min-height:44px;color:inherit;font:inherit;cursor:pointer;
 }
+.chip-art{display:flex;align-items:flex-end;width:26px;flex:none}
+.chip-art svg{width:100%;display:block}
+.chip-words{display:flex;flex-direction:column;line-height:1.05;text-align:left;padding-bottom:3px}
 .chip[data-held="1"]{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
 .chip:focus-visible{outline:2px solid var(--gold-light);outline-offset:2px}
-.swatch{width:10px;align-self:stretch;border-radius:3px;flex:none}
-.chip[data-need="3"] .swatch{background:var(--sun)}
-.chip[data-need="2"] .swatch{background:var(--bright)}
-.chip[data-need="1"] .swatch{background:var(--shade)}
-.chip small{color:var(--muted);font-size:12px}
+/* The chip carries a real plant, so it colours the way a shelf does. */
+.chip[data-need="3"] .foliage{fill:var(--sun)}
+.chip[data-need="2"] .foliage{fill:var(--bright)}
+.chip[data-need="1"] .foliage{fill:var(--shade)}
+.chip .pot{fill:var(--pot)}
+.chip small{color:var(--muted);font-size:11px}
 #tray-empty{color:var(--muted);font-size:14px;margin:0;align-self:center;white-space:nowrap}
 
 /* Wraps rather than squeezing: at 390px with two buttons in it, "9
@@ -272,6 +294,11 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
     <button type="button" data-shelf="standard">Standard</button>
     <button type="button" data-shelf="deep">Deep end</button>
   </div>
+
+  <p id="key" hidden>
+    <span class="key-pips" aria-hidden="true">●●●</span>
+    The dots over each place are how much light reaches it. Three is full sun.
+  </p>
 
   <div id="shelf"></div>
 
@@ -693,14 +720,22 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
       chip.dataset.need = String(plant.need);
       chip.dataset.plant = String(plant.id);
       chip.dataset.held = held && held.from === "tray" && held.plant.id === plant.id ? "1" : "0";
-      chip.innerHTML = '<span class="swatch" aria-hidden="true"></span><span>' +
-        R.NEEDS[plant.need] + ' <small>' + R.HEIGHTS[plant.height] + '</small></span>';
-      chip.setAttribute("aria-label", R.describe(plant) + ". Pick up.");
+      /* The plant itself, drawn at the height it will stand, so what you pick
+         up looks like what you pick up. Two words of jargon on a coloured bar
+         taught nobody anything. */
+      chip.innerHTML =
+        '<span class="chip-art" aria-hidden="true">' + plantArt(plant.need, plant.height) + '</span>' +
+        '<span class="chip-words">' + R.NEEDS[plant.need] +
+        '<small>' + R.HEIGHTS[plant.height] + '</small></span>';
+      chip.querySelector(".chip-art svg").style.height = (9 + plant.height * 7) + "px";
+      chip.setAttribute("aria-label",
+        "Wants " + R.NEEDS[plant.need] + ", " + R.HEIGHTS[plant.height] + " height. Pick up.");
       chip.addEventListener("click", function () { tapTray(plant.id); });
       trayEl.appendChild(chip);
     });
 
     /* Practice counts towards nothing, so it does not keep score. */
+    pointAt();
     movesEl.textContent = LEARN ? "" : placements + (placements === 1 ? " placement" : " placements") +
       " · par " + par();
     statusEl.textContent = summary(states);
@@ -739,7 +774,7 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
      write -- moving it back is the undo. */
   function tapTray(id) {
     if (done) return;
-    if (held && held.from === "tray" && held.plant.id === id) { held = null; paint(); return; }
+    if (held && held.from === "tray" && held.plant.id === id) { held = null; paint(); coachAfter(null); return; }
     if (held && held.from === "shelf") {           /* put it back */
       var vacated = { run: held.run, tier: held.tier };
       shelf[held.run][held.tier] = null;
@@ -756,6 +791,9 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
     if (i === -1) return;
     held = { from: "tray", plant: tray[i] };
     paint();
+    /* Picking one up is half the move, so the coaching has to answer it --
+       without this it went on asking for the tap that had just happened. */
+    coachAfter(null);
   }
 
   function tapCell(r, t) {
@@ -812,65 +850,109 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
     return shelf[r].every(Boolean) && R.shelfStates(shelf)[r].every(function (s) { return s === "happy"; });
   }
 
+  /* Where practice wants the first plant put. The practice board has exactly
+     one solution, so there is a right answer to point at. */
+  var lesson = null;
+  function lessonBoard() {
+    if (!lesson) lesson = R.solutions(BOARD.w, BOARD.d, BOARD.tray, 1)[0];
+    return lesson;
+  }
+
+  /** Rings the plant to tap next, and then the place to put it. */
+  function pointAt() {
+    Array.prototype.forEach.call(document.querySelectorAll(".point"), function (el) {
+      el.classList.remove("point");
+    });
+    if (!LEARN || done || placements > 0 || !lessonBoard()) return;
+    if (held) {
+      var cell = document.querySelector('.cell[data-run="0"][data-tier="0"]');
+      if (cell) cell.classList.add("point");
+      return;
+    }
+    var want = lessonBoard()[0][0], chip = null;
+    tray.forEach(function (plant) {
+      if (!chip && plant.need === want.need && plant.height === want.height) {
+        chip = document.querySelector('.chip[data-plant="' + plant.id + '"]');
+      }
+    });
+    if (!chip) return;
+    chip.classList.add("point");
+    /* The tray scrolls sideways, so the plant being pointed at may be off the
+       end of it. Pointing at something nobody can see is worse than not
+       pointing at all. */
+    try { chip.scrollIntoView({ block: "nearest", inline: "center" }); } catch (e) { /* older browsers */ }
+  }
+
   function coachAfter(where) {
     if (!LEARN) return;
     if (done) {
       coach("That is the whole game. A plant only shades what it stands over, " +
             "which is why the stand is built in steps.");
-      return;
+      return pointAt();
     }
     if (!where) {
-      coach("Six plants, two runs. Each one wants an exact amount of light — too much " +
-            "scorches it, too little makes it leggy. Light comes in from the left.");
-      return;
+      /* The verbs before the physics. Somebody who cannot work out how to put
+         a plant down has no use for a rule about light. The first version of
+         this opened by explaining scorching and legginess to a player who did
+         not yet know they were meant to tap anything. */
+      coach(held
+        ? "Now tap the ringed place, at the front of the top row."
+        : "Tap the ringed plant at the bottom to pick it up.");
+      return pointAt();
     }
 
     var r = where.run, t = where.tier, plant = shelf[r][t];
     if (!plant) {
       coach("Taken back out. Nothing here is ever lost — putting it somewhere else is the undo.");
-      return;
+      return pointAt();
     }
     var light = R.lightsFor(shelf[r])[t];
     var state = R.stateOf(plant, light);
 
+    if (placements === 1 && state === "happy") {
+      coach("That is the whole of it: tap a plant, tap a place. The dots over each place " +
+            "are the light reaching it — three is full sun, and the front of a row always " +
+            "gets it, because nothing stands in front.");
+      return pointAt();
+    }
+
     if (state !== "happy") {
       var blockers = R.blockersOf(shelf[r], t);
       if (state === "scorching" && t === 0) {
-        coach("Nothing stands in front of the glass, so the front of a run is always full " +
-              "sun. Only a sun-lover is happy there.");
+        coach("Too much light. Nothing stands in front of the glass, so the front of a row " +
+              "is always full sun — only a plant that wants sun is happy there.");
       } else if (state === "scorching") {
-        coach("Too much light: " + A[plant.need] + " in light " + light + ". It needs something " +
-              "taller in front of it, or a place further back.");
+        coach("Too much light: this one wants " + plant.need + " and is getting " + light +
+              ". Put something taller in front of it, or move it further back.");
       } else if (blockers.length) {
         var tall = shelf[r][blockers[blockers.length - 1]];
-        coach("Not enough light: this one wants " + plant.need + " and is getting " + light +
+        coach("Not enough light: it wants " + plant.need + " and is getting " + light +
               ". The " + TALLNESS[tall.height] + " plant in front is standing over it.");
       } else {
         coach("Not enough light — though nothing is shading it. Try it nearer the glass.");
       }
-      return;
+      return pointAt();
     }
 
-    /* The two halves of the lesson, each said once, when the board has just
-       demonstrated it. */
     if (runIsDone(r)) {
       var heights = shelf[r].map(function (p) { return p.height; });
       if (!taught.low && heights[0] === 1) {
         taught.low = true;
-        coach("Look at that run: three of them in full sun, none shading another. A low plant " +
-              "stands exactly as high as the step behind it, so it blocks nothing at all.");
-        return;
+        coach("Look at that row: three of them in full sun, none shading another. A low " +
+              "plant stands exactly as high as the step behind it, so it blocks nothing.");
+        return pointAt();
       }
       if (!taught.tall && heights[0] === 3) {
         taught.tall = true;
         coach("And there is the other half: the tall one at the glass stands over both rows " +
               "behind it, so the light steps down 3, 2, 1.");
-        return;
+        return pointAt();
       }
-      coach("That run is right. One to go.");
-      return;
+      coach("That row is right. One to go.");
+      return pointAt();
     }
-    coach("Happy. Keep going — the light changes as you fill the run in front.");
+    coach("Happy. Keep going — the light changes as you fill in front.");
+    pointAt();
   }
 
   /* How long today's board has left. Local midnight, because the board
@@ -1082,6 +1164,8 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
     }
     coachEl.hidden = !LEARN;
     document.getElementById("learn-link").hidden = LEARN;
+    /* The key is for somebody meeting the board for the first time. */
+    document.getElementById("key").hidden = !LEARN;
     document.getElementById("daily-link").hidden = DAILY;
     document.getElementById("again").textContent =
       LEARN ? "Play a proper board" : DAILY ? "Play a board of your own" : "Start again";

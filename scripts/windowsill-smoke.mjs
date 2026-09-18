@@ -533,14 +533,61 @@ try {
     if (ways !== 1) throw new Error(`the practice board has ${ways} ways out, not 1`);
   });
 
-  await step("the coaching answers what you actually did", async () => {
-    const opening = await lp.evaluate(() => window.__game.coach());
-    if (!/light/i.test(opening)) throw new Error(`it opens with "${opening}"`);
+  await step("practice teaches the moves before it teaches the rule", async () => {
+    // Somebody who cannot work out how to put a plant down has no use for a
+    // rule about light. The first version of this opened by explaining
+    // scorching and legginess to a player who did not yet know they were
+    // meant to tap anything, and the report that came back was "it is
+    // difficult to understand how to play this game".
+    await lp.goto("http://localhost:4611/parlour-games/windowsill/learn");
+    await lp.waitForSelector(".chip");
 
+    const opening = await lp.evaluate(() => window.__game.coach());
+    if (!/[Tt]ap the ringed plant/.test(opening)) throw new Error(`it opens with "${opening}"`);
+    const ringed = await lp.locator(".chip.point");
+    if ((await ringed.count()) !== 1) throw new Error("nothing is ringed to tap first");
+    // Pointing at something off the end of a sideways scroller helps nobody.
+    if (!(await ringed.isVisible())) throw new Error("the ringed plant is not on screen");
+
+    await ringed.click();
+    const held = await lp.evaluate(() => window.__game.coach());
+    if (!/ringed place/.test(held)) throw new Error(`having picked one up it says "${held}"`);
+    if ((await lp.locator(".cell.point").count()) !== 1) throw new Error("no place is ringed");
+
+    await lp.locator(".cell.point").click();
+    const after = await lp.evaluate(() => window.__game.coach());
+    if (!/tap a plant, tap a place/.test(after)) throw new Error(`after the first move it says "${after}"`);
+    if (!/dots/.test(after)) throw new Error("it never says what the dots are");
+    if ((await lp.locator(".point").count()) !== 0) throw new Error("it is still pointing after the lesson");
+
+    // And the board says what the dots are, in words, before anybody has to guess.
+    if (!(await lp.locator("#key").isVisible())) throw new Error("no key for the light dots");
+  });
+
+  await step("a plant in the tray looks like the plant it is", async () => {
+    // "sun mid" is two words of jargon on a coloured bar. The chip now
+    // carries the drawing, at the height the plant will stand.
+    const chips = await lp.evaluate(() => [...document.querySelectorAll(".chip")].map((c) => ({
+      art: !!c.querySelector(".chip-art svg .foliage"),
+      h: Math.round(c.querySelector(".chip-art svg").getBoundingClientRect().height),
+      label: c.getAttribute("aria-label"),
+    })));
+    if (!chips.length) throw new Error("no chips");
+    if (chips.some((c) => !c.art)) throw new Error("a chip is not showing its plant");
+    if (new Set(chips.map((c) => c.h)).size < 2) {
+      throw new Error("every chip draws its plant the same height, so height is invisible");
+    }
+    if (chips.some((c) => !/Wants (sun|bright|shade), (low|mid|tall) height/.test(c.label))) {
+      throw new Error(`a chip reads "${chips[0].label}"`);
+    }
+  });
+
+  await step("the coaching answers what you actually did", async () => {
+    await lp.click("#clear");
     // A shade plant at the glass: the one mistake everybody makes first.
     await lplace(1, 1, 0, 0);
     let said = await lp.evaluate(() => window.__game.coach());
-    if (!/front of a run is always full sun/i.test(said)) throw new Error(`on a scorch it said "${said}"`);
+    if (!/front of a row is always full sun/i.test(said)) throw new Error(`on a scorch it said "${said}"`);
 
     // Take it back out again: that is the undo, and it should say so.
     await lcell(0, 0).click();
