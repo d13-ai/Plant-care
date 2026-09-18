@@ -105,6 +105,18 @@ try {
     await page.getByText("Add your first plant").click();
     await page.getByPlaceholder("Big Monstera").waitFor();
   });
+  await step("the AI allowance is stated before anything is spent, and no price is", async () => {
+    // It used to be discoverable only by watching it count down, and the wall
+    // at zero arrived unannounced. And the note that carried it led with what
+    // the scan cost -- a number that answers the owner's question, not the
+    // keeper's, and is recorded in ai_usage either way.
+    await page.getByText(/AI identifications/).first().waitFor({ timeout: 20000 });
+    const body = await page.evaluate(() => document.body.innerText);
+    if (/¢|cost about|\$\d/.test(body)) {
+      throw new Error(`the add-plant screen quotes a price: ${/[^\n]*(¢|cost about|\$\d)[^\n]*/.exec(body)?.[0]}`);
+    }
+  });
+
   await step("browse the species list and pick one", async () => {
     await page.getByText("Browse", { exact: true }).click();
     await page.getByText("Pick a species").waitFor();

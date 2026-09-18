@@ -8,7 +8,8 @@ import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/compone
 import { addPhoto, createPlant, listPlants, logCare, type Plant } from "@/db";
 import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "@/domain/species";
 import { scanSummary } from "@/domain/scan";
-import { MAX_SCAN_PHOTOS, analyzePhoto, clearLastScan, describeCost, loadLastScan, type LastScan, type Verdict } from "@/lib/ai";
+import { MAX_SCAN_PHOTOS, analyzePhoto, clearLastScan, describeScan, loadLastScan, photoAllowance, type LastScan, type Verdict } from "@/lib/ai";
+import { allowanceLine, type Allowance } from "@/domain/allowance";
 import { confirm } from "@/lib/confirm";
 import { clearDraft, loadDraft, saveDraftSoon } from "@/lib/draft";
 import { Calendar } from "@/components/calendar";
@@ -41,6 +42,9 @@ export default function NewPlant() {
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const [scanNote, setScanNote] = useState<string | null>(null);
+  // Read before anything is spent, so the allowance is something the keeper
+  // is told rather than something they work out by watching it fall.
+  const [allowance, setAllowance] = useState<Allowance | null>(null);
   // The AI candidate the keeper tapped, for the highlight and the name ideas.
   const [chosen, setChosen] = useState<Verdict["species"][number] | null>(null);
   const [restored, setRestored] = useState(false);
@@ -48,6 +52,12 @@ export default function NewPlant() {
   const [lastScan, setLastScan] = useState<LastScan | null>(null);
   // Don't overwrite a saved draft with the empty form before it's been read back.
   const hydrated = useRef(false);
+
+  // Read on arrival, not after the first scan: the point of the line is that
+  // somebody knows what they have before they start spending it.
+  useEffect(() => {
+    if (supabaseConfigured) photoAllowance().then(setAllowance);
+  }, []);
 
   // Whatever was here last time comes back — the photo, the AI's answer, the
   // typed fields — so backing out by accident costs nothing.
@@ -118,7 +128,8 @@ export default function NewPlant() {
       // confirms or corrects it rather than guessing among look-alikes.
       const answer = await analyzePhoto(photos, { mode: "both", speciesHint: species.trim() || null });
       setVerdict(answer.verdict);
-      setScanNote(describeCost(answer));
+      setScanNote(describeScan(answer));
+      setAllowance(await photoAllowance());
       setLastScan(null);
     } catch (err) {
       setAiError(err instanceof Error ? err.message : String(err));
@@ -273,6 +284,9 @@ export default function NewPlant() {
               <Button title={analyzing ? "Looking…" : "Identify with AI"} variant="primary" disabled={analyzing} onPress={identify} />
             ) : null}
           </Row>
+          {supabaseConfigured && allowance && !scanNote && allowanceLine(allowance) ? (
+            <Body small muted>{allowanceLine(allowance)}</Body>
+          ) : null}
           {aiError ? (
             <Body small style={{ color: c.critical.fg } as never}>
               {aiError}

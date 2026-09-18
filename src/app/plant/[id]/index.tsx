@@ -21,7 +21,8 @@ import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
 import { scanSummary } from "@/domain/scan";
-import { MAX_SCAN_PHOTOS, analyzePhoto, describeCost, type Verdict } from "@/lib/ai";
+import { MAX_SCAN_PHOTOS, analyzePhoto, describeScan, photoAllowance, type Verdict } from "@/lib/ai";
+import { allowanceLine, type Allowance } from "@/domain/allowance";
 import { CareGuide } from "@/components/care-guide";
 import { PhotoTips } from "@/components/photo-tips";
 import { PlantPhoto } from "@/components/plant-photo";
@@ -57,6 +58,7 @@ export default function PlantDetail() {
   const [checkup, setCheckup] = useState<Verdict | null>(null);
   const [checkError, setCheckError] = useState<string | null>(null);
   const [checkNote, setCheckNote] = useState<string | null>(null);
+  const [allowance, setAllowance] = useState<Allowance | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [calBusy, setCalBusy] = useState(false);
@@ -64,6 +66,8 @@ export default function PlantDetail() {
 
   useEffect(() => {
     getKeeperName().then(setKeeperNameState);
+    // Before the health check runs, not after it: see src/domain/allowance.ts.
+    photoAllowance().then(setAllowance);
   }, []);
 
   const undo = useUndo();
@@ -187,7 +191,8 @@ export default function PlantDetail() {
     try {
       const answer = await analyzePhoto(uris, { mode: "health", speciesHint });
       setCheckup(answer.verdict);
-      setCheckNote(describeCost(answer));
+      setCheckNote(describeScan(answer));
+      setAllowance(await photoAllowance());
       // A fresh read goes into the history; a remembered one is already there.
       if (!answer.cached && answer.verdict.is_plant) {
         await logCare(db, plantId, "AI_CHECK", { notes: scanSummary(answer.verdict) });
@@ -525,6 +530,9 @@ export default function PlantDetail() {
             )}
             {checkup.notes ? <Body small muted>{checkup.notes}</Body> : null}
             {checkNote ? <Body small muted>{checkNote}</Body> : null}
+            {!checkNote && allowance && allowanceLine(allowance) ? (
+              <Body small muted>{allowanceLine(allowance)}</Body>
+            ) : null}
           </View>
         ) : null}
       </Card>
