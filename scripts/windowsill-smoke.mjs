@@ -564,6 +564,58 @@ try {
     if (!(await lp.locator("#key").isVisible())) throw new Error("no key for the light dots");
   });
 
+  await step("the page ends above the tray, whatever height the tray turns out to be", async () => {
+    /*
+     * Installed to a home screen this page runs with viewport-fit=cover, so
+     * it extends under the system navigation bar and the tray pads itself by
+     * the safe-area inset. A hardcoded guess at the tray's height knew
+     * nothing about that, and the foot of the page ended up behind a bar
+     * there is no scrolling past. It was reported as the bottom of the page
+     * being cut off, and it was.
+     *
+     * The inset cannot be forced in a test, so the same effect is produced by
+     * padding the tray -- which is exactly what the inset does.
+     */
+    for (const navBar of [0, 24, 48, 90]) {
+      const ctx = await browser.newContext({ viewport: { width: 393, height: 830 }, hasTouch: true, isMobile: true });
+      const vp = await ctx.newPage();
+      if (navBar) {
+        await vp.addInitScript((px) => addEventListener("DOMContentLoaded", () => {
+          const st = document.createElement("style");
+          st.textContent = `#dock{padding-bottom:${px + 12}px !important}`;
+          document.head.appendChild(st);
+        }), navBar);
+      }
+      await vp.goto("http://localhost:4611/parlour-games/windowsill");
+      await vp.waitForSelector(".chip");
+      await vp.click('[data-shelf="deep"]');
+      await vp.waitForSelector(".chip");
+      await vp.waitForTimeout(250);
+      await vp.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await vp.waitForTimeout(250);
+      const m = await vp.evaluate(() => {
+        const dock = document.getElementById("dock").getBoundingClientRect();
+        const last = [...document.querySelectorAll(".run")].pop().getBoundingClientRect();
+        return {
+          dockH: Math.round(dock.height),
+          measured: getComputedStyle(document.documentElement).getPropertyValue("--dock").trim(),
+          foot: +(dock.top - document.querySelector(".foot").getBoundingClientRect().bottom).toFixed(1),
+          save: +(dock.top - document.getElementById("save").getBoundingClientRect().bottom).toFixed(1),
+          lastRun: +(dock.top - last.bottom).toFixed(1),
+        };
+      });
+      const where = `with a ${navBar}px navigation bar`;
+      if (parseInt(m.measured, 10) !== m.dockH) {
+        throw new Error(`${where}: the page thinks the tray is ${m.measured} but it is ${m.dockH}px`);
+      }
+      if (m.foot < 0) throw new Error(`${where}: the last line of the page sits ${-m.foot}px behind the tray`);
+      if (m.save < 0) throw new Error(`${where}: the account line sits ${-m.save}px behind the tray`);
+      if (m.lastRun < 0) throw new Error(`${where}: the last shelf row cannot be scrolled clear of the tray`);
+      await ctx.close();
+    }
+    console.log("  (the page ends clear of the tray at every navigation-bar height tried)");
+  });
+
   await step("the tray fades only where there is more to see", async () => {
     // A fade sitting permanently over the start of the row dims the first
     // plant for no reason, which reads as the graphic being cut off -- and
@@ -1276,11 +1328,18 @@ try {
 
     // And it is still a game inside the frame: a tall plant at the glass has
     // to take light off the row behind it, same as anywhere else.
+    // The board here is dealt at random, and a deal is not guaranteed to hold
+    // a tall plant -- so keep dealing until one does, rather than let the
+    // draw decide whether this check runs at all.
     const tall = await host.frames()[1].evaluate(() => {
-      const t = window.__game.tray().find((p) => p.height === 3);
-      return t ? t.id : null;
+      for (let i = 0; i < 60; i++) {
+        const t = window.__game.tray().find((p) => p.height === 3);
+        if (t) return t.id;
+        window.__game.newBoard();
+      }
+      return null;
     });
-    if (tall === null) throw new Error("this board dealt nothing tall to test with");
+    if (tall === null) throw new Error("60 deals in a row held nothing tall");
     await frame.locator(`.chip[data-plant="${tall}"]`).click();
     await frame.locator('.cell[data-run="0"][data-tier="0"]').click();
     const after = await host.frames()[1].evaluate(() => ({

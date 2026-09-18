@@ -31,7 +31,10 @@
   --muted:#C8B8C2;
   --leaf:#8FC79E;
   --unit:18px;          /* one step of the stand == one unit of plant */
-  --dock:76px;          /* the tray, docked to the bottom of the screen */
+  /* The tray's height. A starting guess only -- the page measures the real
+     one and writes it back, because guessing it wrong hides the foot of the
+     page behind it and there is no way to scroll past a fixed bar. */
+  --dock:76px;
   --sun:#E6C46B;
   --bright:#9FD3AC;
   --shade:#6FA9A0;
@@ -67,7 +70,7 @@ body{
   font-family:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
   font-size:16px;line-height:1.5;
   /* The tray is docked to the bottom of the screen, so the page has to end
-     above it rather than behind it. */
+     above it rather than behind it. --dock is measured, not assumed. */
   padding:16px 16px calc(var(--dock) + 20px);
   -webkit-font-smoothing:antialiased;
 }
@@ -752,6 +755,7 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
     /* Practice counts towards nothing, so it does not keep score. */
     pointAt();
     markEdges();
+    sizeDock();
     if (!trayEl.dataset.watching) {
       trayEl.dataset.watching = "1";
       trayEl.addEventListener("scroll", markEdges, { passive: true });
@@ -852,6 +856,32 @@ body.embed h1,body.embed .tagline,body.embed .hub,body.embed #save,body.embed .f
     saveDaily(false);
     coachAfter({ run: r, tier: t });
   }
+
+  /* ---- how tall the tray actually is ----------------------------------- */
+  /**
+   * The page has to end above the docked tray, and the only reliable way to
+   * know how tall that is, is to ask it.
+   *
+   * A hardcoded guess is wrong for every reason a phone can supply. This page
+   * sets viewport-fit=cover, so installed to a home screen it extends under
+   * the system navigation bar and the tray pads itself by the safe-area
+   * inset -- which the guess knew nothing about. The bar also grows with the
+   * system text size, and with a plant that wraps. Get it wrong and the foot
+   * of the page sits behind a bar you cannot scroll past, which is exactly
+   * what was reported.
+   */
+  function sizeDock() {
+    var dock = document.getElementById("dock");
+    if (!dock) return;
+    var h = Math.ceil(dock.getBoundingClientRect().height);
+    if (h > 0) document.documentElement.style.setProperty("--dock", h + "px");
+  }
+
+  if (window.ResizeObserver) {
+    new ResizeObserver(sizeDock).observe(document.getElementById("dock"));
+  }
+  window.addEventListener("resize", sizeDock);
+  window.addEventListener("orientationchange", sizeDock);
 
   /* ---- practice coaching ----------------------------------------------- */
   /* Written against the board rather than as a script of steps: whatever the
