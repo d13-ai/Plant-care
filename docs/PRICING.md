@@ -12,45 +12,79 @@ Measured, from `ai_usage` and `storage.objects`:
 
 | | Measured |
 |---|---|
-| AI cost per call | **$0.02137** — 28 calls, $0.5984 total, 4 keepers, 13–17 Sep |
-| Photos | 18 objects, 9.6 MB, **535 KB average** |
-| Photo handling | Downscaled to 1600px at 0.85 quality on upload (`src/lib/photos.ts`) |
-| Current AI cap | `DAILY_CAP = 20` per keeper per **day** — up to ~600/month |
+| AI calls recorded | 28, of which **10 cost nothing** — cache hits |
+| Cost per *billed* call | **$0.0352** — $0.5985 over 17 calls, 13–17 Sep |
+| Cost per photo scan | **2–7¢**, depending on how many photos ride along |
+| Photos | 18 objects, 9.6 MB, **535 KB average** (1600px, q0.85, `src/lib/photos.ts`) |
 
-The sample is small — 28 calls over five days — and cost per call moves with
-photo size and model choice. Treat $0.02 as the right order of magnitude
-rather than a constant, and re-run the query before relying on it.
+**Take 7¢ as the planning number.** A scan sends up to three 1024px photos in
+a single call (`supabase/functions/analyze`), so its cost scales with how many
+the keeper attaches: one photo is a couple of cents, three is about seven.
+The 2.1¢ figure in the first draft of this page was the average across *all*
+AI calls including free cache hits and cheap text-only care guides, and it
+understated a real scan by a factor of three.
 
-Everything that is not AI is cheap. A 40-plant collector with ten photos each
-is about 214 MB, well under a cent a month of storage. Fixed costs are
-Supabase Pro (~$25) and Vercel (~$20), so **roughly nine subscribers cover the
-infrastructure.**
+The model is the other half of it. The default is **Opus 5** at $5/$25 per
+million tokens, chosen on evidence recorded in the function: on five real
+photos it named every plant including cultivars, where Sonnet got two and
+called a Thai Constellation an Albo. Sonnet would cost about 40% as much. For
+an app whose buyers are collectors, naming the cultivar correctly *is* the
+product — but it is the biggest single cost lever, and worth revisiting for
+health-check-only scans, where no cultivar has to be named.
 
-The variable that could bite is **egress, not storage**. Photos are served as
-full-size originals — there are no thumbnails — so a conservatory holding 400
-photos can pull hundreds of megabytes on a single view. Supabase's image
-transformations would cut that by an order of magnitude and make the pages
-faster. Worth doing before there is traffic rather than after.
+## Correcting the first draft: the cap is not what I said it was
 
-## $5.99 works, but not with today's caps
+This page previously claimed a heavy keeper could spend $12.82 a month inside
+the current caps. That was wrong, and the code is better than I gave it credit
+for. There are **two** caps (`supabase/functions/_shared/cap.ts`):
 
-Through Stripe, $5.99 nets about **$5.52** after 2.9% + 30¢. At $0.02137 a
-call that is **258 AI calls a month before a subscriber costs more than they
-pay.**
+- `DAILY_CAP = 20` — photos **or lookups**, per keeper per day.
+- `PHOTO_TRIAL = 5` — photo identifications per keeper **for their lifetime**,
+  overridable by the `AI_PHOTO_TRIAL` secret, skipped for rows flagged
+  `ai_unlimited`.
 
-The current cap permits 600. A heavy keeper inside today's limit costs
-**$12.82 a month against $5.99 of revenue.**
+So a free keeper cannot run up 600 scans a month. They get **five scans, ever
+— about 35¢** — and then care guides, which are cached and shared, so the
+second keeper to ask about a Monstera pays nothing.
 
-The cap was written to bound abuse of a free product, and as a paid
-entitlement it is upside-down. Proposed instead:
+Which means the free tier is already the shape this page recommends further
+down: a quota, not a clock. It was built before anyone called it pricing.
 
-| Tier | AI scans | Worst case cost | Gross margin |
-|---|---|---|---|
-| Free | 3–5 / month | ~$0.11 | n/a |
-| Paid | 50–100 / month | ~$2.14 | ~60% |
+## What to charge, at 7¢ a scan
 
-Two or three scans a day is generous for anybody who is not testing the app,
-and it bounds the downside without anyone feeling a wall.
+Through Stripe, $5.99 nets about **$5.52** after 2.9% + 30¢. At 7¢ a scan that
+is **79 scans a month before a subscriber costs more than they pay.**
+
+| Monthly allowance | Worst-case cost | Gross margin |
+|---|---|---|
+| 20 | $1.40 | 75% |
+| **30 (recommended)** | **$2.10** | **62%** |
+| 50 | $3.50 | 37% |
+| 79 | $5.53 | 0% |
+| 100 | $7.00 | **−27%** |
+
+**30 a month.** One a day is more than a collector uses once their plants are
+photographed — scans cluster around new arrivals and sick plants — and it
+leaves enough margin to absorb a price rise or a heavier cohort. The 50–100
+range floated in the first draft of this page was written against the 2.1¢
+figure and does not survive 7¢.
+
+**The free tier has an acquisition cost.** Five scans at 7¢ is **35¢ per
+signup**, spent before anyone pays anything. A thousand signups is $350. That
+is affordable and it is not nothing, and it is the number to watch if a post
+ever goes wide.
+
+## Everything else is cheap
+
+At 535 KB a photo, a 40-plant collector with ten photos each is about 214 MB —
+under a cent a month of storage. Fixed costs are Supabase Pro (~$25) and
+Vercel (~$20), so **roughly nine subscribers cover the infrastructure.**
+
+Egress *was* the thing that could bite: photos were served as full-size
+originals into thumbnails a centimetre across, so a conservatory with 400
+photos could pull hundreds of megabytes on one view. Fixed on 18 September —
+photos are now requested at the size they are drawn, measured at 69× smaller
+for a grid thumbnail and 4.9× for a full-width hero.
 
 ## The problem is the shape, not the number
 
@@ -106,11 +140,17 @@ feeds it exists — and we currently cannot measure a funnel at all. See
 ## Re-running the numbers
 
 ```sql
--- cost per AI call, and per keeper
-select count(distinct keeper_id) as keepers, sum(count) as ai_calls,
+-- cost per BILLED call. The zero rows are cache hits; averaging over them
+-- is what understated a scan by 3x the first time this page was written.
+select count(*) filter (where cost_usd > 0) as billed_rows,
+       sum(count) filter (where cost_usd > 0) as billed_calls,
        round(sum(cost_usd), 4) as total_usd,
-       round(sum(cost_usd) / nullif(sum(count), 0), 5) as usd_per_call
+       round(sum(cost_usd) / nullif(sum(count) filter (where cost_usd > 0), 0), 5) as usd_per_billed_call
 from ai_usage;
+
+-- and the heaviest keeper-days, which is where a cap has to hold
+select keeper_id, day, count as calls, round(cost_usd, 4) as cost_usd
+from ai_usage order by cost_usd desc limit 10;
 
 -- what the photos weigh
 select count(*) as photos,
