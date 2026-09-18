@@ -380,9 +380,13 @@ const plantPagesCache = () => (_cache ??= plantPages());
 
 // ----------------------------------------------------------------- the hub
 export function hubPage(pages) {
-  const title = "Plant care library: how to care for 158 houseplants | PlantParlour";
+  // Counted, not typed. The catalogue grows -- it gained Dracaena sanderiana
+  // the day lucky bamboo turned out to be filed under a true bamboo -- and a
+  // number written into the title is wrong from then on while the page body
+  // right underneath it says something else.
+  const title = `Plant care library: how to care for ${pages.length} houseplants | PlantParlour`;
   const description =
-    "Watering cadence, light, humidity, soil, feeding, propagation, toxicity and common problems for 158 houseplants — from monstera and pothos to lithops and living stones. Free, no account needed.";
+    `Watering cadence, light, humidity, soil, feeding, propagation, toxicity and common problems for ${pages.length} houseplants — from monstera and pothos to lithops and living stones. Free, no account needed.`;
   const canonical = `${SITE}/plants`;
 
   const answer =

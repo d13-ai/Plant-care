@@ -222,6 +222,26 @@ if (!existsSync(join(PUBLIC, "robots.txt"))) {
   }
 }
 
+// --- any number the library quotes about itself has to be the real one.
+// The hub's title once said 158 while the page under it said 159, because
+// the title was typed and the body was counted.
+{
+  const hub = DOCS.find((d) => d.url === "/plants");
+  if (hub && existsSync(join(PUBLIC, hub.file))) {
+    const html = read(hub.file);
+    const real = String([...ROUTES.keys()].filter((u) => u.startsWith("/plants/")).length);
+    const parts = [
+      ["title", attr(html, /<title>([\s\S]*?)<\/title>/)],
+      ["meta description", attr(html, /<meta name="description" content="([\s\S]*?)">/)],
+    ];
+    for (const [what, text] of parts) {
+      for (const n of (text || "").match(/\b\d{2,4}\b/g) ?? []) {
+        if (n !== real) err(hub.file, `${what} says ${n} houseplants; the library has ${real}`);
+      }
+    }
+  }
+}
+
 // --- llms.txt exists and doesn't advertise anything unlisted
 if (!existsSync(join(PUBLIC, "llms.txt"))) {
   err("llms.txt", "missing");
