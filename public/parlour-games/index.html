@@ -4,9 +4,117 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2E1633">
-<title>Parlour Games — quiet puzzles from PlantParlour</title>
-<meta name="description" content="Trickle and Windowsill: small, calm puzzles to sit with for a minute. No timers, no scores, nothing to lose. From PlantParlour.">
+<title>Parlour Games — free browser puzzles with no timers or scores</title>
+<meta name="description" content="Trickle and Windowsill: small, calm puzzles that run in any browser. No timers, no scores, nothing to lose, no ads and no signup. One daily board each, and one streak across the lot. From PlantParlour.">
 <link rel="canonical" href="https://plantparlour.org/parlour-games">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PlantParlour">
+<meta property="og:title" content="Parlour Games — free browser puzzles with no timers or scores">
+<meta property="og:description" content="Trickle and Windowsill: small, calm puzzles that run in any browser. No timers, no scores, nothing to lose, no ads and no signup. One daily board each, and one streak across the lot. From PlantParlour.">
+<meta property="og:url" content="https://plantparlour.org/parlour-games">
+<meta property="og:image" content="https://plantparlour.org/og-games.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Parlour Games",
+  "url": "https://plantparlour.org/parlour-games",
+  "description": "Trickle and Windowsill: small, calm puzzles that run in any browser. No timers, no scores, nothing to lose, no ads and no signup. One daily board each, and one streak across the lot. From PlantParlour.",
+  "inLanguage": "en",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "PlantParlour",
+    "url": "https://plantparlour.org/"
+  },
+  "speakable": {
+    "@type": "SpeakableSpecification",
+    "cssSelector": [
+      ".about"
+    ]
+  },
+  "mainEntity": {
+    "@type": "ItemList",
+    "numberOfItems": 2,
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Trickle",
+        "url": "https://plantparlour.org/parlour-games/trickle"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Windowsill",
+        "url": "https://plantparlour.org/parlour-games/windowsill"
+      }
+    ]
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are Parlour Games?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Two free puzzles that run in a browser — Trickle, a pipe-rotation puzzle, and Windowsill, a light-and-shade placement puzzle. They are made by PlantParlour, a plant care app, as somewhere to sit for a minute between other things."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are they free? Do I need an account?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Both are free with no ads and nothing to unlock, and neither needs an account. Signing in to PlantParlour only saves your counts and streak across devices."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why are there no timers or scores?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Because a game that punishes you is a game people quit, and the whole point is the coming back. Nothing here can be lost or failed; the only numbers are there for interest."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is there a daily puzzle?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — each game has one board a day, the same for everyone in the world that day. Playing either of them keeps your streak going, because the streak is shared across the whole corner rather than kept per game."
+      }
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "PlantParlour",
+      "item": "https://plantparlour.org/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Parlour Games",
+      "item": "https://plantparlour.org/parlour-games"
+    }
+  ]
+}
+</script>
 <style>
 /*
  * The Parlour Games hub.
@@ -70,6 +178,25 @@ h1{
 .mark .wet{stroke:var(--leaf)}
 .mark path{fill:none;stroke-width:14;stroke-linecap:round}
 .mark circle{fill:var(--gold)}
+
+/* The About / Quick facts / FAQ block. Plain text under the board, for the
+   person who wants to know what this is before playing and for the answer
+   engines that will never run the script. Hidden in an embed, where the
+   host page owns everything below the board. */
+.about{max-width:560px;margin:34px auto 0;padding:0 2px;text-align:left}
+.about h2{font-family:Lora,Georgia,serif;font-size:19px;font-weight:600;margin:24px 0 6px}
+.about h3{font-family:Lora,Georgia,serif;font-size:16px;font-weight:600;margin:16px 0 2px}
+.about p{margin:0 0 10px;font-size:15px;line-height:1.6}
+.about dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:0;font-size:15px}
+.about dt{font-weight:700;padding:7px 14px 7px 0;border-top:1px solid var(--border)}
+.about dd{margin:0;padding:7px 0;border-top:1px solid var(--border)}
+.about dt:first-of-type,.about dt:first-of-type + dd{border-top:0}
+@media (max-width:480px){
+  .about dl{grid-template-columns:1fr}
+  .about dt{padding-bottom:0;border-top:1px solid var(--border)}
+  .about dd{padding-top:1px;border-top:0}
+  .about dt:first-of-type + dd{border-top:0}
+}
 </style>
 </head>
 <body>
@@ -102,6 +229,37 @@ h1{
 
   <p class="foot">From <a href="/">PlantParlour</a> — a room for the plants you're proud of.</p>
 </main>
+
+<aside class="about">
+  <h2>About this game</h2>
+  <p>Parlour Games is a small puzzle corner run by <a href="/">PlantParlour</a>. Two games so far: <a href="/parlour-games/trickle">Trickle</a>, where you turn pipes until the water reaches every plant, and <a href="/parlour-games/windowsill">Windowsill</a>, where you arrange plants on a stepped shelf so each gets the light it wants.</p>
+  <p>The house rules apply to everything here: no timers, no scores, nothing to lose. They are the constraint rather than the decoration. Each game has one board a day that is the same for everyone, and a single streak runs across the whole corner — playing any of them today keeps it alive.</p>
+  <p>Both are free, need no account, run in any browser on any phone or computer, and keep playing once they have loaded even if the connection goes.</p>
+  <h2>Quick facts</h2>
+  <dl>
+    <dt>What it is</dt>
+    <dd>Two free browser puzzles — Trickle and Windowsill — made by PlantParlour.</dd>
+    <dt>Cost</dt>
+    <dd>Free. No ads, no purchases and nothing to unlock.</dd>
+    <dt>Signup</dt>
+    <dd>None. Signing in to PlantParlour only saves your counts across devices.</dd>
+    <dt>House rules</dt>
+    <dd>No timers, no scores, nothing to lose. Those are the constraint, not decoration.</dd>
+    <dt>The streak</dt>
+    <dd>One streak across the whole corner: playing any of these today keeps it alive.</dd>
+    <dt>Where it runs</dt>
+    <dd>Any phone, tablet or computer with a browser. Both games play offline once loaded.</dd>
+  </dl>
+  <h2>Questions people ask</h2>
+  <h3>What are Parlour Games?</h3>
+  <p>Two free puzzles that run in a browser — Trickle, a pipe-rotation puzzle, and Windowsill, a light-and-shade placement puzzle. They are made by PlantParlour, a plant care app, as somewhere to sit for a minute between other things.</p>
+  <h3>Are they free? Do I need an account?</h3>
+  <p>Both are free with no ads and nothing to unlock, and neither needs an account. Signing in to PlantParlour only saves your counts and streak across devices.</p>
+  <h3>Why are there no timers or scores?</h3>
+  <p>Because a game that punishes you is a game people quit, and the whole point is the coming back. Nothing here can be lost or failed; the only numbers are there for interest.</p>
+  <h3>Is there a daily puzzle?</h3>
+  <p>Yes — each game has one board a day, the same for everyone in the world that day. Playing either of them keeps your streak going, because the streak is shared across the whole corner rather than kept per game.</p>
+</aside>
 <script src="/parlour-games/harness.js"></script>
 <script>
   /* The streak belongs to the arcade rather than to any one game, so the hub

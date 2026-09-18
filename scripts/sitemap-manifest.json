@@ -1,0 +1,662 @@
+{
+  "https://plantparlour.org/": {
+    "hash": "a580e1f2d98fb6ac319d814b9581fbf5b18e0fad6948752f751c5c526c7aafa1",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/parlour-games": {
+    "hash": "8c09c2c22fb17aebbb80bfaa892b0cdc78f9e302aed65faf7431b5bc67594141",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/parlour-games/trickle": {
+    "hash": "52cb936a5670f18706b4412029cca45482c398b7cb0a910d52ebbe92374d0c62",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/parlour-games/windowsill": {
+    "hash": "f028f839569d841cb4339c9f3212f819c098f910228331ddf0b6aa8cb0999400",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants": {
+    "hash": "a22f7f4e28a3199f2e66156ad782e6f70333ec9b8772e705f7ff836626fc876e",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/adiantum-raddianum": {
+    "hash": "d601095c995f2189cb1fdaee14700a14994a2e873cdb2ff4a8fde29c057ba771",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/aechmea-fasciata": {
+    "hash": "d719aefcdce0c81a67ee82d75129c56170b71273b5ec69d966000676a1df8616",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/aglaonema-commutatum": {
+    "hash": "ce802276e949785353a71fe9a085a40f817d82ce54fcb678889e2ba647caab78",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/aglaonema-pink-dalmatian": {
+    "hash": "d83d886d788bb11a5ab2e0e3f9c4f94c04359637d98dfbf54b13f71eb4d65022",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/aglaonema-red-siam": {
+    "hash": "3318e6de9ae75e569373490ee0bcd9c34e1590b0e840ae27fde35b069adf0c95",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/aglaonema-siam-aurora": {
+    "hash": "11175161fe7ace2497562f177da357dbea24ee092808064173ee568ff735f6aa",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/alocasia-amazonica": {
+    "hash": "fd10b93299563f71289b36f7bd60da5e33b63cba7c3aa01d2d643a7fcf96c5cc",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/alocasia-baginda": {
+    "hash": "aa342c64d2de0f421ea5ef8cbad1dddcd87cc9117f8e42ea7447c3a501f67b1f",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/alocasia-macrorrhizos": {
+    "hash": "d4b801343c596d9b4a25fa3dc6a4f4f4fd5ccc546835c020dafa57407a7c2659",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/alocasia-micholitziana": {
+    "hash": "8ff6097bab7843c60b60c10287e9ada8e415b3ab7474c5b7e7e4e10131facbe8",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/alocasia-pink-dragon": {
+    "hash": "13171d64a2afbdbdc58a8842d278144699b0a78cf949bd3f9da24701b80e4658",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/alocasia-regal-shield": {
+    "hash": "645392bb0f058032daa9511674254f201a51ad64dbfaf232fe14db4a7f87388a",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/alocasia-reginula": {
+    "hash": "5d0b187f73fdc78e8467a4aa4b12e5cc05835da1bf3c2f44db95020d52765362",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/alocasia-zebrina": {
+    "hash": "edd2b4fd8e727f1eb44bad9e3c3493b8def8b0365408347bb97f8b708cb8b0af",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/aloe-vera": {
+    "hash": "e8f5a22f5a312f13fec8619ee1e61416bec8daf7094e14a708d73bd21f948e6f",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/anthurium-andraeanum": {
+    "hash": "dab6df5e7a9a4ffbe87616855d5fce625baf07019b8c7c811940deb76d72ae9b",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/anthurium-clarinervium": {
+    "hash": "cec9d4ab098f0f8489251be04e9c08cfc55b98f87e2624f3f1e3a182b3593b70",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/anthurium-crystallinum": {
+    "hash": "58f2bd81c496805ab165c18cc3da5925b0c5e75d55f9fd97beb3045737fa95bd",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/anthurium-scherzerianum": {
+    "hash": "951bf39ddfeba2d1f5e8823628418b40222dc52225f592a34d266bfde183bda8",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/asparagus-setaceus": {
+    "hash": "03267b73eea39f0c1a78e1add493cb08514531ab66de51b629546e220521124b",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/aspidistra-elatior": {
+    "hash": "54f464e62dabeae66eeeddde0e701cb138d90323ff456cff332b36530c7b669b",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/asplenium-nidus": {
+    "hash": "e8750938dccf965278cfaa87bacca8262537e3feda046f7986b291c0b82090d1",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/bambusa-vulgaris": {
+    "hash": "baca8f83714a441ce9d0cdae0729dc29d9539bf1d5b50dbb21ff45a0153dbdda",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/beaucarnea-recurvata": {
+    "hash": "1bdfb514a6f911f4520c2337865e4b7a0a04020aa8b255a9e35011c70afc6941",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/begonia-maculata": {
+    "hash": "85466c9ff329c8570e25b81e11bb9eeadf99019aa9237efad1006ebbbccad2c4",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/begonia-rex": {
+    "hash": "c57916f29e6e11570c3787d7b049636d5f0c50e556d33e278bcf198afedb4dbd",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/caladium-bicolor": {
+    "hash": "6daf1b0c321c326854bba89810e3f8ab229e2b5a23e12198ed5588518e0627db",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/calathea-ornata": {
+    "hash": "9bfecb9faf01449f68f7db11b1dcb49607ff729c3a6a355a5966a90be603486a",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/calathea-white-fusion": {
+    "hash": "4f90c9a10616e5af3b0601b2e6918ae1a43dee79960c947c51bce96c000fe8ae",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/cattleya-labiata": {
+    "hash": "8f8d75d41077308a98c2351206a7c6440ead400b52fac0b4aabfa2d4bc7c2946",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/cereus-repandus": {
+    "hash": "698a5955418a5ab84433095c0c8eacee159c06ee5fdd6498c4709febc3cfb312",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/ceropegia-woodii": {
+    "hash": "46d975fa122f72ee80fa5d7fc746080dd7edcb430dfa90aa51ba4382ea5b9707",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/chamaedorea-elegans": {
+    "hash": "4101939a614b606907e510317799e74ab5f07a00ec695b5a9c887ad8027c9ee7",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/chlorophytum-comosum": {
+    "hash": "dc50342e2441c199b1d0a7cf7e1eaf77836f091431becb1201e1776aca2d80b6",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/cissus-discolor": {
+    "hash": "b8a9a95605558175782f051d27e8cc047637384750faa49fd0cb8a82ce6dcfc7",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/citrus-limon": {
+    "hash": "f500ae3c7110eadd69eb55cacb4bc3561a63c6ad0fbe5759e75b5e5275ad7dc3",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/clivia-miniata": {
+    "hash": "cfa53545390863f0f26315d3abde2e495a1dbcbf7016343065f88d87ccac2327",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/codiaeum-variegatum": {
+    "hash": "9f09abbdd3c7bf09ae5e5db538bd1ec1e418edc249deae3cca579726b11a8e85",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/coffea-arabica": {
+    "hash": "51264df42c06452f88ff8056f9f7cb4a1209b6b632f2aee6310993b7e3ceedac",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/colocasia-esculenta": {
+    "hash": "7a3b17ef8d5634adde387d63519e912403e7cab536dc64dee4841bbcc894ddec",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/cordyline-fruticosa": {
+    "hash": "16cc65d51c64a869e5616270f0fa994d1a5f915e5a0bfbb4ca69157002b47d6a",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/crassula-ovata": {
+    "hash": "b1510aa21094d6547f462fe3aa5a5f110356375c6e742244b8445c7e1420c76b",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/ctenanthe-amagris": {
+    "hash": "60654c6ea7996963615bba016b4bfb33062f31dbbfda6489b2d0683974db6e4d",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/ctenanthe-burle-marxii": {
+    "hash": "47ad9007542b3f7203243e4805be9bf58420e2d419b7c9994bdb6dd10b07394e",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/cyclamen-persicum": {
+    "hash": "1a46d292a7510e511d52a76222007f8b1735ce73ea5f01a1e01b55b32c37362c",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/cyperus-alternifolius": {
+    "hash": "0090e2ce7df321b8de0c6ec88ad367b886c7ce32cc47569d8ecfb9984387785b",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/davallia-fejeensis": {
+    "hash": "0e298ac41311b849504a6db92ee0cc23331fb3547437b59c27b614bfd6c83368",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/dendrobium-nobile": {
+    "hash": "b463c0c08ca65574dde03c97bf53fa59db195da4143a1793f2836202e22e0dbb",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/dieffenbachia-seguine": {
+    "hash": "37b74fbb0aa087074840b74f5297730a201df2c42ccd91f5e7ffe6ee3cde269d",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/dracaena-angolensis": {
+    "hash": "c932e5aaf3d1b7edf6ce234f85e14656e7451d9d711682707a6888bd42fa32aa",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/dracaena-fragrans": {
+    "hash": "ac5a27eba2ec6bddd66d29c76516b40636ac4d099b3f6790bc0a3be723951ecb",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/dracaena-marginata": {
+    "hash": "e432f70c62e4260199acbdc584e219b175f30b90f0316e16b59b3398b1fc1a56",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/dracaena-masoniana": {
+    "hash": "370d20193608fdba392991c5168d3af22ee596c9ab858e1829ed7ca324d12d21",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/dracaena-surculosa": {
+    "hash": "00ea10be819a25defce399af868952dd0fe95ed74c9d59179cf786d4881f7367",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/dracaena-trifasciata": {
+    "hash": "2ab30ce6f4a92075b88e1fbb7402064a844a11b5985d038f27f56bba05f2f527",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/dypsis-lutescens": {
+    "hash": "9543e2e1e6cd024528c3a692f1c1b7aeb082fbc87ade7a2e1dce0d7ad4536117",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/echeveria-elegans": {
+    "hash": "ef54c5290578c3e8e42c2d60d2695b6ca76c57413d67f5bec202b511d1ac737c",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/echeveria-lola": {
+    "hash": "38da3eed4f70f784a39a4c55092c799083b9ac3fc19f3b4e4bb570efe207313a",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/echeveria-perle-von-nurnberg": {
+    "hash": "ca74be23dfc629a7806785181e56b156b27b57eafe00271612501414ded4ac92",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/epiphyllum-oxypetalum": {
+    "hash": "0f9d73fee0be20dffd00dffbe9aa0c8fb9cba02394da21f2e9e69281e9fa81a5",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/epipremnum-aureum": {
+    "hash": "6788080d9e8b2642a70de74a6d2b2a93448fcc734f9eb1b0598e46bcd004baaa",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/epipremnum-pinnatum": {
+    "hash": "29050bb0b5e08e276176277a4123496f56afb0f1732bd6b7223e248ed98c1127",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/episcia-cupreata": {
+    "hash": "6e3b433cfdca6c06de760fbaddd14e26ef13c16a1099eff203efbe6c51b04a7b",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/euphorbia-tirucalli": {
+    "hash": "5679360d2e23483c33d21f7637bab4ff42728df75c98747df6c585e1957fb151",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/euphorbia-trigona": {
+    "hash": "035b9b364fd26cd0da6418d16fdcc15a9a0e39011fdd0132b08b2e2d6b33a2f3",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/fatsia-japonica": {
+    "hash": "bce58dcc25b759f9ca066984e26b46c1297a6fec2f39b965ba4900bd2a5dbbfc",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/ficus-audrey": {
+    "hash": "ef0f922d955a4aa3d754a99614f004e58ab0a0bea9dbfb6268b5c825d65d509c",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/ficus-benjamina": {
+    "hash": "57c1c8c80c4c6eb6f5bf56d80f723e69cc664e14d229aa7ec896223aa62cfdff",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/ficus-elastica": {
+    "hash": "3c2193635d4553430d0cc2464a1a4f14a7534e9a86b679f8a7ed21ef792b7a04",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/ficus-lyrata": {
+    "hash": "b0fdbd1d5e75ee4be4d3ebb6d4912b42229dbe1ceb4a8aad64af4aadb9176824",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/ficus-microcarpa": {
+    "hash": "624546655267e6d4eac293c80fcc53d5f62be15a084db67f07b92eb570464aa2",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/ficus-triangularis": {
+    "hash": "9e8549d99366cb933bfb67cd68e17c75d5c9b7b282dfcb6760b251b7da9af973",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/fittonia-albivenis": {
+    "hash": "640ee6c799691cdfa91085b994a60447b2d21d5a96f61a81339ddf6b7c343b51",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/gardenia-jasminoides": {
+    "hash": "2bdce996a0c78c854a43753aabf1e29a54468188854a0a347a0661dc75b31117",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/gasteria-carinata": {
+    "hash": "3ad1964b06b3de058694219e159bf29695be19fb951266ff4e18d3bc997c0440",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/goeppertia-lancifolia": {
+    "hash": "f88865d3e65ff98f2adc6dedcf48ca327543501628d233da36e1b0a26b4c916e",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/goeppertia-makoyana": {
+    "hash": "8df5ef381b751d1920984fc3216694f0a6a7c9860cc1288e948290863a92cffa",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/goeppertia-orbifolia": {
+    "hash": "54f8ffd24ac50df0b89f2398e2a917e032e847cfd2db7601ee8495e41ffaec98",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/goeppertia-roseopicta": {
+    "hash": "994ed6d9b7eec2a21313aa595cdbd2f91d85b4b3823359f0493e61592871739e",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/guzmania-lingulata": {
+    "hash": "ae3507d0be29a5df71a5dfaa6a1f79745d85f1be6d19f8191d34eb59cf72e08d",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/haworthiopsis-attenuata": {
+    "hash": "ac12c693533df174a183eb3ec20a38ef99349cffd43166440e286f5a483aabd9",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/hedera-helix": {
+    "hash": "01bd2e6dfc4a306639ff78e035d54b4fe6b51b8d20c4a42a42c7376666e0dde7",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/hibiscus-rosa-sinensis": {
+    "hash": "93b4ff256dda2f52689550646e3aa330ad489622397410e06dd7d838130c818e",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/hippeastrum-hybridum": {
+    "hash": "49f7ebf4aa3cc47a5c8d740c1041ce33950d91116ae197d593ea40051e7131e0",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/howea-forsteriana": {
+    "hash": "90ad9e833e14a411b80dd875d6363ff0003ccbc8d9817bb1d78001d8d6b30d92",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/hoya-australis-lisa": {
+    "hash": "e514c78bd62d3b8e4f3226baa991c9fa00dd0b098c257eab245d4429113333fc",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/hoya-carnosa": {
+    "hash": "9f200ee5f2f1bc0b515a024cd2ce8afc3961c9a4f9019a3fc752afbcd3b7b887",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/hoya-kerrii": {
+    "hash": "8c53b1bff2fc52b41be4dd88e09fc7b93e83b5a76f1e8e5558b6054054d92dd4",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/hoya-linearis": {
+    "hash": "bd91b0a25406b51a64b904b6763adc47293dd5286a8750d009eab48431a6720d",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/hoya-publicalyx-splash": {
+    "hash": "b63ecace217fd4348fc56a9063cf6239ed7eb069059c03ab464ecb0f10e2d249",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/hypoestes-phyllostachya": {
+    "hash": "bd19843c3302b96264d2d06db00a3a1e42f12da486b5704abe64fe6be785e85a",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/jasminum-polyanthum": {
+    "hash": "47491eda8f523413d2ceadd67ae179938928cc5812bec8e79a130d72f27a5338",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/kalanchoe-blossfeldiana": {
+    "hash": "811a03f8ad32846a8f273703c188fedeb863a931f8c67fefb7693dbdf54adc70",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/lithops-lesliei": {
+    "hash": "56be4b3cf0ec779fc4feee1915ed49a901503be7ed60c24581fe77fb8d76370f",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/livistona-chinensis": {
+    "hash": "f813248f5623cb1ddfeea416f1cd1d78539b3f3c89705efda6c31d59046c5264",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/mammillaria-elongata": {
+    "hash": "45f4a5a8ff508a945852243c82f6befeac30c2827d8f0d4721d96abe551dc934",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/maranta-leuconeura": {
+    "hash": "eecc227919ba508dfdfa828e02d298d09cfe6794155c1b4531c71ab88263a1f4",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/mentha-spicata": {
+    "hash": "e314af4bc62f5f72e4b361fd7e1586fcc38407ffb1997b87b9add3ee10532d87",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/monstera-adansonii": {
+    "hash": "2fc3101480677da31ff154b4152a7e6f12cebfc88b1a9493a684bc337e244242",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/monstera-deliciosa": {
+    "hash": "71d52c9a56fb34cbb6a9d9608792cefec27e4f232fbf05804414cedfe52c1a98",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/monstera-obliqua": {
+    "hash": "d38936eced20fa06a77527393b68c7def9ee918bd7c8aa9bea97aaeb9258be8b",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/monstera-standleyana": {
+    "hash": "b38f53cd8059c8d31993bbe437e40bba1d822447c176d2702f75850b57de28c0",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/musa-acuminata": {
+    "hash": "3bf8b2a3513c6e205d6b3577d5041979f623548bcbc385d8537821cecc08a5f9",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/nephrolepis-exaltata": {
+    "hash": "468e17f3fb4a21f0a579e58a730dab17914633595f46f81b3c4820585a9067e5",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/ocimum-basilicum": {
+    "hash": "b64b13d7f1f82b4df7e97073394549449e7912af492fc9e3e2319162b96d2b9e",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/opuntia-microdasys": {
+    "hash": "d1f0a84c9e4281b65cf6fab41eb5fb6df8572fd9bb3fd2d7c9df4b0a2ce8418a",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/oxalis-triangularis": {
+    "hash": "824a2d86212b999a5b47eef7569112316cdac1365544f02e43bbeed9bd954849",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/pachira-aquatica": {
+    "hash": "a848957224b2b4f529abad04e88ddfc07ca4a93d95e73e15ce687417b4d1de8e",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/peperomia-argyreia": {
+    "hash": "231d6fb7a343703a4274faa3c83c85bda2bed3899f65c752e42215f00dc8c41e",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/peperomia-caperata": {
+    "hash": "cf7521b5e998a57fbd6e72e01017ce9179ab3c5abfc3c5a650278c867cba0c48",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/peperomia-ginny": {
+    "hash": "7202ece312b16b23c86fcdec06aa7d45c45b39900cbd33df84fa4700fa9958db",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/peperomia-obtusifolia": {
+    "hash": "bad23c4b09f12ebc7e7155e2dd42842f441e7b6d5e0d84dfa6415315500d6489",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/peperomia-prostrata": {
+    "hash": "c22d614db84efea11755ead112d16f6a267d625f5a6f61e08f5c8d51d6c5c27e",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/phalaenopsis-amabilis": {
+    "hash": "df96e4a629fa789eac5f51762e384c8daedf06ff190bf40517ddf9997ae29aca",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/philodendron-burle-marx-variegata": {
+    "hash": "f9995169efdf72b9f0c519338a3c126da0924ad739f32ad1ce50717dae700ffc",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/philodendron-erubescens": {
+    "hash": "2cdb270410c111d03b1e79b1d3aecbad8ff67eddc67208d1205ad2a2202b73be",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/philodendron-florida-beauty": {
+    "hash": "90e726ef4665240a90a6e75f2987d2d44aec15a2f60bbb314f2b4fc46ace1ec7",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/philodendron-florida-ghost": {
+    "hash": "95e88c469c993413f79744a2f258b3aeda3a9de223e5b0527b739c3eb777f0c6",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/philodendron-gloriosum": {
+    "hash": "5aaa62577f87c7ef31dca881bb780b1b3fbe2bff34af8f209a6b0f5e53825447",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/philodendron-hederaceum": {
+    "hash": "aa25aa6d20dc5c26ddb884f5a96ef0f00a98d64f06e93f074068bea9327164e5",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/philodendron-jose-buono": {
+    "hash": "a3629d31a5659bdbbf414096ca5078d4ede32890236fbc78fb3cc7feaee3317a",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/philodendron-melanochrysum": {
+    "hash": "da2d690b2a7ef8c48cfc31ef48ad0f12e06f542f7e8cc537950f2f04aa977a4b",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/philodendron-moonlight": {
+    "hash": "3dcce209b8eed9aeb475b0ae4022e170647144ef9e56d89125c3b58b909216d5",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/philodendron-paraiso-verde": {
+    "hash": "9b9d816d4c269718842ccff28aa997ebe2110b8b38a1466016fcc62def508017",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/philodendron-prince-of-orange": {
+    "hash": "84ad525cf34f68c585e4044da011631bcead2a240deff25c1f7907d37e3cf55f",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/philodendron-ring-of-fire": {
+    "hash": "510fafdf4c88a038cfc2d28488027d3773104563a259ec655718282c69843a7f",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/phlebodium-aureum": {
+    "hash": "274db39e55fdcc1392b84c99dc43920203f31cb048bd4336ff27e5a17f48a6a4",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/phoenix-roebelenii": {
+    "hash": "f7ca0b714c1944cad8ebdfb85f0e89b54db9c27baff79a93d8aaa894064ecf72",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/pilea-peperomioides": {
+    "hash": "13f1a000a97d023efa3bcf07cb325708830c444d14fd148cc73bde03a29199e5",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/platycerium-bifurcatum": {
+    "hash": "6249f9c2452fef75f2e36044ce9534272474c80d31e6188a71d96bebe82791fb",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/polyscias-fruticosa": {
+    "hash": "a9ecddde9bfbc7522a9f0c4d529376d75cce582b81f6c8646f1abdb5268ad830",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/rhaphidophora-tetrasperma": {
+    "hash": "b1aa1d38fda25bc290bacd47a67b218076b950057cdf61a0dcf4938e0dbae088",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/rhapis-excelsa": {
+    "hash": "fd69f0ae8bbd612f0bcfd71f707886d0d1e911cff4e63d1d6bd1a9b4d098739c",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/rhipsalis-baccifera": {
+    "hash": "9cae040c52f096c98cf99be692f102470ae04b431759649d0e13c347287cf75a",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/rosmarinus-officinalis": {
+    "hash": "28eb720260d96b3d36b0d3aaeacd7590e0d9f7fd549c6cd21a23fd470f90447e",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/saintpaulia-ionantha": {
+    "hash": "b6f15034a544ab592feaeab2582a8e6157bbd4cd12a2906be15728bf36dd7377",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/schefflera-arboricola": {
+    "hash": "ba069f741a35a427adfa54c0d8a59703f3a22c6174ea6aba75b7f9761f02f819",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/schlumbergera-truncata": {
+    "hash": "1f93d845fc720cabef4eb8b2a6618c50a420dd7ba6e407985a9e1645fd1d8997",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/scindapsus-pictus": {
+    "hash": "8fbdde41549bfbe6f7c0f26871b0f61965d21d9976c1554f299f306ab23db712",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/scindapsus-treubii": {
+    "hash": "d1bd19b9bbc94c37dd99b1c4aa3c9e98d90e6054a535deb359a8836df527517e",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/sedum-morganianum": {
+    "hash": "e34f7785305648e24fa270467ddbf39dba6ef789d34d0ed4bcaa71422bdb52a8",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/sempervivum-tectorum": {
+    "hash": "711bbedbe9eca04858e9acd82ddb39c5f26687c507aa970cef61656afb1b2297",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/senecio-rowleyanus": {
+    "hash": "03117b43f7e5d7205aa30a6f2f0fde82ef9616ca5982e886ffee2fb7269324bd",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/soleirolia-soleirolii": {
+    "hash": "60195c1659ac09edcfae123dbcbe9fecef3f43145895f12e9e498f0e869d5605",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/spathiphyllum-wallisii": {
+    "hash": "513d02f2e2bca0588d6cfe9becc1b69c97733755bdef776a8ad74974d6d1f697",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/strelitzia-nicolai": {
+    "hash": "0ca53862ed41967f8988006ce5bf4e3608e426715c82152393192280dfa9e7ab",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/strelitzia-reginae": {
+    "hash": "e5b52303a2eae69f769ad440fe57fa69a0205d805429af654222d264107d965c",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/streptocarpus-hybridus": {
+    "hash": "9ebe88a1fab1fe5838d959a587e231dd2c6b8e80a659c0bb41caccc4f84125a2",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/stromanthe-sanguinea": {
+    "hash": "d13a824a20796100e8f1e00e3037b31c37a2ea33b8f685f2fa0ab84d7affbf5d",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/syngonium-podophyllum": {
+    "hash": "76e35e4be10996023e765a937c37101e49e6291b71502bd62ac95abe1b1a58e3",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/thaumatophyllum-bipinnatifidum": {
+    "hash": "0bd8f2d6f3de4c8be64c4ef42dfb9e09eb99a228373f2228abf059966d97ed2a",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/tillandsia-ionantha": {
+    "hash": "3bd5f667f4cd850e4865597d942a5a72b0910296a71cf4c086926a3f7ba7a879",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/tillandsia-xerographica": {
+    "hash": "faa3e5f4bd5e6cf82cd9ffa98766750aad1015eeefa093347114b4f31b667b63",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/tradescantia-nanouk": {
+    "hash": "789153713d76f8fa0ecaf20097407393d88eac9f69ec7b5817200873b7cdd644",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/tradescantia-tricolor": {
+    "hash": "3248e618a34b6d4568c0b0a2f02d115b1f8119d9b0396c3ac59b62e7ed4e0f67",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/tradescantia-zebrina": {
+    "hash": "068540e44e940711fe9bc13518e43f943c4a6cfab6909ccd561eba202f0c3106",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/yucca-elephantipes": {
+    "hash": "8af664400373a8ddeefc2fc556154f05fc4449914893e21b23720a2fc06b3236",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/plants/zamioculcas-zamiifolia": {
+    "hash": "28600aafdcd6340eac1aceb8fba1c70e9c68c232df199dab1a088fac8b8e1749",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/privacy": {
+    "hash": "e8579e658ba90f3dfbf64c1bf2ace65c9f14dfa449a5947dc64cc29e84e64233",
+    "lastmod": "2026-09-18"
+  },
+  "https://plantparlour.org/terms": {
+    "hash": "2610f042e6a5f87f764f3ba5391b87efc73a8a772139be8a0fbdc6dd0630b8db",
+    "lastmod": "2026-09-18"
+  }
+}

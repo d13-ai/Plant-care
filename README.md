@@ -249,6 +249,33 @@ a name it knows, sets the plant's reminders and stores the catalogue's
 spelling (`Monstera deliciosa 'Thai Constellation'`). Cultivars inherit their
 parent's care and sit right under it in the list.
 
+## Plant care library
+
+`/plants` — a care page for each of the 158 plants the catalogue knows, and
+the only part of the site a crawler or an answer engine can actually read
+(every app route renders the same empty shell and paints itself from the
+bundle). Each page covers watering and how to tell when it's due, light,
+humidity, soil, feeding, repotting, propagation, toxicity to cats and dogs,
+what usually goes wrong and the fix, and the plant's named cultivars.
+
+The cadences on those pages are read from `src/domain/species.ts` — the same
+file the species picker uses — so the library and the reminders can never
+disagree. The care knowledge that a cadence can't carry lives in
+`scripts/plants-data.mjs`, at genus level with per-species overrides.
+
+```sh
+npm run plants   # regenerate public/plants/ and sitemap.xml
+npm run seo      # check titles, canonicals, JSON-LD, FAQ mirroring, links
+```
+
+The generated pages are committed, so a change to a plant shows up as a diff.
+Commit `scripts/sitemap-manifest.json` with them: it is what keeps each URL's
+`lastmod` honest instead of claiming all 165 changed on every build.
+
+The whole approach — the AEO furniture on every page, why tags stay
+unlisted, what is deliberately not done yet — is written up in
+[`docs/SEO.md`](docs/SEO.md).
+
 ## AI photo analysis
 
 On the add-plant screen, **Identify with AI** names the plant from its photo

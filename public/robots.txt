@@ -1,0 +1,186 @@
+# https://plantparlour.org
+#
+# Everything is open to crawlers except the API and published plant tags.
+# A tag link is unlisted by design — a keeper shares it with one person, so
+# it must not turn up in a search result. See docs/SEO.md.
+#
+# Every group repeats the full Disallow list, because a crawler that matches
+# its own user-agent line ignores the wildcard group entirely: a rule written
+# only under `User-agent: *` would not apply to GPTBot at all.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Claude-User
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: GoogleOther
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Applebot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Bytespider
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: CCBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: cohere-ai
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Meta-ExternalAgent
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: FacebookBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: DuckAssistBot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: Amazonbot
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+User-agent: MistralAI-User
+Allow: /
+Disallow: /api/
+Disallow: /tag
+Disallow: /_expo/
+Disallow: /_sitemap
+
+Sitemap: https://plantparlour.org/sitemap.xml

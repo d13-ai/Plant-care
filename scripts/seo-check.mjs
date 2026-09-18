@@ -1,0 +1,185 @@
+/**
+ * Checks the crawlable surface of the site before it ships.
+ *
+ * These are the mistakes that are invisible in a browser and expensive in a
+ * search console: two pages claiming the same title, a canonical pointing at
+ * the wrong URL, a FAQPage block promising answers the page doesn't show
+ * (which is a manual-action offence, not a style question), JSON-LD that
+ * doesn't parse, an og:image that 404s, a page missing from the sitemap, or
+ * an internal link to a plant that left the catalogue.
+ *
+ * Run over public/ — the generated pages and the hand-written ones alike.
+ * Exits non-zero on any error. Warnings are printed and don't fail the run.
+ *
+ * Usage: npm run seo
+ */
+import { readFileSync, existsSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { plantPages, SITE } from "./generate-plant-pages.mjs";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, "..");
+const PUBLIC = join(ROOT, "public");
+
+const errors = [];
+const warnings = [];
+const err = (where, msg) => errors.push(`${where}: ${msg}`);
+const warn = (where, msg) => warnings.push(`${where}: ${msg}`);
+
+const read = (rel) => readFileSync(join(PUBLIC, rel), "utf-8");
+
+/** Visible text, near enough: tags out, entities back, whitespace flattened. */
+const visibleText = (html) =>
+  html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&mdash;/g, "—")
+    .replace(/&middot;/g, "·")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const attr = (html, re) => {
+  const m = html.match(re);
+  return m ? m[1] : null;
+};
+
+// Every URL the site is meant to serve, and the file behind it. Anything an
+// internal link points at has to be in here.
+const pages = plantPages();
+const ROUTES = new Map([
+  ["/", null], // the app shell; expo writes it, not this build
+  ["/plants", "plants/index.html"],
+  ["/parlour-games", "parlour-games/index.html"],
+  ["/parlour-games/trickle", "parlour-games/trickle.html"],
+  ["/parlour-games/windowsill", "parlour-games/windowsill.html"],
+  ["/privacy", null], // served by api/privacy.ts
+  ["/terms", null], // served by api/terms.ts
+  ...pages.map((p) => [`/plants/${p.slug}`, `plants/${p.slug}.html`]),
+]);
+
+/** The documents this script actually inspects, with the URL each claims. */
+const DOCS = [...ROUTES].filter(([, file]) => file).map(([url, file]) => ({ url, file }));
+
+const titles = new Map();
+
+for (const { url, file } of DOCS) {
+  const where = file;
+  if (!existsSync(join(PUBLIC, file))) {
+    err(where, "file is missing — run `npm run plants`");
+    continue;
+  }
+  const html = read(file);
+
+  // --- title: present, sane length, and not shared with another page
+  const title = attr(html, /<title>([\s\S]*?)<\/title>/);
+  if (!title) err(where, "no <title>");
+  else {
+    if (titles.has(title)) err(where, `duplicate <title> — also used by ${titles.get(title)}`);
+    titles.set(title, file);
+    if (title.length > 70) warn(where, `<title> is ${title.length} chars; Google will truncate it`);
+  }
+
+  // --- description
+  const desc = attr(html, /<meta name="description" content="([\s\S]*?)">/);
+  if (!desc) err(where, "no meta description");
+  else if (desc.length < 70) warn(where, `meta description is only ${desc.length} chars`);
+  else if (desc.length > 320) err(where, `meta description is ${desc.length} chars; cut it under 320`);
+
+  // --- canonical: present, absolute, and the URL this file is served at
+  const canonical = attr(html, /<link rel="canonical" href="([^"]+)">/);
+  const expected = `${SITE}${url}`;
+  if (!canonical) err(where, "no canonical");
+  else if (canonical !== expected) err(where, `canonical is ${canonical}, expected ${expected}`);
+
+  // --- og:image has to exist, or the link previews as a blank rectangle
+  const ogImage = attr(html, /<meta property="og:image" content="([^"]+)">/);
+  if (!ogImage) err(where, "no og:image");
+  else {
+    const rel = ogImage.replace(SITE, "").replace(/^\//, "");
+    if (!existsSync(join(PUBLIC, rel))) err(where, `og:image ${ogImage} has no file — run \`npm run icons\``);
+  }
+
+  // --- JSON-LD parses, and a FAQPage's answers are actually on the page
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+  if (!blocks.length) err(where, "no JSON-LD");
+  const text = visibleText(html);
+  for (const [, raw] of blocks) {
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      err(where, `JSON-LD does not parse: ${e.message}`);
+      continue;
+    }
+    if (!data["@context"]) err(where, `JSON-LD block has no @context`);
+    const types = [].concat(data["@type"] ?? []);
+    if (types.includes("FAQPage")) {
+      for (const q of data.mainEntity ?? []) {
+        // Rich-result rules: every question and answer in the markup must be
+        // visible on the page. Both are rendered from the same array as the
+        // JSON, so a failure here means something got out of step.
+        if (!text.includes(q.name)) err(where, `FAQPage question is not visible on the page: "${q.name}"`);
+        const answer = q.acceptedAnswer?.text ?? "";
+        if (answer && !text.includes(answer.slice(0, 60)))
+          err(where, `FAQPage answer is not visible on the page: "${answer.slice(0, 60)}…"`);
+      }
+    }
+  }
+
+  // --- internal links go somewhere we serve
+  for (const [, href] of html.matchAll(/<a[^>]+href="(\/[^"#?]*)"/g)) {
+    const target = href.length > 1 ? href.replace(/\/$/, "") : href;
+    if (ROUTES.has(target)) continue;
+    if (existsSync(join(PUBLIC, target.replace(/^\//, "")))) continue; // a real asset
+    err(where, `internal link to ${href}, which nothing serves`);
+  }
+}
+
+// --- sitemap covers every page, and claims nothing it doesn't serve
+if (!existsSync(join(PUBLIC, "sitemap.xml"))) {
+  err("sitemap.xml", "missing — run `npm run plants`");
+} else {
+  const sitemap = read("sitemap.xml");
+  const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  const listed = new Set(locs.map((l) => l.replace(SITE, "") || "/"));
+  for (const url of ROUTES.keys()) {
+    if (!listed.has(url)) err("sitemap.xml", `does not list ${url}`);
+  }
+  for (const url of listed) {
+    if (!ROUTES.has(url)) err("sitemap.xml", `lists ${url}, which is not a page we serve`);
+  }
+  if (locs.length !== new Set(locs).size) err("sitemap.xml", "contains duplicate <loc> entries");
+  // A tag is unlisted by design; if one ever reaches the sitemap, say so loudly.
+  if (locs.some((l) => l.includes("/tag"))) err("sitemap.xml", "lists a plant tag, which must stay unlisted");
+}
+
+// --- robots.txt: points at the sitemap and keeps tags out
+if (!existsSync(join(PUBLIC, "robots.txt"))) {
+  err("robots.txt", "missing");
+} else {
+  const robots = read("robots.txt");
+  if (!robots.includes(`Sitemap: ${SITE}/sitemap.xml`)) err("robots.txt", "does not name the sitemap");
+  if (!/^Disallow: \/tag$/m.test(robots)) err("robots.txt", "does not disallow /tag");
+  for (const bot of ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended", "Applebot-Extended"]) {
+    if (!robots.includes(`User-agent: ${bot}`)) warn("robots.txt", `no rule named for ${bot}`);
+  }
+}
+
+// --- llms.txt exists and doesn't advertise anything unlisted
+if (!existsSync(join(PUBLIC, "llms.txt"))) {
+  err("llms.txt", "missing");
+}
+
+for (const w of warnings) console.log(`  warn  ${w}`);
+for (const e of errors) console.error(`  ERROR ${e}`);
+console.log(
+  `\nChecked ${DOCS.length} pages, ${warnings.length} warning(s), ${errors.length} error(s).`,
+);
+if (errors.length) process.exit(1);
