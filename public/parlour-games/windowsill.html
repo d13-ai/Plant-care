@@ -35,7 +35,31 @@
   --bright:#9FD3AC;
   --shade:#6FA9A0;
   --bad:#E08BA6;
+  --pot:#A2755C;
 }
+/* Night: the same roles, turned right down. Measured rather than eyeballed --
+   every pair below is checked in the smoke test against the same bars the
+   day palette meets. */
+body.night{
+  --ink:#140A17;
+  --card:#1E1023;
+  --border:rgba(201,162,75,.18);
+  --edge:rgba(201,162,75,.6);   /* .42 left the stand's edge at 2.31:1 on the darker page */
+  --gold:#8C6F35;
+  --gold-light:#A98A4A;
+  --cream:#BFB3B9;
+  --muted:#8D7D88;
+  --leaf:#6E9B79;
+  --sun:#B49A54;
+  --bright:#7BA686;
+  --shade:#5C8A83;   /* 4.49:1 at #56827B, a hair under the 4.5 the word on it needs */
+  --pot:#B08774;     /* clay, and a variable: the old pot was hardcoded, so it was
+                        the one thing on the page that did not follow the palette --
+                        and it came out BRIGHTER at night than by day */
+  --bad:#AE6A80;
+}
+body{transition:background .8s,color .8s}
+[hidden]{display:none !important}   /* .actions sets display:flex, which otherwise wins */
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--ink);color:var(--cream)}
 body{
@@ -103,20 +127,23 @@ body.learn .shelves,body.learn #new,body.daily .shelves,body.daily #new{display:
 .cell[data-held="1"] .plinth{background:#5A2A50;border-top-color:var(--gold)}
 
 /* The plant stands ON its step, so its foot is that step's top edge and its
-   head is (tier + height) units up -- which is exactly what the rule
-   measures. A pot and a rounded crown, so a plant never reads as furniture. */
-.plant{position:absolute;left:27%;right:27%;display:flex;flex-direction:column;justify-content:flex-end}
-/* `hidden` sets display:none from the UA sheet, which an author display:flex
+   head is exactly (tier + height) units up -- which is what the rule measures,
+   so the art is drawn to that height rather than near it.
+   The box is 2.4 units wide, which is the viewBox's own aspect, so the drawing
+   scales with --unit and is never stretched to fit. */
+.plant{
+  position:absolute;left:50%;transform:translateX(-50%);
+  width:calc(var(--unit) * 2.4);line-height:0;
+}
+/* `hidden` sets display:none from the UA sheet, which an author display rule
    silently beats -- so an empty cell drew an empty pot until this was here. */
 .plant[hidden]{display:none}
-.crown{
-  border-radius:40% 40% 18% 18%;background:var(--leaf);
-  box-shadow:inset 0 -6px 0 rgba(0,0,0,.08);
-}
-.pot{height:9px;margin:0 16%;border-radius:0 0 5px 5px;background:#8A5A3B;flex:none}
-.plant[data-need="3"] .crown{background:var(--sun)}
-.plant[data-need="2"] .crown{background:var(--bright)}
-.plant[data-need="1"] .crown{background:var(--shade)}
+.plant svg{display:block;width:100%;height:100%}
+.foliage{fill:var(--leaf)}
+.plant[data-need="3"] .foliage{fill:var(--sun)}
+.plant[data-need="2"] .foliage{fill:var(--bright)}
+.plant[data-need="1"] .foliage{fill:var(--shade)}
+.pot{fill:var(--pot)}
 /* What the plant wants, said above it rather than written on it: a low plant
    is one unit tall and there is simply no room on it for a word. */
 .want{
@@ -165,6 +192,9 @@ button.quiet{
 }
 button.quiet:hover{border-color:var(--gold)}
 button.quiet:focus-visible{outline:2px solid var(--gold-light);outline-offset:2px}
+button.quiet.on{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:700}
+.toggles{display:flex;gap:8px;justify-content:center;margin-top:14px}
+.toggles .quiet{min-height:44px}
 #status{margin:10px 0 0;font-size:14px;color:var(--muted);min-height:1.5em}
 #records{margin:6px 0 0;font-size:14px;color:var(--muted)}
 #records b{color:var(--gold-light)}
@@ -212,6 +242,12 @@ button.plain{
       <button class="quiet" id="new" type="button">New board</button>
     </span>
   </div>
+  <div class="toggles">
+    <button class="quiet" id="sound" type="button" aria-pressed="false">Sound</button>
+    <button class="quiet" id="music" type="button" aria-pressed="false">Music</button>
+    <button class="quiet" id="night" type="button" aria-pressed="false">Night</button>
+  </div>
+
   <p id="status"></p>
   <p id="records" hidden></p>
   <p id="save"></p>
@@ -243,7 +279,10 @@ button.plain{
     /* Everything worth keeping, in one blob, in the shape the account holds
        it -- so what is sent is what is stored and there is nothing to
        translate between the two. */
-    progress: "pp_windowsill_progress"
+    progress: "pp_windowsill_progress",
+    sound: "pp_windowsill_sound",
+    music: "pp_windowsill_music",
+    night: "pp_windowsill_night"    /* unset means follow the clock */
   };
 
   /* Practice wins over the daily board; the arcade reads all three modes the
@@ -289,6 +328,30 @@ button.plain{
     BOARD = R.deal(shelfKind, P.mulberry32(seed));
     BOARD.seed = seed;
   }
+
+  /* ---- sound ----------------------------------------------------------- */
+  /* The engine is the harness's -- oscillators, the delay, the scheduler, one
+     dial for the whole bus. What is here is the tune, because that is the part
+     that is this game's rather than the arcade's.
+     Where Trickle is in D and descends, this sits in C and drifts upward with
+     more air in it, on two chords rather than four: a windowsill in the
+     afternoon rather than water finding its way down.
+     The mix is tuned against the analyser, not by ear, since there is no ear
+     in a test run: at 5 it peaked around 0.42 against Trickle's 0.26, which
+     is the same arcade at two different volumes. At 4 it measures 0.275 to
+     0.298 peak and 0.042 to 0.045 mean RMS over a full bar -- and it has to
+     be a full bar, because at 58bpm one is eight seconds long and the chord
+     lands on its first step. */
+  var snd = P.sound({
+    key: KEY.sound,
+    mix: 4,
+    bpm: 58,
+    root: 130.81,                                                   /* C3 */
+    motif: [12, null, 16, null, 19, null, 16, null, 14, null, 12, null, null, 16, null, null],
+    chords: [[0, 4, 7, 11], [-7, -3, 0, 4]],                        /* Cmaj7, Fmaj7 */
+    blips: [523.25, 587.33, 659.25, 783.99, 880]
+  });
+  var musicPref = P.read(KEY.music, null);          /* null: never chosen */
 
   var progress = P.read(KEY.progress, null) || R.emptyProgress();
   if (!progress.byShelf) progress.byShelf = {};
@@ -392,8 +455,7 @@ button.plain{
         cell.innerHTML =
           '<div class="pips"></div><div class="verdict"></div>' +
           '<div class="want"></div><div class="plinth"></div>' +
-          '<div class="plant"><div class="crown"></div><div class="pot"></div></div>' +
-          '<div class="empty-label"></div>';
+          '<div class="plant"></div><div class="empty-label"></div>';
         cell.addEventListener("click", function () { tapCell(r, t); });
         row.appendChild(cell);
       });
@@ -402,6 +464,124 @@ button.plain{
   }
 
   var WORD = { happy: "happy", scorching: "scorching", leggy: "leggy" };
+
+  /* ---- the plants ------------------------------------------------------ */
+  /*
+   * Nine of them: three light needs by three heights, each drawn rather than
+   * scaled, so they can be told apart by shape and not only by colour and
+   * size.
+   *
+   * Everything is authored in unit space -- 100 across is one step of the
+   * stand, the box is 2.4 units wide -- so the art and the rule are the same
+   * measurement. A plant's foliage reaches y=0, which is exactly `height`
+   * units above its own step: what the picture shows and what lightsFor()
+   * counts cannot disagree.
+   *
+   * Each one is built to give the top edge a WIDTH rather than a point. The
+   * question a player answers by looking is "does this clear the step behind
+   * it", and a single tapering tip makes that a guess -- so every plant has
+   * either a broad crown or two or three tips arriving at the same line.
+   *
+   * The families are true to the light, which is the one thing this game can
+   * teach for free: sun is succulents and cacti, bright is broad leaves,
+   * shade is ferns and blades.
+   */
+  var POT = 44;              /* of 100 per unit */
+
+  function potPath(H) {
+    var lip = H - POT, body = lip + 13;
+    return '<path class="pot" d="M62,' + lip + 'h116v13H62z M69,' + body +
+           'h102l-11,' + (POT - 13) + 'H80z"/>';
+  }
+
+  /** A leaf or blade: from the pot up to `top`, widest near the base. */
+  function blade(cx, halfW, top, base, lean) {
+    lean = lean || 0;
+    var tip = cx + lean;
+    return "M" + (cx - halfW) + "," + base +
+           "Q" + (cx - halfW * 0.72 + lean * 0.4) + "," + (top + (base - top) * 0.22) + " " + tip + "," + top +
+           "Q" + (cx + halfW * 0.72 + lean * 0.4) + "," + (top + (base - top) * 0.22) + " " + (cx + halfW) + "," + base + "Z";
+  }
+
+  /** A thick rounded column: succulents and cacti. */
+  function column(cx, halfW, top, base) {
+    return "M" + (cx - halfW) + "," + base +
+           "V" + (top + halfW) +
+           "a" + halfW + "," + halfW + " 0 0 1 " + (halfW * 2) + ",0" +
+           "V" + base + "Z";
+  }
+
+  /**
+   * A broad round leaf on a stalk, centred on `cy` -- so it spans cy - ry to
+   * cy + ry, and a leaf meant to reach the top is written cy === ry.
+   *
+   * The first version started its arc at cy + ry and bulged up by ry, which
+   * put the leaf a whole radius lower than the name said. Every plant in this
+   * family came out a quarter of a unit short of its own height, so the
+   * picture claimed a shorter plant than the rule counted. Nothing looked
+   * wrong; the measurement found it.
+   */
+  function roundLeaf(cx, cy, rx, ry, base) {
+    var stalk = "M" + (cx - 7) + "," + base + "L" + (cx - 3) + "," + cy + "h6L" + (cx + 7) + "," + base + "Z";
+    var leaf = "M" + (cx - rx) + "," + cy +
+               "a" + rx + "," + ry + " 0 1 1 " + (rx * 2) + ",0" +
+               "a" + rx + "," + ry + " 0 1 1 " + (-rx * 2) + ",0Z";
+    return stalk + leaf;
+  }
+
+  function plantArt(need, height) {
+    var H = 100 * height, base = H - POT + 6, d = [];
+
+    if (need === 3) {
+      /* Succulents and cacti: thick, geometric, flat-topped. */
+      if (height === 1) {
+        /* A rosette, wider than its pot the way a real one sits. Three tips
+           arrive on the same line so the top reads as an edge, not a point. */
+        d.push(blade(88, 26, 0, base, 4), blade(120, 28, 0, base), blade(152, 26, 0, base, -4));
+        d.push(blade(46, 22, 18, base, -14), blade(194, 22, 18, base, 14));
+        d.push(blade(16, 17, 40, base, -18), blade(224, 17, 40, base, 18));
+      } else if (height === 2) {
+        d.push(column(120, 48, 0, base));
+        d.push(column(52, 24, 64, base), column(188, 24, 64, base));
+      } else {
+        d.push(column(110, 44, 0, base));
+        d.push(column(184, 28, 92, base));
+      }
+    } else if (need === 2) {
+      /* Broad leaves on stalks. */
+      /* A leaf meant to reach the top line is written cy === ry, so the two
+         top leaves sit on it and the top reads as an edge. */
+      if (height === 1) {
+        d.push(roundLeaf(88, 23, 44, 23, base), roundLeaf(154, 23, 42, 23, base));
+        d.push(roundLeaf(32, 44, 32, 18, base), roundLeaf(208, 44, 32, 18, base));
+      } else if (height === 2) {
+        d.push(roundLeaf(92, 25, 44, 25, base), roundLeaf(154, 24, 42, 24, base));
+        d.push(roundLeaf(44, 88, 36, 21, base), roundLeaf(198, 96, 34, 20, base));
+      } else {
+        d.push(roundLeaf(96, 27, 46, 27, base), roundLeaf(158, 26, 44, 26, base));
+        d.push(roundLeaf(42, 112, 38, 23, base), roundLeaf(204, 126, 36, 22, base));
+        d.push(roundLeaf(116, 192, 40, 24, base));
+      }
+    } else {
+      /* Ferns and upright blades: fine, arching, and always several tips. */
+      if (height === 1) {
+        d.push(blade(104, 20, 0, base, 6), blade(140, 20, 0, base, -6));
+        d.push(blade(64, 17, 14, base, -16), blade(178, 17, 14, base, 16));
+        d.push(blade(26, 14, 34, base, -24), blade(216, 14, 34, base, 24));
+      } else if (height === 2) {
+        d.push(blade(102, 21, 0, base, 6), blade(142, 20, 0, base, -6));
+        d.push(blade(58, 17, 44, base, -26), blade(186, 17, 50, base, 26));
+        d.push(blade(26, 14, 94, base, -34), blade(216, 14, 100, base, 34));
+      } else {
+        d.push(blade(100, 23, 0, base, 6), blade(146, 22, 0, base, -6));
+        d.push(blade(58, 18, 70, base, -22), blade(186, 18, 58, base, 22));
+        d.push(blade(28, 15, 146, base, -30), blade(214, 15, 156, base, 30));
+      }
+    }
+
+    return '<svg viewBox="0 0 240 ' + H + '" preserveAspectRatio="xMidYMax meet" aria-hidden="true">' +
+      '<path class="foliage" d="' + d.join("") + '"/>' + potPath(H) + '</svg>';
+  }
 
   function paint() {
     var lights = R.shelfLights(shelf), states = R.shelfStates(shelf);
@@ -419,9 +599,12 @@ button.plain{
       plantEl.hidden = !plant;
       if (plant) {
         plantEl.dataset.need = String(plant.need);
-        /* The crown takes the height less the pot, so the plant's overall
-           head height is exactly `height` units above its own step. */
-        plantEl.querySelector(".crown").style.height = "calc(var(--unit) * " + plant.height + " - 9px)";
+        var art = plant.need + "x" + plant.height;
+        if (plantEl.dataset.art !== art) {
+          plantEl.dataset.art = art;
+          plantEl.innerHTML = plantArt(plant.need, plant.height);
+        }
+        plantEl.style.height = "calc(var(--unit) * " + plant.height + ")";
       }
       cell.querySelector(".want").innerHTML = plant
         ? '<i>' + (state === "happy" ? "✓" : "✗") + '</i> ' + R.NEEDS[plant.need]
@@ -540,6 +723,10 @@ button.plain{
     }
     placements += 1;
     held = null;
+    /* One note per plant set down, rising with the light it is getting, so a
+       run being filled in sounds like it is going somewhere. */
+    snd.blip(R.lightsFor(shelf[r])[t] - 1 + r);
+    if (musicShouldPlay() && !snd.musicRunning()) snd.startMusic();
     paint();
     saveDaily(false);
     coachAfter({ run: r, tier: t });
@@ -661,6 +848,45 @@ button.plain{
       : "In " + placements + " placements. Par is " + par() + ".";
   }
 
+  /* ---- night ----------------------------------------------------------- */
+  /* Unset follows the clock, so the first evening visit is already dark
+     without anybody choosing. Choosing once wins from then on. */
+  var night = P.night({
+    key: KEY.night,
+    onApply: function (on) { setToggle("night", on); }
+  });
+
+  function setToggle(id, on) {
+    var b = document.getElementById(id);
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", String(on));
+  }
+
+  /* Music follows Night unless somebody has turned it off on purpose. It
+     cannot start without a gesture, so a remembered preference waits for the
+     first tap rather than failing silently. */
+  function musicShouldPlay() { return musicPref === true || (musicPref == null && night.isOn()); }
+  function refreshMusic(fromGesture) {
+    setToggle("music", musicShouldPlay());
+    if (musicShouldPlay() && fromGesture) snd.startMusic();
+    else if (!musicShouldPlay() && snd.musicRunning()) snd.stopMusic();
+  }
+
+  document.getElementById("sound").addEventListener("click", function () {
+    snd.setOn(!snd.isOn());
+    setToggle("sound", snd.isOn());
+    if (snd.isOn()) snd.blip(0);
+  });
+  document.getElementById("music").addEventListener("click", function () {
+    musicPref = !musicShouldPlay();
+    P.write(KEY.music, musicPref);
+    refreshMusic(true);
+  });
+  document.getElementById("night").addEventListener("click", function () {
+    night.toggle();
+    refreshMusic(true);
+  });
+
   /* The only two numbers worth showing: fewest placements here, and how many
      boards have been finished. */
   function showRecords() {
@@ -721,6 +947,7 @@ button.plain{
       LEARN ? "Play a proper board" : DAILY ? "Play a board of your own" : "Start again";
     winEl.hidden = false;
     showRecords();
+    if (!restored) snd.fanfare();
     if (DAILY) { tickCountdown(); saveDaily(true); }
     coachAfter(null);
     if (LEARN) coachAfter({ run: 0, tier: 0 });
@@ -778,6 +1005,10 @@ button.plain{
       : "Give every plant the light it actually wants.";
   }
 
+  night.apply();
+  setToggle("sound", snd.isOn());
+  setToggle("music", musicShouldPlay());
+
   setChrome();
   markShelf();
   dealAndLay();
@@ -806,6 +1037,10 @@ button.plain{
     dayNumber: P.dayNumber,
     progress: function () { return progress; },
     streak: P.getStreak,
+    musicPlaying: snd.musicAudible,
+    /* So the art can be laid out as a sheet and judged all at once. */
+    art: plantArt,
+    levels: snd.levels,
     coach: function () { return coachLine.textContent; },
     newBoard: dealAndLay
   };

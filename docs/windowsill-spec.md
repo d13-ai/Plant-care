@@ -287,8 +287,40 @@ Each step ends somewhere it can be looked at.
    fewest placements the smaller, and two saved daily boards are never
    blended: one whole board is chosen over the other, because half of one
    arrangement and half of another is not a position anybody played.
-6. **Sound and night mode**, from the harness.
-7. **Art pass** — the nine silhouettes, the window, the stepped stand.
+6. ~~**Sound and night mode**, from the harness.~~ **Done.** The engine is
+   the harness's; the tune is this game's — C rather than Trickle's D,
+   drifting upward with more air in it, on two chords rather than four.
+
+   Both were tuned by measurement, and both were wrong first. The mix at 5
+   peaked around 0.42 against Trickle's 0.26, which is one arcade at two
+   volumes; at 4 it measures 0.275–0.298 peak and 0.042–0.045 mean RMS. That
+   has to be sampled across a **full bar** — at 58bpm one is eight seconds
+   long and the chord lands on its first step, so a short sample calls the
+   music inaudible.
+
+   The night palette had two pairs under the bar: the need word on a shade
+   plant at 4.49:1, and the stand's own edge at 2.31:1. Both are fixed. The
+   smoke test now measures **both palettes explicitly** rather than toggling
+   and hoping — night follows the clock when nobody has chosen, so which one
+   a toggle lands on depends on the hour the tests happen to run, and an
+   earlier version of this measured the day palette twice and called it
+   night.
+7. ~~**Art pass** — the nine silhouettes, the window, the stepped stand.~~
+   **Done.** Nine drawn silhouettes in three families that are true to the
+   light — sun is succulents and cacti, bright is broad leaves on stalks,
+   shade is ferns and blades — so they can be told apart by shape rather than
+   by colour and size alone.
+
+   Everything is authored in unit space (100 across is one step, the box is
+   2.4 units wide), so the art and the rule are the same measurement, and
+   every plant's foliage reaches exactly y=0. That is checked: the smoke test
+   measures each plant's ink against its own box and fails if any is short,
+   tall, or comes to a point. It found the whole `bright` family drawn a
+   quarter of a unit short, which nothing about the picture gave away.
+
+   Weakest of the three is `bright` at mid and tall, which reads a little like
+   lily pads. If Amanda ever draws real plants they drop into the same nine
+   slots with the same contract: reach y=0, have width at the top.
 8. **The hub entry**, the smoke test, and the embed build.
 
 Steps 1 and 2 are the ones that decide whether the game is any good. Stop
