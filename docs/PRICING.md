@@ -50,29 +50,107 @@ second keeper to ask about a Monstera pays nothing.
 Which means the free tier is already the shape this page recommends further
 down: a quota, not a clock. It was built before anyone called it pricing.
 
-## What to charge, at 7¢ a scan
+## Health checks moved to Sonnet
 
-Through Stripe, $5.99 nets about **$5.52** after 2.9% + 30¢. At 7¢ a scan that
-is **79 scans a month before a subscriber costs more than they pay.**
+`mode: "health"` now runs on Sonnet 5 rather than Opus 5 — 40% of the cost on
+the same tokens, **2.8¢ against 7¢**. Opus is the default because of
+cultivar-grade identification, naming a Thai Constellation rather than an
+Albo; a keeper asking why the leaves are yellowing on a Monstera they have
+already recorded is not asking for that skill. The health prompt now takes the
+keeper's species as given rather than asking the model to re-identify it,
+because pairing a cheaper model with a request for its weakest skill is the
+worst of both.
 
-| Monthly allowance | Worst-case cost | Gross margin |
+Overridable with `AI_HEALTH_MODEL`, and an explicit `model` in the request
+still wins, so the two can be compared on one photo.
+
+**Untested.** The Opus-vs-Sonnet comparison recorded in the function was about
+identification, not health reading, and `CLAUDE.md` forbids spending the
+project's API key on evaluations without asking. A five-photo A/B across both
+models would cost about **50¢**. Worth doing before this is load-bearing.
+
+## What a keeper actually uses
+
+Run `node scripts/pricing-model.mjs` — every number below is arithmetic from
+stated assumptions, and the assumptions are the argument.
+
+The personas are judgement, not data: four keepers over five days cannot
+produce a usage curve. Month one is the burst, when somebody photographs the
+collection they already own; after that a scan happens when a plant arrives or
+something looks wrong.
+
+| Persona | Share | Month 1 | Steady state |
+|---|---|---|---|
+| Casual (8 plants) | 60% | 10 scans, $0.62 | 2 scans, $0.10 |
+| Enthusiast (25 plants) | 30% | 25 scans, $1.54 | 5 scans, $0.22 |
+| Collector (60+) | 10% | 55 scans, $3.43 | 10 scans, $0.45 |
+| **Blended** | | **$1.17** | **3.7 scans, $0.17** |
+
+**A subscriber costs 17¢ a month to serve.** On $5.99 monthly that is a 97%
+margin in steady state, 79% in their first month.
+
+Which means **the paid allowance was the wrong thing to agonise over.** A cap
+exists to bound abuse, not to price the product, because the typical keeper
+uses four scans and the cap could be fifty without anybody noticing:
+
+| Allowance, used in full every month | All identify | All health | Half and half |
+|---|---|---|---|
+| 30 | $3.42 (62%) | $4.68 (85%) | $4.05 (73%) |
+| **50** | **$2.02 (37%)** | $4.12 (75%) | $3.07 (56%) |
+| 100 | −$1.48 (−27%) | $2.72 (49%) | $0.62 (11%) |
+
+**Set it at 50 a month.** It reads as generous, almost nobody approaches it,
+and the loss-making corner needs somebody running fifty *identifications* a
+month, every month — which is not a keeper, it is a script.
+
+## The free trial is the real cost, not the paid cap
+
+At any size worth having, the dominant AI cost is people who never pay:
+
+| Keepers | Subscribers (3%) | Revenue/mo | AI for subscribers | Free trials (one-off) | Profit/mo |
+|---|---|---|---|---|---|
+| 100 | 3 | $11.71 | $0.51 | $33.95 | **−$33.80** |
+| 1,000 | 30 | $117.07 | $5.12 | $339.50 | $66.95 |
+| 10,000 | 300 | $1,170.75 | $51.24 | **$3,395.00** | $1,074.51 |
+| 50,000 | 1,500 | $5,853.73 | $256.20 | **$16,975.00** | $5,552.53 |
+
+At ten thousand keepers, serving every paying subscriber costs **$51 a month**
+and the free trials cost **$3,395** — sixty-six times more. That is the number
+to manage, and there are three ways to:
+
+- **Five scans to three.** 35¢ a signup becomes 21¢, and three is still enough
+  to photograph the plants somebody cares most about.
+- **Spend the first scan well and the rest cheaply.** Run trial scan one on
+  Opus — it is the moment the app proves itself — and the rest on Sonnet. 35¢
+  becomes about 18¢ with the wow intact.
+- **Watch it, and be ready.** It is an acquisition cost, and 21–35¢ a signup
+  is cheap next to any advertising. It only becomes a problem if a post goes
+  wide and the people it brings never come back.
+
+## What to charge
+
+Stripe's fixed 30¢ lands twelve times on a monthly plan and once on an annual
+one, which is why the plans net so differently:
+
+| Plan | Nets per month | Card fee |
 |---|---|---|
-| 20 | $1.40 | 75% |
-| **30 (recommended)** | **$2.10** | **62%** |
-| 50 | $3.50 | 37% |
-| 79 | $5.53 | 0% |
-| 100 | $7.00 | **−27%** |
+| $5.99/month | **$5.52** | 8% |
+| $39.99/year | **$3.21** | 4% |
 
-**30 a month.** One a day is more than a collector uses once their plants are
-photographed — scans cluster around new arrivals and sick plants — and it
-leaves enough margin to absorb a price rise or a heavier cohort. The 50–100
-range floated in the first draft of this page was written against the 2.1¢
-figure and does not survive 7¢.
+At a 70/30 annual/monthly mix that is **$3.90 a month of real revenue per
+subscriber** — the annual plan buys retention, not revenue, and the headline
+price is not what arrives.
 
-**The free tier has an acquisition cost.** Five scans at 7¢ is **35¢ per
-signup**, spent before anyone pays anything. A thousand signups is $350. That
-is affordable and it is not nothing, and it is the number to watch if a post
-ever goes wide.
+- **$5.99/month, and an annual plan.** Recommended: **$47.88/year** — it reads
+  as "$3.99 a month", undercuts Planta's monthly, sits a little above their
+  annual, and nets $3.87 rather than $3.21. Matching Planta at $39.99 is the
+  safer comparison-shopper choice and costs about 66¢ a subscriber a month.
+- **Break-even is about 13 subscribers**, or roughly 430 keepers at 3%
+  conversion. Below that the $45 of fixed cost is the whole story: at 100
+  keepers this loses $34 a month, which is the price of being open.
+- **$1,000/month profit needs 281 subscribers** — about **9,400 keepers** at
+  3% conversion. That is the target, and it is a distribution problem, not a
+  pricing one.
 
 ## Everything else is cheap
 
@@ -130,11 +208,12 @@ as Paddle, is a decision that comes with the first paid keeper, not later.
 
 ## The number that matters
 
-**$1,000/month is 167 subscribers.** At a typical 2–5% free-to-paid
-conversion, that is somewhere between 3,300 and 8,400 active keepers.
+**$1,000/month of profit is 281 subscribers** — about 9,400 keepers at 3%
+conversion — once the free trials are paid for. `scripts/pricing-model.mjs`
+prints it, and will print a different one when the assumptions change.
 
-Which reframes everything above: none of this matters until the funnel that
-feeds it exists — and we currently cannot measure a funnel at all. See
+Which reframes everything above: none of it matters until the funnel that
+feeds it exists, and we cannot measure a funnel at all. See
 `docs/COMPETITION.md`, item 5.
 
 ## Re-running the numbers
@@ -159,5 +238,11 @@ select count(*) as photos,
 from storage.objects where bucket_id = 'plant-photos';
 ```
 
-Both are reads. Neither spends anything — which is the point: the app records
+And the model that turns those into a business:
+
+```
+node scripts/pricing-model.mjs
+```
+
+Both queries are reads. Neither spends anything — which is the point: the app records
 what it costs so nobody has to spend money to find out (`CLAUDE.md`).
