@@ -7,6 +7,18 @@
 # Every group repeats the full Disallow list, because a crawler that matches
 # its own user-agent line ignores the wildcard group entirely: a rule written
 # only under `User-agent: *` would not apply to GPTBot at all.
+#
+# Googlebot and Bingbot are the exception, and deliberately so. `noindex`
+# lives inside the page, so a crawler has to FETCH a tag to be told not to
+# list it. Disallowing them would mean they never read that instruction --
+# and a disallowed URL can still be listed as a bare link if somebody posts
+# it publicly, which is the one outcome this file exists to prevent. Letting
+# those two in is what keeps tags out of search results.
+#
+# Every other group keeps `Disallow: /tag`. `noindex` is an instruction to
+# search indexes; a crawler collecting text for a model has no index to be
+# excluded from, so the only thing that binds it is not being allowed to
+# fetch the page at all.
 
 User-agent: *
 Allow: /
@@ -95,7 +107,7 @@ Disallow: /_sitemap
 User-agent: Googlebot
 Allow: /
 Disallow: /api/
-Disallow: /tag
+# must fetch a tag to read its noindex -- see the note at the top
 Disallow: /_expo/
 Disallow: /_sitemap
 
@@ -123,7 +135,7 @@ Disallow: /_sitemap
 User-agent: Bingbot
 Allow: /
 Disallow: /api/
-Disallow: /tag
+# must fetch a tag to read its noindex -- see the note at the top
 Disallow: /_expo/
 Disallow: /_sitemap
 

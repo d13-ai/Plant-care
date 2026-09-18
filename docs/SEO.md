@@ -127,12 +127,35 @@ re-dates the pages it can't account for.
 Publishing a plant's tag gives a keeper a link to hand to one person. The
 README calls those links unlisted, so they are:
 
+That takes two different mechanisms, because it is two different problems.
+
 - `api/tag.ts` renders a published tag with `robots: noindex, nofollow`.
-- `robots.txt` disallows `/tag` in **every** group — a crawler that matches
-  its own user-agent line ignores the wildcard group entirely, so the rule
-  has to be repeated under each named bot.
+  `noindex` is what actually keeps it out of search results. `nofollow`
+  matters because the only links on a tag page are to other tags — a
+  keeper's mother plant and its cuttings — so following them would walk a
+  whole lineage. There is nothing else on the page to follow.
+- `robots.txt` disallows `/tag` in every group **except `Googlebot` and
+  `Bingbot`**, which are deliberately allowed to fetch one.
+
+  That looks backwards and is not. `noindex` lives inside the page, so a
+  crawler has to fetch a tag to be told not to list it; disallowing the two
+  crawlers that build search results means the instruction is never read.
+  Worse, a disallowed URL can still be listed as a bare link — title-less,
+  undescribed, and unremovable without allowing the crawl — if a keeper
+  posts their tag link somewhere public. Allowing those two in is what keeps
+  tags out of Google.
+
+  Every other group keeps the disallow, because `noindex` binds an index and
+  a crawler collecting text for a model does not have one. For those, not
+  being allowed to fetch the page is the only thing that binds. (The rule is
+  repeated under each named bot because a crawler matching its own
+  user-agent line ignores the wildcard group entirely.)
 - `llms.txt` says explicitly that tag URLs are not for citation.
-- `scripts/seo-check.mjs` fails the build if a tag URL reaches the sitemap.
+- `scripts/seo-check.mjs` fails the build if a tag URL reaches the sitemap,
+  if a search crawler is disallowed from `/tag`, if any other crawler is
+  allowed it, or if `api/tag.ts` stops emitting the `noindex` that the whole
+  arrangement rests on. Half of this is only correct in combination, so
+  neither half is left to a comment.
 
 `/@handle` conservatories are the opposite: a keeper chose a handle and made
 that page public, so it stays indexable. It isn't in the sitemap because the

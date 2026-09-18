@@ -160,15 +160,65 @@ if (!existsSync(join(PUBLIC, "sitemap.xml"))) {
   if (locs.some((l) => l.includes("/tag"))) err("sitemap.xml", "lists a plant tag, which must stay unlisted");
 }
 
-// --- robots.txt: points at the sitemap and keeps tags out
+// --- robots.txt: points at the sitemap and keeps tags out of search results
+//
+// Two different mechanisms, because two different kinds of crawler:
+//
+//   A search crawler is kept out of the RESULTS by `noindex`, which lives
+//   inside the page -- so it has to be allowed to fetch a tag in order to be
+//   told not to list it. Disallowing it would leave the instruction unread,
+//   and a disallowed URL can still be listed as a bare link.
+//
+//   Everything else is kept out by not being allowed to fetch at all, since
+//   a crawler collecting text for a model has no index for `noindex` to
+//   exclude it from.
+//
+// Get either half backwards and tags leak, quietly, so both are asserted.
+const SEARCH_BOTS = ["Googlebot", "Bingbot"];
+
 if (!existsSync(join(PUBLIC, "robots.txt"))) {
   err("robots.txt", "missing");
 } else {
   const robots = read("robots.txt");
   if (!robots.includes(`Sitemap: ${SITE}/sitemap.xml`)) err("robots.txt", "does not name the sitemap");
-  if (!/^Disallow: \/tag$/m.test(robots)) err("robots.txt", "does not disallow /tag");
+
+  // One group per `User-agent:` line, each ending where the next begins.
+  const groups = robots
+    .split(/^User-agent:[ \t]*/m)
+    .slice(1)
+    .map((block) => {
+      const [name, ...rest] = block.split("\n");
+      return { name: name.trim(), lines: rest.map((l) => l.trim()) };
+    });
+  if (!groups.length) err("robots.txt", "names no crawlers at all");
+
+  for (const g of groups) {
+    const blocksTags = g.lines.includes("Disallow: /tag");
+    const search = SEARCH_BOTS.includes(g.name);
+    if (search && blocksTags) {
+      err("robots.txt", `${g.name} is disallowed from /tag, so it can never read the noindex that keeps tags out of search`);
+    }
+    if (!search && !blocksTags) {
+      err("robots.txt", `${g.name} may fetch /tag but nothing stops it keeping what it finds`);
+    }
+    if (!g.lines.includes("Disallow: /api/")) err("robots.txt", `${g.name} may crawl /api/`);
+  }
+
   for (const bot of ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended", "Applebot-Extended"]) {
     if (!robots.includes(`User-agent: ${bot}`)) warn("robots.txt", `no rule named for ${bot}`);
+  }
+
+  // The other half of the pair: the page itself has to say noindex, or
+  // letting the search crawlers in publishes every tag. Both the meta tag
+  // and the published-tag branch that asks for it are checked -- the word
+  // "noindex" also appears in that file as a comment and a parameter name,
+  // and neither of those keeps anything out of Google.
+  const tagSrc = readFileSync(join(ROOT, "api", "tag.ts"), "utf8");
+  if (!/content="noindex/.test(tagSrc)) {
+    err("api/tag.ts", "no longer emits a noindex robots meta tag");
+  }
+  if (!/render\(data\)[^;]*\btrue\b/.test(tagSrc)) {
+    err("api/tag.ts", "a published tag no longer asks to be noindexed");
   }
 }
 
