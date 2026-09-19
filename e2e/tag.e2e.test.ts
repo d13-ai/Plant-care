@@ -230,7 +230,13 @@ describe("publishing a tag to Supabase", () => {
     expect(html).toContain("No open issues");
     expect(html).toContain("Treatment applied");
     expect(html).toContain("Neem oil, twice a week");
-    expect(html).toContain("/storage/v1/object/public/plant-photos/");
+    // The page asks the bucket to resize on the way out rather than serving
+    // the stored 1600px original into a thumbnail: 10 KB against 704 KB on a
+    // real photo. seo-check enforces the same thing at the source; this
+    // checks what the deployed page actually emits.
+    expect(html).toContain("/storage/v1/render/image/public/plant-photos/");
+    expect(html).toMatch(/render\/image\/public\/plant-photos\/[^"]*width=\d+/);
+    expect(html).not.toContain("/storage/v1/object/public/plant-photos/");
   });
 
   test("republishing replaces the snapshot and keeps the link", async () => {
@@ -311,7 +317,13 @@ describe("publishing a tag to Supabase", () => {
     expect(link).toBe(tagLink);
     const { status, html } = await fetchTagPage(link);
     expect(status).toBe(200);
-    expect(html).toContain("/storage/v1/object/public/plant-photos/");
+    // The page asks the bucket to resize on the way out rather than serving
+    // the stored 1600px original into a thumbnail: 10 KB against 704 KB on a
+    // real photo. seo-check enforces the same thing at the source; this
+    // checks what the deployed page actually emits.
+    expect(html).toContain("/storage/v1/render/image/public/plant-photos/");
+    expect(html).toMatch(/render\/image\/public\/plant-photos\/[^"]*width=\d+/);
+    expect(html).not.toContain("/storage/v1/object/public/plant-photos/");
 
     const after = await getPlant(local.db, plantId);
     const photo = await fetch(
