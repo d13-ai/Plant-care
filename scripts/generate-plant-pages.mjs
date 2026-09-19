@@ -184,9 +184,15 @@ export function plantPage(p) {
     ["Feeding", `${p.feed}.`],
     ["Repotting", `Repot ${repotEvery}.`],
     ["Toxic to pets", p.toxicity],
-    ["Difficulty", `${p.difficulty}.`],
-    ["Mature size", `${p.size}.`],
-    ["Native to", `${p.origin}.`],
+    // difficulty, size and origin come only from PLANTS, and plants-data.mjs
+    // promises a species with no PLANTS entry still renders from its genus.
+    // It didn't: these three were read unconditionally, so adding a species
+    // to the catalogue without also writing its blurb crashed `npm run
+    // plants` on `undefined.toLowerCase()`. A missing fact is now a row that
+    // isn't there, which is what the file said all along.
+    ...(p.difficulty ? [["Difficulty", `${p.difficulty}.`]] : []),
+    ...(p.size ? [["Mature size", `${p.size}.`]] : []),
+    ...(p.origin ? [["Native to", `${p.origin}.`]] : []),
   ];
 
   // Hand-written questions first, then the four every plant page is asked.
@@ -272,7 +278,7 @@ export function plantPage(p) {
 <nav class="crumbs"><a href="/">PlantParlour</a> / <a href="/plants">Plant care</a> / ${esc(p.sci)}</nav>
 
 <h1>${esc(p.full)} care</h1>
-<p class="sub">${esc(p.entry.group)} &middot; ${esc(p.difficulty.toLowerCase())} to keep</p>
+<p class="sub">${esc(p.entry.group)}${p.difficulty ? ` &middot; ${esc(p.difficulty.toLowerCase())} to keep` : ""}</p>
 
 <div class="answer">
   <p>${esc(answer)}</p>

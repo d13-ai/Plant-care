@@ -29,7 +29,13 @@ const CATALOGUE: { group: string; rows: Row[] }[] = [
     ["Monstera", "deliciosa", ["Swiss cheese plant", "Monstera"], 7, 30, 365],
     ["Monstera", "adansonii", ["Swiss cheese vine", "Monkey mask"], 7, 30, 365],
     ["Monstera", "obliqua", [], 6, 30, 365],
-  ["Monstera", "standleyana", ["Five holes plant"], 7, 30, 365],
+    ["Monstera", "standleyana", ["Five holes plant"], 7, 30, 365],
+    // Both are sold as "Silver monstera", which is how a Peru ended up in a
+    // keeper's greenhouse recorded as a deliciosa: the catalogue had neither,
+    // so the nearest Monstera won. Thick, semi-succulent leaves on both --
+    // they drink less often than a deliciosa.
+    ["Monstera", "karstenianum", ["Monstera Peru", "Marble planet"], 8, 30, 365],
+    ["Monstera", "siltepecana", ["Silver monstera"], 8, 30, 365],
     ["Philodendron", "hederaceum", ["Heartleaf philodendron"], 7, 30, 365],
     ["Philodendron", "erubescens", ["Blushing philodendron", "Red-leaf philodendron"], 7, 30, 365],
     ["Philodendron", "gloriosum", [], 7, 30, 365],
@@ -209,6 +215,7 @@ const CULTIVARS: CultivarRow[] = [
   ["Monstera", "adansonii", "Albo Variegata", ["Adansonii Albo"]],
   ["Monstera", "adansonii", "Aurea", ["Adansonii Aurea"]],
   ["Monstera", "standleyana", "Albo Variegata", ["Standleyana Albo"]],
+  ["Monstera", "karstenianum", "Peru", ["Monstera Peru", "Peru"]],
   ["Rhaphidophora", "tetrasperma", "Variegata", ["Variegated mini monstera"]],
   // Philodendron
   ["Philodendron", "erubescens", "Birkin", ["Philodendron Birkin", "Birkin"]],
