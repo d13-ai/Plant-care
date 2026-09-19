@@ -104,7 +104,18 @@ export default function EditPlant() {
             value={status}
             onChange={setStatus}
           />
-          <Field label="Notes" value={notes} onChangeText={setNotes} multiline />
+          {/* The health check reads this, so say what is worth putting in it.
+              Pot, drainage and potting mix are the facts a photograph is
+              worst at: across four plants read by two models they disagreed
+              about the soil three times out of four, and every one of those
+              was something the keeper could simply have stated. */}
+          <Field
+            label="Notes"
+            hint="What it's potted in, whether the pot drains, where it lives. The AI health check reads this — and a photo can't tell bark from peat."
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+          />
         </Card>
 
         <Card>

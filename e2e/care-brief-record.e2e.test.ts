@@ -10,8 +10,8 @@
  * off `getPlant` exactly as the plant page does.
  */
 import { expect, test } from "vitest";
-import { careBrief } from "@/domain/care-brief";
-import { createPlant, getPlant, logCare, migrate, resolveIssue } from "@/db";
+import { careBrief, CARE_BRIEF_MAX } from "@/domain/care-brief";
+import { createPlant, getPlant, logCare, migrate, resolveIssue, updatePlant } from "@/db";
 import { openTestDatabase } from "./node-sqlite";
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
@@ -62,6 +62,53 @@ test("a plant with nothing logged sends no brief at all", async () => {
     expect(brief).toContain("Brought home: today");
     expect(brief).not.toMatch(/Watered|Repotted|Unresolved/);
     expect(brief).not.toMatch(/NaN|undefined|: \./);
+  } finally {
+    close();
+  }
+});
+
+test("two open issues and the keeper's pot notes all reach the AI", async () => {
+  // The brief used to send one issue cut to 120 characters. Gepetto had two
+  // confirmed problems at once and a pot whose mix two models read three
+  // different ways, so this asserts the whole lot survives the round trip
+  // through getPlant -- including `notes`, which is where the standing facts
+  // about the pot live and which a photograph is worst at.
+  const { db, close } = openTestDatabase();
+  try {
+    await migrate(db);
+    const plantId = await createPlant(db, {
+      nickname: "Gepetto",
+      species: "Monstera deliciosa 'Thai Constellation'",
+      waterEveryDays: 7,
+    });
+    // Notes are set on the edit screen rather than at creation, so this goes
+    // through the same call that screen makes.
+    const made = (await getPlant(db, plantId))!.plant;
+    await updatePlant(db, plantId, {
+      ...made,
+      notes: "Glazed pot with a drainage hole, sits on a plastic saucer. Bark, perlite and sphagnum mix.",
+    });
+    await logCare(db, plantId, "ISSUE", {
+      notes: "A large cream section has gone papery — likely sun scorch on chlorophyll-free tissue. Move it back from the glass.",
+      occurredAt: daysAgo(1),
+    });
+    await logCare(db, plantId, "ISSUE", {
+      notes: "Dark grey-purple blotches with paler haloes in the green tissue — likely leaf spot. Keep the leaves dry and watch for spread.",
+      occurredAt: daysAgo(3),
+    });
+
+    const data = await getPlant(db, plantId);
+    const brief = careBrief(data!.events, data!.plant);
+
+    // Both problems, each with the cause that explains it.
+    expect(brief).toContain("cream section has gone papery");
+    expect(brief).toContain("sun scorch");
+    expect(brief).toContain("Dark grey-purple blotches");
+    expect(brief).toContain("leaf spot");
+    // And the facts no photo can supply.
+    expect(brief).toContain("drainage hole");
+    expect(brief).toContain("sphagnum");
+    expect(brief.length).toBeLessThanOrEqual(CARE_BRIEF_MAX);
   } finally {
     close();
   }

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 import { careBrief, CARE_BRIEF_MAX } from "./care-brief";
 
@@ -33,8 +34,49 @@ describe("what the AI is told about a plant's record", () => {
       { type: "ISSUE", occurredAt: daysBefore(40), resolvedAt: daysBefore(35), notes: "Spider mites" },
     ];
     const brief = careBrief(events, {}, NOW);
-    expect(brief).toContain("Unresolved issue from yesterday: Cream section going papery");
+    expect(brief).toContain("Unresolved issue, first logged yesterday: Cream section going papery");
     expect(brief).not.toContain("Spider mites");
+  });
+
+  test("every open issue travels, not just the newest", () => {
+    // Gepetto had two confirmed problems at once -- a papery cream section
+    // and dark blotches in the green tissue. Sending one meant the model was
+    // told about half the plant's known state.
+    const events = [
+      ...GEPETTO,
+      { type: "ISSUE", occurredAt: daysBefore(1), resolvedAt: null, notes: "Cream section going papery" },
+      { type: "ISSUE", occurredAt: daysBefore(3), resolvedAt: null, notes: "Dark grey-purple blotches in the green tissue" },
+    ];
+    const brief = careBrief(events, {}, NOW);
+    expect(brief).toContain("Cream section going papery");
+    expect(brief).toContain("Dark grey-purple blotches");
+    // Newest first, so the most recent problem leads.
+    expect(brief.indexOf("Cream section")).toBeLessThan(brief.indexOf("Dark grey-purple"));
+  });
+
+  test("an issue arrives whole, with its cause and its remedy", () => {
+    // The old bound was 120 characters, which cut a logged finding off before
+    // its likely cause -- the half that says why.
+    const long =
+      "A large fully cream section on one leaf has gone papery pale-tan with brown flecks — likely sun scorch on chlorophyll-free tissue. Move it back from the glass.";
+    const brief = careBrief([{ type: "ISSUE", occurredAt: daysBefore(1), resolvedAt: null, notes: long }], {}, NOW);
+    expect(brief).toContain("likely sun scorch");
+    expect(brief).toContain("Move it back from the glass");
+  });
+
+  test("the keeper's notes go too, because a photo cannot read a pot", () => {
+    const brief = careBrief(GEPETTO, { notes: "Glazed pot, drainage hole, sits on a saucer. Bark, perlite and sphagnum mix." }, NOW);
+    expect(brief).toContain("drainage hole");
+    expect(brief).toContain("perlite");
+  });
+
+  test("notes alone are worth sending, with nothing else logged", () => {
+    const brief = careBrief([], { notes: "Terracotta, no saucer." }, NOW);
+    expect(brief).toContain("Terracotta");
+  });
+
+  test("nothing logged and nothing noted still sends nothing", () => {
+    expect(careBrief([], { notes: "   " }, NOW)).toBe("");
   });
 
   test("today and yesterday read as words, not as 0 days ago", () => {
@@ -78,4 +120,14 @@ describe("what the AI is told about a plant's record", () => {
     const brief = careBrief(GEPETTO, { waterEveryDays: 7 }, NOW);
     expect(brief).not.toMatch(/overwater|too (often|much)|rot|should|probably/i);
   });
+});
+
+test("the edge function bounds the brief to the same number this file does", () => {
+  // These two live in different runtimes and cannot import each other, so
+  // they drift silently: the function was left at 600 when this file moved to
+  // 1200, which would have cut every brief off mid-issue and dropped the
+  // keeper's pot notes without a word. A mismatch is now a failing test.
+  const fn = readFileSync("supabase/functions/analyze/index.ts", "utf-8");
+  const bound = fn.match(/boundedText\(body\.care_brief,\s*(\d+)\)/)?.[1];
+  expect(bound).toBe(String(CARE_BRIEF_MAX));
 });

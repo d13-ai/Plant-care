@@ -33,10 +33,25 @@ export type BriefPlant = {
   waterEveryDays?: number | null;
   fertilizeEveryDays?: number | null;
   repotEveryDays?: number | null;
+  /**
+   * The keeper's own notes. This is where the standing facts live -- what
+   * the plant is potted in, whether the pot drains, what sits under it.
+   *
+   * Worth its tokens because those are the facts a photograph is worst at.
+   * Across four plants read by two models, the soil and pot were where they
+   * contradicted each other three times out of four: peaty against
+   * bark-and-perlite, mossy against clean, "no visible drainage hole" on a
+   * pot that has one. None of it is guessable and all of it is knowable.
+   */
+  notes?: string | null;
 };
 
 /** Longest brief we will ever send; the function truncates to the same. */
-export const CARE_BRIEF_MAX = 600;
+export const CARE_BRIEF_MAX = 1200;
+/** Per open issue. Enough for an observation, its cause and what to do. */
+const ISSUE_MAX = 240;
+/** The keeper's standing notes about the plant and its pot. */
+const NOTES_MAX = 240;
 
 const DAY = 86_400_000;
 
@@ -47,6 +62,12 @@ function daysAgo(iso: string, now: Date): number | null {
 }
 
 const ago = (days: number) => (days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`);
+
+/** Cut to a bound without leaving a word in half or a dangling space. */
+const clip = (text: string, max: number) => {
+  const t = text.trim();
+  return t.length <= max ? t : `${t.slice(0, max - 1).trimEnd()}…`;
+};
 
 /** The care types worth telling a model about, in the order they are listed. */
 const TOLD: CareType[] = ["WATER", "FERTILIZE", "REPOT", "PRUNE", "TREATMENT", "ACQUIRED"];
@@ -87,19 +108,27 @@ export function careBrief(
     lines.push(`${label}: ${when}${cadence ? ` (reminder set for every ${cadence} days)` : ""}.`);
   }
 
-  const open = events.filter((e) => e.type === "ISSUE" && !e.resolvedAt);
-  if (open.length) {
-    const newest = open
-      .map((e) => ({ e, d: daysAgo(e.occurredAt, now) }))
-      .filter((x) => x.d !== null)
-      .sort((a, b) => (a.d as number) - (b.d as number))[0];
-    if (newest) {
-      const note = (newest.e.notes ?? "").split("\n")[0].slice(0, 120).trim();
-      lines.push(`Unresolved issue from ${ago(newest.d as number)}${note ? `: ${note}` : ""}.`);
-    }
+  // Every unresolved issue, not just the newest, and in full rather than cut
+  // to a stub. The first version sent one issue truncated at 120 characters,
+  // which meant a keeper who had logged two problems saw one of them reach
+  // the model, shorn of its cause and its remedy. An open issue is the
+  // keeper's own assertion about the plant -- the one thing here that beats
+  // anything a photograph can offer -- so it travels whole.
+  const open = events
+    .filter((e) => e.type === "ISSUE" && !e.resolvedAt)
+    .map((e) => ({ e, d: daysAgo(e.occurredAt, now) }))
+    .filter((x): x is { e: BriefEvent; d: number } => x.d !== null)
+    .sort((a, b) => a.d - b.d);
+  for (const { e, d } of open) {
+    const note = clip((e.notes ?? "").replace(/\s+/g, " "), ISSUE_MAX);
+    lines.push(`Unresolved issue, first logged ${ago(d)}${note ? `: ${note}` : ""}.`);
   }
 
-  if (!lines.length) return "";
-  const brief = `What this keeper has logged for this plant:\n${lines.join("\n")}`;
-  return brief.length > CARE_BRIEF_MAX ? `${brief.slice(0, CARE_BRIEF_MAX - 1).trimEnd()}…` : brief;
+  if (!lines.length && !plant.notes) return "";
+  const parts = [];
+  if (lines.length) parts.push(`What this keeper has logged for this plant:\n${lines.join("\n")}`);
+  const notes = clip((plant.notes ?? "").replace(/\s+/g, " "), NOTES_MAX);
+  if (notes) parts.push(`The keeper's own notes on this plant and its pot: ${notes}`);
+  const brief = parts.join("\n\n");
+  return clip(brief, CARE_BRIEF_MAX);
 }

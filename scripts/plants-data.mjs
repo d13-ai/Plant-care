@@ -1269,6 +1269,29 @@ export const PLANTS = {
     difficulty: "Fussy",
     humidity: "Above 80%. Realistically a terrarium plant",
   },
+  // Keyed by the base species slug: the 'Peru' cultivar entry resolves to
+  // this page, because plantPages() drops a cultivar that has a base species.
+  "monstera-karstenianum": {
+    blurb:
+      "Sold everywhere as Monstera 'Peru' and almost never by its botanical name, which is itself unsettled. The leaves are the giveaway: small, thick and stiff, puckered into ridges between sunken veins, and glossy enough that a lamp turns them silver. It climbs, and unlike most of the genus it never fenestrates however well you grow it — the leaves simply get larger and more deeply quilted.",
+    size: "Vines to 2–3 m; leaves 8–15 cm",
+    origin: "Not settled — long in cultivation, probably South American",
+    difficulty: "Easy",
+    problems: [
+      ["Leaves look dull grey rather than glossy", "Dust, which those ridged leaves hold better than a flat one does.", "Wipe both surfaces with a damp cloth or rinse it in a lukewarm shower. A dusty leaf photosynthesises less — and hides the spots and early pest damage you would otherwise notice."],
+      ["Long bare stems with small leaves far apart", "Trailing with nothing to climb, and not enough light.", "Give it a moss pole. A vining aroid left to trail keeps making juvenile leaves; one that climbs sizes them up."],
+    ],
+  },
+  "monstera-siltepecana": {
+    blurb:
+      "The silver monstera, and the reason so many plants are recorded as the wrong species — half a dozen unrelated aroids are sold under that name. Juvenile leaves are thin, arrow-shaped and genuinely silver-grey with dark veins. Give it a pole and it changes plant entirely: the leaves enlarge, lose the silver, green up, and eventually fenestrate.",
+    size: "Vines to 2 m and beyond; juvenile leaves 8–15 cm, mature far larger",
+    origin: "Mexico and Central America",
+    difficulty: "Easy",
+    problems: [
+      ["The silver is fading as it grows", "Nothing wrong — this is the plant maturing.", "Silver is a juvenile trait. A siltepecana that is greening up and enlarging is doing exactly what it should."],
+    ],
+  },
   "monstera-standleyana": {
     blurb:
       "A climbing monstera with narrow, glossy, unsplit leaves, usually speckled with cream. It looks nothing like the monstera most people picture and is often sold as a philodendron by mistake. It is undemanding, fast, and takes a pole well.",

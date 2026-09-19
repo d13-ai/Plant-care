@@ -5,9 +5,24 @@ import { KNOWN_CULTIVARS } from "@/domain/species";
 import { ensureSession, supabase, supabaseConfigured } from "./supabase";
 
 /** Bump when the prompt changes, so a remembered answer from the old one isn't reused. */
-const PROMPT_VERSION = 4;
-/** Photos per scan. Each extra one adds ~1,100 input tokens, about half a cent on Opus. */
+const PROMPT_VERSION = 5;
+/** Photos per scan. Each one costs 3,000-4,000 input tokens depending on its
+ *  shape -- about 2c on Opus, 0.7c on Sonnet. */
 export const MAX_SCAN_PHOTOS = 3;
+
+/**
+ * Longest edge we send, in pixels.
+ *
+ * Claude 4.7 and later read images at up to a 2576px long edge and 4784
+ * visual tokens (a token is a 28x28 patch, so ceil(w/28) x ceil(h/28)).
+ * We used to resize to 1024 on the *width*, which on a phone's portrait
+ * photo caps the short edge and throws away resolution the model would have
+ * taken: a 1600x3463 photo went as 1024x2216 when 1190x2576 was free to
+ * send. Health checks turn on marks a few pixels across, so the detail is
+ * the whole point; capping the long edge costs about 1,000 extra tokens a
+ * photo, a fifth of a cent on Sonnet.
+ */
+const LONG_EDGE = 2576;
 
 /** What the analyze function returns — mirrors its zod schema. */
 export interface Verdict {
@@ -44,8 +59,8 @@ type Answer = {
 
 /**
  * The most recent scan, photos included, so a cleared Add plant screen can
- * bring it back without another call. The photos are the 1024px copies
- * that were sent — a few hundred KB, well within storage on any device.
+ * bring it back without another call. The photos are the shrunk copies that
+ * were sent — a few hundred KB, well within storage on any device.
  */
 export interface LastScan {
   at: string;
@@ -113,15 +128,22 @@ export async function photoAllowance(): Promise<Allowance> {
 
 /**
  * Ask the AI about one to three photos of the same plant — the whole plant
- * first, then close-ups. Each is shrunk to 1024px on its long side first —
- * plenty for a plant, and it keeps each call cheap; the words in the prompt
- * cost more than the pictures. The answer is kept on the device per set of
- * photos, so asking again about the same pictures (after backing out of a
- * screen, say) costs nothing.
+ * first, then close-ups. Each is capped at LONG_EDGE on its longer side, which
+ * is as much as the model will read; a health check lives on detail a few
+ * pixels across, so this is not the place to economise. The answer is kept on
+ * the device per set of photos, so asking again about the same pictures
+ * (after backing out of a screen, say) costs nothing.
  */
 export async function analyzePhoto(
   uris: string | string[],
-  options: { mode?: AnalysisMode; speciesHint?: string | null; careBrief?: string | null } = {},
+  options: {
+    mode?: AnalysisMode;
+    speciesHint?: string | null;
+    careBrief?: string | null;
+    /** When each photo was taken, parallel to `uris`, so the model can compare
+     *  one against another instead of seeing a pile of undated pictures. */
+    photoDates?: (string | null | undefined)[];
+  } = {},
 ): Promise<Answer> {
   if (!supabaseConfigured) throw new Error("Supabase isn't configured.");
   const list = (Array.isArray(uris) ? uris : [uris]).slice(0, MAX_SCAN_PHOTOS);
@@ -129,8 +151,18 @@ export async function analyzePhoto(
 
   const images: string[] = [];
   for (const uri of list) {
-    const shrunk = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 1024 } }], {
-      compress: 0.8,
+    // Measure first: which edge is the long one decides which to cap, and a
+    // photo already smaller than the cap is left alone rather than upscaled.
+    const probe = await ImageManipulator.manipulateAsync(uri, [], {});
+    const resize =
+      probe.width >= probe.height
+        ? { width: Math.min(probe.width, LONG_EDGE) }
+        : { height: Math.min(probe.height, LONG_EDGE) };
+    const shrunk = await ImageManipulator.manipulateAsync(uri, [{ resize }], {
+      // 0.9 rather than 0.8: the camera has already compressed these once,
+      // and a second lossy pass eats exactly the low-contrast detail a health
+      // check is looking for.
+      compress: 0.9,
       format: ImageManipulator.SaveFormat.JPEG,
       base64: true,
     });
@@ -161,7 +193,11 @@ export async function analyzePhoto(
       // client hasn't always attached it yet, and the function would 401.
       headers: { Authorization: `Bearer ${session.access_token}` },
       body: {
-        images: images.map((data) => ({ data, media_type: "image/jpeg" })),
+        images: images.map((data, i) => ({
+          data,
+          media_type: "image/jpeg",
+          taken_at: options.photoDates?.[i] ?? undefined,
+        })),
         mode: options.mode ?? "both",
         // What the keeper has logged for this plant. Only the health check
         // sends it, and only when there is something on the record.
