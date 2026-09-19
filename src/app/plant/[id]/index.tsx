@@ -20,6 +20,7 @@ import {
 import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
+import { careBrief } from "@/domain/care-brief";
 import { scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, describeScan, photoAllowance, type Verdict } from "@/lib/ai";
 import { allowanceLine, type Allowance } from "@/domain/allowance";
@@ -193,7 +194,15 @@ export default function PlantDetail() {
     setChecking(true);
     setCheckError(null);
     try {
-      const answer = await analyzePhoto(uris, { mode: "health", speciesHint });
+      // Send what this plant's record already knows — when it was last
+      // watered, repotted and fed, and what is still unresolved. A model
+      // reading a dark soil surface should not have to guess at drainage
+      // when the app can tell it the plant was repotted last week.
+      const answer = await analyzePhoto(uris, {
+        mode: "health",
+        speciesHint,
+        careBrief: careBrief(events, plant),
+      });
       setCheckup(answer.verdict);
       setCheckNote(describeScan(answer));
       setAllowance(await photoAllowance());

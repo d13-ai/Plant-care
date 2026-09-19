@@ -1,4 +1,4 @@
-// AI photo analysis: POST /analyze  { images: [{ data, media_type }], mode?, species_hint?, known? }
+// AI photo analysis: POST /analyze  { images: [{ data, media_type }], mode?, species_hint?, care_brief?, known? }
 // (or the older single { image, media_type }). Up to three photos of the
 // same plant: the whole plant first, then close-ups; one call, one answer.
 //
@@ -98,6 +98,7 @@ Identify it as precisely as the photo allows — give the genus and, if you're r
 Decide between look-alikes on diagnostic features, not overall impression: leaf margin (toothed or serrated edges on a variegated philodendron point to 'Ring of Fire', smooth lobed edges to 'Golden Dragon' or 'Florida Beauty'), lobing, petiole colour and texture, the colours in the variegation (orange and pink tones as well as cream), leaf shape at maturity. Say in the notes which feature decided it.
 When the keeper's app lists the cultivar names it tracks, prefer those names and spellings whenever one fits — they are the plants this keeper is likely to own — but don't force a match that the photo doesn't support.
 Then read its health from what is actually visible: leaf colour and texture, spots, pests, drooping, soil, pot. Name only what you can see; say "unknown" when the photo doesn't show enough. For each finding give the likely cause and one concrete thing to do. Don't invent problems for a plant that looks fine.
+When the keeper's care record is given, treat it as fact — it is what they logged, not a guess from the photo — and read the photo in its light: wet soil eleven days after a repot means something different from wet soil on a plant watered twice this week. Weigh it against what you see, say plainly where the two disagree, and never repeat a piece of the record back as a finding on its own.
 If the photo isn't clearly a plant, say so and return no candidates.`;
 
 Deno.serve(async (req: Request) => {
@@ -118,7 +119,7 @@ Deno.serve(async (req: Request) => {
 
   let body: {
     image?: string; media_type?: string; images?: unknown;
-    mode?: string; species_hint?: unknown; model?: string; known?: unknown;
+    mode?: string; species_hint?: unknown; care_brief?: unknown; model?: string; known?: unknown;
   };
   try { body = await req.json(); } catch { return json({ error: "Expected JSON." }, 400); }
   const { mode = "both" } = body;
@@ -126,6 +127,11 @@ Deno.serve(async (req: Request) => {
   // and an unbounded one lets a caller choose how many input tokens the
   // owner is billed for. 120 chars is what `care` allows for a species.
   const species_hint = boundedText(body.species_hint, 120);
+  // What the keeper's own record says about this plant — when it was watered,
+  // repotted, fed, and what is unresolved. The app builds it (src/domain/care-brief.ts)
+  // and bounds it to 600; bounded again here, because the app is not the only
+  // thing that can call this.
+  const care_brief = mode === "health" ? boundedText(body.care_brief, 600) : "";
   const MEDIA = ["image/jpeg", "image/png", "image/webp"];
   type Img = { data: string; media_type: "image/jpeg" | "image/png" | "image/webp" };
   const images: Img[] = [];
@@ -177,6 +183,7 @@ Deno.serve(async (req: Request) => {
   const askWithKnown = known.length
     ? `${ask}${several}\n\nCultivar names the keeper's app tracks (prefer these names when one fits; the list isn't exhaustive): ${known.join("; ")}.`
     : `${ask}${several}`;
+  const askWithRecord = care_brief ? `${askWithKnown}\n\n${care_brief}` : askWithKnown;
   const label = (i: number) => (i === 0 ? (images.length > 1 ? "Photo 1 — the whole plant:" : "The photo:") : `Photo ${i + 1} — a closer look:`);
 
   try {
@@ -194,7 +201,7 @@ Deno.serve(async (req: Request) => {
               { type: "text" as const, text: label(i) },
               { type: "image" as const, source: { type: "base64" as const, media_type: img.media_type, data: img.data } },
             ]),
-            { type: "text", text: askWithKnown },
+            { type: "text", text: askWithRecord },
           ],
         },
       ],
@@ -208,7 +215,7 @@ Deno.serve(async (req: Request) => {
     // downstream (the cap, docs/PRICING.md, "what did that cost") is true.
     const { input_tokens, output_tokens } = response.usage;
     const cost_usd = costOf(MODEL, input_tokens, output_tokens);
-    console.log(JSON.stringify({ fn: "analyze", model: MODEL, effort: EFFORT, mode, photos: images.length, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)), stop_reason: response.stop_reason }));
+    console.log(JSON.stringify({ fn: "analyze", model: MODEL, effort: EFFORT, mode, photos: images.length, brief: care_brief.length, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)), stop_reason: response.stop_reason }));
     await admin.rpc("record_ai_usage", { p_keeper: user.id, p_day: day, p_input: input_tokens, p_output: output_tokens, p_cost: cost_usd });
 
     if (response.stop_reason === "refusal") return json({ error: "The photo couldn't be analysed." }, 422);
