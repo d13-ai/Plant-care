@@ -1,4 +1,4 @@
-// AI photo analysis: POST /analyze  { images: [{ data, media_type }], mode?, species_hint?, care_brief?, known? }
+// AI photo analysis: POST /analyze  { images: [{ data, media_type, taken_at? }], mode?, species_hint?, care_brief?, known? }
 // (or the older single { image, media_type }). Up to three photos of the
 // same plant: the whole plant first, then close-ups; one call, one answer.
 //
@@ -99,6 +99,9 @@ Decide between look-alikes on diagnostic features, not overall impression: leaf 
 When the keeper's app lists the cultivar names it tracks, prefer those names and spellings whenever one fits — they are the plants this keeper is likely to own — but don't force a match that the photo doesn't support.
 Then read its health from what is actually visible: leaf colour and texture, spots, pests, drooping, soil, pot. Name only what you can see; say "unknown" when the photo doesn't show enough. For each finding give the likely cause and one concrete thing to do. Don't invent problems for a plant that looks fine.
 When the keeper's care record is given, treat it as fact — it is what they logged, not a guess from the photo — and read the photo in its light: wet soil eleven days after a repot means something different from wet soil on a plant watered twice this week. Weigh it against what you see, say plainly where the two disagree, and never repeat a piece of the record back as a finding on its own.
+When a photo's date is given, use it: say whether something has spread, held or improved between one photo and another, and between the photos and any issue already on the record. That comparison is what a keeper wants on a second look, and only the dates make it possible.
+Say so plainly when the photo itself is the limit — leaves thick with dust, a picture taken at night under a warm lamp, motion blur, a plant too far from the camera. Name it as a finding and say which of your other findings it makes unreliable. A confident reading of a photograph you cannot actually read is worse than no reading.
+You are told to take the keeper's species as given, and you should — but if the plant in the photo plainly is not that species, say so in the notes and name what you think it is. Health advice keyed to the wrong plant is wrong advice, and a keeper who has mislabelled something would rather find out.
 If the photo isn't clearly a plant, say so and return no candidates.`;
 
 Deno.serve(async (req: Request) => {
@@ -133,7 +136,7 @@ Deno.serve(async (req: Request) => {
   // thing that can call this.
   const care_brief = mode === "health" ? boundedText(body.care_brief, 600) : "";
   const MEDIA = ["image/jpeg", "image/png", "image/webp"];
-  type Img = { data: string; media_type: "image/jpeg" | "image/png" | "image/webp" };
+  type Img = { data: string; media_type: "image/jpeg" | "image/png" | "image/webp"; taken_at?: string };
   const images: Img[] = [];
   const raw = Array.isArray(body.images) ? body.images : body.image ? [{ data: body.image, media_type: body.media_type ?? "image/jpeg" }] : [];
   for (const r of raw.slice(0, 3)) {
@@ -142,7 +145,12 @@ Deno.serve(async (req: Request) => {
     if (typeof data !== "string" || !data) return json({ error: "Missing image." }, 400);
     if (typeof media_type !== "string" || !MEDIA.includes(media_type)) return json({ error: "Unsupported image type." }, 400);
     if (data.length > 6_000_000) return json({ error: "Image too large — send it smaller." }, 413);
-    images.push({ data, media_type: media_type as Img["media_type"] });
+    const taken = (r as { taken_at?: unknown })?.taken_at;
+    images.push({
+      data,
+      media_type: media_type as Img["media_type"],
+      taken_at: typeof taken === "string" ? taken : undefined,
+    });
   }
   if (!images.length) return json({ error: "Missing image." }, 400);
   // Cultivar names the app's catalogue knows — a short, bounded list.
@@ -184,7 +192,21 @@ Deno.serve(async (req: Request) => {
     ? `${ask}${several}\n\nCultivar names the keeper's app tracks (prefer these names when one fits; the list isn't exhaustive): ${known.join("; ")}.`
     : `${ask}${several}`;
   const askWithRecord = care_brief ? `${askWithKnown}\n\n${care_brief}` : askWithKnown;
-  const label = (i: number) => (i === 0 ? (images.length > 1 ? "Photo 1 — the whole plant:" : "The photo:") : `Photo ${i + 1} — a closer look:`);
+  // "taken 5 days ago" turns a pile of pictures into a sequence. Without it a
+  // model shown two photos of the same leaf cannot say whether a mark grew;
+  // with it, the commonest question on a second check becomes answerable.
+  const DAY = 86_400_000;
+  const when = (iso?: string) => {
+    if (!iso) return "";
+    const then = Date.parse(iso);
+    if (!Number.isFinite(then)) return "";
+    const d = Math.max(0, Math.round((Date.now() - then) / DAY));
+    return d === 0 ? ", taken today" : d === 1 ? ", taken yesterday" : `, taken ${d} days ago`;
+  };
+  const label = (i: number) => {
+    const base = i === 0 ? (images.length > 1 ? "Photo 1 — the whole plant" : "The photo") : `Photo ${i + 1} — a closer look`;
+    return `${base}${when(images[i].taken_at)}:`;
+  };
 
   try {
     const client = new Anthropic({ apiKey });

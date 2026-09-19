@@ -35,6 +35,9 @@ import { capturePhoto } from "@/lib/photos";
 import { tagUrl, supabaseConfigured } from "@/lib/supabase";
 import { cardTheme, font, radius, space, useTheme, type Tone } from "@/theme";
 
+/** Marks the batch logger as the thing in flight, distinct from any one finding. */
+const ALL_FINDINGS = "\u0000all";
+
 const toneFor: Record<DueState, Tone> = {
   OVERDUE: "critical",
   DUE_SOON: "warning",
@@ -190,19 +193,25 @@ export default function PlantDetail() {
 
   // The newest photos go together, newest first — a close-up taken just now
   // rides along with the last full view.
-  const checkHealth = async (uris: string[], speciesHint: string | null) => {
+  const checkHealth = async (shots: { uri: string; takenAt: string }[], speciesHint: string | null) => {
     setChecking(true);
     setCheckError(null);
     try {
       // Send what this plant's record already knows — when it was last
-      // watered, repotted and fed, and what is still unresolved. A model
-      // reading a dark soil surface should not have to guess at drainage
-      // when the app can tell it the plant was repotted last week.
-      const answer = await analyzePhoto(uris, {
-        mode: "health",
-        speciesHint,
-        careBrief: careBrief(events, plant),
-      });
+      // watered, repotted and fed, what is still unresolved, and the keeper's
+      // own notes on the pot and mix. A model reading a dark soil surface
+      // should not have to guess at drainage when the app can tell it the
+      // plant was repotted last week. The photo dates go too, so two pictures
+      // of the same leaf can be read as a before and an after.
+      const answer = await analyzePhoto(
+        shots.map((sh) => sh.uri),
+        {
+          mode: "health",
+          speciesHint,
+          careBrief: careBrief(events, plant),
+          photoDates: shots.map((sh) => sh.takenAt),
+        },
+      );
       setCheckup(answer.verdict);
       setCheckNote(describeScan(answer));
       setAllowance(await photoAllowance());
@@ -215,6 +224,40 @@ export default function PlantDetail() {
       setCheckError(err instanceof Error ? err.message : String(err));
     } finally {
       setChecking(false);
+    }
+  };
+
+  // One finding, written the way it goes on the record: what was seen, what
+  // probably caused it, what to do. The cause is the half that says why, and
+  // a record that keeps only the symptom is the weaker half of the story.
+  const noteFor = (f: Verdict["health"]["findings"][number]) =>
+    `${f.observation} — likely ${f.likely_cause.toLowerCase()}. ${f.suggested_action}`;
+
+  /**
+   * Put every finding on the record in one press.
+   *
+   * A check routinely returns five or six findings, and promoting them meant
+   * five or six taps — so in practice a keeper logged the alarming one and
+   * left the rest inside an AI-check summary, which the care brief
+   * deliberately never sends. The findings that matter most to the next check
+   * are exactly the ones a keeper has confirmed, so making that cheap is the
+   * point. logCare dedupes an open issue by its text, so pressing this after
+   * logging one by hand adds the others and not a duplicate.
+   */
+  const logAllFindings = async (findings: Verdict["health"]["findings"]) => {
+    const todo = findings.filter((f) => !loggedIssues.has(f.observation));
+    if (!todo.length || logging) return;
+    setLogging(ALL_FINDINGS);
+    try {
+      for (const f of todo) await logCare(db, plantId, "ISSUE", { notes: noteFor(f) });
+      setLoggedIssues((seen) => {
+        const next = new Set(seen);
+        for (const f of todo) next.add(f.observation);
+        return next;
+      });
+      refresh();
+    } finally {
+      setLogging(null);
     }
   };
 
@@ -501,7 +544,12 @@ export default function PlantDetail() {
               small
               variant="primary"
               disabled={checking}
-              onPress={() => checkHealth(photos.slice(0, MAX_SCAN_PHOTOS).map((ph) => ph.uri), plant.species)}
+              onPress={() =>
+                checkHealth(
+                  photos.slice(0, MAX_SCAN_PHOTOS).map((ph) => ({ uri: ph.uri, takenAt: ph.takenAt })),
+                  plant.species,
+                )
+              }
             />
           ) : null}
         </Row>
@@ -523,7 +571,23 @@ export default function PlantDetail() {
             {checkup.health.findings.length === 0 ? (
               <Body small muted>Nothing worrying in this photo.</Body>
             ) : (
-              checkup.health.findings.map((f) => (
+              <>
+              {checkup.health.findings.length > 1 &&
+              checkup.health.findings.some((f) => !loggedIssues.has(f.observation)) ? (
+                <Row>
+                  <Button
+                    title={
+                      logging === ALL_FINDINGS
+                        ? "Logging…"
+                        : `Log all ${checkup.health.findings.filter((f) => !loggedIssues.has(f.observation)).length} as issues`
+                    }
+                    small
+                    disabled={logging !== null}
+                    onPress={() => logAllFindings(checkup.health.findings)}
+                  />
+                </Row>
+              ) : null}
+              {checkup.health.findings.map((f) => (
                 <View key={f.observation} style={{ gap: 4 }}>
                   <Body small>
                     {f.observation} — likely {f.likely_cause.toLowerCase()}. {f.suggested_action}
@@ -546,9 +610,7 @@ export default function PlantDetail() {
                           // model worked it out and it is the half that says
                           // why -- a record that keeps only what was seen and
                           // what was done is the weaker half of the story.
-                          const eventId = await logCare(db, plantId, "ISSUE", {
-                            notes: `${f.observation} — likely ${f.likely_cause.toLowerCase()}. ${f.suggested_action}`,
-                          });
+                          const eventId = await logCare(db, plantId, "ISSUE", { notes: noteFor(f) });
                           setLoggedIssues((seen) => new Set(seen).add(f.observation));
                           refresh();
                           offerUndo("ISSUE", eventId);
@@ -559,7 +621,8 @@ export default function PlantDetail() {
                     />
                   </Row>
                 </View>
-              ))
+              ))}
+              </>
             )}
             {checkup.notes ? <Body small muted>{checkup.notes}</Body> : null}
             {checkNote ? <Body small muted>{checkNote}</Body> : null}
