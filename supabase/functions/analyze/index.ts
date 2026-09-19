@@ -131,10 +131,13 @@ Deno.serve(async (req: Request) => {
   // owner is billed for. 120 chars is what `care` allows for a species.
   const species_hint = boundedText(body.species_hint, 120);
   // What the keeper's own record says about this plant — when it was watered,
-  // repotted, fed, and what is unresolved. The app builds it (src/domain/care-brief.ts)
-  // and bounds it to 600; bounded again here, because the app is not the only
-  // thing that can call this.
-  const care_brief = mode === "health" ? boundedText(body.care_brief, 600) : "";
+  // repotted and fed, every issue still open, and their own notes on the pot
+  // and mix. The app builds it (src/domain/care-brief.ts) and bounds it to
+  // CARE_BRIEF_MAX; bounded again here, because the app is not the only thing
+  // that can call this. Keep the two numbers equal: this one was left at 600
+  // when the app moved to 1200, which would have quietly cut every brief off
+  // mid-issue and dropped the pot notes entirely.
+  const care_brief = mode === "health" ? boundedText(body.care_brief, 1200) : "";
   const MEDIA = ["image/jpeg", "image/png", "image/webp"];
   type Img = { data: string; media_type: "image/jpeg" | "image/png" | "image/webp"; taken_at?: string };
   const images: Img[] = [];

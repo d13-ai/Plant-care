@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 import { careBrief, CARE_BRIEF_MAX } from "./care-brief";
 
@@ -119,4 +120,14 @@ describe("what the AI is told about a plant's record", () => {
     const brief = careBrief(GEPETTO, { waterEveryDays: 7 }, NOW);
     expect(brief).not.toMatch(/overwater|too (often|much)|rot|should|probably/i);
   });
+});
+
+test("the edge function bounds the brief to the same number this file does", () => {
+  // These two live in different runtimes and cannot import each other, so
+  // they drift silently: the function was left at 600 when this file moved to
+  // 1200, which would have cut every brief off mid-issue and dropped the
+  // keeper's pot notes without a word. A mismatch is now a failing test.
+  const fn = readFileSync("supabase/functions/analyze/index.ts", "utf-8");
+  const bound = fn.match(/boundedText\(body\.care_brief,\s*(\d+)\)/)?.[1];
+  expect(bound).toBe(String(CARE_BRIEF_MAX));
 });
