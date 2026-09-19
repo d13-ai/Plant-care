@@ -45,3 +45,7 @@ example
 # generated native folders
 /ios
 /android
+
+# Supabase CLI scratch — a version-check stamp it writes on any invocation,
+# including `npx supabase --version`. Machine state, not project state.
+supabase/.temp/

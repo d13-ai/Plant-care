@@ -20,6 +20,7 @@ import {
 import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
+import { careBrief } from "@/domain/care-brief";
 import { scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, describeScan, photoAllowance, type Verdict } from "@/lib/ai";
 import { allowanceLine, type Allowance } from "@/domain/allowance";
@@ -59,6 +60,10 @@ export default function PlantDetail() {
   const [checkError, setCheckError] = useState<string | null>(null);
   const [checkNote, setCheckNote] = useState<string | null>(null);
   const [allowance, setAllowance] = useState<Allowance | null>(null);
+  // Which findings are already on the record, and which one is being
+  // written right now — so the button can say so and refuse a second press.
+  const [loggedIssues, setLoggedIssues] = useState<Set<string>>(new Set());
+  const [logging, setLogging] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [calBusy, setCalBusy] = useState(false);
@@ -189,7 +194,15 @@ export default function PlantDetail() {
     setChecking(true);
     setCheckError(null);
     try {
-      const answer = await analyzePhoto(uris, { mode: "health", speciesHint });
+      // Send what this plant's record already knows — when it was last
+      // watered, repotted and fed, and what is still unresolved. A model
+      // reading a dark soil surface should not have to guess at drainage
+      // when the app can tell it the plant was repotted last week.
+      const answer = await analyzePhoto(uris, {
+        mode: "health",
+        speciesHint,
+        careBrief: careBrief(events, plant),
+      });
       setCheckup(answer.verdict);
       setCheckNote(describeScan(answer));
       setAllowance(await photoAllowance());
@@ -517,11 +530,31 @@ export default function PlantDetail() {
                   </Body>
                   <Row>
                     <Button
-                      title="Log as issue"
+                      // Says what it did, and stops taking presses while it
+                      // does it. Before, the block re-rendered unchanged after
+                      // a press and nothing else happened, so a keeper pressed
+                      // it eight times in five seconds and got eight open
+                      // issues to delete by hand.
+                      title={loggedIssues.has(f.observation) ? "Logged as issue" : logging === f.observation ? "Logging…" : "Log as issue"}
                       small
+                      disabled={logging !== null || loggedIssues.has(f.observation)}
                       onPress={async () => {
-                        await logCare(db, plantId, "ISSUE", { notes: `${f.observation} — ${f.suggested_action}` });
-                        refresh();
+                        if (logging || loggedIssues.has(f.observation)) return;
+                        setLogging(f.observation);
+                        try {
+                          // The cause rides into the record with the rest. The
+                          // model worked it out and it is the half that says
+                          // why -- a record that keeps only what was seen and
+                          // what was done is the weaker half of the story.
+                          const eventId = await logCare(db, plantId, "ISSUE", {
+                            notes: `${f.observation} — likely ${f.likely_cause.toLowerCase()}. ${f.suggested_action}`,
+                          });
+                          setLoggedIssues((seen) => new Set(seen).add(f.observation));
+                          refresh();
+                          offerUndo("ISSUE", eventId);
+                        } finally {
+                          setLogging(null);
+                        }
                       }}
                     />
                   </Row>

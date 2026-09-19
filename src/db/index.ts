@@ -424,7 +424,47 @@ export async function logCare(
   options: { notes?: string | null; occurredAt?: string | null } = {},
 ): Promise<number> {
   const now = nowIso();
-  return insertEvent(db, plantId, type, blank(options.notes), options.occurredAt || now, now);
+  const notes = blank(options.notes);
+
+  // An open issue is not a thing you can have twice. Logging the same
+  // unresolved issue on the same plant returns the one already there rather
+  // than adding another, because the button that does it was pressed eight
+  // times in five seconds on 18 Sep 2026 and wrote eight rows: no feedback
+  // came back, so the keeper pressed again, and then deleted seven by hand.
+  // The screen now says when it worked, but a record whose worth is being
+  // readable in three years should not depend on a button behaving.
+  //
+  // Watering twice is a real thing a keeper might do; reporting the same
+  // unresolved problem twice is not, so only ISSUE is deduplicated, and only
+  // while it is open — the same trouble returning after it was fixed is a
+  // new entry, and the record should say so.
+  //
+  // One statement, not a read and then a write: a check followed by an insert
+  // is the bug _shared/cap.ts describes, where every racing caller reads
+  // "nothing there yet" and every one of them writes. Five simultaneous calls
+  // to this function wrote five rows until it became a single INSERT ...
+  // WHERE NOT EXISTS, and there is a test that runs exactly that race.
+  if (type === "ISSUE" && notes) {
+    const result = await db.runAsync(
+      `INSERT INTO care_events (uuid, plant_id, type, notes, occurred_at, created_at, updated_at)
+       SELECT ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (
+         SELECT 1 FROM care_events
+         WHERE plant_id = ? AND type = 'ISSUE' AND resolved_at IS NULL AND notes = ?
+       )`,
+      [uuid(), plantId, type, notes, options.occurredAt || now, now, now, plantId, notes],
+    );
+    if (result.changes > 0) return result.lastInsertRowId;
+    // Somebody else's press got there first; hand back the entry they made,
+    // so an undo offered for this press removes the issue that exists.
+    const open = await db.getFirstAsync<{ id: number }>(
+      "SELECT id FROM care_events WHERE plant_id = ? AND type = 'ISSUE' AND resolved_at IS NULL AND notes = ? ORDER BY id LIMIT 1",
+      [plantId, notes],
+    );
+    if (open) return open.id;
+  }
+
+  return insertEvent(db, plantId, type, notes, options.occurredAt || now, now);
 }
 
 /**

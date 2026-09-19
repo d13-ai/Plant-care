@@ -5,7 +5,7 @@ import { KNOWN_CULTIVARS } from "@/domain/species";
 import { ensureSession, supabase, supabaseConfigured } from "./supabase";
 
 /** Bump when the prompt changes, so a remembered answer from the old one isn't reused. */
-const PROMPT_VERSION = 3;
+const PROMPT_VERSION = 4;
 /** Photos per scan. Each extra one adds ~1,100 input tokens, about half a cent on Opus. */
 export const MAX_SCAN_PHOTOS = 3;
 
@@ -121,7 +121,7 @@ export async function photoAllowance(): Promise<Allowance> {
  */
 export async function analyzePhoto(
   uris: string | string[],
-  options: { mode?: AnalysisMode; speciesHint?: string | null } = {},
+  options: { mode?: AnalysisMode; speciesHint?: string | null; careBrief?: string | null } = {},
 ): Promise<Answer> {
   if (!supabaseConfigured) throw new Error("Supabase isn't configured.");
   const list = (Array.isArray(uris) ? uris : [uris]).slice(0, MAX_SCAN_PHOTOS);
@@ -138,7 +138,10 @@ export async function analyzePhoto(
     images.push(shrunk.base64);
   }
 
-  const cacheKey = `ai:${PROMPT_VERSION}:${images.map(fingerprint).join("+")}:${options.mode ?? "both"}:${(options.speciesHint ?? "").toLowerCase()}`;
+  // The brief is part of the question, so it is part of the key: watering a
+  // plant and asking again about the same photo must not return the answer
+  // given before the watering was on the record.
+  const cacheKey = `ai:${PROMPT_VERSION}:${images.map(fingerprint).join("+")}:${options.mode ?? "both"}:${(options.speciesHint ?? "").toLowerCase()}:${options.careBrief ? fingerprint(options.careBrief) : ""}`;
   try {
     const hit = await AsyncStorage.getItem(cacheKey);
     if (hit) {
@@ -160,6 +163,9 @@ export async function analyzePhoto(
       body: {
         images: images.map((data) => ({ data, media_type: "image/jpeg" })),
         mode: options.mode ?? "both",
+        // What the keeper has logged for this plant. Only the health check
+        // sends it, and only when there is something on the record.
+        care_brief: options.careBrief || undefined,
         species_hint: options.speciesHint ?? undefined,
         known: KNOWN_CULTIVARS,
       },
