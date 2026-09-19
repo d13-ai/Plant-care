@@ -103,20 +103,32 @@ Deno.serve(async (req: Request) => {
       output_config: { effort: "medium", format: zodOutputFormat(CareCard) },
       messages: [{ role: "user", content: `Write the care guide for: ${species}` }],
     });
+    // Recorded before the answer is judged: a refusal costs what a guide
+    // costs, and returning above this line spent money the table never saw.
+    // See the same note in ../analyze/index.ts.
+    const { input_tokens, output_tokens } = response.usage;
+    const cost_usd = costOf(MODEL, input_tokens, output_tokens);
+    console.log(JSON.stringify({ fn: "care", model: MODEL, species, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)), stop_reason: response.stop_reason }));
+    await admin.rpc("record_ai_usage", { p_keeper: user.id, p_day: day, p_input: input_tokens, p_output: output_tokens, p_cost: cost_usd });
+
     if (response.stop_reason === "refusal" || !response.parsed_output) {
       return json({ error: "Couldn't write a care guide for that." }, 502);
     }
     const card = response.parsed_output;
-    const { input_tokens, output_tokens } = response.usage;
-    const cost_usd = costOf(MODEL, input_tokens, output_tokens);
-    console.log(JSON.stringify({ fn: "care", model: MODEL, species, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)) }));
-    await admin.rpc("record_ai_usage", { p_keeper: user.id, p_day: day, p_input: input_tokens, p_output: output_tokens, p_cost: cost_usd });
     // Cache for everyone. Ignore a conflict if another request beat us to it.
     await admin.from("care_cards").upsert({ species_key: speciesKey, species, card, model: MODEL }, { onConflict: "species_key" });
     return json({ card, species, cached: false, cost_usd });
   } catch (err) {
-    // Nothing was generated, so the slot goes back.
-    await refundAiCall(admin, user.id, day);
+    // The slot goes back only when the model cannot have run -- see the note
+    // in ../analyze/index.ts. A response that arrived and then failed to
+    // validate was billed, and refunding it lets a failing loop spend
+    // without limit.
+    const neverRan =
+      err instanceof Anthropic.AuthenticationError ||
+      err instanceof Anthropic.RateLimitError ||
+      err instanceof Anthropic.APIConnectionError;
+    if (neverRan) await refundAiCall(admin, user.id, day);
+    else console.error(JSON.stringify({ fn: "care", billed_but_unrecorded: true, error: err instanceof Error ? err.message : String(err) }));
     if (err instanceof Anthropic.AuthenticationError) return json({ error: "The AI key for this project isn't valid." }, 503);
     if (err instanceof Anthropic.RateLimitError) return json({ error: "The AI is busy — try again in a minute." }, 503);
     return json({ error: err instanceof Error ? err.message : "Couldn't write a care guide." }, 502);
