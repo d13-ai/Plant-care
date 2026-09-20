@@ -7,6 +7,8 @@
 // key. Tokens are 32 random hex chars: links are unlisted, not browsable.
 // Anyone with the link can read it; that is the point of a tag.
 
+import { ANALYTICS_SNIPPET } from "../src/domain/analytics";
+
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "https://ixagjvntbgyqemxxinqe.supabase.co";
 const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY || "sb_publishable__A5fA6nyI8nrSqJWfaaJBQ_vqEZdRn6";
 
@@ -100,6 +102,7 @@ ${noindex ? '<meta name="robots" content="noindex, nofollow, noimageindex">' : "
 ${head}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap">
+${ANALYTICS_SNIPPET}
 <style>
 :root{--bg:#2E1633;--card:#F3ECDD;--text:#2E1633;--muted:#6B5A6B;--label:#1F3D2B;--gold:#C9A24B;--gold-deep:#7A5A12;--gold-light:#E6C46B;--plum:#4B2142;--hair:rgba(201,162,75,.6);--hair2:rgba(201,162,75,.35);--ok-bg:#E3EFE6;--ok:#1F3D2B;--bad-bg:#F0DCE2;--bad:#7A2141;--neu-bg:#EDE3D3;--neu:#4B2142}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 'Source Sans 3','Segoe UI',system-ui,sans-serif;padding:20px 16px;-webkit-font-smoothing:antialiased}

@@ -1,4 +1,5 @@
 import { ScrollViewStyleReset } from "expo-router/html";
+import { ANALYTICS_INLINE } from "@/domain/analytics";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -113,6 +114,10 @@ export default function Root({ children }: PropsWithChildren) {
             pages under /plants and /parlour-games are real files and carry
             their own canonical. */}
         <link rel="canonical" href={`${SITE}/`} />
+        {/* Counting, with the token stripped before anything is sent — see
+            src/domain/analytics.ts. Every HTML surface carries this and the
+            seo check fails if one of them stops. */}
+        <script dangerouslySetInnerHTML={{ __html: ANALYTICS_INLINE }} />
         {JSON_LD.map((block) => (
           <script
             key={block["@type"]}

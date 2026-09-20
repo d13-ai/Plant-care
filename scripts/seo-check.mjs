@@ -17,6 +17,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { plantPages, SITE } from "./generate-plant-pages.mjs";
+import { ANALYTICS_SCRIPT_SRC, BEFORE_SEND } from "../src/domain/analytics.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -265,6 +266,34 @@ for (const file of ["tag.ts", "conservatory.ts"]) {
 // --- llms.txt exists and doesn't advertise anything unlisted
 if (!existsSync(join(PUBLIC, "llms.txt"))) {
   err("llms.txt", "missing");
+}
+
+// ------------------------------------------------- analytics, and its muzzle
+//
+// A tag's URL carries the token that makes it reachable, so a page that gets
+// the counter without the redaction in front of it reports that token to a
+// dashboard. The app shell and the generated pages import the snippet, but
+// the three games are hand-written HTML where a copy can rot quietly — so
+// every surface is checked for both halves, and for this exact beforeSend
+// rather than merely some beforeSend.
+const HAND_WRITTEN = [
+  "parlour-games/index.html",
+  "parlour-games/trickle.html",
+  "parlour-games/windowsill.html",
+];
+for (const rel of [...HAND_WRITTEN, "plants/index.html", `plants/${pages[0].slug}.html`]) {
+  const html = read(rel);
+  const where = `/${rel.replace(/\.html$/, "").replace(/\/index$/, "")}`;
+  if (!html.includes(ANALYTICS_SCRIPT_SRC)) err(where, "no analytics script — this page is not counted");
+  if (!html.includes("window.vaq")) err(where, "no window.va queue stub, so beforeSend can never register");
+  if (!html.includes(BEFORE_SEND)) {
+    err(where, "analytics beforeSend is missing or has drifted from src/domain/analytics.ts — URLs would be reported unredacted, tag tokens included");
+  } else if (html.indexOf("beforeSend") > html.indexOf(ANALYTICS_SCRIPT_SRC)) {
+    err(where, "beforeSend is registered after the script is appended, so the first pageview goes out unredacted");
+  }
+  if (!/localhost/.test(html.slice(html.indexOf("window.vaq"), html.indexOf(ANALYTICS_SCRIPT_SRC)))) {
+    err(where, "no localhost guard — a static file server answers this path with index.html and the page throws on it");
+  }
 }
 
 for (const w of warnings) console.log(`  warn  ${w}`);

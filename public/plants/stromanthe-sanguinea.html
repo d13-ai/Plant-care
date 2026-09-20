@@ -17,6 +17,32 @@
 <meta property="og:image" content="https://plantparlour.org/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/plants/plants.css">
+<script>
+window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+window.va('beforeSend', function (event) {
+  try {
+    var u = new URL(event.url);
+    u.search = "";
+    u.hash = "";
+    var p = u.pathname;
+    if (/^\/@[^/]+/.test(p)) p = p.replace(/^\/@[^/]+/, "/@");
+    else    if (/^\/plant\/[^/]+\/edit/.test(p)) p = p.replace(/^\/plant\/[^/]+\/edit/, "/plant/edit");
+    else    if (/^\/plant\/[^/]+/.test(p)) p = p.replace(/^\/plant\/[^/]+/, "/plant");
+    u.pathname = p;
+    return { ...event, url: u.toString() };
+  } catch (e) {
+    return null;
+  }
+});
+(function () {
+  var h = location.hostname;
+  if (h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "" || h.endsWith(".local")) return;
+  var s = document.createElement("script");
+  s.defer = true;
+  s.src = "/_vercel/insights/script.js";
+  document.head.appendChild(s);
+})();
+</script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",

@@ -25,6 +25,7 @@ import { mkdirSync, writeFileSync, rmSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SPECIES, SPECIES_GROUPS, scientificName } from "../src/domain/species.ts";
+import { ANALYTICS_SNIPPET } from "../src/domain/analytics.ts";
 import { GENUS, PLANTS } from "./plants-data.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -131,6 +132,7 @@ const head = ({ title, description, canonical, extra = "" }) => `<!doctype html>
 <meta property="og:image" content="${SITE}/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/plants/plants.css">
+${ANALYTICS_SNIPPET}
 ${extra}</head>
 <body>
 <div class="top">
