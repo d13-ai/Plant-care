@@ -3,7 +3,8 @@
 // Written from the actual data flows, not a template: the tables in
 // supabase/migrations, the `plant-photos` bucket (public: true, hence the
 // blunt paragraph about photo links), the analyze and care functions, and
-// the fact that the app carries no analytics of any kind.
+// and the one counter the site does carry (see src/domain/analytics.ts,
+// which strips a tag's token before any page view is reported).
 import { CONTACT, ENTITY_FULL, legalPage, serve } from "./legal";
 
 const sections = [
@@ -13,8 +14,15 @@ const sections = [
 <li><strong>Your account.</strong> Your email address, and either a password or your Google sign-in. Passwords are hashed by our authentication provider — we never see yours. If you sign in with Google we receive your email address and name, nothing else: not your Google password, not your contacts, not anything else in your Google account.</li>
 <li><strong>Your plants.</strong> Whatever you put in: nicknames, species, when you acquired a plant and who from, notes, your care log, photos and their captions, and which plants came as cuttings from which.</li>
 <li><strong>Your display name</strong>, and a handle if you claim one.</li>
+<li><strong>A count of page views.</strong> Which pages get opened, and how often. See below.</li>
 </ul>
-<p class="muted">That is the whole list. There is no analytics, no advertising, no tracking pixels and no third-party cookies anywhere in PlantParlour. We do not buy information about you, and we do not sell or rent yours to anybody.</p>`,
+<p class="muted">There is no advertising and there are no tracking pixels anywhere in PlantParlour. We set no cookies of our own. We do not buy information about you, and we do not sell or rent yours to anybody.</p>`,
+  },
+  {
+    heading: "Counting page views",
+    html: `<p>We count how many people open each page, using Vercel Web Analytics — Vercel already serve this site, so the counting happens where the site is already hosted rather than being handed to a third party. It is not linked to your account, and it does not follow you to other websites.</p>
+<p><strong>Tag and conservatory links are deliberately blunted before anything is counted.</strong> A published tag lives at an address ending in a long random token, and that token is the whole of what makes the link work. Before a page view is reported, the address is stripped: the token goes, every other query string goes, and a handle or a plant's id is replaced by the shape of the page. So we can see that somebody opened a plant tag. We cannot see whose, and neither can Vercel.</p>
+<p>What Vercel do with what they receive is set out in <a href="https://vercel.com/legal/privacy-policy">their privacy policy</a>.</p>`,
   },
   {
     heading: "Where it lives",
