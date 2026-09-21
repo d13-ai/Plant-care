@@ -21,7 +21,7 @@ import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
 import { careBrief } from "@/domain/care-brief";
-import { scanSummary } from "@/domain/scan";
+import { problemsIn, isProblem, scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, describeScan, photoAllowance, type Verdict } from "@/lib/ai";
 import { allowanceLine, type Allowance } from "@/domain/allowance";
 import { CareGuide } from "@/components/care-guide";
@@ -245,7 +245,7 @@ export default function PlantDetail() {
    * logging one by hand adds the others and not a duplicate.
    */
   const logAllFindings = async (findings: Verdict["health"]["findings"]) => {
-    const todo = findings.filter((f) => !loggedIssues.has(f.observation));
+    const todo = problemsIn(findings).filter((f) => !loggedIssues.has(f.observation));
     if (!todo.length || logging) return;
     setLogging(ALL_FINDINGS);
     try {
@@ -572,14 +572,14 @@ export default function PlantDetail() {
               <Body small muted>Nothing worrying in this photo.</Body>
             ) : (
               <>
-              {checkup.health.findings.length > 1 &&
-              checkup.health.findings.some((f) => !loggedIssues.has(f.observation)) ? (
+              {problemsIn(checkup.health.findings).length > 1 &&
+              problemsIn(checkup.health.findings).some((f) => !loggedIssues.has(f.observation)) ? (
                 <Row>
                   <Button
                     title={
                       logging === ALL_FINDINGS
                         ? "Logging…"
-                        : `Log all ${checkup.health.findings.filter((f) => !loggedIssues.has(f.observation)).length} as issues`
+                        : `Log all ${problemsIn(checkup.health.findings).filter((f) => !loggedIssues.has(f.observation)).length} as issues`
                     }
                     small
                     disabled={logging !== null}
@@ -592,6 +592,7 @@ export default function PlantDetail() {
                   <Body small>
                     {f.observation} — likely {f.likely_cause.toLowerCase()}. {f.suggested_action}
                   </Body>
+                  {isProblem(f) ? (
                   <Row>
                     <Button
                       // Says what it did, and stops taking presses while it
@@ -620,6 +621,7 @@ export default function PlantDetail() {
                       }}
                     />
                   </Row>
+                  ) : null}
                 </View>
               ))}
               </>
