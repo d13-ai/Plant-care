@@ -10,8 +10,8 @@
  *
  * Identity: an account with an email (sync is off for anonymous sessions).
  * Set PASSPORT_E2E_EMAIL and PASSPORT_E2E_PASSWORD to a confirmed account;
- * without them the test signs up a throwaway one, which works when the
- * project doesn't require email confirmation.
+ * without them the test uses a fixture account, reused run to run rather
+ * than minted fresh each time — see e2e/test-account.ts for why.
  */
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
@@ -31,6 +31,7 @@ import {
   type Plant,
 } from "@/db";
 import { SUPABASE_URL, supabase, supabaseConfigured } from "@/lib/supabase";
+import { signInTestAccount as signInFixture } from "./test-account";
 import { getSyncStatus, syncNow } from "@/lib/sync";
 import { openTestDatabase, type TestDatabase } from "./node-sqlite";
 
@@ -96,23 +97,9 @@ async function removeTestData(signedInAs: string): Promise<void> {
 }
 
 async function signInTestAccount(): Promise<string> {
-  const email = process.env.PASSPORT_E2E_EMAIL;
-  const password = process.env.PASSPORT_E2E_PASSWORD;
-  if (email && password) return signIn(email, password);
-  const fresh = `e2e-${Date.now()}@plantparlour.app`;
-  const { data, error } = await supabase.auth.signUp({
-    email: fresh,
-    password: `E2e-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-  });
-  if (error) throw new Error(`Sign-up failed: ${error.message}`);
-  if (data.user) throwawayKeeperId = data.user.id;
-  if (!data.session) {
-    throw new Error(
-      "This project requires email confirmation, so a throwaway account can't sign in. " +
-        "Set PASSPORT_E2E_EMAIL / PASSPORT_E2E_PASSWORD to a confirmed account.",
-    );
-  }
-  return data.user!.id;
+  const account = await signInFixture("sync");
+  if (account.disposable) throwawayKeeperId = account.id;
+  return account.id;
 }
 
 /** updatePlant wants the whole editable record; patch one field of it. */

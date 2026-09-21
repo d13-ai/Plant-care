@@ -19,17 +19,14 @@
  * e2e/sync.e2e.test.ts already does, and it means the suite runs with no
  * configuration at all.
  *
- * A throwaway run leaves one empty auth.users row behind: the test holds no
- * service role, so it can delete its own keeper row and plants but not its
- * own account. They own nothing. Clear them out now and then with
- *
- *   delete from auth.users where email like 'e2e-tag-%'
- *     and not exists (select 1 from public.plants p where p.keeper_id = id);
+ * The fallback account is a fixture, reused run to run rather than minted
+ * fresh each time — see e2e/test-account.ts for why.
  */
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { addPhoto, createPlant, getPlant, logCare, migrate, propagate, resolveIssue } from "@/db";
 import { publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
 import { SUPABASE_URL, tagUrl, supabase, supabaseConfigured } from "@/lib/supabase";
+import { signInTestAccount as signInFixture } from "./test-account";
 import { openTestDatabase, type TestDatabase } from "./node-sqlite";
 
 const KEEPER_NAME = "Tag e2e greenhouse";
@@ -70,27 +67,9 @@ let throwawayKeeperId: string | null = null;
  * and this takes that path instead.
  */
 async function signInTestAccount(): Promise<string> {
-  const email = process.env.PASSPORT_E2E_EMAIL;
-  const password = process.env.PASSPORT_E2E_PASSWORD;
-  if (email && password) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(`Test account sign-in failed: ${error.message}`);
-    return data.user!.id;
-  }
-  const fresh = `e2e-tag-${Date.now()}@plantparlour.app`;
-  const { data, error } = await supabase.auth.signUp({
-    email: fresh,
-    password: `E2e-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-  });
-  if (error) throw new Error(`Sign-up failed: ${error.message}`);
-  if (!data.session) {
-    throw new Error(
-      "This project requires email confirmation, so a throwaway account can't sign in. " +
-        "Set PASSPORT_E2E_EMAIL / PASSPORT_E2E_PASSWORD to a confirmed account.",
-    );
-  }
-  throwawayKeeperId = data.user!.id;
-  return data.user!.id;
+  const account = await signInFixture("tag");
+  if (account.disposable) throwawayKeeperId = account.id;
+  return account.id;
 }
 
 describe("publishing a tag to Supabase", () => {

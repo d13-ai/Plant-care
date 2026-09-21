@@ -82,6 +82,17 @@ const Verdict = z.object({
     findings: z.array(
       z.object({
         observation: z.string().describe("what is visible, in plain words"),
+        // Everything in `findings` used to be called a finding, which left the
+        // app unable to tell "half this leaf is dead" from "the other leaves
+        // look fine" from "these leaves are too dusty to read". A keeper
+        // pressing "log all" got all three on the record as open problems.
+        kind: z
+          .enum(["problem", "observation", "photo_quality"])
+          .describe(
+            "problem = something is wrong with the plant and a keeper might act on it; " +
+              "observation = this part of the plant is fine, said so the keeper knows you looked; " +
+              "photo_quality = a limit of the photograph itself, not of the plant",
+          ),
         likely_cause: z.string(),
         suggested_action: z.string(),
         severity: z.enum(["low", "medium", "high"]),
@@ -100,6 +111,7 @@ When the keeper's app lists the cultivar names it tracks, prefer those names and
 Then read its health from what is actually visible: leaf colour and texture, spots, pests, drooping, soil, pot. Name only what you can see; say "unknown" when the photo doesn't show enough. For each finding give the likely cause and one concrete thing to do. Don't invent problems for a plant that looks fine.
 When the keeper's care record is given, treat it as fact — it is what they logged, not a guess from the photo — and read the photo in its light: wet soil eleven days after a repot means something different from wet soil on a plant watered twice this week. Weigh it against what you see, say plainly where the two disagree, and never repeat a piece of the record back as a finding on its own.
 When a photo's date is given, use it: say whether something has spread, held or improved between one photo and another, and between the photos and any issue already on the record. That comparison is what a keeper wants on a second look, and only the dates make it possible.
+Mark each finding with its kind. A problem is something wrong with the plant that a keeper might act on; an observation is a part of the plant that is fine, worth saying so they know you looked at it; photo_quality is a limit of the photograph rather than of the plant. Be strict about it: "the new leaf is unfurling and looks healthy" is an observation however welcome it is, and a keeper should never end up with it on their record as an unresolved problem.
 Say so plainly when the photo itself is the limit — leaves thick with dust, a picture taken at night under a warm lamp, motion blur, a plant too far from the camera. Name it as a finding and say which of your other findings it makes unreliable. A confident reading of a photograph you cannot actually read is worse than no reading.
 You are told to take the keeper's species as given, and you should — but if the plant in the photo plainly is not that species, say so in the notes and name what you think it is. Health advice keyed to the wrong plant is wrong advice, and a keeper who has mislabelled something would rather find out.
 If the photo isn't clearly a plant, say so and return no candidates.`;

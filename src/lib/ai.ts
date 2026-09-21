@@ -5,7 +5,7 @@ import { KNOWN_CULTIVARS } from "@/domain/species";
 import { ensureSession, supabase, supabaseConfigured } from "./supabase";
 
 /** Bump when the prompt changes, so a remembered answer from the old one isn't reused. */
-const PROMPT_VERSION = 5;
+const PROMPT_VERSION = 6;
 /** Photos per scan. Each one costs 3,000-4,000 input tokens depending on its
  *  shape -- about 2c on Opus, 0.7c on Sonnet. */
 export const MAX_SCAN_PHOTOS = 3;
@@ -30,12 +30,24 @@ export interface Verdict {
   species: { genus: string; species: string; cultivar: string; common_name: string; confidence: number }[];
   health: {
     overall: "healthy" | "watch" | "unwell" | "unknown";
-    findings: { observation: string; likely_cause: string; suggested_action: string; severity: "low" | "medium" | "high" }[];
+    findings: {
+      observation: string;
+      /** What this finding is. Absent on an answer cached before the field
+       *  existed, which `isProblem` reads as a problem — the safe way round,
+       *  since hiding a real one is worse than offering to log a good one. */
+      kind?: FindingKind;
+      likely_cause: string;
+      suggested_action: string;
+      severity: "low" | "medium" | "high";
+    }[];
   };
   notes: string;
 }
 
 export type AnalysisMode = "identify" | "health" | "both";
+
+/** What a finding is about — see the analyze function's schema. */
+export type FindingKind = "problem" | "observation" | "photo_quality";
 
 /** FNV-1a over the image bytes — enough to recognise the same photo again. */
 function fingerprint(text: string): string {
