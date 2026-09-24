@@ -1,6 +1,6 @@
 # PlantParlour
 
-> PlantParlour is a free care record for houseplants: photograph each plant you own, log what you do for it, see what needs doing today, and hand the plant's whole history to whoever you trade or sell it to. The record belongs to the plant, not the keeper, so it survives changing hands — and a cutting traces back to the plant it came from. It runs in a browser, works offline, and needs no account to start. There is no paid tier, no ads, and no tracking.
+> PlantParlour is a free care record for houseplants: photograph each plant you own, log what you do for it, see what needs doing today, and hand the plant's whole history to whoever you trade or sell it to. The record belongs to the plant, not the keeper, so it survives changing hands — and a cutting traces back to the plant it came from. It runs in a browser, works offline, and needs no account to start. There is no paid tier and no ads, and nothing tracks you beyond a cookieless page-view count.
 
 ## The app
 
@@ -29,7 +29,7 @@ URL: https://plantparlour.org/
 
 ## Plant care library
 
-Free care pages for 158 houseplants at https://plantparlour.org/plants — no signup, no email gate.
+Free care pages for about 160 houseplants at https://plantparlour.org/plants — no signup, no email gate.
 
 Each page covers one plant: how often to water it and how to tell when it's ready, how much light it needs, humidity, the potting mix, feeding, repotting, propagation, whether it is toxic to cats and dogs, the common problems with their causes and fixes, its named cultivars, and where it comes from.
 
@@ -41,6 +41,16 @@ Two things worth knowing about this data:
 Pages are grouped as Aroids, Trees, Palms, Vines & trailers, Prayer plants, Ferns, Begonias & violets, Succulents & cacti, Flowering, Bromeliads & air plants, Herbs & edibles, and Other.
 
 URL: https://plantparlour.org/plants
+
+## Plant problems
+
+Guides that start from what a keeper can see, at https://plantparlour.org/problems: yellow leaves, brown tips and edges, spider mites, leggy stretched growth, leaves falling off, and variegation fading. Each explains how to read the pattern (which leaves, how fast, what the compost feels like), the likely causes with their fixes, and then lists every plant in the library where that symptom is a known problem, with that plant's own cause and fix.
+
+URL: https://plantparlour.org/problems — e.g. /problems/yellow-leaves, /problems/spider-mites
+
+## Pet-safe houseplants
+
+https://plantparlour.org/pet-safe-houseplants lists the houseplants in the library that the ASPCA Animal Poison Control Center lists as non-toxic to both cats and dogs, with a link to each ASPCA entry and the date the list was last compared. The rule behind it is strict: a plant is only called non-toxic when the ASPCA lists that species, or its whole genus, as non-toxic to both animals. Plants the ASPCA doesn't list, or lists only a relative of, are shown as unconfirmed rather than safe. It is general information, not veterinary advice; if a pet has eaten a plant, the page says to call a vet or the ASPCA Animal Poison Control Center on (888) 426-4435.
 
 ## Parlour Games
 
@@ -55,8 +65,10 @@ Both are free, need no account, work on any phone or computer with a browser, an
 ## Key URLs
 
 - App and home page: https://plantparlour.org/
-- Plant care library (158 plants): https://plantparlour.org/plants
+- Plant care library (about 160 plants): https://plantparlour.org/plants
 - A single plant's care page: https://plantparlour.org/plants/{slug} — e.g. /plants/monstera-deliciosa, /plants/epipremnum-aureum, /plants/dracaena-trifasciata
+- Plant problems guides: https://plantparlour.org/problems
+- Pet-safe houseplants: https://plantparlour.org/pet-safe-houseplants
 - Parlour Games: https://plantparlour.org/parlour-games
 - Trickle: https://plantparlour.org/parlour-games/trickle
 - Windowsill: https://plantparlour.org/parlour-games/windowsill
@@ -74,7 +86,7 @@ Not for crawling or citation: https://plantparlour.org/tag?t=… — a published
 - **Lineage.** A cutting is linked to its mother plant and chains back indefinitely, so a propagation years later still traces to where it came from. That is the selling point for anyone rooting and trading cuttings.
 - **Cultivar-level care.** The species catalogue names about 110 cultivars and variegations, each with its own cadences, rather than treating every Monstera as one plant.
 - **No account required, and no email gate.** The app works entirely offline on the device. Signing in adds backup, sync across phones, and the ability to publish a tag.
-- **No tracking.** No analytics, no advertising, no tracking pixels and no third-party cookies anywhere in the app. See https://plantparlour.org/privacy.
+- **No tracking.** Page views are counted with Vercel Web Analytics, which sets no cookies; tag links and keeper names are stripped from every URL before it is sent. No advertising, no tracking pixels and no third-party cookies. See https://plantparlour.org/privacy.
 - **Browser-based.** PlantParlour has never published an app-store app. The official app is only at https://plantparlour.org.
 
 ## Operator

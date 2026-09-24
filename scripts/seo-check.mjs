@@ -18,6 +18,9 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { plantPages, SITE } from "./generate-plant-pages.mjs";
 import { ANALYTICS_SCRIPT_SRC, BEFORE_SEND } from "../src/domain/analytics.ts";
+import { GUIDES } from "./guides-data.mjs";
+import { petSafe } from "./generate-guides.mjs";
+import { aspcaNonToxic, auditToxicity, APCC } from "./pet-safety.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -63,6 +66,9 @@ const ROUTES = new Map([
   ["/privacy", null], // served by api/privacy.ts
   ["/terms", null], // served by api/terms.ts
   ...pages.map((p) => [`/plants/${p.slug}`, `plants/${p.slug}.html`]),
+  ["/problems", "problems/index.html"],
+  ...GUIDES.map((g) => [`/problems/${g.slug}`, `problems/${g.slug}.html`]),
+  ["/pet-safe-houseplants", "pet-safe-houseplants.html"],
 ]);
 
 /** The documents this script actually inspects, with the URL each claims. */
@@ -281,7 +287,14 @@ const HAND_WRITTEN = [
   "parlour-games/trickle.html",
   "parlour-games/windowsill.html",
 ];
-for (const rel of [...HAND_WRITTEN, "plants/index.html", `plants/${pages[0].slug}.html`]) {
+for (const rel of [
+  ...HAND_WRITTEN,
+  "plants/index.html",
+  `plants/${pages[0].slug}.html`,
+  "problems/index.html",
+  `problems/${GUIDES[0].slug}.html`,
+  "pet-safe-houseplants.html",
+]) {
   const html = read(rel);
   const where = `/${rel.replace(/\.html$/, "").replace(/\/index$/, "")}`;
   if (!html.includes(ANALYTICS_SCRIPT_SRC)) err(where, "no analytics script — this page is not counted");
@@ -294,6 +307,32 @@ for (const rel of [...HAND_WRITTEN, "plants/index.html", `plants/${pages[0].slug
   if (!/localhost/.test(html.slice(html.indexOf("window.vaq"), html.indexOf(ANALYTICS_SCRIPT_SRC)))) {
     err(where, "no localhost guard — a static file server answers this path with index.html and the page throws on it");
   }
+}
+
+// ------------------------------------------------- what we say about pets
+//
+// "Non-toxic to cats and dogs" is the one sentence in the library someone
+// might act on with an animal's health. It may only appear where the ASPCA
+// says the same, and every page that talks about toxicity has to carry the
+// emergency number. See scripts/pet-safety.mjs.
+for (const problem of auditToxicity(pages)) err("scripts/plants-data.mjs", problem);
+
+if (existsSync(join(PUBLIC, "pet-safe-houseplants.html"))) {
+  const html = read("pet-safe-houseplants.html");
+  const safeTable = html.slice(html.indexOf('id="how-we-decide"'), html.indexOf('id="toxic"'));
+  const listed = [...safeTable.matchAll(/<tr><td><a href="\/plants\/([^"]+)"/g)].map((m) => m[1]);
+  for (const slug of listed) {
+    if (!aspcaNonToxic(slug)) err("pet-safe-houseplants.html", `lists ${slug} as pet-safe, but the ASPCA snapshot doesn't back it for both cats and dogs`);
+  }
+  if (listed.length !== petSafe(pages).length) {
+    err("pet-safe-houseplants.html", `lists ${listed.length} plants in its safe tables, expected ${petSafe(pages).length}`);
+  }
+}
+for (const rel of ["pet-safe-houseplants.html", ...pages.map((p) => `plants/${p.slug}.html`)]) {
+  if (!existsSync(join(PUBLIC, rel))) continue;
+  const html = read(rel);
+  if (!html.includes(APCC.phone)) err(rel, `talks about toxicity without the ${APCC.name} number`);
+  if (!html.includes('class="notice"')) err(rel, "has no pet-safety notice beside its toxicity information");
 }
 
 for (const w of warnings) console.log(`  warn  ${w}`);

@@ -1,0 +1,2330 @@
+{
+  "checked": "2026-09-24",
+  "source": "https://www.aspca.org/pet-care/animal-poison-control/toxic-and-non-toxic-plants",
+  "plants": {
+    "monstera-deliciosa": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Swiss Cheese Plant",
+        "sci": "Monstera deliciosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/swiss-cheese-plant"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Swiss Cheese Plant",
+        "sci": "Monstera deliciosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/swiss-cheese-plant"
+      }
+    },
+    "monstera-adansonii": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Ceriman",
+        "sci": "Monstera deliciosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/ceriman"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Ceriman",
+        "sci": "Monstera deliciosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/ceriman"
+      }
+    },
+    "monstera-obliqua": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Ceriman",
+        "sci": "Monstera deliciosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/ceriman"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Ceriman",
+        "sci": "Monstera deliciosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/ceriman"
+      }
+    },
+    "monstera-standleyana": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Ceriman",
+        "sci": "Monstera deliciosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/ceriman"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Ceriman",
+        "sci": "Monstera deliciosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/ceriman"
+      }
+    },
+    "monstera-karstenianum": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Ceriman",
+        "sci": "Monstera deliciosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/ceriman"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Ceriman",
+        "sci": "Monstera deliciosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/ceriman"
+      }
+    },
+    "monstera-siltepecana": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Ceriman",
+        "sci": "Monstera deliciosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/ceriman"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Ceriman",
+        "sci": "Monstera deliciosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/ceriman"
+      }
+    },
+    "philodendron-hederaceum": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Heartleaf Philodendron",
+        "sci": "Philodendron hederaceum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/heartleaf-philodendron"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Heartleaf Philodendron",
+        "sci": "Philodendron hederaceum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/heartleaf-philodendron"
+      }
+    },
+    "philodendron-florida-ghost": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      }
+    },
+    "philodendron-florida-beauty": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      }
+    },
+    "philodendron-prince-of-orange": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      }
+    },
+    "philodendron-moonlight": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      }
+    },
+    "philodendron-ring-of-fire": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      }
+    },
+    "philodendron-paraiso-verde": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      }
+    },
+    "philodendron-burle-marx-variegata": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      }
+    },
+    "philodendron-jose-buono": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      }
+    },
+    "philodendron-erubescens": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      }
+    },
+    "philodendron-gloriosum": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      }
+    },
+    "philodendron-melanochrysum": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Philodendron Pertusum",
+        "sci": "Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/philodendron-pertusum"
+      }
+    },
+    "thaumatophyllum-bipinnatifidum": {
+      "cats": null,
+      "dogs": null
+    },
+    "epipremnum-aureum": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Golden Pothos",
+        "sci": "Epipremnum aureum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/golden-pothos"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Golden Pothos",
+        "sci": "Epipremnum aureum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/golden-pothos"
+      }
+    },
+    "epipremnum-pinnatum": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Devils Ivy",
+        "sci": "Epipremnum aureum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/devils-ivy"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Devils Ivy",
+        "sci": "Epipremnum aureum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/devils-ivy"
+      }
+    },
+    "scindapsus-pictus": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Satin Pothos",
+        "sci": "Scindapsus pictus",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/satin-pothos"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Satin Pothos",
+        "sci": "Scindapsus pictus",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/satin-pothos"
+      }
+    },
+    "scindapsus-treubii": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Variegated Philodendron",
+        "sci": "Scindapsus, Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/variegated-philodendron"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Variegated Philodendron",
+        "sci": "Scindapsus, Philodendron spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/variegated-philodendron"
+      }
+    },
+    "anthurium-andraeanum": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Flamingo Flower",
+        "sci": "Anthurium scherzeranum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/flamingo-flower"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Flamingo Flower",
+        "sci": "Anthurium scherzeranum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/flamingo-flower"
+      }
+    },
+    "anthurium-clarinervium": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Flamingo Flower",
+        "sci": "Anthurium scherzeranum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/flamingo-flower"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Flamingo Flower",
+        "sci": "Anthurium scherzeranum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/flamingo-flower"
+      }
+    },
+    "anthurium-crystallinum": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Flamingo Flower",
+        "sci": "Anthurium scherzeranum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/flamingo-flower"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Flamingo Flower",
+        "sci": "Anthurium scherzeranum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/flamingo-flower"
+      }
+    },
+    "alocasia-amazonica": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      }
+    },
+    "alocasia-pink-dragon": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      }
+    },
+    "alocasia-regal-shield": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      }
+    },
+    "alocasia-zebrina": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      }
+    },
+    "alocasia-macrorrhizos": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      }
+    },
+    "alocasia-baginda": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      }
+    },
+    "alocasia-reginula": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      }
+    },
+    "alocasia-micholitziana": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Alocasia",
+        "sci": "Alocasia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/alocasia"
+      }
+    },
+    "colocasia-esculenta": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Elephant Ears (Colocasia esculenta)",
+        "sci": "Colocasia esculenta",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/elephant-ears-colocasia-esculenta"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Elephant Ears (Colocasia esculenta)",
+        "sci": "Colocasia esculenta",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/elephant-ears-colocasia-esculenta"
+      }
+    },
+    "caladium-bicolor": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Caladium",
+        "sci": "Caladium hortulanum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/caladium"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Caladium",
+        "sci": "Caladium hortulanum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/caladium"
+      }
+    },
+    "zamioculcas-zamiifolia": {
+      "cats": null,
+      "dogs": null
+    },
+    "spathiphyllum-wallisii": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Peace Lily",
+        "sci": "Spathiphyllum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/peace-lily"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Peace Lily",
+        "sci": "Spathiphyllum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/peace-lily"
+      }
+    },
+    "aglaonema-commutatum": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Chinese Evergreen",
+        "sci": "Aglaonema modestum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/chinese-evergreen"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Chinese Evergreen",
+        "sci": "Aglaonema modestum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/chinese-evergreen"
+      }
+    },
+    "aglaonema-red-siam": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Chinese Evergreen",
+        "sci": "Aglaonema modestum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/chinese-evergreen"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Chinese Evergreen",
+        "sci": "Aglaonema modestum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/chinese-evergreen"
+      }
+    },
+    "aglaonema-siam-aurora": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Chinese Evergreen",
+        "sci": "Aglaonema modestum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/chinese-evergreen"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Chinese Evergreen",
+        "sci": "Aglaonema modestum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/chinese-evergreen"
+      }
+    },
+    "aglaonema-pink-dalmatian": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Chinese Evergreen",
+        "sci": "Aglaonema modestum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/chinese-evergreen"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Chinese Evergreen",
+        "sci": "Aglaonema modestum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/chinese-evergreen"
+      }
+    },
+    "dieffenbachia-seguine": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Dieffenbachia",
+        "sci": "Dieffenbachia",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/dieffenbachia"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Dieffenbachia",
+        "sci": "Dieffenbachia",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/dieffenbachia"
+      }
+    },
+    "syngonium-podophyllum": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Arrow-Head Vine",
+        "sci": "Syngonium podophyllum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/arrow-head-vine"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Arrow-Head Vine",
+        "sci": "Syngonium podophyllum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/arrow-head-vine"
+      }
+    },
+    "rhaphidophora-tetrasperma": {
+      "cats": null,
+      "dogs": null
+    },
+    "ficus-lyrata": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Weeping Fig",
+        "sci": "Ficus sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/weeping-fig"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Weeping Fig",
+        "sci": "Ficus sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/weeping-fig"
+      }
+    },
+    "ficus-elastica": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Weeping Fig",
+        "sci": "Ficus sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/weeping-fig"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Weeping Fig",
+        "sci": "Ficus sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/weeping-fig"
+      }
+    },
+    "ficus-benjamina": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Fig",
+        "sci": "Ficus benjamina",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/fig"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Fig",
+        "sci": "Ficus benjamina",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/fig"
+      }
+    },
+    "ficus-microcarpa": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Weeping Fig",
+        "sci": "Ficus sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/weeping-fig"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Weeping Fig",
+        "sci": "Ficus sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/weeping-fig"
+      }
+    },
+    "ficus-audrey": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Weeping Fig",
+        "sci": "Ficus sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/weeping-fig"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Weeping Fig",
+        "sci": "Ficus sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/weeping-fig"
+      }
+    },
+    "ficus-triangularis": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Weeping Fig",
+        "sci": "Ficus sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/weeping-fig"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Weeping Fig",
+        "sci": "Ficus sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/weeping-fig"
+      }
+    },
+    "schefflera-arboricola": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Schefflera",
+        "sci": "Schefflera",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/schefflera"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Schefflera",
+        "sci": "Schefflera",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/schefflera"
+      }
+    },
+    "dracaena-trifasciata": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Dracaena",
+        "sci": "Dracaena spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/dracaena"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Dracaena",
+        "sci": "Dracaena spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/dracaena"
+      }
+    },
+    "dracaena-marginata": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Madagascar Dragon Tree",
+        "sci": "Dracaena marginata",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/madagascar-dragon-tree"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Madagascar Dragon Tree",
+        "sci": "Dracaena marginata",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/madagascar-dragon-tree"
+      }
+    },
+    "dracaena-fragrans": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Corn Plant",
+        "sci": "Dracaena fragrans",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/corn-plant"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Corn Plant",
+        "sci": "Dracaena fragrans",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/corn-plant"
+      }
+    },
+    "dracaena-angolensis": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Dracaena",
+        "sci": "Dracaena spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/dracaena"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Dracaena",
+        "sci": "Dracaena spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/dracaena"
+      }
+    },
+    "dracaena-masoniana": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Dracaena",
+        "sci": "Dracaena spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/dracaena"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Dracaena",
+        "sci": "Dracaena spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/dracaena"
+      }
+    },
+    "dracaena-sanderiana": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Ribbon Plant",
+        "sci": "Dracaena spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/ribbon-plant"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Ribbon Plant",
+        "sci": "Dracaena spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/ribbon-plant"
+      }
+    },
+    "yucca-elephantipes": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Yucca",
+        "sci": "Yucca spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/yucca"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Yucca",
+        "sci": "Yucca spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/yucca"
+      }
+    },
+    "pachira-aquatica": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Money Tree",
+        "sci": "Pachira aquatica",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/money-tree"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Money Tree",
+        "sci": "Pachira aquatica",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/money-tree"
+      }
+    },
+    "crassula-ovata": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Jade Plant",
+        "sci": "Crassula argentea",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/jade-plant"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Jade Plant",
+        "sci": "Crassula argentea",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/jade-plant"
+      }
+    },
+    "beaucarnea-recurvata": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Bottle Palm",
+        "sci": "Beaucarnea recurvata",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/bottle-palm"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Bottle Palm",
+        "sci": "Beaucarnea recurvata",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/bottle-palm"
+      }
+    },
+    "polyscias-fruticosa": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Coffee Tree",
+        "sci": "Polyscias guilfoylei",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/coffee-tree"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Coffee Tree",
+        "sci": "Polyscias guilfoylei",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/coffee-tree"
+      }
+    },
+    "fatsia-japonica": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Japanese Aralia",
+        "sci": "Fatsia japonica",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/japanese-aralia"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Japanese Aralia",
+        "sci": "Fatsia japonica",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/japanese-aralia"
+      }
+    },
+    "strelitzia-nicolai": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Bird of Paradise Flower",
+        "sci": "Strelitzia reginae",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/bird-paradise-flower"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Bird of Paradise Flower",
+        "sci": "Strelitzia reginae",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/bird-paradise-flower"
+      }
+    },
+    "strelitzia-reginae": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Bird of Paradise Flower",
+        "sci": "Strelitzia reginae",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/bird-paradise-flower"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Bird of Paradise Flower",
+        "sci": "Strelitzia reginae",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/bird-paradise-flower"
+      }
+    },
+    "musa-acuminata": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Banana",
+        "sci": "Musa acuminata",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/banana"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Banana",
+        "sci": "Musa acuminata",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/banana"
+      }
+    },
+    "chamaedorea-elegans": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Parlor Palm",
+        "sci": "Chamaedorea elegans",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/parlor-palm"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Parlor Palm",
+        "sci": "Chamaedorea elegans",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/parlor-palm"
+      }
+    },
+    "dypsis-lutescens": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Areca Palm",
+        "sci": "Dypsis lutescens",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/areca-palm"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Areca Palm",
+        "sci": "Dypsis lutescens",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/areca-palm"
+      }
+    },
+    "howea-forsteriana": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Kentia Palm",
+        "sci": "Howea forsteriana",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/kentia-palm"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Kentia Palm",
+        "sci": "Howea forsteriana",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/kentia-palm"
+      }
+    },
+    "rhapis-excelsa": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Lady Palm",
+        "sci": "Rhapis flabelliformus",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/lady-palm"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Lady Palm",
+        "sci": "Rhapis flabelliformus",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/lady-palm"
+      }
+    },
+    "phoenix-roebelenii": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Canary Date Palm",
+        "sci": "Phoenix canariensis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/canary-date-palm"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Canary Date Palm",
+        "sci": "Phoenix canariensis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/canary-date-palm"
+      }
+    },
+    "livistona-chinensis": {
+      "cats": null,
+      "dogs": null
+    },
+    "hoya-carnosa": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Wax Plant",
+        "sci": "Hoya carnosa 'krinkle kurl'",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/wax-plant"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Wax Plant",
+        "sci": "Hoya carnosa 'krinkle kurl'",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/wax-plant"
+      }
+    },
+    "hoya-publicalyx-splash": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Hindu Rope Plant",
+        "sci": "Hoya carnosa 'krinkle kurl'",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/hindu-rope-plant"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Hindu Rope Plant",
+        "sci": "Hoya carnosa 'krinkle kurl'",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/hindu-rope-plant"
+      }
+    },
+    "hoya-australis-lisa": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Hindu Rope Plant",
+        "sci": "Hoya carnosa 'krinkle kurl'",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/hindu-rope-plant"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Hindu Rope Plant",
+        "sci": "Hoya carnosa 'krinkle kurl'",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/hindu-rope-plant"
+      }
+    },
+    "hoya-kerrii": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Sweetheart Hoya",
+        "sci": "Hoya kerrii",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/sweetheart-hoya"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Sweetheart Hoya",
+        "sci": "Hoya kerrii",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/sweetheart-hoya"
+      }
+    },
+    "hoya-linearis": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Hindu Rope Plant",
+        "sci": "Hoya carnosa 'krinkle kurl'",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/hindu-rope-plant"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Hindu Rope Plant",
+        "sci": "Hoya carnosa 'krinkle kurl'",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/hindu-rope-plant"
+      }
+    },
+    "tradescantia-zebrina": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Inch Plant",
+        "sci": "Tradescantia flumeninsis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/inch-plant"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Inch Plant",
+        "sci": "Tradescantia flumeninsis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/inch-plant"
+      }
+    },
+    "tradescantia-tricolor": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Inch Plant",
+        "sci": "Tradescantia flumeninsis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/inch-plant"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Inch Plant",
+        "sci": "Tradescantia flumeninsis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/inch-plant"
+      }
+    },
+    "tradescantia-nanouk": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Inch Plant",
+        "sci": "Tradescantia flumeninsis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/inch-plant"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Inch Plant",
+        "sci": "Tradescantia flumeninsis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/inch-plant"
+      }
+    },
+    "chlorophytum-comosum": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Spider Plant",
+        "sci": "Chlorophytum comosum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/spider-plant"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Spider Plant",
+        "sci": "Chlorophytum comosum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/spider-plant"
+      }
+    },
+    "hedera-helix": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "English Ivy",
+        "sci": "Hedera helix",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/english-ivy"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "English Ivy",
+        "sci": "Hedera helix",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/english-ivy"
+      }
+    },
+    "senecio-rowleyanus": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Golden Ragwort",
+        "sci": "Senecio species",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/golden-ragwort"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Golden Ragwort",
+        "sci": "Senecio species",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/golden-ragwort"
+      }
+    },
+    "ceropegia-woodii": {
+      "cats": null,
+      "dogs": null
+    },
+    "peperomia-prostrata": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "American Rubber Plant",
+        "sci": "Peperomia obtusifolia",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/american-rubber-plant"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "American Rubber Plant",
+        "sci": "Peperomia obtusifolia",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/american-rubber-plant"
+      }
+    },
+    "peperomia-ginny": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "American Rubber Plant",
+        "sci": "Peperomia obtusifolia",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/american-rubber-plant"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "American Rubber Plant",
+        "sci": "Peperomia obtusifolia",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/american-rubber-plant"
+      }
+    },
+    "cissus-discolor": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Begonia, Climbing",
+        "sci": "Cissus dicolor",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/begonia-climbing"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Begonia, Climbing",
+        "sci": "Cissus dicolor",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/begonia-climbing"
+      }
+    },
+    "pilea-peperomioides": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Aluminum Plant",
+        "sci": "Pilea cadieri",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/aluminum-plant"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Aluminum Plant",
+        "sci": "Pilea cadieri",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/aluminum-plant"
+      }
+    },
+    "peperomia-obtusifolia": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Baby Rubber Plant",
+        "sci": "Peperomia obtusifolia",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/baby-rubber-plant"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Baby Rubber Plant",
+        "sci": "Peperomia obtusifolia",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/baby-rubber-plant"
+      }
+    },
+    "peperomia-caperata": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Emerald Ripple Peperomia",
+        "sci": "Peperomia caperata",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/emerald-ripple-peperomia"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Emerald Ripple Peperomia",
+        "sci": "Peperomia caperata",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/emerald-ripple-peperomia"
+      }
+    },
+    "peperomia-argyreia": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Watermelon Peperomia",
+        "sci": "Peperomia argyreia",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/watermelon-peperomia"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Watermelon Peperomia",
+        "sci": "Peperomia argyreia",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/watermelon-peperomia"
+      }
+    },
+    "maranta-leuconeura": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Calathea Lancifolia 2",
+        "sci": "Maranta insignis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea-lancifolia-2"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Calathea Lancifolia 2",
+        "sci": "Maranta insignis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea-lancifolia-2"
+      }
+    },
+    "goeppertia-orbifolia": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Calathea",
+        "sci": "Calathea spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Calathea",
+        "sci": "Calathea spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea"
+      }
+    },
+    "goeppertia-makoyana": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Calathea",
+        "sci": "Calathea spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Calathea",
+        "sci": "Calathea spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea"
+      }
+    },
+    "goeppertia-roseopicta": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Calathea",
+        "sci": "Calathea spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Calathea",
+        "sci": "Calathea spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea"
+      }
+    },
+    "goeppertia-lancifolia": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Calathea",
+        "sci": "Calathea spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Calathea",
+        "sci": "Calathea spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea"
+      }
+    },
+    "calathea-ornata": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Calathea",
+        "sci": "Calathea spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Calathea",
+        "sci": "Calathea spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea"
+      }
+    },
+    "calathea-white-fusion": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Calathea",
+        "sci": "Calathea spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Calathea",
+        "sci": "Calathea spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/calathea"
+      }
+    },
+    "ctenanthe-burle-marxii": {
+      "cats": null,
+      "dogs": null
+    },
+    "ctenanthe-amagris": {
+      "cats": null,
+      "dogs": null
+    },
+    "stromanthe-sanguinea": {
+      "cats": null,
+      "dogs": null
+    },
+    "nephrolepis-exaltata": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Feather Palm",
+        "sci": "Nephrolepis exaltata",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/feather-palm"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Feather Palm",
+        "sci": "Nephrolepis exaltata",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/feather-palm"
+      }
+    },
+    "adiantum-raddianum": {
+      "cats": null,
+      "dogs": null
+    },
+    "asplenium-nidus": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Hen and Chickens Fern",
+        "sci": "Asplenium bulbiferum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/hen-and-chickens-fern"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Hen and Chickens Fern",
+        "sci": "Asplenium bulbiferum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/hen-and-chickens-fern"
+      }
+    },
+    "platycerium-bifurcatum": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Common Staghorn Fern",
+        "sci": "Platycerium bifurcatum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/common-staghorn-fern"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Common Staghorn Fern",
+        "sci": "Platycerium bifurcatum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/common-staghorn-fern"
+      }
+    },
+    "phlebodium-aureum": {
+      "cats": null,
+      "dogs": null
+    },
+    "davallia-fejeensis": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Dainty Rabbits-Foot Fern",
+        "sci": "Davallia fejeensis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/dainty-rabbits-foot-fern"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Dainty Rabbits-Foot Fern",
+        "sci": "Davallia fejeensis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/dainty-rabbits-foot-fern"
+      }
+    },
+    "begonia-maculata": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Begonia",
+        "sci": "Begonia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/begonia"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Begonia",
+        "sci": "Begonia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/begonia"
+      }
+    },
+    "begonia-rex": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Rex Begonia",
+        "sci": "Begonia rex",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/rex-begonia"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Rex Begonia",
+        "sci": "Begonia rex",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/rex-begonia"
+      }
+    },
+    "saintpaulia-ionantha": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "African Violet",
+        "sci": "Saintpaulia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/african-violet"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "African Violet",
+        "sci": "Saintpaulia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/african-violet"
+      }
+    },
+    "streptocarpus-hybridus": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Cape Primrose",
+        "sci": "Streptocarpus spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/cape-primrose"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Cape Primrose",
+        "sci": "Streptocarpus spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/cape-primrose"
+      }
+    },
+    "episcia-cupreata": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Episcia",
+        "sci": "Episcia dianthiflora",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/episcia"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Episcia",
+        "sci": "Episcia dianthiflora",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/episcia"
+      }
+    },
+    "echeveria-elegans": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Chickens and Hens",
+        "sci": "Echeveria elegans",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/chickens-and-hens"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Chickens and Hens",
+        "sci": "Echeveria elegans",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/chickens-and-hens"
+      }
+    },
+    "echeveria-lola": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Blue Echeveria",
+        "sci": "Echeveria glauca",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/blue-echeveria"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Blue Echeveria",
+        "sci": "Echeveria glauca",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/blue-echeveria"
+      }
+    },
+    "echeveria-perle-von-nurnberg": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Blue Echeveria",
+        "sci": "Echeveria glauca",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/blue-echeveria"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Blue Echeveria",
+        "sci": "Echeveria glauca",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/blue-echeveria"
+      }
+    },
+    "haworthiopsis-attenuata": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Haworthia",
+        "sci": "Haworthia species",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/haworthia"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Haworthia",
+        "sci": "Haworthia species",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/haworthia"
+      }
+    },
+    "aloe-vera": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Aloe",
+        "sci": "Aloe vera",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/aloe"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Aloe",
+        "sci": "Aloe vera",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/aloe"
+      }
+    },
+    "gasteria-carinata": {
+      "cats": null,
+      "dogs": null
+    },
+    "kalanchoe-blossfeldiana": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Kalanchoe",
+        "sci": "Kalanchoe spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/kalanchoe"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Kalanchoe",
+        "sci": "Kalanchoe spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/kalanchoe"
+      }
+    },
+    "sempervivum-tectorum": {
+      "cats": null,
+      "dogs": null
+    },
+    "sedum-morganianum": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Burro's Tail",
+        "sci": "Sedum morganianum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/burros-tail"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Burro's Tail",
+        "sci": "Sedum morganianum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/burros-tail"
+      }
+    },
+    "euphorbia-trigona": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Pencil Cactus",
+        "sci": "Euphorbia tirucalli",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/pencil-cactus"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Pencil Cactus",
+        "sci": "Euphorbia tirucalli",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/pencil-cactus"
+      }
+    },
+    "euphorbia-tirucalli": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Pencil Cactus",
+        "sci": "Euphorbia tirucalli",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/pencil-cactus"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Pencil Cactus",
+        "sci": "Euphorbia tirucalli",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/pencil-cactus"
+      }
+    },
+    "schlumbergera-truncata": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Christmas Cactus",
+        "sci": "Schlumbergera bridgesii",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/christmas-cactus"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Christmas Cactus",
+        "sci": "Schlumbergera bridgesii",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/christmas-cactus"
+      }
+    },
+    "opuntia-microdasys": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Tree Cactus",
+        "sci": "Opuntia species",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/tree-cactus"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Tree Cactus",
+        "sci": "Opuntia species",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/tree-cactus"
+      }
+    },
+    "mammillaria-elongata": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Thimble Cactus",
+        "sci": "Mammillaria fragilis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/thimble-cactus"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Thimble Cactus",
+        "sci": "Mammillaria fragilis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/thimble-cactus"
+      }
+    },
+    "cereus-repandus": {
+      "cats": null,
+      "dogs": null
+    },
+    "epiphyllum-oxypetalum": {
+      "cats": null,
+      "dogs": null
+    },
+    "rhipsalis-baccifera": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Mistletoe Cactus",
+        "sci": "Rhipsalis cassutha",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/mistletoe-cactus"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Mistletoe Cactus",
+        "sci": "Rhipsalis cassutha",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/mistletoe-cactus"
+      }
+    },
+    "lithops-lesliei": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Living Stones",
+        "sci": "Lithops naureeniae",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/living-stones"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Living Stones",
+        "sci": "Lithops naureeniae",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/living-stones"
+      }
+    },
+    "phalaenopsis-amabilis": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Phalaenopsis Orchid",
+        "sci": "Phalaenopsis sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/phalaenopsis-orchid"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Phalaenopsis Orchid",
+        "sci": "Phalaenopsis sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/phalaenopsis-orchid"
+      }
+    },
+    "dendrobium-nobile": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Leopard Orchid",
+        "sci": "Dendrobium gracilicaule",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/leopard-orchid"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Leopard Orchid",
+        "sci": "Dendrobium gracilicaule",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/leopard-orchid"
+      }
+    },
+    "cattleya-labiata": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Cattleya Labiata",
+        "sci": "Cattleya labiata",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/cattleya-labiata"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Cattleya Labiata",
+        "sci": "Cattleya labiata",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/cattleya-labiata"
+      }
+    },
+    "gardenia-jasminoides": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Cape Jasmine",
+        "sci": "Gardenia jasminoides",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/cape-jasmine"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Cape Jasmine",
+        "sci": "Gardenia jasminoides",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/cape-jasmine"
+      }
+    },
+    "jasminum-polyanthum": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Jasmine",
+        "sci": "Jasminum species",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/jasmine"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "genus",
+        "name": "Jasmine",
+        "sci": "Jasminum species",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/jasmine"
+      }
+    },
+    "hibiscus-rosa-sinensis": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Hibiscus",
+        "sci": "Hibiscus syriacus",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/hibiscus"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "related",
+        "name": "Hibiscus",
+        "sci": "Hibiscus syriacus",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/hibiscus"
+      }
+    },
+    "anthurium-scherzerianum": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Flamingo Flower",
+        "sci": "Anthurium scherzeranum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/flamingo-flower"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Flamingo Flower",
+        "sci": "Anthurium scherzeranum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/flamingo-flower"
+      }
+    },
+    "cyclamen-persicum": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Cyclamen",
+        "sci": "Cyclamen spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/cyclamen"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Cyclamen",
+        "sci": "Cyclamen spp",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/cyclamen"
+      }
+    },
+    "clivia-miniata": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Clivia Lily",
+        "sci": "Clivia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/clivia-lily"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Clivia Lily",
+        "sci": "Clivia spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/clivia-lily"
+      }
+    },
+    "hippeastrum-hybridum": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Barbados Lily",
+        "sci": "Hippeastrum spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/barbados-lily"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Barbados Lily",
+        "sci": "Hippeastrum spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/barbados-lily"
+      }
+    },
+    "guzmania-lingulata": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Orange Star",
+        "sci": "Guzmania lingulata minor",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/orange-star"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Orange Star",
+        "sci": "Guzmania lingulata minor",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/orange-star"
+      }
+    },
+    "aechmea-fasciata": {
+      "cats": null,
+      "dogs": null
+    },
+    "tillandsia-ionantha": {
+      "cats": null,
+      "dogs": null
+    },
+    "tillandsia-xerographica": {
+      "cats": null,
+      "dogs": null
+    },
+    "ocimum-basilicum": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Basil",
+        "sci": "Ocimum basilicum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/basil"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Basil",
+        "sci": "Ocimum basilicum",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/basil"
+      }
+    },
+    "mentha-spicata": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Mint",
+        "sci": "Mentha sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/mint"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Mint",
+        "sci": "Mentha sp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/mint"
+      }
+    },
+    "rosmarinus-officinalis": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Rosemary",
+        "sci": "Rosmarinus officinalis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/rosemary"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Rosemary",
+        "sci": "Rosmarinus officinalis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/rosemary"
+      }
+    },
+    "citrus-limon": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Bergamot Orange",
+        "sci": "Citrus Aurantium",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/bergamot-orange"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Bergamot Orange",
+        "sci": "Citrus Aurantium",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/bergamot-orange"
+      }
+    },
+    "coffea-arabica": {
+      "cats": null,
+      "dogs": null
+    },
+    "dracaena-surculosa": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Gold Dust Dracaena",
+        "sci": "Dracaena surculosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/gold-dust-dracaena"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Gold Dust Dracaena",
+        "sci": "Dracaena surculosa",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/gold-dust-dracaena"
+      }
+    },
+    "codiaeum-variegatum": {
+      "cats": null,
+      "dogs": null
+    },
+    "cordyline-fruticosa": {
+      "cats": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Baby Doll Ti Plant",
+        "sci": "Cordyline terminalis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/baby-doll-ti-plant"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "species",
+        "name": "Baby Doll Ti Plant",
+        "sci": "Cordyline terminalis",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/baby-doll-ti-plant"
+      }
+    },
+    "fittonia-albivenis": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Nerve Plant",
+        "sci": "Fittonia verschaffeltii",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/nerve-plant"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Nerve Plant",
+        "sci": "Fittonia verschaffeltii",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/nerve-plant"
+      }
+    },
+    "hypoestes-phyllostachya": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Polka Dot Plant",
+        "sci": "Hypoestes phyllostachya",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/polka-dot-plant"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Polka Dot Plant",
+        "sci": "Hypoestes phyllostachya",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/polka-dot-plant"
+      }
+    },
+    "oxalis-triangularis": {
+      "cats": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Good Luck Plant",
+        "sci": "Oxalis spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/good-luck-plant"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "genus",
+        "name": "Good Luck Plant",
+        "sci": "Oxalis spp.",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/good-luck-plant"
+      }
+    },
+    "aspidistra-elatior": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Cast Iron Plant",
+        "sci": "Aspidistra elatior",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/cast-iron-plant"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Cast Iron Plant",
+        "sci": "Aspidistra elatior",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/cast-iron-plant"
+      }
+    },
+    "cyperus-alternifolius": {
+      "cats": null,
+      "dogs": null
+    },
+    "soleirolia-soleirolii": {
+      "cats": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Paddys Wig",
+        "sci": "Soleirolia soleirolii",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/paddys-wig"
+      },
+      "dogs": {
+        "status": "non-toxic",
+        "level": "species",
+        "name": "Paddys Wig",
+        "sci": "Soleirolia soleirolii",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/paddys-wig"
+      }
+    },
+    "asparagus-setaceus": {
+      "cats": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Asparagus Fern",
+        "sci": "Asparagus densiflorus cv sprengeri",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/asparagus-fern"
+      },
+      "dogs": {
+        "status": "toxic",
+        "level": "related",
+        "name": "Asparagus Fern",
+        "sci": "Asparagus densiflorus cv sprengeri",
+        "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/asparagus-fern"
+      }
+    },
+    "bambusa-vulgaris": {
+      "cats": null,
+      "dogs": null
+    }
+  }
+}
