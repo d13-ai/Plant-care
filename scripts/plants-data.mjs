@@ -22,7 +22,23 @@
  * these pages are read by people about to water something.
  */
 
-/** Toxicity lines are written to the ASPCA's classification for cats and dogs. */
+/**
+ * Toxicity lines are written to the ASPCA's classification for cats and dogs,
+ * and scripts/aspca-audit.mjs holds them to it: a line may only start
+ * "Non-toxic" when the ASPCA lists the plant (or its genus) as non-toxic to
+ * both. A plant it does not list at all says so, with UNLISTED, rather than
+ * borrowing reassurance from horticultural folklore.
+ */
+const UNLISTED =
+  "Not on the ASPCA's list of toxic or non-toxic plants, so we don't call it pet-safe: not being listed is not the same as being tested. Keep it out of reach of a pet that chews.";
+
+/**
+ * The ASPCA lists a relative — another species in the genus — but not this
+ * plant. Close, and not good enough to call it pet-safe on.
+ */
+const RELATIVES =
+  "Not on the ASPCA's list itself, only its relatives, so we don't call it pet-safe. Keep it out of reach of a pet that chews.";
+
 const OXALATE = "Toxic to cats, dogs and people if chewed — the sap carries insoluble calcium oxalate crystals, which burn the mouth and throat. Keep it off the floor if anything in the house tastes its way through life.";
 
 export const GENUS = {
@@ -360,7 +376,7 @@ export const GENUS = {
     soilLong: "Ordinary compost with a third perlite or coarse sand. The swollen trunk stores water, so the mix must not.",
     feed: "Balanced feed at half strength monthly in spring and summer",
     repotNote: "Every second or third spring. Braided specimens are several young trees planted together — they can be separated at repotting if you would rather have one proper tree.",
-    toxicity: "Non-toxic to cats and dogs, and one of the few genuinely safe larger houseplants.",
+    toxicity: "Non-toxic to cats and dogs, and one of the few larger houseplants that is.",
     propagation: "Stem cuttings in spring, rooted in damp compost under a bag; expect a low success rate compared with an aroid.",
     waterHow: "Water thoroughly when the top half of the pot is dry, then let it drain completely. Every week or two is typical indoors.",
     problems: [
@@ -492,7 +508,7 @@ export const GENUS = {
   Howea: { inherit: "Chamaedorea", light: "Medium indirect light, and tolerant of shade", lightLong: "Medium indirect light. Kentias are the most shade-tolerant palm sold as a houseplant, and the most forgiving overall — which is why they cost more." },
   Rhapis: { inherit: "Chamaedorea", light: "Medium indirect light", propagation: "Divide the clump in spring — unusually for a palm, lady palms sucker and divide well." },
   Phoenix: { inherit: "Chamaedorea", light: "Bright light with some direct sun", toxicity: "Non-toxic to cats and dogs, but the spines at the base of each frond are needle-sharp — site it away from walkways." },
-  Livistona: { inherit: "Chamaedorea", light: "Bright indirect light with some direct sun" },
+  Livistona: { toxicity: UNLISTED, inherit: "Chamaedorea", light: "Bright indirect light with some direct sun" },
 
   // ------------------------------------------------------- Vines & trailers
   Hoya: {
@@ -541,7 +557,7 @@ export const GENUS = {
     soilLong: "Ordinary compost with perlite. Spider plants build thick white water-storing roots that will crack a pot when they run out of room.",
     feed: "A balanced feed at half strength monthly in spring and summer; over-feeding causes brown tips",
     repotNote: "Every spring while young. A spider plant that is not producing babies is usually one that needs a bigger pot — or, occasionally, one that needs a smaller one, since they flower when snug.",
-    toxicity: "Non-toxic to cats and dogs. Cats are unusually drawn to chewing the leaves, which is harmless but hard on the plant.",
+    toxicity: "Non-toxic to cats and dogs. Cats are unusually drawn to chewing the leaves, which is hard on the plant — and a lot of any plant can still upset a cat's stomach.",
     propagation: "Peg a plantlet from a runner onto a pot of compost while still attached to the parent, and cut it free once it has rooted.",
     waterHow: "Keep lightly damp in summer, drier in winter. They store water in the roots and survive a missed fortnight.",
     problems: [
@@ -587,7 +603,7 @@ export const GENUS = {
   Ceropegia: {
     inherit: "Senecio",
     light: "Bright indirect light with a little direct sun",
-    toxicity: "Non-toxic to cats and dogs.",
+    toxicity: UNLISTED,
     propagation:
       "It makes small round tubers along the strands; press one onto damp compost and it roots within weeks. Strand cuttings work too.",
   },
@@ -647,7 +663,7 @@ export const GENUS = {
     soilLong: "A light, moisture-retentive mix — compost with perlite and a little bark. The roots are fine and shallow, so a wide shallow pot beats a deep one.",
     feed: "A balanced feed at quarter to half strength monthly in spring and summer. They are sensitive to over-feeding",
     repotNote: "Every spring, into a shallow pot. Divide the clump at the same time if it has spread.",
-    toxicity: "Non-toxic to cats and dogs — the whole family is safe, which is much of their appeal.",
+    toxicity: "Non-toxic to cats and dogs, which is much of their appeal.",
     propagation: "Divide the clump at repotting, giving each piece roots and several leaves. Stem cuttings with a node also root in water.",
     waterHow:
       "Keep evenly damp — never soggy, never dry — and use rainwater or filtered water if you can. Tap water is the most common cause of the brown edges this family is famous for.",
@@ -664,8 +680,8 @@ export const GENUS = {
       "Medium indirect light. Calatheas — which is what most of these were called until the genus was split, and what everyone still calls them — burn in direct sun and lose their markings in a dark corner.",
   },
   Calathea: { inherit: "Maranta" },
-  Ctenanthe: { inherit: "Maranta", humidity: "Above 60%, though it is the most forgiving of the prayer plants" },
-  Stromanthe: { inherit: "Maranta", light: "Bright indirect light — the pink needs more than a calathea does" },
+  Ctenanthe: { toxicity: UNLISTED, inherit: "Maranta", humidity: "Above 60%, though it is the most forgiving of the prayer plants" },
+  Stromanthe: { toxicity: UNLISTED, inherit: "Maranta", light: "Bright indirect light — the pink needs more than a calathea does" },
 
   // ----------------------------------------------------------------- Ferns
   Nephrolepis: {
@@ -687,7 +703,7 @@ export const GENUS = {
       ["Brown dots in rows under the fronds", "Spores. Completely normal.", "Nothing to do; it means the fern is mature and happy."],
     ],
   },
-  Adiantum: { inherit: "Nephrolepis", humidity: "Above 70%. Maidenhair ferns are unforgiving about this", waterHow: "Never, ever let it dry out. A maidenhair that dries once loses every frond — cut them all back to the compost and it usually reshoots." },
+  Adiantum: { toxicity: UNLISTED, inherit: "Nephrolepis", humidity: "Above 70%. Maidenhair ferns are unforgiving about this", waterHow: "Never, ever let it dry out. A maidenhair that dries once loses every frond — cut them all back to the compost and it usually reshoots." },
   Asplenium: { inherit: "Nephrolepis", light: "Medium to low indirect light", waterHow: "Keep the compost damp, and water around the edge of the pot rather than into the centre — water sitting in the rosette rots the crown." },
   Platycerium: {
     inherit: "Nephrolepis",
@@ -702,7 +718,7 @@ export const GENUS = {
       ["Black spots spreading on the antler fronds", "Too wet, or water sitting on the fronds in still air.", "Water at the base, improve airflow, and let it dry between soaks."],
     ],
   },
-  Phlebodium: { inherit: "Nephrolepis", light: "Medium to bright indirect light", waterHow: "Keep damp, and keep water off the furry rhizomes that creep over the surface — they rot if buried or kept wet." },
+  Phlebodium: { toxicity: UNLISTED, inherit: "Nephrolepis", light: "Medium to bright indirect light", waterHow: "Keep damp, and keep water off the furry rhizomes that creep over the surface — they rot if buried or kept wet." },
   Davallia: { inherit: "Nephrolepis", waterHow: "Keep damp, and leave the furry rhizomes sitting on top of the compost where they belong — burying them kills the plant." },
   Asparagus: {
     inherit: "Nephrolepis",
@@ -774,7 +790,7 @@ export const GENUS = {
     ],
   },
   Haworthiopsis: { inherit: "Echeveria", light: "Bright indirect light; it burns in hard direct sun", lightLong: "Bright indirect light. Unlike most succulents, haworthias grow under scrub in the wild and turn red and stressed in full midday sun." },
-  Gasteria: { inherit: "Haworthiopsis" },
+  Gasteria: { toxicity: UNLISTED, inherit: "Haworthiopsis" },
   Aloe: {
     inherit: "Echeveria",
     light: "Bright light with several hours of direct sun",
@@ -793,7 +809,7 @@ export const GENUS = {
       ["Mushy stem at the base", "Overwatering.", "Take healthy cuttings and start again."],
     ],
   },
-  Sempervivum: { inherit: "Echeveria", light: "Full sun; it is a hardy outdoor plant", lightLong: "Full sun. Houseleeks are alpine plants, hardy to well below freezing, and they do better on a windowsill that gets cold at night — or outdoors — than in a warm room.", propagation: "Detach the offsets — the 'chicks' — and press them onto gritty compost." },
+  Sempervivum: { toxicity: UNLISTED, inherit: "Echeveria", light: "Full sun; it is a hardy outdoor plant", lightLong: "Full sun. Houseleeks are alpine plants, hardy to well below freezing, and they do better on a windowsill that gets cold at night — or outdoors — than in a warm room.", propagation: "Detach the offsets — the 'chicks' — and press them onto gritty compost." },
   Sedum: { inherit: "Echeveria", light: "Bright light with some direct sun", propagation: "Individual leaves root readily; a burro's tail drops them at the slightest knock, so pot the casualties up." },
   Euphorbia: {
     inherit: "Echeveria",
@@ -838,9 +854,9 @@ export const GENUS = {
       ["Corky brown patches low down", "Normal ageing on an older cactus.", "Nothing to fix."],
     ],
   },
-  Mammillaria: { inherit: "Opuntia", toxicity: "Non-toxic to cats and dogs; the spines are the only hazard." },
-  Cereus: { inherit: "Opuntia", toxicity: "Non-toxic to cats and dogs; the spines are the only hazard.", repotNote: "Every three or four years, into a heavy pot — a tall column cactus is top-heavy." },
-  Epiphyllum: { inherit: "Schlumbergera", light: "Bright indirect light", lightLong: "Bright indirect light. Like the holiday cacti, this is a forest epiphyte and scorches in direct sun." },
+  Mammillaria: { inherit: "Opuntia", toxicity: "Non-toxic to cats and dogs, but the spines are a hazard in their own right." },
+  Cereus: { inherit: "Opuntia", toxicity: `${UNLISTED} The spines are a hazard in their own right.`, repotNote: "Every three or four years, into a heavy pot — a tall column cactus is top-heavy." },
+  Epiphyllum: { toxicity: UNLISTED, inherit: "Schlumbergera", light: "Bright indirect light", lightLong: "Bright indirect light. Like the holiday cacti, this is a forest epiphyte and scorches in direct sun." },
   Rhipsalis: { inherit: "Schlumbergera", light: "Medium to bright indirect light", waterHow: "Keep lightly damp — mistletoe cactus is the thirstiest cactus you will own and hates drying out hard." },
   Lithops: {
     // Inherits the cactus mix and cactus discipline, but it is a mesemb, not
@@ -1008,8 +1024,9 @@ export const GENUS = {
       ["Rot at the base", "The compost was kept too wet.", "Water the cup, not the pot."],
     ],
   },
-  Aechmea: { inherit: "Guzmania" },
+  Aechmea: { toxicity: UNLISTED, inherit: "Guzmania" },
   Tillandsia: {
+    toxicity: UNLISTED,
     inherit: "Guzmania",
     light: "Bright indirect light",
     soil: "None — air plants grow on nothing at all",
@@ -1047,7 +1064,7 @@ export const GENUS = {
   Mentha: {
     inherit: "Ocimum",
     light: "Bright light; a few hours of direct sun",
-    toxicity: "Mildly toxic to cats and dogs in quantity, though a nibble is harmless. Edible for people.",
+    toxicity: "Mildly toxic to cats and dogs, mostly when eaten in quantity. Edible for people.",
     repotNote: "Every spring — mint fills a pot with runners within a season and exhausts it.",
     propagation: "Cuttings root in water in days, and a clump divides in seconds.",
     waterHow: "Keep it damp. Mint is a streamside plant and the one herb that genuinely does not want to dry out.",
@@ -1160,7 +1177,7 @@ export const GENUS = {
     soilLong: "Ordinary compost with perlite. It grows from small scaly rhizomes just under the surface.",
     feed: "A balanced feed at half strength monthly while in leaf",
     repotNote: "Every second spring, or whenever the pot fills with rhizomes. Divide at the same time.",
-    toxicity: "Toxic to cats and dogs in quantity — the leaves are high in oxalic acid. A nibble is harmless; a mouthful is not.",
+    toxicity: "Toxic to cats and dogs, especially in quantity — the leaves are high in oxalic acid.",
     propagation: "Divide the rhizomes at repotting; each scaly piece makes a new plant.",
     waterHow: "Keep lightly damp while in leaf. When it dies back, stop watering entirely until new shoots appear.",
     problems: [
@@ -1194,7 +1211,7 @@ export const GENUS = {
     soilLong: "Ordinary compost, kept wet. This is the one houseplant that is genuinely happy with its pot standing in water.",
     feed: "A balanced feed monthly through the growing season",
     repotNote: "Every spring — it fills a pot fast.",
-    toxicity: "Non-toxic to cats and dogs.",
+    toxicity: UNLISTED,
     propagation: "Divide the clump, or turn a flower head upside down in a glass of water — it roots from the bracts.",
     waterHow: "Stand the pot in a saucer of water and keep it there. An umbrella plant cannot be overwatered and dies quickly if it dries.",
     problems: [
@@ -1217,7 +1234,7 @@ export const GENUS = {
     soilLong: "A rich compost that holds water. Bamboo is thirsty and roots hard into whatever it is given.",
     feed: "A high-nitrogen feed every two weeks in spring and summer",
     repotNote: "Every spring — bamboo fills a pot with root in a single season and will eventually split it.",
-    toxicity: "Non-toxic to cats and dogs.",
+    toxicity: UNLISTED,
     propagation: "Divide the clump in spring with a saw. It is heavy work.",
     waterHow: "Keep the compost damp at all times. Bamboo in a pot dries out fast and drops leaves when it does.",
     problems: [
@@ -1778,6 +1795,7 @@ export const PLANTS = {
     difficulty: "Easy",
   },
   "phoenix-roebelenii": {
+    toxicity: `${RELATIVES} The spines at the base of each frond are needle-sharp — site it away from walkways.`,
     blurb:
       "The pygmy date palm: a stout shaggy trunk with a crown of fine feathery fronds, like a scaled-down date palm. It wants more light than the other palms here, and the spines at the base of each frond are genuinely sharp — site it away from where people brush past.",
     size: "1–2 m indoors",
@@ -1815,6 +1833,7 @@ export const PLANTS = {
     ],
   },
   "hoya-linearis": {
+    toxicity: RELATIVES,
     blurb:
       "The odd one out among hoyas: soft, fuzzy, needle-thin leaves hanging in long green curtains, more like a string plant than a wax plant. It comes from cool Himalayan forests, so it wants better humidity, more air movement and cooler nights than the leathery hoyas — and it rots faster if kept wet.",
     size: "Strands to 1.5 m",
@@ -1869,6 +1888,7 @@ export const PLANTS = {
     difficulty: "Easy",
   },
   "peperomia-prostrata": {
+    toxicity: RELATIVES,
     blurb:
       "String of turtles: tiny round leaves patterned like a turtle's shell, on slow trailing stems. It is a peperomia rather than a succulent, so it wants more humidity and less sun than the other string plants — and it is very slow, so a full pot is worth paying for.",
     size: "Strands to 30 cm",
@@ -1884,6 +1904,7 @@ export const PLANTS = {
     difficulty: "Fussy",
   },
   "pilea-peperomioides": {
+    toxicity: RELATIVES,
     blurb:
       "The Chinese money plant: round coin-shaped leaves on long stalks radiating from a central stem. It was carried out of Yunnan by a Norwegian missionary in 1946 and spread through Scandinavia entirely by cuttings passed between friends, decades before it reached the trade. It pups freely, which is why.",
     size: "30–40 cm tall and wide",
@@ -1942,6 +1963,7 @@ export const PLANTS = {
 
   // ------------------------------------------------------- Prayer plants
   "maranta-leuconeura": {
+    toxicity: RELATIVES,
     blurb:
       "The prayer plant proper: velvety leaves patterned in herringbone red veins or dark chocolate blotches, which fold upright at night and open again at dawn. The movement is real and worth watching — it is driven by water pressure in a hinge at the base of each leaf. It trails as it grows and is the most forgiving of this family.",
     size: "20–30 cm tall, trailing to 40 cm",
@@ -2032,6 +2054,7 @@ export const PLANTS = {
     difficulty: "Fussy",
   },
   "asplenium-nidus": {
+    toxicity: RELATIVES,
     blurb:
       "The bird's nest fern: broad, undivided, glossy fronds in a rosette around a central crown, growing on tree branches in the wild. The simplest fern to keep — it has none of the maidenhair's drama — but water must never sit in the centre of the rosette.",
     size: "50–90 cm across",
@@ -2093,6 +2116,7 @@ export const PLANTS = {
     difficulty: "Straightforward",
   },
   "episcia-cupreata": {
+    toxicity: RELATIVES,
     blurb:
       "The flame violet: quilted copper and silver leaves on trailing runners, with small scarlet flowers. Another gesneriad — same family as the African violet — but it wants more warmth and more humidity, and it spreads by strawberry-style runners rather than leaf cuttings.",
     size: "15 cm tall, trailing to 40 cm",
@@ -2165,6 +2189,7 @@ export const PLANTS = {
     difficulty: "Easy",
   },
   "schlumbergera-truncata": {
+    toxicity: RELATIVES,
     blurb:
       "The Christmas or Thanksgiving cactus: flat segmented stems that arch over and, in late autumn, hang tubular flowers off every tip. It is a forest cactus that grows in tree forks in Brazil, not a desert plant — so it wants more water and less sun than its shape suggests. Plants passed down for fifty years are common.",
     size: "30–50 cm across, arching",
@@ -2182,6 +2207,7 @@ export const PLANTS = {
     difficulty: "Easy",
   },
   "mammillaria-elongata": {
+    toxicity: `${RELATIVES} The spines are a hazard in their own right.`,
     blurb:
       "Ladyfinger cactus: clusters of short upright fingers covered in neat radiating golden spines, forming a dense colony. It is one of the easiest cacti to keep alive on a sunny windowsill and flowers readily in spring with a ring of small cream flowers.",
     size: "15–20 cm tall, clumping",
@@ -2203,6 +2229,7 @@ export const PLANTS = {
     difficulty: "Straightforward",
   },
   "rhipsalis-baccifera": {
+    toxicity: RELATIVES,
     blurb:
       "Mistletoe cactus: a mass of thin trailing green strands with small white berries — and the only cactus that grows wild outside the Americas, found in Africa and Sri Lanka too. It is an epiphyte from humid forest, so it is the one cactus that wants regular water and hates drying out hard.",
     size: "Strands to 1–2 m",
@@ -2210,6 +2237,7 @@ export const PLANTS = {
     difficulty: "Easy",
   },
   "lithops-lesliei": {
+    toxicity: RELATIVES,
     blurb:
       "Living stones: a pair of fused leaves flush with the ground, patterned to look like the pebbles around them. Each year the plant absorbs the old pair of leaves to grow a new one, and watering during that changeover is the standard way people kill them. It is the most specific watering regime in this catalogue and the most unforgiving.",
     size: "2–4 cm across",
@@ -2248,6 +2276,7 @@ export const PLANTS = {
     ],
   },
   "dendrobium-nobile": {
+    toxicity: RELATIVES,
     blurb:
       "An orchid that flowers along the length of its leafless canes rather than on a spike, covering them in scented blooms. It needs a genuinely cold, dry winter rest — nights near 10 °C and almost no water for six weeks — to set buds, which is why the ones sold in flower rarely repeat indoors.",
     size: "40–60 cm tall",
@@ -2276,6 +2305,7 @@ export const PLANTS = {
     difficulty: "Needs attention",
   },
   "hibiscus-rosa-sinensis": {
+    toxicity: RELATIVES,
     blurb:
       "Chinese hibiscus: enormous flowers, each lasting a day or two, produced all summer on new growth if it gets enough sun and enough feeding. It is greedy on both counts and will not flower indoors without a genuinely sunny window.",
     size: "1–1.5 m indoors",

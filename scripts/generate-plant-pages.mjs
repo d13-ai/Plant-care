@@ -27,6 +27,8 @@ import { fileURLToPath } from "node:url";
 import { SPECIES, SPECIES_GROUPS, scientificName } from "../src/domain/species.ts";
 import { ANALYTICS_SNIPPET } from "../src/domain/analytics.ts";
 import { GENUS, PLANTS } from "./plants-data.mjs";
+import { guideFor } from "./guides-data.mjs";
+import { aspcaFor, aspcaHtml, aspcaText, EMERGENCY_TEXT, PET_NOTICE_HTML, petSummary, saysUnlisted } from "./pet-safety.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -34,7 +36,7 @@ const OUT = process.argv[2] ? join(ROOT, process.argv[2]) : join(ROOT, "public",
 export const SITE = "https://plantparlour.org";
 
 // --------------------------------------------------------------- helpers
-const esc = (s) =>
+export const esc = (s) =>
   String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 export const slugify = (s) =>
@@ -47,9 +49,6 @@ export const slugify = (s) =>
 
 /** Lower-cases a field's first letter so it can be dropped mid-sentence. */
 const lc = (s) => s.charAt(0).toLowerCase() + s.slice(1).replace(/\.$/, "");
-
-/** The first sentence of a longer field, with its full stop kept. */
-const firstSentence = (s) => s.split(/(?<=\.)\s/)[0];
 
 /** "a Swiss cheese plant" / "an African violet". */
 const indef = (s) => `${/^[aeiou]/i.test(s) ? "an" : "a"} ${s}`;
@@ -111,9 +110,9 @@ export function plantPages() {
   return SPECIES.filter((e) => !e.cultivar || !hasBase(e)).map(resolve);
 }
 
-const ld = (obj) => `<script type="application/ld+json">\n${JSON.stringify(obj, null, 2)}\n</script>`;
+export const ld = (obj) => `<script type="application/ld+json">\n${JSON.stringify(obj, null, 2)}\n</script>`;
 
-const head = ({ title, description, canonical, extra = "" }) => `<!doctype html>
+export const head = ({ title, description, canonical, extra = "" }) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -142,10 +141,12 @@ ${extra}</head>
 <div class="wrap">
 <main>`;
 
-const foot = `</main>
+export const foot = `</main>
 </div>
 <footer>
   <a href="/plants">Plant care library</a> &middot;
+  <a href="/problems">Plant problems</a> &middot;
+  <a href="/pet-safe-houseplants">Pet-safe plants</a> &middot;
   <a href="/">PlantParlour</a> &middot;
   <a href="/parlour-games">Parlour Games</a> &middot;
   <a href="/privacy">Privacy</a> &middot;
@@ -173,10 +174,18 @@ export function plantPage(p) {
   // The liftable answer. Short sentences, no hedging, in the order someone
   // asks: light, water, mix, food, repotting, humidity, is it safe. This is
   // the paragraph an answer engine quotes, so it has to stand alone.
+  //
+  // The pet line is the one sentence here that can hurt somebody if it is
+  // wrong, so when it reassures it says whose reassurance it is.
   const answer =
     `${p.full} wants ${lc(p.light)}. Water it ${waterEvery}. ${p.waterHow} ` +
     `Pot it in ${lc(p.soil)}. ${p.feed}, and repot ${repotEvery}. ` +
-    `Humidity: ${lc(p.humidity)}. ${firstSentence(p.toxicity)}`;
+    `Humidity: ${lc(p.humidity)}. ${petSummary(p)}`;
+
+  // Who says so, and when we looked. Left out only where the ASPCA has
+  // nothing to say and the toxicity line has already said as much.
+  const aspca = aspcaFor(p.slug);
+  const petSource = saysUnlisted(p.toxicity) && !aspca.cats && !aspca.dogs ? "" : ` ${aspcaText(p)}`;
 
   const facts = [
     ["Water", `Water ${waterEvery}. ${p.waterHow}`],
@@ -185,7 +194,7 @@ export function plantPage(p) {
     ["Soil", `${p.soil}.`],
     ["Feeding", `${p.feed}.`],
     ["Repotting", `Repot ${repotEvery}.`],
-    ["Toxic to pets", p.toxicity],
+    ["Toxic to pets", `${p.toxicity}${petSource}`],
     // difficulty, size and origin come only from PLANTS, and plants-data.mjs
     // promises a species with no PLANTS entry still renders from its genus.
     // It didn't: these three were read unconditionally, so adding a species
@@ -212,7 +221,7 @@ export function plantPage(p) {
     ],
     [
       `Is ${p.label} toxic to cats and dogs?`,
-      p.toxicity,
+      `${p.toxicity}${petSource} ${EMERGENCY_TEXT}`,
     ],
     [
       `How do you propagate ${indef(p.label)}?`,
@@ -316,11 +325,18 @@ ${facts.map(([k, v]) => `  <dt>${esc(k)}</dt>\n  <dd>${esc(v)}</dd>`).join("\n")
 <ul class="problems">
 ${p.problems
   .map(
-    ([symptom, why, fix]) => `  <li>
+    ([symptom, why, fix]) => {
+      // A problem that has a guide links to it: the guide reads the symptom
+      // across every plant, which is what someone unsure of the cause needs.
+      const guide = guideFor(symptom);
+      return `  <li>
     <b>${esc(symptom)}</b>
     <p>${esc(why)}</p>
-    <p class="fix"><strong>Fix:</strong> ${esc(fix)}</p>
-  </li>`,
+    <p class="fix"><strong>Fix:</strong> ${esc(fix)}</p>${
+      guide ? `\n    <p class="more"><a href="/problems/${guide.slug}">${esc(guide.name)}: how to read it on any plant</a></p>` : ""
+    }
+  </li>`;
+    },
   )
   .join("\n")}
 </ul>
@@ -331,6 +347,8 @@ ${p.problems
 
 <h2 id="toxicity">Toxicity and safety</h2>
 <p>${esc(p.toxicity)}</p>
+${petSource ? `<p class="source">${aspcaHtml(p)}</p>\n` : ""}${PET_NOTICE_HTML}
+<p><a href="/pet-safe-houseplants">Every houseplant in the library the ASPCA lists as non-toxic to cats and dogs</a></p>
 ${
   p.cultivars.length
     ? `
@@ -452,6 +470,7 @@ export function hubPage(pages) {
 </div>
 
 <p>Each page covers one plant: how often to water it and how to tell when it needs it, the light and humidity it wants, the mix to pot it in, feeding, repotting, propagation, whether it is safe around cats and dogs, and the handful of things that actually go wrong with it — with the fix.</p>
+<p>Something going wrong and not sure what? The <a href="/problems">plant problems guides</a> start from what you can see — yellow leaves, brown tips, spider mites, leaf drop — and work back to the cause. Keeping a cat or a dog? See the <a href="/pet-safe-houseplants">houseplants the ASPCA lists as pet-safe</a>.</p>
 <p>These are the same plants the app's species picker knows, and the same watering, feeding and repotting cadences it sets as reminders when you name a plant. Named cultivars are listed on their parent species' page.</p>
 
 ${byGroup

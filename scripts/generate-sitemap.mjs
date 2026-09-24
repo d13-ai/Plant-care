@@ -20,6 +20,7 @@ import { createHash } from "node:crypto";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { plantPages, SITE } from "./generate-plant-pages.mjs";
+import { GUIDES } from "./guides-data.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -47,6 +48,16 @@ const urls = [
     priority: "0.7",
     changefreq: "monthly",
   })),
+  // The guides gather from every plant page and the pet page from the ASPCA
+  // snapshot, so each is keyed to its own output rather than its sources.
+  { loc: `${SITE}/problems`, files: ["public/problems/index.html"], priority: "0.8", changefreq: "monthly" },
+  ...GUIDES.map((g) => ({
+    loc: `${SITE}/problems/${g.slug}`,
+    files: [`public/problems/${g.slug}.html`],
+    priority: "0.8",
+    changefreq: "monthly",
+  })),
+  { loc: `${SITE}/pet-safe-houseplants`, files: ["public/pet-safe-houseplants.html"], priority: "0.8", changefreq: "monthly" },
   { loc: `${SITE}/parlour-games`, files: ["public/parlour-games/index.html"], priority: "0.6", changefreq: "weekly" },
   { loc: `${SITE}/parlour-games/trickle`, files: ["public/parlour-games/trickle.html"], priority: "0.6", changefreq: "weekly" },
   { loc: `${SITE}/parlour-games/windowsill`, files: ["public/parlour-games/windowsill.html"], priority: "0.6", changefreq: "weekly" },

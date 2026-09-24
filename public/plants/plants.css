@@ -99,6 +99,23 @@ th,td{text-align:left;padding:8px 10px 8px 0;border-top:1px solid var(--hair2);v
 th{color:var(--label);font-weight:700}
 thead th{border-top:0}
 
+/* The pet-safety notice. It sits beside every toxicity statement, so it is
+   styled to be read rather than skimmed: its own box, the emergency first. */
+.notice{background:var(--bad-bg);border:1px solid var(--bad);border-radius:8px;padding:12px 14px;margin:12px 0 14px;font-size:15px}
+.notice p{margin:0 0 8px}
+.notice p:last-child{margin:0}
+.notice a{color:var(--bad)}
+.source{font-size:14px;color:var(--muted)}
+
+/* A problem's link to the guide that reads it across every plant. */
+.problems .more{font-size:14px;margin-top:6px}
+.problems .chips{margin-top:8px}
+.steps{margin:0 0 12px;padding-left:22px}
+.steps li{margin:0 0 6px}
+.plainlist{margin:0 0 12px;padding-left:18px}
+.plainlist li{margin:0 0 6px}
+.cv{color:var(--muted);font-size:13px}
+
 nav.crumbs{font-size:13px;color:var(--muted);margin:0 0 10px}
 nav.crumbs a{font-weight:600}
 

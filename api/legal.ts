@@ -15,7 +15,14 @@ export const SITE = "https://plantparlour.org";
  * privacy notice silently re-dated the terms, which tells a keeper something
  * changed in an agreement that did not change at all.
  */
-export const UPDATED = { privacy: "18 September 2026", terms: "17 September 2026" };
+export const UPDATED = { privacy: "18 September 2026", terms: "24 September 2026" };
+/**
+ * When the arbitration agreement was added, which is what an existing
+ * keeper's 30-day opt-out window counts from. Kept apart from UPDATED.terms
+ * on purpose: that date moves whenever any wording changes, and tying the
+ * window to it would quietly reopen the opt-out on every edit.
+ */
+export const ARBITRATION_ADDED = "17 September 2026";
 /** Both pages point here. It has to be a mailbox someone actually reads. */
 export const CONTACT = "bondcreativestudios@gmail.com";
 /**
