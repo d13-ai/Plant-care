@@ -340,6 +340,47 @@ try {
       await second.close();
     }
   });
+  await step("a plant the scan calls unwell arrives flagged, not All good", async () => {
+    // 25 Sep 2026: a zigzag cactus scanned as Unwell was added and showed
+    // "All good", because the verdict went into history as a note and the
+    // badge only reads open issues. The scan's answer is put in the saved
+    // draft here, the way a real scan leaves it, since the smoke run has no AI.
+    const finding = (observation, kind) => ({ observation, kind, likely_cause: "Overwatering", suggested_action: "Let it dry out.", severity: "medium" });
+    const verdict = {
+      is_plant: true,
+      species: [{ genus: "Disocactus", species: "anguliger", cultivar: "", common_name: "Fishbone cactus", confidence: 0.9 }],
+      health: {
+        overall: "unwell",
+        findings: [
+          finding("One segment is yellow and limp", "problem"),
+          finding("The flat segments are healthy", "observation"),
+          finding("Rocks hide the soil", "photo_quality"),
+          finding("Thin stretched stems", "problem"),
+        ],
+      },
+      notes: "",
+    };
+    const draft = { photoUris: [], nickname: "Zigzag", species: "Disocactus anguliger", pickedName: null, location: "", acquiredFrom: "", acquiredAt: "", motherId: "", verdict, savedAt: new Date().toISOString() };
+    await page.evaluate((d) => localStorage.setItem("newPlantDraft", JSON.stringify(d)), draft);
+    await page.goto(base + "/plant/new");
+    await page.getByText("2 problems will be logged as issues").waitFor({ timeout: 20000 });
+    // Only the two problems get a button: good news and photo limits never do.
+    if ((await page.getByText("✓ Will log as an issue").count()) !== 2) throw new Error("expected both problems ticked, and nothing else offered");
+    // The keeper can leave one off.
+    await page.getByText("✓ Will log as an issue").first().click();
+    await page.getByText("1 problem will be logged as an issue").waitFor();
+    await page.getByText("Add plant", { exact: true }).last().click();
+    // On the plant's own page now. Not "Special care needed" as text: the add
+    // screen's own hint says those words, so a check for them passes before
+    // the plant exists. The issue is written as "... — likely <cause>", which
+    // the AI-check note never is, so that is what proves an issue was logged.
+    await page.waitForURL(/\/plant\/\d+$/, { timeout: 20000 });
+    await page.getByText("Thin stretched stems — likely overwatering", { exact: false }).first().waitFor({ timeout: 20000 });
+    const body = await page.evaluate(() => document.body.innerText);
+    if (body.includes("One segment is yellow and limp — likely")) throw new Error("a problem the keeper left off was logged anyway");
+    if (body.includes("All good")) throw new Error("the plant still says All good");
+    await shot("12-unwell-scan-flagged");
+  });
   await step("without an account there is a welcome screen and no way past it", async () => {
     // A clean context: no session in storage, no stubbed auth. The parlour
     // belongs to an account, so this is all anyone sees -- including on a

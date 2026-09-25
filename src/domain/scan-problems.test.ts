@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { isProblem, problemsIn } from "./scan";
+import { isProblem, issueNote, preselectedIssues, problemsIn } from "./scan";
+import type { FindingKind } from "@/lib/ai";
 
 // The real Ring of Fire check, 20 Sep 2026, with the kinds the model would
 // now give it. Four findings, of which one is good news.
@@ -38,5 +39,37 @@ describe("what a keeper can log as an issue", () => {
     // A kind we don't know isn't one the model was asked for. Silence is the
     // safer reading for a record meant to be true in three years.
     expect(isProblem({ kind: "something_new" })).toBe(false);
+  });
+});
+
+describe("what a new plant's scan puts on the record", () => {
+  const f = (observation: string, kind?: FindingKind) => ({
+    observation,
+    likely_cause: "Overwatering",
+    suggested_action: "Let it dry out.",
+    kind,
+  });
+  const findings = [
+    f("One segment is yellow and limp", "problem"),
+    f("The flat segments are healthy", "observation"),
+    f("Rocks hide the soil", "photo_quality"),
+    f("Thin stretched stems", "problem"),
+  ];
+
+  test("an unwell plant arrives with every problem ticked, and nothing else", () => {
+    // The zigzag cactus of 25 Sep 2026: called Unwell, added, shown "All good".
+    expect(preselectedIssues({ health: { overall: "unwell", findings } })).toEqual([
+      "One segment is yellow and limp",
+      "Thin stretched stems",
+    ]);
+  });
+
+  test("worth watching is offered, not ticked", () => {
+    expect(preselectedIssues({ health: { overall: "watch", findings } })).toEqual([]);
+    expect(preselectedIssues({ health: { overall: "healthy", findings: [] } })).toEqual([]);
+  });
+
+  test("an issue from the scan reads like one from a health check", () => {
+    expect(issueNote(findings[0])).toBe("One segment is yellow and limp — likely overwatering. Let it dry out.");
   });
 });

@@ -21,7 +21,7 @@ import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
 import { careBrief } from "@/domain/care-brief";
-import { problemsIn, isProblem, scanSummary } from "@/domain/scan";
+import { issueNote, problemsIn, isProblem, scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, describeScan, photoAllowance, type Verdict } from "@/lib/ai";
 import { allowanceLine, type Allowance } from "@/domain/allowance";
 import { CareGuide } from "@/components/care-guide";
@@ -227,11 +227,8 @@ export default function PlantDetail() {
     }
   };
 
-  // One finding, written the way it goes on the record: what was seen, what
-  // probably caused it, what to do. The cause is the half that says why, and
-  // a record that keeps only the symptom is the weaker half of the story.
-  const noteFor = (f: Verdict["health"]["findings"][number]) =>
-    `${f.observation} — likely ${f.likely_cause.toLowerCase()}. ${f.suggested_action}`;
+  // One finding, written the way it goes on the record — see issueNote.
+  const noteFor = issueNote;
 
   /**
    * Put every finding on the record in one press.
