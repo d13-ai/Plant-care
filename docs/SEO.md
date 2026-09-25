@@ -120,6 +120,29 @@ that stamps the build date into its markup doesn't look changed every time.
 If you forget to commit the manifest, nothing breaks — the next build just
 re-dates the pages it can't account for.
 
+**Generated pages carry their own date.** Every page under `/plants`,
+`/problems` and `/pet-safe-houseplants` shows "Last updated …" under its
+heading and puts the same date in its JSON-LD `dateModified`. Both come from
+`scripts/page-dates.mjs`, which hashes only the page's `<main>` — so a footer,
+head or analytics change dates nothing — and records dates in
+`scripts/page-dates.json` (committed). The sitemap takes those pages'
+`lastmod` from that file rather than hashing them itself: a page that prints
+its own date would otherwise be re-dated the day after every change, because
+today's date is stripped before hashing and yesterday's isn't. `npm run seo`
+fails if the page, `dateModified` and the sitemap ever disagree.
+
+It says "updated", not "reviewed", on purpose: the hash can vouch that the
+content changed on that day; nothing vouches that a person re-read it.
+
+**IndexNow.** Bing — and so ChatGPT search and Copilot — plus Yandex, Seznam
+and Naver hear about changed pages within minutes instead of waiting for a
+crawl. `.github/workflows/indexnow.yml` runs on every push to `main` that
+changes `public/sitemap.xml`: it waits until the live site serves that
+commit's sitemap, then submits the URLs whose `lastmod` moved, plus new and
+removed ones (`scripts/indexnow.mjs`). The key file is
+`public/df1a1687ac3cc57d57481ab4c3ecd761.txt`; it is public by design, and
+`npm run seo` checks it is there. Google doesn't take part in IndexNow.
+
 ---
 
 ## 5. Tags stay unlisted
@@ -207,15 +230,18 @@ Warnings (long titles, short descriptions) print but don't fail.
 - **Per-plant photography.** Every page would be better with a picture of
   the plant, and `og:image` currently falls back to the site card. That
   needs an image source with licensing that survives commercial use.
-- **Search Console.** Nothing here verifies the property or watches what
-  lands. Submit `https://plantparlour.org/sitemap.xml` once this ships.
+- **Search Console** is verified and the sitemap submitted (25 Sep 2026).
+  Bing Webmaster Tools is not yet — importing from Search Console takes a
+  couple of minutes and is worth doing; IndexNow works without it.
 
 ---
 
 ## 8. Commands
 
 ```
-npm run plants   # regenerate /plants and sitemap.xml
+npm run plants   # regenerate /plants, /problems, the pet page and sitemap.xml
+npm run aspca    # re-check every toxicity line against the ASPCA's lists
+npm run indexnow -- --since <ref> [--wait] [--dry-run]   # or --all
 npm run seo      # check the crawlable surface
 npm run icons    # re-render icons and the four social cards
 npm run smoke    # build + seo + the full browser walkthrough

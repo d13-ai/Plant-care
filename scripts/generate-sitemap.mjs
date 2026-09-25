@@ -21,6 +21,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { plantPages, SITE } from "./generate-plant-pages.mjs";
 import { GUIDES } from "./guides-data.mjs";
+import { recordedDates } from "./page-dates.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -77,7 +78,18 @@ if (existsSync(MANIFEST_PATH)) {
 const next = {};
 let changed = 0;
 
+// The generated pages carry their own "Last updated" date, decided in
+// page-dates.mjs from their content alone. Their lastmod is that date, not a
+// second opinion: hashing a page that prints its own date here re-dated it
+// the day after every change (today's date is stripped below; yesterday's
+// isn't).
+const pageDates = recordedDates();
+
 const lastmodFor = (loc, files) => {
+  if (pageDates[loc]) {
+    next[loc] = { hash: pageDates[loc].hash, lastmod: pageDates[loc].updated };
+    return pageDates[loc].updated;
+  }
   const h = createHash("sha256");
   for (const rel of files) {
     const abs = join(ROOT, rel);
