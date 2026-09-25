@@ -7,7 +7,7 @@ import { CloseIcon } from "@/components/icons";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
 import { addPhoto, createPlant, listPlants, logCare, type Plant } from "@/db";
 import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "@/domain/species";
-import { scanSummary } from "@/domain/scan";
+import { isProblem, issueNote, preselectedIssues, problemsIn, scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, clearLastScan, describeScan, loadLastScan, photoAllowance, type LastScan, type Verdict } from "@/lib/ai";
 import { allowanceLine, type Allowance } from "@/domain/allowance";
 import { confirm } from "@/lib/confirm";
@@ -50,8 +50,23 @@ export default function NewPlant() {
   const [restored, setRestored] = useState(false);
   // A paid scan whose screen was cleared: on offer until it's used or a new one runs.
   const [lastScan, setLastScan] = useState<LastScan | null>(null);
+  // Which of the scan's problems go on the record as open issues when the
+  // plant is added, by observation. Reset to the default for each new answer.
+  const [issuePicks, setIssuePicks] = useState<Set<string>>(new Set());
   // Don't overwrite a saved draft with the empty form before it's been read back.
   const hydrated = useRef(false);
+
+  useEffect(() => {
+    setIssuePicks(new Set(verdict?.is_plant ? preselectedIssues(verdict) : []));
+  }, [verdict]);
+  const toggleIssue = (observation: string) =>
+    setIssuePicks((picks) => {
+      const next = new Set(picks);
+      if (next.has(observation)) next.delete(observation);
+      else next.add(observation);
+      return next;
+    });
+  const pickedIssues = verdict?.is_plant ? problemsIn(verdict.health.findings).filter((f) => issuePicks.has(f.observation)) : [];
 
   // Read on arrival, not after the first scan: the point of the line is that
   // somebody knows what they have before they start spending it.
@@ -203,6 +218,10 @@ export default function NewPlant() {
     for (const uri of photos.slice(1)) await addPhoto(db, id, uri);
     // The scan's health read goes into the record, not just the species name.
     if (verdict?.is_plant) await logCare(db, id, "AI_CHECK", { notes: scanSummary(verdict) });
+    // And the problems the keeper kept ticked go in as open issues, which is
+    // what the badges read: a plant the scan called unwell arrives flagged,
+    // not wearing "All good" with the verdict buried in its history.
+    for (const f of pickedIssues) await logCare(db, id, "ISSUE", { notes: issueNote(f) });
     await clearDraft();
     await clearLastScan();
     router.replace({ pathname: "/plant/[id]", params: { id: String(id) } });
@@ -342,10 +361,29 @@ export default function NewPlant() {
                         <Badge label={`Health: ${verdict.health.overall}`} tone={verdict.health.overall === "healthy" ? "success" : verdict.health.overall === "unwell" ? "critical" : verdict.health.overall === "watch" ? "warning" : "neutral"} />
                       </Row>
                       {verdict.health.findings.map((f) => (
-                        <Body small key={f.observation}>
-                          {f.observation} — {f.suggested_action}
-                        </Body>
+                        <View key={f.observation} style={{ gap: 4 }}>
+                          <Body small>
+                            {f.observation} — {f.suggested_action}
+                          </Body>
+                          {isProblem(f) ? (
+                            <Row>
+                              <Button
+                                title={issuePicks.has(f.observation) ? "✓ Will log as an issue" : "Log as an issue"}
+                                variant={issuePicks.has(f.observation) ? "plum" : "secondary"}
+                                small
+                                onPress={() => toggleIssue(f.observation)}
+                              />
+                            </Row>
+                          ) : null}
+                        </View>
                       ))}
+                      {problemsIn(verdict.health.findings).length > 0 ? (
+                        <Body small muted>
+                          {pickedIssues.length === 0
+                            ? "Nothing ticked, so the plant starts as All good. Tap a problem to log it when you add the plant."
+                            : `${pickedIssues.length === 1 ? "1 problem" : `${pickedIssues.length} problems`} will be logged as ${pickedIssues.length === 1 ? "an issue" : "issues"} when you add the plant, so it starts marked Special care needed. Tap one to leave it off.`}
+                        </Body>
+                      ) : null}
                     </View>
                   ) : null}
                   {verdict.notes ? <Body small muted>{verdict.notes}</Body> : null}
