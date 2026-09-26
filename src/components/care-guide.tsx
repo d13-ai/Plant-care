@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSQLiteContext } from "expo-sqlite";
-import { StyleSheet, View } from "react-native";
+import { Linking, StyleSheet, View } from "react-native";
 import { Badge, Body, Button, Card, Heading, Row } from "@/components/ui";
 import { getCareCard, type CareCard } from "@/lib/care-card";
 import { supabaseConfigured } from "@/lib/supabase";
-import { space, useTheme, type Tone } from "@/theme";
+import { AI_TOXICITY_NOTICE, APCC, ASPCA_PLANT_LIST } from "@/domain/pet-safety";
+import { cardTheme, space, useTheme, type Tone } from "@/theme";
 
 const DIFFICULTY_TONE: Record<CareCard["difficulty"], Tone> = {
   easy: "success",
@@ -100,6 +101,19 @@ export function CareGuide({ species }: { species: string | null }) {
             <Body small style={[styles.label, { color: t.muted }] as never}>Toxicity</Body>
             <Body small style={{ flex: 1 } as never}>{card.toxicity}</Body>
           </View>
+          {/* Never shown without this: the AI is not the authority on whether a
+              plant is safe around a pet or a child. See domain/pet-safety.ts. */}
+          <View
+            accessibilityRole="alert"
+            // The card's own light palette: this sits on the cream card, not the page.
+            style={[styles.notice, { backgroundColor: cardTheme.critical.bg, borderColor: cardTheme.critical.ring }]}
+          >
+            <Body small style={{ color: cardTheme.critical.fg } as never}>{AI_TOXICITY_NOTICE}</Body>
+            <Row>
+              <Button title="Check the ASPCA list" small onPress={() => Linking.openURL(ASPCA_PLANT_LIST).catch(() => {})} />
+              <Button title={`Call ${APCC.phone}`} small onPress={() => Linking.openURL(APCC.tel).catch(() => {})} />
+            </Row>
+          </View>
         </View>
       ) : null}
     </Card>
@@ -109,4 +123,5 @@ export function CareGuide({ species }: { species: string | null }) {
 const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: space.md, alignItems: "flex-start" },
   label: { width: 96 },
+  notice: { gap: space.sm, padding: space.md, borderRadius: 8, borderWidth: 1 },
 });

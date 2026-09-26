@@ -381,6 +381,26 @@ try {
     if (body.includes("All good")) throw new Error("the plant still says All good");
     await shot("12-unwell-scan-flagged");
   });
+  await step("the care guide's toxicity line always comes with the ASPCA notice", async () => {
+    // 26 Sep 2026: an Easter cactus's AI guide called it "a safe choice for
+    // households with pets or curious kids", with nothing beneath it. The
+    // guide is stubbed with that answer, as the smoke run has no AI.
+    const card = {
+      summary: "An easy forest cactus.", difficulty: "easy", light: "Bright indirect.", water: "When the top dries.",
+      humidity: "Average.", temperature: "10-24 °C.", soil: "Gritty.", feeding: "Monthly.", repotting: "Every 2-3 years.",
+      common_problems: [{ problem: "Bud drop", fix: "Don't move it." }],
+      toxicity: "Non-toxic to cats, dogs, and children, making it a safe choice for households with pets or curious kids.",
+    };
+    await context.route("**/functions/v1/care", (route) => route.fulfill(asJson({ card })));
+    await page.goto(`${base}/plant/1`);
+    await page.getByText("making it a safe choice").waitFor({ timeout: 20000 });
+    await page.getByText(/Written by AI, and it can be wrong/).waitFor();
+    await page.getByText("Check the ASPCA list").waitFor();
+    await page.getByText("Call (888) 426-4435").waitFor();
+    await page.getByText(/Written by AI, and it can be wrong/).scrollIntoViewIfNeeded();
+    await shot("13-care-guide-toxicity-notice");
+    await context.unroute("**/functions/v1/care");
+  });
   await step("without an account there is a welcome screen and no way past it", async () => {
     // A clean context: no session in storage, no stubbed auth. The parlour
     // belongs to an account, so this is all anyone sees -- including on a
