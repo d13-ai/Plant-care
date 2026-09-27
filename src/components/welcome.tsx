@@ -53,6 +53,14 @@ export function Welcome() {
         <MonsteraIcon size={44} color={t.leaf} />
         <Text style={[styles.wordmark, { color: t.text }]}>PlantParlour</Text>
         <Text style={[styles.tagline, { color: t.muted }]}>A room for the plants you're proud of.</Text>
+        {/* The plain version, for a stranger and for a search engine: the
+            tagline says what it feels like, this says what it is. */}
+        <Text style={[styles.plain, { color: t.muted }]}>
+          A free plant care app: watering reminders, AI plant identification and a care record for every plant.{" "}
+          <Text style={styles.legalLink} onPress={() => Linking.openURL("/plant-care-app").catch(() => {})}>
+            How it works
+          </Text>
+        </Text>
       </View>
 
       <Card>
@@ -130,6 +138,7 @@ const styles = StyleSheet.create({
   masthead: { alignItems: "center", gap: space.sm },
   wordmark: { fontFamily: font.serifBold, fontSize: 36, lineHeight: 44, textAlign: "center" },
   tagline: { fontFamily: font.serifItalic, fontSize: 18, lineHeight: 26, textAlign: "center" },
+  plain: { fontFamily: font.regular, fontSize: 15, lineHeight: 22, textAlign: "center", maxWidth: 420 },
   // Reading type, not app type.
   story: { fontSize: 17, lineHeight: 27 },
   invite: { fontFamily: font.serifItalic, fontSize: 18, lineHeight: 27, marginTop: space.xs },

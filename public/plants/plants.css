@@ -59,6 +59,8 @@ small{font-size:13px}
   padding:8px 14px;border-radius:6px;text-decoration:none;border:1px solid var(--gold-deep)}
 .btn:hover{background:var(--gold-light);color:#2E1633}
 .btn-lg{font-size:16px;padding:11px 20px}
+.cta .more-link{margin:10px 0 0;font-size:14px}
+.cta .more-link a{color:var(--gold-light)}
 
 /* The liftable answer. Deliberately one paragraph, no list, no hedging —
    it is what an answer engine quotes and what a person reads first. */
