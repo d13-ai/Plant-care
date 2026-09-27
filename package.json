@@ -14,6 +14,7 @@
     "lint": "expo lint",
     "plants": "node scripts/generate-plant-pages.mjs && node scripts/generate-guides.mjs && node scripts/generate-sitemap.mjs",
     "aspca": "node scripts/aspca-audit.mjs",
+    "indexnow": "node scripts/indexnow.mjs",
     "seo": "node scripts/seo-check.mjs",
     "build:web": "npm run plants && expo export --platform web --output-dir dist && node scripts/flatten-routes.mjs dist",
     "smoke": "npm run build:web && npm run seo && node scripts/web-smoke.mjs dist",

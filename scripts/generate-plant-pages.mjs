@@ -27,6 +27,7 @@ import { fileURLToPath } from "node:url";
 import { SPECIES, SPECIES_GROUPS, scientificName } from "../src/domain/species.ts";
 import { ANALYTICS_SNIPPET } from "../src/domain/analytics.ts";
 import { GENUS, PLANTS } from "./plants-data.mjs";
+import { pageDates } from "./page-dates.mjs";
 import { guideFor } from "./guides-data.mjs";
 import { aspcaFor, aspcaHtml, aspcaText, EMERGENCY_TEXT, PET_NOTICE_HTML, petSummary, saysUnlisted } from "./pet-safety.mjs";
 
@@ -504,8 +505,11 @@ function main() {
   for (const f of readdirSync(OUT)) {
     if (f.endsWith(".html")) rmSync(join(OUT, f));
   }
-  writeFileSync(join(OUT, "index.html"), hubPage(pages), "utf-8");
-  for (const p of pages) writeFileSync(join(OUT, `${p.slug}.html`), plantPage(p), "utf-8");
+  // Each page gets the date its content last changed; see page-dates.mjs.
+  const dates = pageDates();
+  writeFileSync(join(OUT, "index.html"), dates.stamp(`${SITE}/plants`, hubPage(pages)), "utf-8");
+  for (const p of pages) writeFileSync(join(OUT, `${p.slug}.html`), dates.stamp(p.url, plantPage(p)), "utf-8");
+  dates.save();
   console.log(`Generated ${pages.length + 1} pages in ${OUT.replace(ROOT + "/", "")}`);
 }
 

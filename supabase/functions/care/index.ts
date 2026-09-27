@@ -52,11 +52,17 @@ const CareCard = z.object({
     .array(z.object({ problem: z.string(), fix: z.string() }))
     .max(5)
     .describe("the handful most likely for this plant, each with what to do"),
-  toxicity: z.string().describe("safe or toxic to cats, dogs, children — say which and how"),
+  toxicity: z
+    .string()
+    .describe(
+      "toxicity to cats, dogs and people, as the ASPCA's plant list classes it; say 'unconfirmed' when unsure; never call a plant safe for children or 'a safe choice'",
+    ),
 });
 export type CareCard = z.infer<typeof CareCard>;
 
-const SYSTEM = `You are a knowledgeable houseplant grower writing a short, practical care guide for one plant a keeper owns. Be specific to this plant, not generic — a fern and a cactus should read nothing alike. Keep each field to a sentence or two of plain, actionable advice a beginner can follow. If the plant is a named variegated cultivar, account for it (variegated leaves need brighter light and grow slower). Be honest about difficulty and about toxicity to pets and children.`;
+const SYSTEM = `You are a knowledgeable houseplant grower writing a short, practical care guide for one plant a keeper owns. Be specific to this plant, not generic — a fern and a cactus should read nothing alike. Keep each field to a sentence or two of plain, actionable advice a beginner can follow. If the plant is a named variegated cultivar, account for it (variegated leaves need brighter light and grow slower). Be honest about difficulty.
+
+On toxicity, be conservative, because a keeper may act on it with a pet or a child. Say what the ASPCA's plant list says for cats and dogs when you know it ("the ASPCA lists it as non-toxic to cats and dogs"), and what the symptoms are when it is toxic. If you are not sure, say it is unconfirmed rather than guessing it is safe. Never call a plant "safe for children", "child-safe", "a safe choice" or "harmless": the most a plant can be is non-toxic, and a pet or child can still be sick from eating any plant.`;
 
 const key = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
 

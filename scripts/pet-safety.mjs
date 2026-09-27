@@ -19,6 +19,7 @@
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { longDate } from "./page-dates.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 /** Empty until the audit has run once; the audit itself imports this file. */
@@ -30,12 +31,6 @@ export const SNAPSHOT = (() => {
   }
 })();
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-/** "2026-09-24" -> "24 September 2026", the way the rest of the site writes dates. */
-export const longDate = (iso) => {
-  const [y, m, d] = iso.split("-").map(Number);
-  return `${d} ${MONTHS[m - 1]} ${y}`;
-};
 export const CHECKED = longDate(SNAPSHOT.checked);
 
 /** Phone lines, checked against each service's own site on 24 Sep 2026. */

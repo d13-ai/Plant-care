@@ -149,6 +149,27 @@ for (const { url, file } of DOCS) {
   }
 }
 
+// --- a generated page's date is one date, in three places.
+// "Last updated" on the page, dateModified in its JSON-LD and lastmod in the
+// sitemap are all taken from scripts/page-dates.json; if they ever disagree,
+// something is dating pages its own way again.
+{
+  const lastmods = existsSync(join(PUBLIC, "sitemap.xml"))
+    ? new Map([...read("sitemap.xml").matchAll(/<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/g)].map((m) => [m[1], m[2]]))
+    : new Map();
+  for (const { url, file } of DOCS) {
+    if (!/^\/(plants|problems|pet-safe-houseplants)/.test(url) || !existsSync(join(PUBLIC, file))) continue;
+    const html = read(file);
+    const shown = attr(html, /<p class="updated">Last updated <time datetime="([^"]+)">/);
+    const modified = attr(html, /"dateModified": "([^"]+)"/);
+    const listed = lastmods.get(`${SITE}${url}`);
+    if (!shown) err(file, "no \"Last updated\" date under the heading");
+    else if (shown !== modified || shown !== listed) {
+      err(file, `dates disagree: page says ${shown}, dateModified ${modified}, sitemap ${listed}`);
+    }
+  }
+}
+
 // --- sitemap covers every page, and claims nothing it doesn't serve
 if (!existsSync(join(PUBLIC, "sitemap.xml"))) {
   err("sitemap.xml", "missing — run `npm run plants`");
@@ -267,6 +288,15 @@ for (const file of ["tag.ts", "conservatory.ts"]) {
       err(`api/${file}`, `an <img> asks for photoUrl(${call.trim()}) at full size — name the size it is drawn at`);
     }
   }
+}
+
+// --- IndexNow verifies ownership by fetching /<key>.txt and reading the key
+// back. If the file goes missing or drifts, every submission is refused.
+{
+  const { KEY } = await import("./indexnow.mjs");
+  const keyFile = `${KEY}.txt`;
+  if (!existsSync(join(PUBLIC, keyFile))) err(keyFile, "IndexNow key file is missing");
+  else if (read(keyFile).trim() !== KEY) err(keyFile, "IndexNow key file doesn't hold the key");
 }
 
 // --- llms.txt exists and doesn't advertise anything unlisted

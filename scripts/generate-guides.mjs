@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 import { SPECIES_GROUPS } from "../src/domain/species.ts";
 import { esc, foot, head, ld, plantPages, SITE, slugify } from "./generate-plant-pages.mjs";
 import { GUIDES } from "./guides-data.mjs";
+import { pageDates } from "./page-dates.mjs";
 import {
   APCC,
   aspcaFor,
@@ -319,7 +320,6 @@ export function petSafePage(pages) {
       isPartOf: { "@type": "WebSite", name: "PlantParlour", url: `${SITE}/` },
       speakable: { "@type": "SpeakableSpecification", cssSelector: [".answer"] },
       citation: { "@type": "WebPage", name: "ASPCA Toxic and Non-Toxic Plant List", url: SNAPSHOT.source },
-      dateModified: SNAPSHOT.checked,
       publisher: { "@type": "Organization", name: "PlantParlour", url: `${SITE}/` },
     }),
     faqLd(faq),
@@ -391,9 +391,13 @@ function main() {
   const dir = join(PUBLIC, "problems");
   mkdirSync(dir, { recursive: true });
   for (const f of readdirSync(dir)) if (f.endsWith(".html")) rmSync(join(dir, f));
-  writeFileSync(join(dir, "index.html"), problemsHub(pages), "utf-8");
-  for (const g of GUIDES) writeFileSync(join(dir, `${g.slug}.html`), guidePage(g, pages), "utf-8");
-  writeFileSync(join(PUBLIC, "pet-safe-houseplants.html"), petSafePage(pages), "utf-8");
+  const dates = pageDates();
+  writeFileSync(join(dir, "index.html"), dates.stamp(`${SITE}/problems`, problemsHub(pages)), "utf-8");
+  for (const g of GUIDES) {
+    writeFileSync(join(dir, `${g.slug}.html`), dates.stamp(`${SITE}/problems/${g.slug}`, guidePage(g, pages)), "utf-8");
+  }
+  writeFileSync(join(PUBLIC, "pet-safe-houseplants.html"), dates.stamp(`${SITE}/pet-safe-houseplants`, petSafePage(pages)), "utf-8");
+  dates.save();
   console.log(`Generated ${GUIDES.length + 1} problem pages and the pet-safe page (${petSafe(pages).length} plants)`);
 }
 

@@ -1,0 +1,42 @@
+# Tell Bing and the other IndexNow engines which pages changed, once Vercel
+# has deployed them. See scripts/indexnow.mjs for what counts as changed.
+#
+# Runs only when a push to main changes the sitemap -- which is to say when a
+# page's content changed, since every lastmod is a content date. The job
+# waits for the live site to serve this commit's sitemap before submitting,
+# so a crawler is never sent to the old page. No secrets: the IndexNow key
+# is public by design.
+name: IndexNow
+
+on:
+  push:
+    branches: [main]
+    paths: [public/sitemap.xml]
+  workflow_dispatch:
+    inputs:
+      all:
+        description: Submit every URL in the sitemap, not just the changed ones
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The previous main commit has to be here to compare sitemaps.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Submit changed pages
+        if: github.event_name == 'push'
+        run: node scripts/indexnow.mjs --since "${{ github.event.before }}" --wait
+      - name: Submit pages (manual run)
+        if: github.event_name == 'workflow_dispatch'
+        run: node scripts/indexnow.mjs ${{ inputs.all && '--all' || '--since HEAD~1' }} --wait
