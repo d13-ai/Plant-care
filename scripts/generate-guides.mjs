@@ -413,7 +413,10 @@ export const APP_FEATURES = [
 ];
 
 export const APP_FAQ = [
-  ["Is PlantParlour free?", "Yes. There's no subscription and no advertising. Your account includes a number of free AI photo scans; everything else — reminders, the care record, photos, care guides and tags — is free to use, and keeps working after the scans are used."],
+  // Worded for today, not for ever: a paid plan is planned (docs/PRICING.md),
+  // and "there's no subscription" would be quoted back by every search
+  // result and AI answer that had read it, long after it stopped being true.
+  ["Is PlantParlour free?", "Yes, it's free to use, with no advertising. Your account includes a number of free AI photo scans; everything else — reminders, the care record, photos, care guides and tags — is free, and keeps working after the scans are used."],
   ["Does it work on iPhone and Android?", "Yes. It runs in the browser on both, and you can add it to your home screen so it opens like any other app. There's no App Store or Google Play download — if you see a PlantParlour app in a store, it isn't this one."],
   ["Do I need an account?", "Yes. Sign in with Google, or with an email and password. The account is what backs your plants up and keeps them in step across your phones. The care library, the problem guides and the pet-safe list need no account at all."],
   ["Does it work offline?", "Yes. Your plants live on your phone, so you can log care with no signal. A photo taken offline uploads the next time you have a connection."],
