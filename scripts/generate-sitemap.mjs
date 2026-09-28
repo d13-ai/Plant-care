@@ -22,6 +22,7 @@ import { fileURLToPath } from "node:url";
 import { plantPages, SITE } from "./generate-plant-pages.mjs";
 import { GUIDES } from "./guides-data.mjs";
 import { recordedDates } from "./page-dates.mjs";
+import { PASTED as ANALYTICS_BLOCK } from "./stamp-analytics.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -96,7 +97,10 @@ const lastmodFor = (loc, files) => {
     const abs = join(ROOT, rel);
     // Strip today's date before hashing so a page that stamps the build date
     // into its markup doesn't look changed on every build.
-    const content = existsSync(abs) ? readFileSync(abs, "utf-8").split(today).join("") : "";
+    // The analytics snippet is left out too: it is the same code on every
+    // page, and changing it (the opt-out, 28 Sep 2026) re-dated the three
+    // hand-written game pages with nothing on them changed.
+    const content = existsSync(abs) ? readFileSync(abs, "utf-8").replace(ANALYTICS_BLOCK, "").split(today).join("") : "";
     h.update(`${rel}::${content}::`);
   }
   const hash = h.digest("hex");

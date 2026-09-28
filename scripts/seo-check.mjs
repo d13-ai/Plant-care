@@ -313,11 +313,7 @@ if (!existsSync(join(PUBLIC, "llms.txt"))) {
 // the three games are hand-written HTML where a copy can rot quietly — so
 // every surface is checked for both halves, and for this exact beforeSend
 // rather than merely some beforeSend.
-const HAND_WRITTEN = [
-  "parlour-games/index.html",
-  "parlour-games/trickle.html",
-  "parlour-games/windowsill.html",
-];
+const { HAND_WRITTEN } = await import("./stamp-analytics.mjs");
 for (const rel of [
   ...HAND_WRITTEN,
   "plants/index.html",

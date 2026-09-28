@@ -1,5 +1,6 @@
-import { describe, expect, test } from "vitest";
-import { ANALYTICS_SNIPPET, BEFORE_SEND, redactUrl } from "./analytics";
+import { readFileSync } from "node:fs";
+import { afterEach, describe, expect, test } from "vitest";
+import { ANALYTICS_SNIPPET, BEFORE_SEND, OPT_OUT_KEY, redactUrl } from "./analytics";
 
 const SITE = "https://plantparlour.org";
 
@@ -68,3 +69,36 @@ describe("what analytics is allowed to learn", () => {
     );
   });
 });
+
+describe("our own visits", () => {
+  const g = globalThis as { localStorage?: { getItem(k: string): string | null } };
+  afterEach(() => {
+    delete g.localStorage;
+  });
+  const browser = () => new Function(`return (${BEFORE_SEND})`)() as (e: { url: string }) => { url: string } | null;
+
+  test("an opted-out browser sends nothing, even if the counter loaded", () => {
+    g.localStorage = { getItem: (k) => (k === OPT_OUT_KEY ? "1" : null) };
+    expect(browser()({ url: `${SITE}/plants/x` })).toBeNull();
+  });
+
+  test("everyone else is counted as before", () => {
+    g.localStorage = { getItem: () => null };
+    expect(browser()({ url: `${SITE}/plants/x` })?.url).toBe(`${SITE}/plants/x`);
+  });
+
+  test("an opted-out browser never loads the counter", () => {
+    const check = ANALYTICS_SNIPPET.indexOf(OPT_OUT_KEY, ANALYTICS_SNIPPET.indexOf("(function ()"));
+    expect(check).toBeGreaterThan(0);
+    expect(check).toBeLessThan(ANALYTICS_SNIPPET.indexOf("appendChild"));
+  });
+
+  test("the opt-out page sets the key the counter reads, before the counter runs", () => {
+    const page = readFileSync("public/count-me-out.html", "utf-8");
+    const sets = page.indexOf(`localStorage.setItem("${OPT_OUT_KEY}", "1")`);
+    expect(sets).toBeGreaterThan(0);
+    expect(sets).toBeLessThan(page.indexOf("insights/script.js"));
+    expect(page).toContain('content="noindex');
+  });
+});
+

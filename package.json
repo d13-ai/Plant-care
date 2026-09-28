@@ -12,7 +12,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "plants": "node scripts/generate-plant-pages.mjs && node scripts/generate-guides.mjs && node scripts/generate-sitemap.mjs",
+    "plants": "node scripts/stamp-analytics.mjs && node scripts/generate-plant-pages.mjs && node scripts/generate-guides.mjs && node scripts/generate-sitemap.mjs",
     "aspca": "node scripts/aspca-audit.mjs",
     "indexnow": "node scripts/indexnow.mjs",
     "seo": "node scripts/seo-check.mjs",
