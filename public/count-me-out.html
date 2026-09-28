@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Don't count this browser | PlantParlour</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#2E1633">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="stylesheet" href="/plants/plants.css">
+<!-- Before the counter, so this visit is the first one not counted.
+     Opening the page opts this browser out; ?undo opts it back in.
+     The key is OPT_OUT_KEY in src/domain/analytics.ts. -->
+<script>
+try {
+  if (new URLSearchParams(location.search).has("undo")) localStorage.removeItem("pp:not-counted");
+  else localStorage.setItem("pp:not-counted", "1");
+} catch (e) {}
+</script>
+<script>
+window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+window.va('beforeSend', function (event) {
+  try {
+    if (localStorage.getItem("pp:not-counted") === "1") return null;
+  } catch (e) {}
+  try {
+    var u = new URL(event.url);
+    u.search = "";
+    u.hash = "";
+    var p = u.pathname;
+    if (/^\/@[^/]+/.test(p)) p = p.replace(/^\/@[^/]+/, "/@");
+    else    if (/^\/plant\/[^/]+\/edit/.test(p)) p = p.replace(/^\/plant\/[^/]+\/edit/, "/plant/edit");
+    else    if (/^\/plant\/[^/]+/.test(p)) p = p.replace(/^\/plant\/[^/]+/, "/plant");
+    u.pathname = p;
+    return { ...event, url: u.toString() };
+  } catch (e) {
+    return null;
+  }
+});
+(function () {
+  var h = location.hostname;
+  if (h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "" || h.endsWith(".local")) return;
+  // A browser that opted out never loads the counter at all.
+  try {
+    if (localStorage.getItem("pp:not-counted") === "1") return;
+  } catch (e) {}
+  var s = document.createElement("script");
+  s.defer = true;
+  s.src = "/_vercel/insights/script.js";
+  document.head.appendChild(s);
+})();
+</script>
+</head>
+<body>
+<div class="top">
+  <a class="brand" href="/">Plant<b>Parlour</b></a>
+</div>
+<div class="wrap">
+<main>
+<h1 id="state">This browser isn't counted</h1>
+<p class="sub">For the people building PlantParlour</p>
+<p id="detail">Visits from this browser are no longer counted in PlantParlour's page-view numbers, so the figures show real visitors rather than our own testing. It applies to this browser on this device only — open this page once on each phone and computer you use.</p>
+<p>Visits already counted stay in the figures; this only affects visits from now on.</p>
+<p><a class="btn" id="toggle" href="/count-me-out?undo">Count this browser again</a></p>
+<p class="muted"><small>On an iPhone, a PlantParlour added to the home screen keeps its own storage apart from Safari, so it needs opting out separately — which it can't be from here yet.</small></p>
+</main>
+</div>
+<script>
+try {
+  if (localStorage.getItem("pp:not-counted") !== "1") {
+    document.getElementById("state").textContent = "This browser is counted again";
+    document.getElementById("detail").textContent = "Visits from this browser count in PlantParlour's page-view numbers again, like anyone else's.";
+    var t = document.getElementById("toggle");
+    t.textContent = "Stop counting this browser";
+    t.setAttribute("href", "/count-me-out");
+  }
+} catch (e) {}
+</script>
+</body>
+</html>

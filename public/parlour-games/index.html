@@ -204,6 +204,9 @@ h1{
 window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
 window.va('beforeSend', function (event) {
   try {
+    if (localStorage.getItem("pp:not-counted") === "1") return null;
+  } catch (e) {}
+  try {
     var u = new URL(event.url);
     u.search = "";
     u.hash = "";
@@ -220,6 +223,10 @@ window.va('beforeSend', function (event) {
 (function () {
   var h = location.hostname;
   if (h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "" || h.endsWith(".local")) return;
+  // A browser that opted out never loads the counter at all.
+  try {
+    if (localStorage.getItem("pp:not-counted") === "1") return;
+  } catch (e) {}
   var s = document.createElement("script");
   s.defer = true;
   s.src = "/_vercel/insights/script.js";

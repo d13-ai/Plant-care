@@ -39,8 +39,23 @@ const REDACTIONS: [RegExp, string][] = [
   [/^\/plant\/[^/]+/, "/plant"],
 ];
 
+/**
+ * A browser that has opted out of being counted: ours. Set by visiting
+ * /count-me-out, which is how the people building PlantParlour keep their
+ * own testing out of the numbers -- on 27 Sep 2026 the most-visited pages
+ * were the home page and the app, which is where our own work happens.
+ *
+ * Per browser, not per person: localStorage is all a static page can read
+ * before deciding whether to load the counter, and there is no account to
+ * consult on the library pages. Visit the link once on each device.
+ */
+export const OPT_OUT_KEY = "pp:not-counted";
+
 /** The redaction, as source, so the browser and the tests share one copy. */
 export const BEFORE_SEND = `function (event) {
+  try {
+    if (localStorage.getItem(${JSON.stringify(OPT_OUT_KEY)}) === "1") return null;
+  } catch (e) {}
   try {
     var u = new URL(event.url);
     u.search = "";
@@ -79,6 +94,10 @@ window.va('beforeSend', ${BEFORE_SEND});
 (function () {
   var h = location.hostname;
   if (h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "" || h.endsWith(".local")) return;
+  // A browser that opted out never loads the counter at all.
+  try {
+    if (localStorage.getItem(${JSON.stringify(OPT_OUT_KEY)}) === "1") return;
+  } catch (e) {}
   var s = document.createElement("script");
   s.defer = true;
   s.src = ${JSON.stringify(ANALYTICS_SCRIPT_SRC_LITERAL)};
