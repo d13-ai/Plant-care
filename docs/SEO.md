@@ -22,6 +22,7 @@ So the crawlable surface is deliberately made of plain documents:
 
 | Surface | What it is | Where it comes from |
 |---|---|---|
+| `/plant-care-app` | what the app does, in plain words — the page that can match "plant care app"; the home page is the sign-in | generated, `npm run plants` |
 | `/plants` and `/plants/{slug}` | 158 plant care pages, plus the hub | generated, `npm run plants` |
 | `/parlour-games`, `/parlour-games/trickle`, `/parlour-games/windowsill` | the puzzle corner | hand-written HTML in `public/` |
 | `/` | the app shell | `src/app/+html.tsx`, plus a `<noscript>` block that states the claim in markup |

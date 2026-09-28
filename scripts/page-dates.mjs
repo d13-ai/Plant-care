@@ -49,10 +49,19 @@ export const longDate = (iso) => {
   return `${d} ${MONTHS[m - 1]} ${y}`;
 };
 
-/** What a reader reads: the page's <main>, without any date already on it. */
+/**
+ * What a reader reads: the page's <main>, without any date already on it and
+ * without the call-to-action box. That box is the same promotion on every
+ * page; rewording its button on 27 Sep 2026 moved all 171 dates to that day
+ * while no care advice had changed, which is exactly what a date is not
+ * supposed to claim.
+ */
 export const contentHash = (html) => {
   const main = html.match(/<main>([\s\S]*?)<\/main>/)?.[1] ?? html;
-  return createHash("sha256").update(main.replace(/<p class="updated">[\s\S]*?<\/p>\n?/, "")).digest("hex");
+  const content = main
+    .replace(/<p class="updated">[\s\S]*?<\/p>\n?/, "")
+    .replace(/<div class="cta">[\s\S]*?<\/div>/g, "");
+  return createHash("sha256").update(content).digest("hex");
 };
 
 /**

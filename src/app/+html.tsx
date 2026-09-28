@@ -13,10 +13,13 @@ import type { PropsWithChildren } from "react";
  * yet. `SOCIAL_TITLE` is what unfurls in a chat thread, where the brand
  * line does the work. Same page, different rooms.
  */
-const TITLE = "PlantParlour — plant care tracker with watering reminders";
+const TITLE = "PlantParlour — free plant care app with watering reminders";
 const SOCIAL_TITLE = "PlantParlour — a room for the plants you're proud of";
+// Said to search engines, so it has to be true of what a stranger gets: an
+// account is needed (it has been since the welcome screen became the front
+// door), and the word people search for is "app".
 const DESCRIPTION =
-  "Track every houseplant you keep: photos, watering and fertilising reminders set per plant, a full care history, and a record that goes with the plant when you trade or sell it. Free, works offline, no account needed to start.";
+  "A free plant care app for every houseplant you keep: watering and feeding reminders set per plant, AI plant identification from a photo, a full care history, and a record that goes with the plant when you trade or sell it. Runs in your phone's browser, offline too.";
 const SOCIAL_DESCRIPTION =
   "Every plant you keep, given the care and the credit it's due: what it is, what it needs today, and the whole story to hand on to whoever gets it next. Made by two plant people who'd rather share it than keep it to themselves.";
 
@@ -62,7 +65,7 @@ const JSON_LD = [
       "Report an issue and record the treatment that fixed it",
       "Log a propagation so a cutting traces back to its mother plant",
       "Publish a plant's tag — its whole record — at a shareable link",
-      "Works offline; syncs across phones once you sign in",
+      "Works offline, and keeps your plants in step across your phones",
     ],
     offers: {
       "@type": "Offer",
@@ -153,10 +156,14 @@ export default function Root({ children }: PropsWithChildren) {
               traces back to the plant it came from.
             </p>
             <p>
-              It runs in the browser and works offline. You can add plants without an account; signing in backs the
-              greenhouse up and syncs it across phones.
+              It runs in the browser and works offline. Sign in with Google or an email to start; your account backs
+              the greenhouse up and keeps it in step across your phones.
             </p>
             <p>
+              <a href="/plant-care-app" style={{ color: "#C9A24B" }}>
+                What the app does
+              </a>{" "}
+              &middot;{" "}
               <a href="/plants" style={{ color: "#C9A24B" }}>
                 Plant care library
               </a>{" "}

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Free plant care app with watering reminders | PlantParlour</title>
+<meta name="description" content="PlantParlour is a free plant care app: watering and feeding reminders set for each plant, AI plant identification and health checks from a photo, a care history for every plant, and a record that goes with it when you sell or trade. Runs in your phone's browser.">
+<link rel="canonical" href="https://plantparlour.org/plant-care-app">
+<meta name="theme-color" content="#2E1633">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="PlantParlour">
+<meta property="og:title" content="Free plant care app with watering reminders | PlantParlour">
+<meta property="og:description" content="PlantParlour is a free plant care app: watering and feeding reminders set for each plant, AI plant identification and health checks from a photo, a care history for every plant, and a record that goes with it when you sell or trade. Runs in your phone's browser.">
+<meta property="og:url" content="https://plantparlour.org/plant-care-app">
+<meta property="og:image" content="https://plantparlour.org/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/plants/plants.css">
+<script>
+window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+window.va('beforeSend', function (event) {
+  try {
+    var u = new URL(event.url);
+    u.search = "";
+    u.hash = "";
+    var p = u.pathname;
+    if (/^\/@[^/]+/.test(p)) p = p.replace(/^\/@[^/]+/, "/@");
+    else    if (/^\/plant\/[^/]+\/edit/.test(p)) p = p.replace(/^\/plant\/[^/]+\/edit/, "/plant/edit");
+    else    if (/^\/plant\/[^/]+/.test(p)) p = p.replace(/^\/plant\/[^/]+/, "/plant");
+    u.pathname = p;
+    return { ...event, url: u.toString() };
+  } catch (e) {
+    return null;
+  }
+});
+(function () {
+  var h = location.hostname;
+  if (h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "" || h.endsWith(".local")) return;
+  var s = document.createElement("script");
+  s.defer = true;
+  s.src = "/_vercel/insights/script.js";
+  document.head.appendChild(s);
+})();
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "PlantParlour: a free plant care app",
+  "description": "PlantParlour is a free plant care app: watering and feeding reminders set for each plant, AI plant identification and health checks from a photo, a care history for every plant, and a record that goes with it when you sell or trade. Runs in your phone's browser.",
+  "url": "https://plantparlour.org/plant-care-app",
+  "inLanguage": "en",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "PlantParlour",
+    "url": "https://plantparlour.org/"
+  },
+  "speakable": {
+    "@type": "SpeakableSpecification",
+    "cssSelector": [
+      ".answer"
+    ]
+  },
+  "about": {
+    "@type": "WebApplication",
+    "name": "PlantParlour",
+    "url": "https://plantparlour.org/",
+    "applicationCategory": "LifestyleApplication",
+    "operatingSystem": "Web, iOS, Android",
+    "featureList": [
+      "Care reminders set for each plant",
+      "Identify a plant from a photo",
+      "A health check that remembers",
+      "Problems and fixes on the record",
+      "A photo timeline",
+      "Cuttings that trace back",
+      "A record that goes with the plant",
+      "A care guide for every species"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PlantParlour",
+    "url": "https://plantparlour.org/"
+  },
+  "dateModified": "2026-09-27"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is PlantParlour free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, it's free to use, with no advertising. Your account includes a number of free AI photo scans; everything else — reminders, the care record, photos, care guides and tags — is free, and keeps working after the scans are used."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it work on iPhone and Android?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. It runs in the browser on both, and you can add it to your home screen so it opens like any other app. There's no App Store or Google Play download — if you see a PlantParlour app in a store, it isn't this one."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I need an account?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Sign in with Google, or with an email and password. The account is what backs your plants up and keeps them in step across your phones. The care library, the problem guides and the pet-safe list need no account at all."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it work offline?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Your plants live on your phone, so you can log care with no signal. A photo taken offline uploads the next time you have a connection."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it send notifications?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Not push notifications. The app shows what's due each time you open it, and Add to calendar puts a plant's watering, feeding and repotting dates into your phone's calendar, which reminds you."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can it tell me what my plant is?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Usually, from a photo — down to the species and often the named cultivar. It can be wrong, especially between look-alikes, so it shows how sure it is and you make the final call."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it useful if I sell or trade plants?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "That's what it was built for. A plant's tag carries its whole record — where it came from, how it's been cared for, what went wrong and what fixed it — and a cutting traces back to the plant it was taken from."
+      }
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "PlantParlour",
+      "item": "https://plantparlour.org/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "The plant care app",
+      "item": "https://plantparlour.org/plant-care-app"
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<div class="top">
+  <a class="brand" href="/">Plant<b>Parlour</b></a>
+  <a class="btn" href="/">Open the app</a>
+</div>
+<div class="wrap">
+<main>
+<nav class="crumbs"><a href="/">PlantParlour</a> / The plant care app</nav>
+
+<h1>A free plant care app for the plants you're proud of</h1>
+<p class="sub">What PlantParlour does, and what it doesn't</p>
+<p class="updated">Last updated <time datetime="2026-09-27">27 September 2026</time></p>
+
+<div class="answer">
+  <p>PlantParlour is a free plant care app that runs in your phone's browser. Add a plant from a photo and it works out what it is, sets watering, feeding and repotting reminders for that plant, and keeps a record of everything you do for it — every watering, repot, problem and fix. When you sell, trade or give a plant away, its whole history can go with it at a link. It works on iPhone and Android without an app store, keeps working offline, and keeps your plants in step across your phones once you sign in.</p>
+</div>
+
+<h2 id="what-it-does">What it does</h2>
+<ul class="problems">
+  <li>
+    <b>Care reminders set for each plant</b>
+    <p>Every plant gets its own schedule for watering, feeding, repotting and a fresh photo, starting from the cadence in the PlantParlour care library for its species. Log a watering and the next one counts from that day, not from the calendar. The greenhouse shows what's due today, and Add to calendar puts a plant's dates in your phone's calendar so your phone does the reminding.</p>
+  </li>
+  <li>
+    <b>Identify a plant from a photo</b>
+    <p>Photograph the whole plant, then a close-up or two, and the AI reads them together to name it — the species, and often the named cultivar, with how sure it is. You choose the answer, and it sets the reminders from there. Or skip the camera and pick from a built-in list of houseplants and named cultivars.</p>
+  </li>
+  <li>
+    <b>A health check that remembers</b>
+    <p>Ask about a plant that looks off and the AI reads its photos alongside what you've logged for it — when it was watered, when it was repotted, what went wrong before — and says what it sees and the likely cause. Take another photo a few days later and it compares the two. It's an AI's considered guess, not a diagnosis.</p>
+  </li>
+  <li>
+    <b>Problems and fixes on the record</b>
+    <p>Report an issue and the plant is marked Special care needed until it's resolved. What you did about it is written down with it, so the plant's history shows what went wrong and what fixed it.</p>
+  </li>
+  <li>
+    <b>A photo timeline</b>
+    <p>Every photo of a plant is kept in order, so you can see it grow — or see exactly when the yellowing started.</p>
+  </li>
+  <li>
+    <b>Cuttings that trace back</b>
+    <p>Log a propagation and the cutting becomes a plant of its own, linked to the plant it came from. Years later, it still traces back to its mother.</p>
+  </li>
+  <li>
+    <b>A record that goes with the plant</b>
+    <p>Publish a plant's tag and its whole story — photos, care, issues and what fixed them — is at a link you can send to whoever buys, trades for or is given the plant. Tags are unlisted: they're for the person you hand them to, not for search results.</p>
+  </li>
+  <li>
+    <b>A care guide for every species</b>
+    <p>Each plant has a care guide for its species: light, water, humidity, soil, feeding, repotting and the usual problems. Anything it says about toxicity comes with a reminder to check the ASPCA's plant list.</p>
+  </li>
+</ul>
+
+<h2 id="who-its-for">Who it's for</h2>
+<p>People with more plants than they can keep in their head. Collectors who want to stop losing the fussy ones and start showing off the rare ones. Propagators and small sellers, for whom a plant with a traceable history is worth more than one without. And anyone who has ever bought a plant and wondered what the last person did to it.</p>
+
+<h2 id="faq">Questions people ask</h2>
+<div class="faq">
+  <h3>Is PlantParlour free?</h3>
+  <p>Yes, it's free to use, with no advertising. Your account includes a number of free AI photo scans; everything else — reminders, the care record, photos, care guides and tags — is free, and keeps working after the scans are used.</p>
+  <h3>Does it work on iPhone and Android?</h3>
+  <p>Yes. It runs in the browser on both, and you can add it to your home screen so it opens like any other app. There's no App Store or Google Play download — if you see a PlantParlour app in a store, it isn't this one.</p>
+  <h3>Do I need an account?</h3>
+  <p>Yes. Sign in with Google, or with an email and password. The account is what backs your plants up and keeps them in step across your phones. The care library, the problem guides and the pet-safe list need no account at all.</p>
+  <h3>Does it work offline?</h3>
+  <p>Yes. Your plants live on your phone, so you can log care with no signal. A photo taken offline uploads the next time you have a connection.</p>
+  <h3>Does it send notifications?</h3>
+  <p>Not push notifications. The app shows what's due each time you open it, and Add to calendar puts a plant's watering, feeding and repotting dates into your phone's calendar, which reminds you.</p>
+  <h3>Can it tell me what my plant is?</h3>
+  <p>Usually, from a photo — down to the species and often the named cultivar. It can be wrong, especially between look-alikes, so it shows how sure it is and you make the final call.</p>
+  <h3>Is it useful if I sell or trade plants?</h3>
+  <p>That's what it was built for. A plant's tag carries its whole record — where it came from, how it's been cared for, what went wrong and what fixed it — and a cutting traces back to the plant it was taken from.</p>
+</div>
+
+<h2 id="free-guides">Free without an account</h2>
+<p>The <a href="/plants">care library</a> has a page for each of 161 houseplants, with the same watering, feeding and repotting cadences the app uses. The <a href="/problems">plant problems guides</a> start from what you can see — yellow leaves, brown tips, spider mites — and work back to the cause. And the <a href="/pet-safe-houseplants">pet-safe houseplants list</a> shows which plants the ASPCA lists as non-toxic to cats and dogs.</p>
+
+<div class="cta">
+  <h2>Start your greenhouse</h2>
+  <p>Free, in your phone's browser. Sign in with Google or an email, add your first plant from a photo, and it takes it from there.</p>
+  <a class="btn btn-lg" href="/">Open PlantParlour</a>
+</div>
+</main>
+</div>
+<footer>
+  <a href="/plants">Plant care library</a> &middot;
+  <a href="/problems">Plant problems</a> &middot;
+  <a href="/pet-safe-houseplants">Pet-safe plants</a> &middot;
+  <a href="/plant-care-app">The app</a> &middot;
+  <a href="/">PlantParlour</a> &middot;
+  <a href="/parlour-games">Parlour Games</a> &middot;
+  <a href="/privacy">Privacy</a> &middot;
+  <a href="/terms">Terms</a>
+</footer>
+</body>
+</html>

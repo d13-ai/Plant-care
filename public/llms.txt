@@ -1,6 +1,6 @@
 # PlantParlour
 
-> PlantParlour is a free care record for houseplants: photograph each plant you own, log what you do for it, see what needs doing today, and hand the plant's whole history to whoever you trade or sell it to. The record belongs to the plant, not the keeper, so it survives changing hands — and a cutting traces back to the plant it came from. It runs in a browser, works offline, and needs no account to start. There is no paid tier and no ads, and nothing tracks you beyond a cookieless page-view count.
+> PlantParlour is a free care record for houseplants: photograph each plant you own, log what you do for it, see what needs doing today, and hand the plant's whole history to whoever you trade or sell it to. The record belongs to the plant, not the keeper, so it survives changing hands — and a cutting traces back to the plant it came from. It runs in a browser and works offline; you sign in with Google or an email to start. It is free to use today, with no ads, and nothing tracks you beyond a cookieless page-view count.
 
 ## The app
 
@@ -15,7 +15,7 @@ At https://plantparlour.org. A browser app that installs to the home screen; the
 - **A photo timeline.** Tap any photo to make it the plant's main picture.
 - **Log a propagation** and the cutting becomes a new plant whose record links back to its mother.
 - **Publish a tag** — one plant's whole record at a shareable link. Tags are unlisted by design (a 32-hex random token, read through a `SECURITY DEFINER` RPC, marked `noindex`, disallowed in robots.txt); they are for handing to one person, not for being found in a search result.
-- **Sign in** with Google or an emailed code — no passwords — and the greenhouse backs up and syncs across phones. The app works fully without an account; signing in is what adds backup, sync and publishing.
+- **Sign in** with Google, or an email and password. The account is what backs the greenhouse up and keeps it in step across phones. The care library, problem guides and pet-safe list need no account.
 
 ### Who it's for
 
@@ -23,7 +23,7 @@ Collectors who want to stop killing things and start showing off the rare ones; 
 
 ### What it costs
 
-Nothing. There is no subscription, no paid tier and no advertising. AI photo identification and the shared care guides are paid for by PlantParlour; a care guide is generated once for a species and then read free and instantly by everyone after.
+Free to use today, with no advertising. Each account includes a free allowance of AI photo scans; everything else is free. Care guides are generated once for a species and then read free and instantly by everyone after. A paid plan for heavier AI use may be added later.
 
 URL: https://plantparlour.org/
 
@@ -41,6 +41,10 @@ Two things worth knowing about this data:
 Pages are grouped as Aroids, Trees, Palms, Vines & trailers, Prayer plants, Ferns, Begonias & violets, Succulents & cacti, Flowering, Bromeliads & air plants, Herbs & edibles, and Other.
 
 URL: https://plantparlour.org/plants
+
+## The app, in plain words
+
+https://plantparlour.org/plant-care-app describes every feature, what is free today (everything; AI photo scans are a free allowance per account), which phones it runs on (iPhone and Android, in the browser; there is no app-store app), whether it needs an account (yes) and how reminders work (in the app and through your phone's calendar; no push notifications).
 
 ## Plant problems
 
@@ -67,6 +71,7 @@ Both are free, need no account, work on any phone or computer with a browser, an
 - App and home page: https://plantparlour.org/
 - Plant care library (about 160 plants): https://plantparlour.org/plants
 - A single plant's care page: https://plantparlour.org/plants/{slug} — e.g. /plants/monstera-deliciosa, /plants/epipremnum-aureum, /plants/dracaena-trifasciata
+- What the app does: https://plantparlour.org/plant-care-app
 - Plant problems guides: https://plantparlour.org/problems
 - Pet-safe houseplants: https://plantparlour.org/pet-safe-houseplants
 - Parlour Games: https://plantparlour.org/parlour-games
@@ -85,7 +90,7 @@ Not for crawling or citation: https://plantparlour.org/tag?t=… — a published
 - **The record belongs to the plant.** Trades, propagation and public tags all fall out of that one rule. Other plant apps keep a log for *you*; when the plant changes hands, that log stays behind. Here it goes with the plant.
 - **Lineage.** A cutting is linked to its mother plant and chains back indefinitely, so a propagation years later still traces to where it came from. That is the selling point for anyone rooting and trading cuttings.
 - **Cultivar-level care.** The species catalogue names about 110 cultivars and variegations, each with its own cadences, rather than treating every Monstera as one plant.
-- **No account required, and no email gate.** The app works entirely offline on the device. Signing in adds backup, sync across phones, and the ability to publish a tag.
+- **An account, but no paywall.** The app needs a sign-in (Google or email); after that it works offline on the device and syncs across phones. The library and guides need no account at all.
 - **No tracking.** Page views are counted with Vercel Web Analytics, which sets no cookies; tag links and keeper names are stripped from every URL before it is sent. No advertising, no tracking pixels and no third-party cookies. See https://plantparlour.org/privacy.
 - **Browser-based.** PlantParlour has never published an app-store app. The official app is only at https://plantparlour.org.
 

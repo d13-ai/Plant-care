@@ -65,3 +65,13 @@ describe("a page's last-updated date", () => {
     expect(longDate("2026-09-05")).toBe("5 September 2026");
   });
 });
+
+describe("what doesn't count as a change", () => {
+  test("rewording the call-to-action box moves no date", () => {
+    // 27 Sep 2026: "free, no account needed" became "free" on every page's
+    // button, and all 171 dates jumped to that day with no advice changed.
+    const withCta = (label) => page(`Water weekly.</p>\n<div class="cta">\n  <h2>Start</h2>\n  <a class="btn" href="/">${label}</a>\n</div>\n<p>`);
+    const path = manifest(withCta("Start your greenhouse — free, no account needed"), "2026-09-24");
+    expect(pageDates({ today: "2026-09-27", path }).dateFor(URL, withCta("Start your greenhouse — free"))).toBe("2026-09-24");
+  });
+});

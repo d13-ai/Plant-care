@@ -53,7 +53,7 @@ const byName = (a, b) => called(a).localeCompare(called(b));
 /** The health check, described as what it is: a second pair of eyes, not a diagnosis. */
 const HEALTH_CTA = `<div class="cta">
   <h2>Not sure which one it is?</h2>
-  <p>PlantParlour's health check looks at up to three photos of your plant alongside the care you've logged for it — when you last watered, when it was repotted, problems it has had before — and tells you what it sees. Log the problem as an issue, take another photo in a few days, and the next check compares the two, so you can tell whether it is spreading or settling. It is an AI's considered guess, not a diagnosis, and it is free to start with no account.</p>
+  <p>PlantParlour's health check looks at up to three photos of your plant alongside the care you've logged for it — when you last watered, when it was repotted, problems it has had before — and tells you what it sees. Log the problem as an issue, take another photo in a few days, and the next check compares the two, so you can tell whether it is spreading or settling. It is an AI's considered guess, not a diagnosis. <a href="/plant-care-app">More about the app</a>.</p>
   <a class="btn btn-lg" href="/">Open PlantParlour</a>
 </div>`;
 
@@ -379,7 +379,116 @@ ${faqHtml(faq)}
 <div class="cta">
   <h2>Know exactly what you have</h2>
   <p>The first thing a vet or a poison line will ask is what the plant is. PlantParlour keeps a record for every plant you own — its name, its photos, and everything you've done for it — so the answer is in your pocket.</p>
-  <a class="btn btn-lg" href="/">Start your greenhouse — free, no account needed</a>
+  <a class="btn btn-lg" href="/">Start your greenhouse — free</a>
+</div>
+${foot}`;
+}
+
+// ------------------------------------------------------------ the app itself
+
+/**
+ * What the app does, said plainly, at a URL a search engine can read.
+ *
+ * The home page is the app, and to anyone without an account it is the
+ * welcome screen: a story and a sign-in. That is the right front door for a
+ * person who has already decided to come in, and it gave Google nothing to
+ * match "plant care app" against -- neither word was on it. This page is the
+ * other half: every feature, what it costs, which phones it runs on, and the
+ * questions people ask before installing anything.
+ *
+ * Every claim here was checked against the code on 27 Sep 2026, and three
+ * are worded carefully because the true answer is narrower than the usual
+ * one: an account is needed; AI scans are a free allowance, not unlimited;
+ * and reminders come from the calendar, not push notifications.
+ */
+export const APP_FEATURES = [
+  ["Care reminders set for each plant", "Every plant gets its own schedule for watering, feeding, repotting and a fresh photo, starting from the cadence in the PlantParlour care library for its species. Log a watering and the next one counts from that day, not from the calendar. The greenhouse shows what's due today, and Add to calendar puts a plant's dates in your phone's calendar so your phone does the reminding."],
+  ["Identify a plant from a photo", "Photograph the whole plant, then a close-up or two, and the AI reads them together to name it — the species, and often the named cultivar, with how sure it is. You choose the answer, and it sets the reminders from there. Or skip the camera and pick from a built-in list of houseplants and named cultivars."],
+  ["A health check that remembers", "Ask about a plant that looks off and the AI reads its photos alongside what you've logged for it — when it was watered, when it was repotted, what went wrong before — and says what it sees and the likely cause. Take another photo a few days later and it compares the two. It's an AI's considered guess, not a diagnosis."],
+  ["Problems and fixes on the record", "Report an issue and the plant is marked Special care needed until it's resolved. What you did about it is written down with it, so the plant's history shows what went wrong and what fixed it."],
+  ["A photo timeline", "Every photo of a plant is kept in order, so you can see it grow — or see exactly when the yellowing started."],
+  ["Cuttings that trace back", "Log a propagation and the cutting becomes a plant of its own, linked to the plant it came from. Years later, it still traces back to its mother."],
+  ["A record that goes with the plant", "Publish a plant's tag and its whole story — photos, care, issues and what fixed them — is at a link you can send to whoever buys, trades for or is given the plant. Tags are unlisted: they're for the person you hand them to, not for search results."],
+  ["A care guide for every species", "Each plant has a care guide for its species: light, water, humidity, soil, feeding, repotting and the usual problems. Anything it says about toxicity comes with a reminder to check the ASPCA's plant list."],
+];
+
+export const APP_FAQ = [
+  // Worded for today, not for ever: a paid plan is planned (docs/PRICING.md),
+  // and "there's no subscription" would be quoted back by every search
+  // result and AI answer that had read it, long after it stopped being true.
+  ["Is PlantParlour free?", "Yes, it's free to use, with no advertising. Your account includes a number of free AI photo scans; everything else — reminders, the care record, photos, care guides and tags — is free, and keeps working after the scans are used."],
+  ["Does it work on iPhone and Android?", "Yes. It runs in the browser on both, and you can add it to your home screen so it opens like any other app. There's no App Store or Google Play download — if you see a PlantParlour app in a store, it isn't this one."],
+  ["Do I need an account?", "Yes. Sign in with Google, or with an email and password. The account is what backs your plants up and keeps them in step across your phones. The care library, the problem guides and the pet-safe list need no account at all."],
+  ["Does it work offline?", "Yes. Your plants live on your phone, so you can log care with no signal. A photo taken offline uploads the next time you have a connection."],
+  ["Does it send notifications?", "Not push notifications. The app shows what's due each time you open it, and Add to calendar puts a plant's watering, feeding and repotting dates into your phone's calendar, which reminds you."],
+  ["Can it tell me what my plant is?", "Usually, from a photo — down to the species and often the named cultivar. It can be wrong, especially between look-alikes, so it shows how sure it is and you make the final call."],
+  ["Is it useful if I sell or trade plants?", "That's what it was built for. A plant's tag carries its whole record — where it came from, how it's been cared for, what went wrong and what fixed it — and a cutting traces back to the plant it was taken from."],
+];
+
+export function appPage(pages) {
+  const url = `${SITE}/plant-care-app`;
+  const title = titled("Free plant care app with watering reminders");
+  const description =
+    "PlantParlour is a free plant care app: watering and feeding reminders set for each plant, AI plant identification and health checks from a photo, a care history for every plant, and a record that goes with it when you sell or trade. Runs in your phone's browser.";
+  const answer =
+    "PlantParlour is a free plant care app that runs in your phone's browser. Add a plant from a photo and it works out what it is, sets watering, feeding and repotting reminders for that plant, and keeps a record of everything you do for it — every watering, repot, problem and fix. When you sell, trade or give a plant away, its whole history can go with it at a link. It works on iPhone and Android without an app store, keeps working offline, and keeps your plants in step across your phones once you sign in.";
+
+  const jsonld = [
+    ld({
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "PlantParlour: a free plant care app",
+      description,
+      url,
+      inLanguage: "en",
+      isPartOf: { "@type": "WebSite", name: "PlantParlour", url: `${SITE}/` },
+      speakable: { "@type": "SpeakableSpecification", cssSelector: [".answer"] },
+      about: {
+        "@type": "WebApplication",
+        name: "PlantParlour",
+        url: `${SITE}/`,
+        applicationCategory: "LifestyleApplication",
+        operatingSystem: "Web, iOS, Android",
+        featureList: APP_FEATURES.map(([name]) => name),
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      },
+      publisher: { "@type": "Organization", name: "PlantParlour", url: `${SITE}/` },
+    }),
+    faqLd(APP_FAQ),
+    breadcrumb([
+      ["PlantParlour", `${SITE}/`],
+      ["The plant care app", url],
+    ]),
+  ].join("\n");
+
+  return `${head({ title, description, canonical: url, extra: jsonld + "\n" })}
+<nav class="crumbs"><a href="/">PlantParlour</a> / The plant care app</nav>
+
+<h1>A free plant care app for the plants you're proud of</h1>
+<p class="sub">What PlantParlour does, and what it doesn't</p>
+
+<div class="answer">
+  <p>${esc(answer)}</p>
+</div>
+
+<h2 id="what-it-does">What it does</h2>
+<ul class="problems">
+${APP_FEATURES.map(([name, body]) => `  <li>\n    <b>${esc(name)}</b>\n    <p>${esc(body)}</p>\n  </li>`).join("\n")}
+</ul>
+
+<h2 id="who-its-for">Who it's for</h2>
+<p>People with more plants than they can keep in their head. Collectors who want to stop losing the fussy ones and start showing off the rare ones. Propagators and small sellers, for whom a plant with a traceable history is worth more than one without. And anyone who has ever bought a plant and wondered what the last person did to it.</p>
+
+<h2 id="faq">Questions people ask</h2>
+${faqHtml(APP_FAQ)}
+
+<h2 id="free-guides">Free without an account</h2>
+<p>The <a href="/plants">care library</a> has a page for each of ${pages.length} houseplants, with the same watering, feeding and repotting cadences the app uses. The <a href="/problems">plant problems guides</a> start from what you can see — yellow leaves, brown tips, spider mites — and work back to the cause. And the <a href="/pet-safe-houseplants">pet-safe houseplants list</a> shows which plants the ASPCA lists as non-toxic to cats and dogs.</p>
+
+<div class="cta">
+  <h2>Start your greenhouse</h2>
+  <p>Free, in your phone's browser. Sign in with Google or an email, add your first plant from a photo, and it takes it from there.</p>
+  <a class="btn btn-lg" href="/">Open PlantParlour</a>
 </div>
 ${foot}`;
 }
@@ -397,6 +506,7 @@ function main() {
     writeFileSync(join(dir, `${g.slug}.html`), dates.stamp(`${SITE}/problems/${g.slug}`, guidePage(g, pages)), "utf-8");
   }
   writeFileSync(join(PUBLIC, "pet-safe-houseplants.html"), dates.stamp(`${SITE}/pet-safe-houseplants`, petSafePage(pages)), "utf-8");
+  writeFileSync(join(PUBLIC, "plant-care-app.html"), dates.stamp(`${SITE}/plant-care-app`, appPage(pages)), "utf-8");
   dates.save();
   console.log(`Generated ${GUIDES.length + 1} problem pages and the pet-safe page (${petSafe(pages).length} plants)`);
 }

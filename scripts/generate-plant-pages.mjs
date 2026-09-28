@@ -148,6 +148,7 @@ export const foot = `</main>
   <a href="/plants">Plant care library</a> &middot;
   <a href="/problems">Plant problems</a> &middot;
   <a href="/pet-safe-houseplants">Pet-safe plants</a> &middot;
+  <a href="/plant-care-app">The app</a> &middot;
   <a href="/">PlantParlour</a> &middot;
   <a href="/parlour-games">Parlour Games</a> &middot;
   <a href="/privacy">Privacy</a> &middot;
@@ -387,7 +388,8 @@ ${related.map((r) => `  <li><a href="/plants/${r.slug}">${esc(r.sci)}</a></li>`)
 <div class="cta">
   <h2>Keep this plant's record</h2>
   <p>PlantParlour gives your ${esc(p.label)} its own page: a photo timeline, reminders set to the cadences above, and every watering, feed, repot and problem written down. Trade or sell it and the whole history goes with it.</p>
-  <a class="btn btn-lg" href="/">Start your greenhouse — free, no account needed</a>
+  <a class="btn btn-lg" href="/">Start your greenhouse — free</a>
+  <p class="more-link"><a href="/plant-care-app">What the app does</a></p>
 </div>
 ${foot}`;
 }
@@ -491,7 +493,8 @@ ${s.plants
 <div class="cta">
   <h2>A record for every plant you keep</h2>
   <p>PlantParlour photographs each plant, tells you what needs doing today, and keeps the whole history — so when you trade or sell one, its record goes with it. Cuttings trace back to the plant they came from.</p>
-  <a class="btn btn-lg" href="/">Start your greenhouse — free, no account needed</a>
+  <a class="btn btn-lg" href="/">Start your greenhouse — free</a>
+  <p class="more-link"><a href="/plant-care-app">What the app does</a></p>
 </div>
 ${foot}`;
 }

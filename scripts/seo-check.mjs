@@ -69,6 +69,7 @@ const ROUTES = new Map([
   ["/problems", "problems/index.html"],
   ...GUIDES.map((g) => [`/problems/${g.slug}`, `problems/${g.slug}.html`]),
   ["/pet-safe-houseplants", "pet-safe-houseplants.html"],
+  ["/plant-care-app", "plant-care-app.html"],
 ]);
 
 /** The documents this script actually inspects, with the URL each claims. */
@@ -158,7 +159,7 @@ for (const { url, file } of DOCS) {
     ? new Map([...read("sitemap.xml").matchAll(/<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/g)].map((m) => [m[1], m[2]]))
     : new Map();
   for (const { url, file } of DOCS) {
-    if (!/^\/(plants|problems|pet-safe-houseplants)/.test(url) || !existsSync(join(PUBLIC, file))) continue;
+    if (!/^\/(plants|problems|pet-safe-houseplants|plant-care-app)/.test(url) || !existsSync(join(PUBLIC, file))) continue;
     const html = read(file);
     const shown = attr(html, /<p class="updated">Last updated <time datetime="([^"]+)">/);
     const modified = attr(html, /"dateModified": "([^"]+)"/);
@@ -324,6 +325,7 @@ for (const rel of [
   "problems/index.html",
   `problems/${GUIDES[0].slug}.html`,
   "pet-safe-houseplants.html",
+  "plant-care-app.html",
 ]) {
   const html = read(rel);
   const where = `/${rel.replace(/\.html$/, "").replace(/\/index$/, "")}`;

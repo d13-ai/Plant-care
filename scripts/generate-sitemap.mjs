@@ -59,6 +59,7 @@ const urls = [
     changefreq: "monthly",
   })),
   { loc: `${SITE}/pet-safe-houseplants`, files: ["public/pet-safe-houseplants.html"], priority: "0.8", changefreq: "monthly" },
+  { loc: `${SITE}/plant-care-app`, files: ["public/plant-care-app.html"], priority: "0.9", changefreq: "monthly" },
   { loc: `${SITE}/parlour-games`, files: ["public/parlour-games/index.html"], priority: "0.6", changefreq: "weekly" },
   { loc: `${SITE}/parlour-games/trickle`, files: ["public/parlour-games/trickle.html"], priority: "0.6", changefreq: "weekly" },
   { loc: `${SITE}/parlour-games/windowsill`, files: ["public/parlour-games/windowsill.html"], priority: "0.6", changefreq: "weekly" },
