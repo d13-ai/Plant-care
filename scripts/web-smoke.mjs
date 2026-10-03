@@ -145,6 +145,23 @@ try {
   });
   await shot("02-detail-overdue");
 
+  await step("still moist puts watering off without logging a watering, and undoes", async () => {
+    // The pot is still wet on the day the reminder says water: the keeper
+    // says so instead of watering on the calendar's word. Weekly plant, so
+    // the next look is in two days.
+    // The Water row's button comes first; the Log care form's chip of the same name is further down.
+    await page.getByText("Still moist", { exact: true }).first().click();
+    await page.getByText(/Watering put off — check Big Monstera again in 2 days/).waitFor();
+    await page.getByText(/still moist today/).waitFor();
+    if (await page.getByText("Needs water").count()) throw new Error("watering is still flagged after the still-moist check");
+    // History says what happened, and "last watered" did not move.
+    await page.getByText("Still moist — skipped watering").first().waitFor();
+    if (await page.getByText(/^Last today/).count()) throw new Error("a still-moist check was counted as a watering");
+    await shot("02b-still-moist");
+    await page.getByText("Undo", { exact: true }).click();
+    await page.getByText("Needs water").first().waitFor();
+  });
+
   await step("add to calendar exports a recurring .ics with reminders", async () => {
     const [download] = await Promise.all([
       page.waitForEvent("download"),
@@ -400,6 +417,50 @@ try {
     await page.getByText(/Written by AI, and it can be wrong/).scrollIntoViewIfNeeded();
     await shot("13-care-guide-toxicity-notice");
     await context.unroute("**/functions/v1/care");
+  });
+  await step("still moist twice in a row suggests watering less often, and it can be taken or declined", async () => {
+    // Waterings 9 days apart on a 7-day reminder, the soil found still
+    // moist before each: the record argues for every 9 days. Back-dated
+    // through the Log care form, the way a keeper would catch up.
+    // Chips are matched by their exact label; "Still moist" is also the Water
+    // row's button above the form, so the form's chip is the last match.
+    const logPast = async (chip, days) => {
+      const matches = page.getByText(chip, { exact: true });
+      await (chip === "Still moist" ? matches.last() : matches.first()).click();
+      await page.getByPlaceholder("0").fill(String(days));
+      await page.getByText("Add to history").click();
+      await page.waitForTimeout(300);
+    };
+    // A fresh plant: Big Monstera has been watered today by earlier steps,
+    // and a same-day watering is a short gap that rightly argues against it.
+    await page.goto(base + "/plant/new");
+    await page.getByPlaceholder("Big Monstera").fill("Slow Pot");
+    await page.getByPlaceholder("Monstera deliciosa").fill("Monstera deliciosa");
+    await page.getByPlaceholder("Today if blank").fill(daysAgo(40));
+    await page.getByText("Add plant", { exact: true }).last().click();
+    await page.getByText("Care schedule").waitFor({ timeout: 20000 });
+    await logPast("Watered", 27);
+    await logPast("Still moist", 20);
+    await logPast("Watered", 18);
+    await logPast("Still moist", 11);
+    await logPast("Watered", 9);
+    await page.getByText(/still moist when watering came due in 2 of the last/).waitFor();
+    await page.getByText(/still moist when watering came due in 2 of the last/).scrollIntoViewIfNeeded();
+    await shot("14-slower-watering-suggested");
+    await page.getByText("Water every 9 days", { exact: true }).click();
+    await page.getByText(/now waters every 9 days/).waitFor();
+    await page.getByText(/every 9 days/).first().waitFor();
+    if (await page.getByText(/still moist when watering came due/).count()) throw new Error("the suggestion stayed after it was taken");
+    await page.getByText(/Watering changed from every 7 to every 9 days/).first().waitFor();
+    // Undo puts the schedule back -- and the suggestion with it.
+    await page.getByText("Undo", { exact: true }).click();
+    await page.getByText(/still moist when watering came due in 2 of the last/).waitFor();
+    // Declining hides it, and it stays hidden after a reload.
+    await page.getByText("Keep every 7", { exact: true }).click();
+    if (await page.getByText(/still moist when watering came due/).count()) throw new Error("declined, but the suggestion is still showing");
+    await page.reload();
+    await page.getByText("Care schedule").waitFor({ timeout: 20000 });
+    if (await page.getByText(/still moist when watering came due/).count()) throw new Error("the declined suggestion came back after a reload");
   });
   await step("without an account there is a welcome screen and no way past it", async () => {
     // A clean context: no session in storage, no stubbed auth. The parlour

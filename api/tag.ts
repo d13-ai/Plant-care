@@ -33,7 +33,7 @@ const LABELS: Record<string, string> = {
   WATER: "Watered", FERTILIZE: "Fertilized", REPOT: "Repotted", PRUNE: "Pruned",
   PHOTO: "Photo taken", ISSUE: "Issue reported", TREATMENT: "Treatment applied",
   NOTE: "Note", ACQUIRED: "Acquired", PROPAGATED: "Propagated", TRANSFERRED: "Changed keeper",
-  AI_CHECK: "AI check",
+  AI_CHECK: "AI check", STILL_MOIST: "Still moist — skipped watering",
 };
 
 const esc = (s: unknown) =>

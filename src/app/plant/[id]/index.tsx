@@ -1,17 +1,20 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { CloseIcon } from "@/components/icons";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
 import { UndoBar, useUndo } from "@/components/undo-bar";
-import { addPhoto, coverPhoto, deleteEvent, deletePlant, getPlant, logCare, propagate, resolveIssue, setCoverPhoto, type CareEvent } from "@/db";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { addPhoto, coverPhoto, deleteEvent, deletePlant, getPlant, logCare, propagate, resolveIssue, setCoverPhoto, updatePlant, type CareEvent } from "@/db";
 import {
   CARE_EVENT_LABELS,
   LOGGABLE_CARE_TYPES,
   REPEAT_PROMPT,
   careStatuses,
   formatDate,
+  moistSnoozeDays,
   openIssues,
+  slowerWatering,
   plantAlerts,
   relativeDays,
   type CareType,
@@ -105,6 +108,78 @@ export default function PlantDetail() {
     [db, plantId, refresh, data, offerUndo],
   );
 
+  /**
+   * The soil is still wet: put watering off rather than log it. It goes in
+   * the record as its own entry, so "last watered" stays true and the next
+   * health check can see a pot that is slow to dry.
+   */
+  const stillMoist = useCallback(
+    async (everyDays: number) => {
+      const eventId = await logCare(db, plantId, "STILL_MOIST");
+      refresh();
+      const days = moistSnoozeDays(everyDays);
+      undo.show({
+        message: `Watering put off — check ${data?.plant.nickname ?? "it"} again ${days === 1 ? "tomorrow" : `in ${days} days`}`,
+        undo: async () => {
+          await deleteEvent(db, eventId);
+          refresh();
+        },
+      });
+    },
+    [db, plantId, refresh, data, undo],
+  );
+
+  /**
+   * "Keep every 7 days", remembered on this device against the evidence it
+   * answered: a new watering is new evidence, and the question may come back.
+   */
+  const keepKey = `pp:keep-water:${plantId}`;
+  const [keptBasis, setKeptBasis] = useState<string | null>(null);
+  useEffect(() => {
+    AsyncStorage.getItem(keepKey).then(setKeptBasis).catch(() => {});
+  }, [keepKey]);
+  const keepCadence = (basis: string) => {
+    setKeptBasis(basis);
+    AsyncStorage.setItem(keepKey, basis).catch(() => {});
+  };
+
+  /**
+   * Water less often, on the plant's own evidence. The change goes in the
+   * record as a note, so the history says why the reminder moved and the
+   * next health check knows the schedule was tuned to this pot.
+   */
+  const acceptSlower = useCallback(
+    async (suggestion: { everyDays: number; cycles: number; moist: number }) => {
+      if (!data) return;
+      const { plant } = data;
+      const before = plant.waterEveryDays;
+      const fields = {
+        nickname: plant.nickname,
+        species: plant.species,
+        location: plant.location,
+        status: plant.status,
+        notes: plant.notes,
+        fertilizeEveryDays: plant.fertilizeEveryDays,
+        repotEveryDays: plant.repotEveryDays,
+        photoEveryDays: plant.photoEveryDays,
+      };
+      await updatePlant(db, plantId, { ...fields, waterEveryDays: suggestion.everyDays });
+      const noteId = await logCare(db, plantId, "NOTE", {
+        notes: `Watering changed from every ${before} to every ${suggestion.everyDays} days: the soil was still moist when it came due in ${suggestion.moist} of the last ${suggestion.cycles} waterings.`,
+      });
+      refresh();
+      undo.show({
+        message: `${plant.nickname} now waters every ${suggestion.everyDays} days`,
+        undo: async () => {
+          await updatePlant(db, plantId, { ...fields, waterEveryDays: before });
+          await deleteEvent(db, noteId);
+          refresh();
+        },
+      });
+    },
+    [db, plantId, refresh, data, undo],
+  );
+
   const removeEvent = useCallback(
     async (event: CareEvent) => {
       const ok = await confirm(
@@ -123,6 +198,8 @@ export default function PlantDetail() {
 
   const { plant, events, photos, mother, propagations } = data;
   const statuses = careStatuses(plant, events);
+  const slower = slowerWatering(events, plant.waterEveryDays);
+  const suggestSlower = slower && slower.basis !== keptBasis ? slower : null;
   const issues = openIssues(events);
   const alerts = plantAlerts(statuses, issues.length);
   const hero = coverPhoto(plant, photos);
@@ -440,30 +517,52 @@ export default function PlantDetail() {
           </Body>
         ) : null}
         {statuses.map((care) => (
-          <View key={care.type} style={[styles.careRow, { borderTopColor: t.hairline }]}>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Row>
-                <Body style={{ fontWeight: "600" } as never}>{care.label}</Body>
-                <Badge
-                  tone={toneFor[care.state]}
-                  label={
-                    care.state === "OFF"
-                      ? "Off"
-                      : care.state === "OVERDUE"
-                        ? care.dueLabel
-                        : care.state === "DUE_SOON"
-                          ? `Due in ${care.daysUntilDue}d`
-                          : `Due ${formatDate(care.dueAt)}`
-                  }
-                />
-              </Row>
-              <Body small muted>
-                {care.daysSinceLast === null ? "Never logged" : `Last ${relativeDays(care.daysSinceLast)}`}
-                {care.everyDays ? ` · every ${care.everyDays} days` : ""}
-              </Body>
+          <Fragment key={care.type}>
+            <View style={[styles.careRow, { borderTopColor: t.hairline }]}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Row>
+                  <Body style={{ fontWeight: "600" } as never}>{care.label}</Body>
+                  <Badge
+                    tone={toneFor[care.state]}
+                    label={
+                      care.state === "OFF"
+                        ? "Off"
+                        : care.state === "OVERDUE"
+                          ? care.dueLabel
+                          : care.state === "DUE_SOON"
+                            ? `Due in ${care.daysUntilDue}d`
+                            : `Due ${formatDate(care.dueAt)}`
+                    }
+                  />
+                </Row>
+                <Body small muted>
+                  {care.daysSinceLast === null ? "Never logged" : `Last ${relativeDays(care.daysSinceLast)}`}
+                  {care.daysSinceChecked != null ? ` · still moist ${relativeDays(care.daysSinceChecked)}` : ""}
+                  {care.everyDays ? ` · every ${care.everyDays} days` : ""}
+                </Body>
+              </View>
+              <View style={{ gap: space.xs, alignItems: "flex-end" }}>
+                <Button title="Log" variant="plum" small onPress={() => quickLog(care.type)} />
+                {/* Due, but the soil says otherwise: put it off instead of
+                    watering on the calendar's word. See moistSnoozeDays. */}
+                {care.type === "WATER" && care.everyDays && (care.state === "OVERDUE" || care.state === "DUE_SOON") ? (
+                  <Button title="Still moist" small onPress={() => stillMoist(care.everyDays!)} />
+                ) : null}
+              </View>
             </View>
-            <Button title="Log" variant="plum" small onPress={() => quickLog(care.type)} />
-          </View>
+            {care.type === "WATER" && suggestSlower ? (
+              // The record argues for a slower schedule: see slowerWatering.
+              <View style={[styles.suggest, { backgroundColor: c.attention.bg, borderColor: c.attention.ring }]}>
+                <Body small style={{ color: c.attention.fg } as never}>
+                  {`The soil was still moist when watering came due in ${suggestSlower.moist} of the last ${suggestSlower.cycles} waterings, and you've been leaving about ${suggestSlower.everyDays} days between them. Water every ${suggestSlower.everyDays} days instead of ${plant.waterEveryDays}?`}
+                </Body>
+                <Row>
+                  <Button title={`Water every ${suggestSlower.everyDays} days`} variant="plum" small onPress={() => acceptSlower(suggestSlower)} />
+                  <Button title={`Keep every ${plant.waterEveryDays}`} small onPress={() => keepCadence(suggestSlower.basis)} />
+                </Row>
+              </View>
+            ) : null}
+          </Fragment>
         ))}
       </Card>
 
@@ -472,7 +571,11 @@ export default function PlantDetail() {
       <Card>
         <Heading>Log care</Heading>
         <Chips
-          options={LOGGABLE_CARE_TYPES.map((type) => ({ label: CARE_EVENT_LABELS[type], value: type }))}
+          options={LOGGABLE_CARE_TYPES.map((type) => ({
+            // The history's label is a sentence; a chip needs a word or two.
+            label: type === "STILL_MOIST" ? "Still moist" : CARE_EVENT_LABELS[type],
+            value: type,
+          }))}
           value={logType}
           onChange={setLogType}
         />
@@ -730,6 +833,7 @@ export default function PlantDetail() {
 const styles = StyleSheet.create({
   container: { padding: space.lg, gap: space.md, paddingBottom: space.xl * 2 },
   photo: { width: 120, height: 120, borderRadius: radius.md },
+  suggest: { gap: space.sm, padding: space.md, borderRadius: radius.md, borderWidth: 1, marginTop: space.sm },
   careRow: {
     flexDirection: "row",
     alignItems: "center",

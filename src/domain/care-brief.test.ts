@@ -131,3 +131,20 @@ test("the edge function bounds the brief to the same number this file does", () 
   const bound = fn.match(/boundedText\(body\.care_brief,\s*(\d+)\)/)?.[1];
   expect(bound).toBe(String(CARE_BRIEF_MAX));
 });
+
+describe("a pot that stays wet", () => {
+  test("is told to the health check, separately from watering", () => {
+    const now = new Date("2026-10-03T12:00:00Z");
+    const ago = (d: number) => new Date(now.getTime() - d * 86_400_000).toISOString();
+    const brief = careBrief(
+      [
+        { type: "WATER", occurredAt: ago(9) },
+        { type: "STILL_MOIST", occurredAt: ago(0) },
+      ],
+      { waterEveryDays: 7 },
+      now,
+    );
+    expect(brief).toContain("Watered: 9 days ago (reminder set for every 7 days).");
+    expect(brief).toContain("Still moist — skipped watering: today.");
+  });
+});
