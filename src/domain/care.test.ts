@@ -6,6 +6,7 @@ import {
   plantAlerts,
   relativeDays,
   loggedToday,
+  moistSnoozeDays,
   REPEAT_PROMPT,
 } from "./care";
 
@@ -184,3 +185,65 @@ describe("loggedToday", () => {
     expect(REPEAT_PROMPT.NOTE).toBeUndefined();
   });
 });
+
+describe("soil still moist", () => {
+  const water = (events: { type: string; occurredAt: Date }[]) =>
+    byType(careStatuses(cadence, events, now)).WATER;
+
+  it("puts an overdue watering off, without counting as one", () => {
+    // Weekly plant, last watered 9 days ago: overdue. Checked today, still
+    // wet: look again in 2 days, and "last watered" is still 9 days ago.
+    const s = water([
+      { type: "WATER", occurredAt: daysAgo(9) },
+      { type: "STILL_MOIST", occurredAt: now },
+    ]);
+    expect(s.state).toBe("OK");
+    expect(s.daysUntilDue).toBe(2);
+    expect(s.daysSinceLast).toBe(9);
+    expect(s.lastCheckedAt).toBe(now.toISOString());
+  });
+
+  it("never brings watering forward", () => {
+    // Checked early, the day after watering: the normal date still stands.
+    const s = water([
+      { type: "WATER", occurredAt: daysAgo(1) },
+      { type: "STILL_MOIST", occurredAt: now },
+    ]);
+    expect(s.daysUntilDue).toBe(6);
+  });
+
+  it("is forgotten once the plant is watered", () => {
+    const s = water([
+      { type: "STILL_MOIST", occurredAt: daysAgo(3) },
+      { type: "WATER", occurredAt: daysAgo(2) },
+    ]);
+    expect(s.daysUntilDue).toBe(5);
+    expect(s.lastCheckedAt).toBeNull();
+  });
+
+  it("takes the latest check when there have been several", () => {
+    const s = water([
+      { type: "WATER", occurredAt: daysAgo(12) },
+      { type: "STILL_MOIST", occurredAt: daysAgo(5) },
+      { type: "STILL_MOIST", occurredAt: daysAgo(1) },
+    ]);
+    expect(s.daysUntilDue).toBe(1);
+  });
+
+  it("puts nothing else off", () => {
+    const s = byType(
+      careStatuses(cadence, [{ type: "FERTILIZE", occurredAt: daysAgo(31) }, { type: "STILL_MOIST", occurredAt: now }], now),
+    );
+    expect(s.FERTILIZE.state).toBe("OVERDUE");
+    expect(s.FERTILIZE.lastCheckedAt).toBeUndefined();
+  });
+
+  it("waits longer for plants that are watered less often", () => {
+    expect(moistSnoozeDays(3)).toBe(1);
+    expect(moistSnoozeDays(7)).toBe(2);
+    expect(moistSnoozeDays(10)).toBe(3);
+    expect(moistSnoozeDays(30)).toBe(7);
+    expect(moistSnoozeDays(1)).toBe(1);
+  });
+});
+

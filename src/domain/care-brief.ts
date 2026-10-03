@@ -69,8 +69,12 @@ const clip = (text: string, max: number) => {
   return t.length <= max ? t : `${t.slice(0, max - 1).trimEnd()}…`;
 };
 
-/** The care types worth telling a model about, in the order they are listed. */
-const TOLD: CareType[] = ["WATER", "FERTILIZE", "REPOT", "PRUNE", "TREATMENT", "ACQUIRED"];
+/**
+ * The care types worth telling a model about, in the order they are listed.
+ * STILL_MOIST is here because a pot that is still wet when watering falls
+ * due is evidence: slow drying is how overwatering and root rot start.
+ */
+const TOLD: CareType[] = ["WATER", "STILL_MOIST", "FERTILIZE", "REPOT", "PRUNE", "TREATMENT", "ACQUIRED"];
 
 /**
  * A few plain lines: when each kind of care last happened, how often it is

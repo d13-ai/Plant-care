@@ -145,6 +145,22 @@ try {
   });
   await shot("02-detail-overdue");
 
+  await step("still moist puts watering off without logging a watering, and undoes", async () => {
+    // The pot is still wet on the day the reminder says water: the keeper
+    // says so instead of watering on the calendar's word. Weekly plant, so
+    // the next look is in two days.
+    await page.getByText("Still moist", { exact: true }).click();
+    await page.getByText(/Watering put off — check Big Monstera again in 2 days/).waitFor();
+    await page.getByText(/still moist today/).waitFor();
+    if (await page.getByText("Needs water").count()) throw new Error("watering is still flagged after the still-moist check");
+    // History says what happened, and "last watered" did not move.
+    await page.getByText("Still moist — skipped watering").first().waitFor();
+    if (await page.getByText(/^Last today/).count()) throw new Error("a still-moist check was counted as a watering");
+    await shot("02b-still-moist");
+    await page.getByText("Undo", { exact: true }).click();
+    await page.getByText("Needs water").first().waitFor();
+  });
+
   await step("add to calendar exports a recurring .ics with reminders", async () => {
     const [download] = await Promise.all([
       page.waitForEvent("download"),

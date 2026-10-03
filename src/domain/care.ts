@@ -18,7 +18,8 @@ export type CareType =
   | "ACQUIRED"
   | "PROPAGATED"
   | "TRANSFERRED"
-  | "AI_CHECK";
+  | "AI_CHECK"
+  | "STILL_MOIST";
 
 export const CARE_EVENT_LABELS: Record<CareType, string> = {
   WATER: "Watered",
@@ -33,6 +34,7 @@ export const CARE_EVENT_LABELS: Record<CareType, string> = {
   PROPAGATED: "Propagated",
   TRANSFERRED: "Changed keeper",
   AI_CHECK: "AI check",
+  STILL_MOIST: "Still moist — skipped watering",
 };
 
 /** Care types a keeper can log by hand, in the order the UI offers them. */
@@ -74,6 +76,9 @@ export interface CareStatus {
   state: DueState;
   daysSinceLast: number | null;
   daysUntilDue: number | null;
+  /** Watering only: when the soil was last found still moist, since the last watering. */
+  lastCheckedAt?: string | null;
+  daysSinceChecked?: number | null;
 }
 
 interface EventLike {
@@ -108,6 +113,16 @@ function startOfDay(d: Date): Date {
  */
 function calendarDaysBetween(a: Date, b: Date): number {
   return Math.round((startOfDay(b).getTime() - startOfDay(a).getTime()) / DAY_MS);
+}
+
+/**
+ * How long a "still moist" check puts watering off: a quarter of the
+ * plant's cadence, at least a day and at most a week. A weekly plant is
+ * looked at again in two days, a three-day plant tomorrow, a monthly cactus
+ * in a week. Not stored with the check, so changing the cadence changes it.
+ */
+export function moistSnoozeDays(everyDays: number): number {
+  return Math.min(7, Math.max(1, Math.round(everyDays / 4)));
 }
 
 /**
@@ -148,7 +163,24 @@ export function careStatuses(
       (plant.createdAt ? toDate(plant.createdAt) : null) ??
       now;
 
-    const dueAt = new Date(baseline.getTime() + everyDays * DAY_MS);
+    let dueAt = new Date(baseline.getTime() + everyDays * DAY_MS);
+
+    // Soil checked and found still moist puts watering off. Only checks
+    // since the last watering count: once it's watered, the clock restarts
+    // from that and an old check means nothing.
+    let lastCheckedAt: string | null | undefined;
+    if (type === "WATER") {
+      const checked = events
+        .filter((e) => e.type === "STILL_MOIST")
+        .map((e) => toDate(e.occurredAt))
+        .filter((d) => !last || d.getTime() > last.getTime())
+        .sort((a, b) => b.getTime() - a.getTime())[0];
+      lastCheckedAt = checked ? checked.toISOString() : null;
+      if (checked) {
+        const recheck = new Date(checked.getTime() + moistSnoozeDays(everyDays) * DAY_MS);
+        if (recheck > dueAt) dueAt = recheck;
+      }
+    }
     // Due on a day, not at an hour: it's "Needs water" from the start of
     // the due date, whatever time the last watering was logged.
     const daysUntilDue = calendarDaysBetween(now, dueAt);
@@ -163,6 +195,9 @@ export function careStatuses(
       type, label, dueLabel, everyDays,
       lastAt, dueAt: dueAt.toISOString(),
       state, daysSinceLast, daysUntilDue,
+      ...(type === "WATER"
+        ? { lastCheckedAt, daysSinceChecked: lastCheckedAt ? calendarDaysBetween(new Date(lastCheckedAt), now) : null }
+        : {}),
     };
   });
 }

@@ -11,6 +11,7 @@ import {
   REPEAT_PROMPT,
   careStatuses,
   formatDate,
+  moistSnoozeDays,
   openIssues,
   plantAlerts,
   relativeDays,
@@ -103,6 +104,27 @@ export default function PlantDetail() {
       offerUndo(type, eventId);
     },
     [db, plantId, refresh, data, offerUndo],
+  );
+
+  /**
+   * The soil is still wet: put watering off rather than log it. It goes in
+   * the record as its own entry, so "last watered" stays true and the next
+   * health check can see a pot that is slow to dry.
+   */
+  const stillMoist = useCallback(
+    async (everyDays: number) => {
+      const eventId = await logCare(db, plantId, "STILL_MOIST");
+      refresh();
+      const days = moistSnoozeDays(everyDays);
+      undo.show({
+        message: `Watering put off — check ${data?.plant.nickname ?? "it"} again ${days === 1 ? "tomorrow" : `in ${days} days`}`,
+        undo: async () => {
+          await deleteEvent(db, eventId);
+          refresh();
+        },
+      });
+    },
+    [db, plantId, refresh, data, undo],
   );
 
   const removeEvent = useCallback(
@@ -459,10 +481,18 @@ export default function PlantDetail() {
               </Row>
               <Body small muted>
                 {care.daysSinceLast === null ? "Never logged" : `Last ${relativeDays(care.daysSinceLast)}`}
+                {care.daysSinceChecked != null ? ` · still moist ${relativeDays(care.daysSinceChecked)}` : ""}
                 {care.everyDays ? ` · every ${care.everyDays} days` : ""}
               </Body>
             </View>
-            <Button title="Log" variant="plum" small onPress={() => quickLog(care.type)} />
+            <View style={{ gap: space.xs, alignItems: "flex-end" }}>
+              <Button title="Log" variant="plum" small onPress={() => quickLog(care.type)} />
+              {/* Due, but the soil says otherwise: put it off instead of
+                  watering on the calendar's word. See moistSnoozeDays. */}
+              {care.type === "WATER" && care.everyDays && (care.state === "OVERDUE" || care.state === "DUE_SOON") ? (
+                <Button title="Still moist" small onPress={() => stillMoist(care.everyDays!)} />
+              ) : null}
+            </View>
           </View>
         ))}
       </Card>
