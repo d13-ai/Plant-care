@@ -47,6 +47,9 @@ export const LOGGABLE_CARE_TYPES: CareType[] = [
   "ISSUE",
   "TREATMENT",
   "NOTE",
+  // Also a button on the Water row when watering is due; here so a check
+  // made yesterday can be back-dated like anything else.
+  "STILL_MOIST",
 ];
 
 /** The care types that carry a reminder cadence. */
@@ -200,6 +203,68 @@ export function careStatuses(
         : {}),
     };
   });
+}
+
+/** A slower watering schedule the plant's own record argues for. */
+export interface SlowerWatering {
+  /** The cadence to suggest, in days. */
+  everyDays: number;
+  /** Recent watering gaps looked at, and how many had the soil still moist when due. */
+  cycles: number;
+  moist: number;
+  /** Changes when there is new evidence, so a "keep it" answer lasts only until then. */
+  basis: string;
+}
+
+/**
+ * Should this plant be watered less often?
+ *
+ * The evidence is the keeper's own "still moist" checks. A gap between two
+ * waterings in which the soil was found still wet is a gap where the
+ * schedule ran ahead of the pot. When that has happened in at least two of
+ * the last three gaps -- or both of the last two -- the schedule is wrong for
+ * this plant in this spot, and the gaps the keeper actually left are a better
+ * cadence than the species default.
+ *
+ * The suggestion is the median of those recent gaps, rounded, and only ever
+ * longer than the current cadence: the record can show a pot drying slowly,
+ * but a missing check says nothing about it drying fast. Only whole gaps
+ * count; the one still open has no length yet.
+ */
+export function slowerWatering(events: EventLike[], everyDays: number | null): SlowerWatering | null {
+  if (!everyDays || everyDays <= 0) return null;
+  const at = (type: string) =>
+    events
+      .filter((e) => e.type === type)
+      .map((e) => toDate(e.occurredAt))
+      .sort((a, b) => a.getTime() - b.getTime());
+  const waters = at("WATER");
+  const moist = at("STILL_MOIST");
+
+  const gaps = waters.slice(1).map((end, i) => {
+    const start = waters[i];
+    return {
+      days: calendarDaysBetween(start, end),
+      moist: moist.some((m) => m.getTime() > start.getTime() && m.getTime() < end.getTime()),
+    };
+  });
+  const recent = gaps.slice(-3);
+  if (recent.length < 2) return null;
+  const moistCount = recent.filter((g) => g.moist).length;
+  if (moistCount < 2) return null;
+
+  const lengths = recent.map((g) => g.days).sort((a, b) => a - b);
+  const mid = lengths.length / 2;
+  const median = lengths.length % 2 ? lengths[Math.floor(mid)] : (lengths[mid - 1] + lengths[mid]) / 2;
+  const suggested = Math.round(median);
+  if (suggested <= everyDays) return null;
+
+  return {
+    everyDays: suggested,
+    cycles: recent.length,
+    moist: moistCount,
+    basis: `${waters[waters.length - 1].toISOString()}|${suggested}`,
+  };
 }
 
 /**

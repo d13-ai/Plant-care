@@ -8,6 +8,7 @@ import {
   loggedToday,
   moistSnoozeDays,
   REPEAT_PROMPT,
+  slowerWatering,
 } from "./care";
 
 const now = new Date("2026-09-13T12:00:00Z");
@@ -244,6 +245,48 @@ describe("soil still moist", () => {
     expect(moistSnoozeDays(10)).toBe(3);
     expect(moistSnoozeDays(30)).toBe(7);
     expect(moistSnoozeDays(1)).toBe(1);
+  });
+});
+
+describe("suggesting a slower watering schedule", () => {
+  // Waterings 9 days apart on a 7-day reminder, the soil found still moist
+  // when each one came due: the pot dries in about 9 days, not 7.
+  const W = (d: number) => ({ type: "WATER", occurredAt: daysAgo(d) });
+  const M = (d: number) => ({ type: "STILL_MOIST", occurredAt: daysAgo(d) });
+
+  it("suggests the gaps the keeper actually leaves, after two moist checks in a row", () => {
+    const s = slowerWatering([W(27), M(20), W(18), M(11), W(9)], 7);
+    expect(s).toMatchObject({ everyDays: 9, cycles: 2, moist: 2 });
+  });
+
+  it("needs two moist gaps out of the last three", () => {
+    expect(slowerWatering([W(36), W(27), M(20), W(18), W(9)], 7)).toBeNull();
+    expect(slowerWatering([W(36), M(29), W(27), W(18), M(11), W(9)], 7)?.everyDays).toBe(9);
+  });
+
+  it("says nothing on one gap's evidence", () => {
+    expect(slowerWatering([W(18), M(11), W(9)], 7)).toBeNull();
+  });
+
+  it("only ever suggests longer, never shorter", () => {
+    // Checks on a plant already on a 10-day schedule, watered every 9 days.
+    expect(slowerWatering([W(27), M(20), W(18), M(11), W(9)], 10)).toBeNull();
+  });
+
+  it("ignores checks in the gap that hasn't finished yet", () => {
+    expect(slowerWatering([W(18), M(11), W(9), M(2)], 7)).toBeNull();
+  });
+
+  it("asks again only when there is new evidence", () => {
+    const before = slowerWatering([W(27), M(20), W(18), M(11), W(9)], 7)!;
+    const same = slowerWatering([W(27), M(20), W(18), M(11), W(9), M(1)], 7)!;
+    const after = slowerWatering([W(27), M(20), W(18), M(11), W(9), M(1), W(0)], 7)!;
+    expect(same.basis).toBe(before.basis);
+    expect(after.basis).not.toBe(before.basis);
+  });
+
+  it("stays quiet with no reminder set", () => {
+    expect(slowerWatering([W(27), M(20), W(18), M(11), W(9)], null)).toBeNull();
   });
 });
 
