@@ -87,6 +87,19 @@ And the art is drawn in the same unit space as the rule, so a plant cannot be
 drawn to a height the game does not count; the check that enforces that found
 a whole family of plants a quarter of a unit short.
 
+### Elbow Room — *specced*
+
+A plot divided into coloured beds: one plant to each bed, one to each row and
+column, and no two plants touching, not even corner to corner. Star Battle
+underneath — the puzzle LinkedIn calls Queens and Meowdoku dresses in cats —
+with a plant keeper's reason for the rule, and three twists that bend it the
+way real plants do: a cactus that doesn't mind company, a fern that keeps out
+of the sun, a climber that needs a trellis.
+
+Measured before it was written: random beds almost never give one answer, so
+the generator repairs them, and a twist only matters if the board is built
+around it. Spec and build plan in `docs/elbow-room-spec.md`.
+
 ### Thicket — *later*
 
 A bed of sprouts; some are weeds. Row and column counts tell you how many
