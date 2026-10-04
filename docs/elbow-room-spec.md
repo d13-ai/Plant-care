@@ -59,9 +59,10 @@ C B D d A
 E e D D D
 ```
 
-The way in is bed **E**: it is only two cells, both in the bottom row, so the
-bottom row's plant must be in E (*confinement*). That empties the rest of the
-bottom row, and the chain runs from there. A player who has solved this has
+There are two ways in, both *confinement*. Bed **C** runs straight down
+column 1, so column 1's plant must be in C and nothing else in column 1 can
+grow. Bed **E** is only two cells, both in the bottom row, so the bottom row
+belongs to E. The chain runs from there. A player who has solved this has
 seen every idea the gentle boards use.
 
 ---
