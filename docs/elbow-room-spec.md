@@ -180,7 +180,7 @@ not a sticker on the bed.
 | board | size | allowed up to | twists |
 |---|---|---|---|
 | **Seedling** | 5 × 5 | confine | none |
-| **Border** | 7 × 7 | crowding | one |
+| **Border** | 7 × 7 | crowding | none — the plain rules |
 | **Allotment** | 9 × 9 | pigeonhole | two |
 
 ### The daily board
@@ -324,6 +324,28 @@ it took plants, markers and the clash ring under 3:1 against the beds, so the
 night palette stops at the plot's edge. And practice is the fixed board
 followed by four small boards, one to meet each twist, in place of a single
 twist practice.
+
+**After the first player tried it (4 Oct 2026).** Three changes, from a
+board reported as unwinnable that wasn't:
+
+- **Border is plain.** A random twist on the default board meant a cactus
+  board one time in four, and a cactus board's answer *has* to touch -- which,
+  to somebody arriving from Meowdoku, is the game breaking its own rule.
+  Twists now live on the Allotment, the daily and the practice lessons.
+- **Dead ends are said at once.** `deadEnds()` names any bed, row or column the
+  plants already in leave no room for; the page outlines them and says "one
+  of your plants needs to move". Meowdoku says the same thing by taking a
+  heart; here nothing is taken. The reported board -- brown in the top row
+  instead of the third -- is now a test.
+- **Twisted beds are unmistakable.** The plant is drawn faintly in every cell
+  of its bed, the legend shows the bed's own colour and pattern beside its
+  rule, and a cactus touching a neighbour says "the cactus doesn't mind the
+  company" instead of saying nothing.
+
+And practice walks the whole board: the coach always shows the next
+deduction, rings the cells and says what to do, so the first board never
+leaves a gap for a guess. (It used to say "column 1's plant has to be in this
+bed" without saying which row -- exactly where the reported guess went in.)
 
 The plan as written:
 

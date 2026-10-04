@@ -45,7 +45,11 @@
 
   var SIZES = [
     { key: "seedling", label: "Seedling", n: 5, twists: 0, min: "single", max: "confine" },
-    { key: "border", label: "Border", n: 7, twists: 1, min: "crowding", max: "crowding" },
+    /* Plain, like Meowdoku and Queens: somebody arriving from those knows these
+       rules exactly, and a random twist on the default board -- a cactus that
+       *has* to touch -- read as the game breaking its own rule. Twists live
+       on the Allotment, the daily board and the practice lessons. */
+    { key: "border", label: "Border", n: 7, twists: 0, min: "crowding", max: "crowding" },
     { key: "allotment", label: "Allotment", n: 9, twists: 2, min: "crowding", max: "pigeonhole" }
   ];
   var sizeOf = function (key) { return SIZES.filter(function (s) { return s.key === key; })[0] || SIZES[1]; };
@@ -117,6 +121,38 @@
       if (kind === "fern" && b.sun[p]) out.push({ type: "sun", cells: [p], words: "too much sun" });
       if (kind === "succulent" && !b.sun[p]) out.push({ type: "shade", cells: [p], words: "wants the sun" });
       if (kind === "climber" && !b.trellis[p]) out.push({ type: "climb", cells: [p], words: "nothing to climb" });
+    });
+    return out;
+  }
+
+  /**
+   * Rows, columns and beds the plants already in leave no room for: every
+   * cell is in the row, column, bed or (cactus aside) the corners of a plant
+   * that is in, or is somewhere this unit's twist forbids. A board in that
+   * state can't be finished until a plant moves -- worth saying at once,
+   * the way Meowdoku does, without taking anything away for it.
+   *
+   * Only the plants count. Bare-soil marks are the player's notes, not rules.
+   */
+  function deadEnds(b, state) {
+    var plants = plantsIn(state), blocked = {};
+    plants.forEach(function (p) { blocked[p] = 1; shadowOf(b, p).forEach(function (q) { blocked[q] = 1; }); });
+    var out = [];
+    unitsOf(b).forEach(function (u) {
+      if (u.cells.some(function (q) { return state[q] === "p"; })) return;
+      var room = u.cells.some(function (q) { return !blocked[q] && allowedByTwist(b, q); });
+      if (!room) out.push({ kind: u.kind, index: u.index, cells: u.cells, words: "no room left in " + unitName(u) });
+    });
+    return out;
+  }
+
+  /** Planted pairs touching corner to corner because a cactus allows it. */
+  function cactusTouches(b, state) {
+    var out = [];
+    plantsIn(state).forEach(function (p) {
+      diagonals(b, p).forEach(function (q) {
+        if (q > p && state[q] === "p" && mayTouch(b, p, q)) out.push([p, q]);
+      });
     });
     return out;
   }
@@ -631,6 +667,8 @@
     mayTouch: mayTouch,
     clashes: clashes,
     isSolved: isSolved,
+    deadEnds: deadEnds,
+    cactusTouches: cactusTouches,
     solutions: solutions,
     reason: reason,
     nudge: nudge,

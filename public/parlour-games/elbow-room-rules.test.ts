@@ -59,6 +59,30 @@ describe("the rules", () => {
   });
 });
 
+describe("dead ends", () => {
+  const b = R.PRACTICE;
+
+  // The board a player sent on 4 Oct 2026: brown planted in the top row
+  // instead of the third. Nothing was said, so it looked unwinnable.
+  it("say so as soon as the plants leave a bed no room -- the reported board", () => {
+    const early = planted(b, [0 * 5 + 0, 1 * 5 + 2]);
+    expect(R.deadEnds(b, early)).toEqual([]);
+    const stuck = planted(b, [0 * 5 + 0, 1 * 5 + 2, 3 * 5 + 3, 4 * 5 + 1]);
+    const dead = R.deadEnds(b, stuck);
+    expect(dead.map((d) => [d.kind, d.index])).toContainEqual(["bed", 0]); // the purple bed, A
+  });
+
+  it("never fire on the way to the answer", () => {
+    const cells = answerCells(b);
+    for (let k = 0; k <= cells.length; k++) expect(R.deadEnds(b, planted(b, cells.slice(0, k)))).toEqual([]);
+  });
+
+  it("ignore bare-soil marks: they are notes, not rules", () => {
+    const allMarked = "x".repeat(25);
+    expect(R.deadEnds(b, allMarked)).toEqual([]);
+  });
+});
+
 describe("the twists", () => {
   // A 3x3 is too small for a real board but fine for a rule.
   const base = (twists: Record<string, "cactus" | "fern" | "climber" | "succulent">) =>
@@ -91,6 +115,12 @@ describe("the twists", () => {
     b.trellis = b.trellis.map((_, i) => (i === 6 ? "left" : null));
     expect(R.clashes(b, planted(b, [0])).map((c) => c.words)).toContain("nothing to climb");
     expect(R.clashes(b, planted(b, [6]))).toEqual([]);
+  });
+
+  it("can say when a cactus is the reason two plants may touch", () => {
+    const cactus = base({ 0: "cactus" });
+    expect(R.cactusTouches(cactus, planted(cactus, [0, 4]))).toEqual([[0, 4]]);
+    expect(R.cactusTouches(base({}), planted(base({}), [0, 4]))).toEqual([]);
   });
 
   it("explain themselves in one line each", () => {
@@ -179,6 +209,13 @@ describe("the generator", () => {
   it("makes seedling boards with no twists", () => {
     for (let seed = 1; seed <= 6; seed++) {
       const b = check(R.generate("seedling", Parlour.mulberry32(seed)), "seedling");
+      expect(Object.keys(b.twists)).toEqual([]);
+    }
+  });
+
+  it("makes plain border boards, the rules Meowdoku and Queens players already know", () => {
+    for (let seed = 1; seed <= 4; seed++) {
+      const b = check(R.generate("border", Parlour.mulberry32(seed * 13)), "border");
       expect(Object.keys(b.twists)).toEqual([]);
     }
   });

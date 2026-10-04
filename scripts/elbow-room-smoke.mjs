@@ -51,17 +51,18 @@ const answerCells = (page) => page.evaluate(() => { const b = window.__game.boar
 const tapCell = (page, cell) => page.locator(`#plot .cell[data-cell="${cell}"]`).click();
 
 try {
-  await step("a board of your own draws, with its legend and a size picked", async () => {
+  await step("a board of your own is a plain 7x7: the rules Meowdoku players already know", async () => {
     const { ctx, page } = await fresh();
     await page.goto(base);
     await ready(page);
     const n = await page.evaluate(() => window.__game.board().n);
     if (n !== 7) throw new Error(`expected a 7x7 Border by default, got ${n}`);
     if ((await page.locator("#plot .cell").count()) !== 49) throw new Error("wrong number of cells");
-    const legend = await page.locator("#legend").innerText();
-    if (!/doesn't mind company|keeps out of the sun|needs something to climb|needs the sun/.test(legend)) {
-      throw new Error("the board's twist isn't explained: " + legend);
-    }
+    // A random twist on the default board -- a cactus that has to touch -- read
+    // to a player as the game breaking its own rule (4 Oct 2026).
+    const twists = await page.evaluate(() => Object.keys(window.__game.board().twists).length);
+    if (twists !== 0) throw new Error("the default board has a twist");
+    if ((await page.locator("#legend").innerText()).trim()) throw new Error("legend shown on a plain board");
     if (!(await page.locator('[data-size="border"].on').count())) throw new Error("Border isn't shown as chosen");
     await ctx.close();
   });
@@ -143,6 +144,39 @@ try {
     await ctx.close();
   });
 
+  await step("a dead end is said at once: the board a player reported as unwinnable", async () => {
+    const { ctx, page } = await fresh();
+    await page.goto(base + "/learn");
+    await ready(page);
+    await page.locator('[data-tool="plant"]').click();
+    // Brown in the top row instead of the third, then green, blue, pink.
+    for (const cell of [0, 7, 18, 21]) await tapCell(page, cell);
+    await page.getByText("No room left for the outlined bed — one of your plants needs to move.").waitFor({ timeout: 5000 });
+    if ((await page.locator("#plot .cell.dead").count()) < 2) throw new Error("the stuck bed isn't outlined");
+    // Moving brown to the third row clears it.
+    await tapCell(page, 0);
+    await tapCell(page, 10);
+    if ((await page.locator("#plot .cell.dead").count()) !== 0) throw new Error("still outlined after the fix");
+    await ctx.close();
+  });
+
+  await step("the practice coach walks the whole board, one deduction at a time, with no guess anywhere", async () => {
+    const { ctx, page } = await fresh();
+    await page.goto(base + "/learn");
+    await ready(page);
+    const first = await page.locator("#coach").innerText();
+    if (!/column 1/.test(first) || !/Mark the ringed cell bare/.test(first)) throw new Error("first step isn't spelled out: " + first);
+    if ((await page.locator("#plot .cell.hint-cell").count()) === 0) throw new Error("nothing lit up");
+    for (let i = 0; i < 60 && !(await page.evaluate(() => window.__game.done())); i++) {
+      const g = await page.evaluate(() => window.__game.guide());
+      if (!g) throw new Error("the coach ran out of steps before the end");
+      await page.locator(`[data-tool="${g.action === "plant" ? "plant" : "mark"}"]`).click();
+      for (const cell of g.cells) await tapCell(page, cell);
+    }
+    if (!(await page.evaluate(() => window.__game.done()))) throw new Error("following the coach didn't finish the board");
+    await ctx.close();
+  });
+
   await step("an Allotment is 9x9 with two twists, and its cells stay hittable on a phone", async () => {
     const { ctx, page } = await fresh({ width: 360, height: 780 });
     await page.goto(base);
@@ -151,6 +185,15 @@ try {
     await page.waitForFunction(() => window.__game.board().n === 9, null, { timeout: 15000 });
     const twists = await page.evaluate(() => Object.keys(window.__game.board().twists).length);
     if (twists !== 2) throw new Error(`expected two twists, got ${twists}`);
+    // Every cell of a twisted bed carries the plant: one badge, the rest marks.
+    const marked = await page.evaluate(() => {
+      const b = window.__game.board();
+      const want = b.beds.filter((bed) => b.twists[bed]).length;
+      const have = document.querySelectorAll("#plot .cell .badge, #plot .cell .twist-mark").length;
+      return { want, have };
+    });
+    if (marked.want !== marked.have) throw new Error(`twisted beds marked in ${marked.have} of ${marked.want} cells`);
+    if (!/\(in this bed\)/.test(await page.locator("#legend").innerText())) throw new Error("legend doesn't point at the bed");
     const w = await page.locator("#plot .cell").first().evaluate((el) => el.getBoundingClientRect().width);
     if (w < 39.5) throw new Error(`cells are ${w}px, under the 40 a thumb needs`);
     // And the choice is remembered.
@@ -173,6 +216,19 @@ try {
     await page.getByText("Meet the cactus", { exact: true }).click();
     await page.waitForFunction(() => window.__game.lesson() === 1 && Object.values(window.__game.board().twists)[0] === "cactus", null, { timeout: 15000 });
     await page.getByText("doesn't mind company").first().waitFor({ timeout: 5000 });
+    // The cactus's answer touches a neighbour; planting both says why that's fine.
+    const pair = await page.evaluate(() => {
+      const b = window.__game.board(), n = b.n, cells = b.answer.map((c, r) => r * n + c);
+      for (const a of cells) for (const d of cells) {
+        if (a < d && Math.abs(Math.floor(a / n) - Math.floor(d / n)) === 1 && Math.abs((a % n) - (d % n)) === 1) return [a, d];
+      }
+      return null;
+    });
+    if (!pair) throw new Error("the cactus board's answer has no touch in it");
+    await page.locator('[data-tool="plant"]').click();
+    for (const cell of pair) await tapCell(page, cell);
+    await page.getByText("The cactus doesn't mind the company.").waitFor({ timeout: 5000 });
+    if (await page.locator("#plot .cell.clash").count()) throw new Error("a cactus touch was shown as a clash");
     // Practice counts nothing.
     if ((await page.evaluate(() => window.__game.progress().done)) !== 0) throw new Error("practice was counted");
     await ctx.close();
