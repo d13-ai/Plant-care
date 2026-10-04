@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { GoogleIcon } from "@/components/icons";
 import { Body, Button, Field, Row, Title } from "@/components/ui";
-import { signInOrUp, signInWithGoogle } from "@/lib/auth";
+import { requestPasswordReset, signInOrUp, signInWithGoogle } from "@/lib/auth";
 import { cardTheme, font, radius, space, useTheme } from "@/theme";
 
 /**
@@ -22,6 +22,10 @@ export function SignIn({ heading }: { heading?: string }) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Forgotten passwords are a second state of the same card rather than a
+  // screen of their own: the email typed above carries straight over.
+  const [forgot, setForgot] = useState(false);
+  const [linkSentTo, setLinkSentTo] = useState<string | null>(null);
 
   // Google can bounce back with an error in the URL instead of a session.
   useEffect(() => {
@@ -45,6 +49,66 @@ export function SignIn({ heading }: { heading?: string }) {
 
   const ready = /\S+@\S+\.\S+/.test(email.trim()) && password.length >= 8;
   const enter = () => run(async () => { await signInOrUp(email, password); });
+  const emailOk = /\S+@\S+\.\S+/.test(email.trim());
+  const askForLink = () =>
+    run(async () => {
+      await requestPasswordReset(email);
+      setLinkSentTo(email.trim().toLowerCase());
+    });
+  const leaveForgot = () => {
+    setForgot(false);
+    setLinkSentTo(null);
+    setError(null);
+  };
+
+  if (forgot) {
+    return (
+      <>
+        <Title>Forgot your password?</Title>
+        {linkSentTo ? (
+          <>
+            {/* Worded for both cases on purpose: the function answers the
+                same whether or not the address has an account. */}
+            <Body>
+              If there's a PlantParlour account for {linkSentTo}, we've emailed it a link to choose a new
+              password. It can take a minute or two — check your spam folder if it hasn't arrived.
+            </Body>
+            <Row>
+              <Button title="Back to sign in" variant="primary" onPress={leaveForgot} />
+            </Row>
+          </>
+        ) : (
+          <>
+            <Body muted>We'll email you a link to choose a new one.</Body>
+            <Field
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@example.com"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              autoComplete="email"
+              textContentType="emailAddress"
+              onSubmitEditing={() => emailOk && !busy && askForLink()}
+              returnKeyType="send"
+            />
+            <Row>
+              <Button
+                title={busy ? "Sending…" : "Email me a link"}
+                variant="primary"
+                disabled={busy || !emailOk}
+                onPress={askForLink}
+              />
+              <Button title="Back" onPress={leaveForgot} disabled={busy} />
+            </Row>
+            <Body small muted>Signed up with Google? You don't need a password — use Continue with Google.</Body>
+          </>
+        )}
+        {error ? <Body small style={{ color: cardTheme.critical.fg } as never}>{error}</Body> : null}
+      </>
+    );
+  }
 
   return (
     <>
@@ -95,6 +159,15 @@ export function SignIn({ heading }: { heading?: string }) {
       <Body small muted>
         New here? This makes your parlour. Already have one? It signs you in.
       </Body>
+      <Pressable
+        onPress={() => {
+          setError(null);
+          setForgot(true);
+        }}
+        accessibilityRole="button"
+      >
+        <Text style={[styles.forgot, { color: cardTheme.plum }]}>Forgot your password?</Text>
+      </Pressable>
       {error ? <Body small style={{ color: cardTheme.critical.fg } as never}>{error}</Body> : null}
     </>
   );
@@ -130,4 +203,5 @@ const styles = StyleSheet.create({
   googleText: { fontSize: 15, fontFamily: font.bold, fontWeight: "700" },
   divider: { flexDirection: "row", alignItems: "center", gap: space.sm },
   rule: { flex: 1, height: StyleSheet.hairlineWidth },
+  forgot: { fontSize: 15, fontFamily: font.bold, fontWeight: "700", textDecorationLine: "underline" },
 });

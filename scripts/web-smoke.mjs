@@ -80,6 +80,15 @@ await context.addInitScript(
   [`sb-${ref}-auth-token`, JSON.stringify(session)],
 );
 
+// Account emails are the edge function's business; here we only check that
+// the app asks for them at the right moments, and says the right thing back.
+const accountEmails = [];
+await context.route("**/functions/v1/account-email", (route) => {
+  const body = route.request().postDataJSON();
+  accountEmails.push(body);
+  return route.fulfill(asJson(body?.kind === "welcome" ? { sent: true } : { ok: true }));
+});
+
 const page = await context.newPage();
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
 page.on("console", (m) => {
@@ -99,6 +108,15 @@ const step = async (name, fn) => { await fn(); console.log("✓", name); };
 try {
   await page.goto(base + "/");
   await step("empty greenhouse renders", () => page.getByText("Your parlour's empty").waitFor({ timeout: 20000 }));
+  await step("a new account asks for its welcome email once, not on every launch", async () => {
+    const welcomes = () => accountEmails.filter((b) => b?.kind === "welcome").length;
+    for (let i = 0; i < 50 && welcomes() === 0; i++) await page.waitForTimeout(100);
+    if (welcomes() !== 1) throw new Error(`expected one welcome request, saw ${welcomes()}`);
+    await page.reload();
+    await page.getByText("Your parlour's empty").waitFor({ timeout: 20000 });
+    await page.waitForTimeout(1000);
+    if (welcomes() !== 1) throw new Error(`the welcome was asked for again on reload (${welcomes()})`);
+  });
   await shot("01-empty");
 
   await step("open add-plant", async () => {
@@ -483,6 +501,82 @@ try {
     } finally {
       await stranger.close();
     }
+  });
+  await step("a forgotten password can be reset by email, without saying who has an account", async () => {
+    const stranger = await browser.newContext({ viewport: { width: 420, height: 860 } });
+    try {
+      const asked = [];
+      await stranger.route("**/functions/v1/account-email", (route) => {
+        asked.push(route.request().postDataJSON());
+        return route.fulfill(asJson({ ok: true }));
+      });
+      const visitor = await stranger.newPage();
+      await visitor.goto(base + "/", { waitUntil: "domcontentloaded" });
+      await visitor.getByText("Start your parlour").waitFor({ timeout: 15000 });
+      // The email typed for signing in carries over to the reset form.
+      await visitor.getByPlaceholder("you@example.com").fill("Keeper@Example.com");
+      await visitor.getByText("Forgot your password?").click();
+      await visitor.getByText("We'll email you a link").waitFor({ timeout: 5000 });
+      await visitor.getByText("Email me a link").click();
+      await visitor.getByText("If there's a PlantParlour account for keeper@example.com").waitFor({ timeout: 10000 });
+      if (shots) await visitor.screenshot({ path: path.join(shots, "27-reset-asked.png"), fullPage: true });
+      if (asked.length !== 1 || asked[0].kind !== "reset" || asked[0].email !== "keeper@example.com") {
+        throw new Error(`unexpected reset request: ${JSON.stringify(asked)}`);
+      }
+      // And back to signing in from there.
+      await visitor.getByText("Back to sign in").click();
+      await visitor.getByText("Start your parlour").waitFor({ timeout: 5000 });
+    } finally {
+      await stranger.close();
+    }
+  });
+  await step("a reset link sets a new password and lets them in, spending the token only on the button", async () => {
+    const stranger = await browser.newContext({ viewport: { width: 420, height: 860 } });
+    try {
+      const verified = [];
+      const updated = [];
+      await stranger.route("**/functions/v1/account-email", (route) => route.fulfill(asJson({ sent: true })));
+      await stranger.route("**/auth/v1/verify**", (route) => {
+        verified.push(route.request().postDataJSON());
+        return route.fulfill(asJson(session));
+      });
+      await stranger.route("**/auth/v1/user**", (route) => {
+        if (route.request().method() === "PUT") updated.push(route.request().postDataJSON());
+        return route.fulfill(asJson(user));
+      });
+      await stranger.route("**/auth/v1/token**", (route) => route.fulfill(asJson(session)));
+      const visitor = await stranger.newPage();
+      await visitor.goto(base + "/?reset=smoke-token-hash", { waitUntil: "domcontentloaded" });
+      await visitor.getByText("Choose a new password").waitFor({ timeout: 15000 });
+      await visitor.waitForTimeout(500);
+      if (verified.length) throw new Error("the token was spent just by opening the link");
+      if (shots) await visitor.screenshot({ path: path.join(shots, "28-reset-form.png"), fullPage: true });
+      await visitor.getByPlaceholder("At least 8 characters").fill("NewPassword9");
+      await visitor.getByText("Save and sign in").click();
+      await visitor.getByText("Your parlour's empty").waitFor({ timeout: 20000 });
+      if (verified.length !== 1 || verified[0].token_hash !== "smoke-token-hash" || verified[0].type !== "recovery") {
+        throw new Error(`unexpected verify: ${JSON.stringify(verified)}`);
+      }
+      if (updated.length !== 1 || updated[0].password !== "NewPassword9") throw new Error(`unexpected update: ${JSON.stringify(updated)}`);
+      if (visitor.url().includes("reset=")) throw new Error(`the token stayed in the address bar: ${visitor.url()}`);
+    } finally {
+      await stranger.close();
+    }
+  });
+  await step("a reset link opened while signed in stops before signing this phone into another account", async () => {
+    let verifiedHere = 0;
+    await page.route("**/auth/v1/verify**", (route) => {
+      verifiedHere++;
+      return route.abort();
+    });
+    await page.goto(base + "/?reset=someone-elses-token", { waitUntil: "domcontentloaded" });
+    await page.getByText("You're already signed in").waitFor({ timeout: 15000 });
+    await page.getByText("smoke@plantparlour.test", { exact: false }).waitFor({ timeout: 5000 });
+    await page.getByText("Go to your parlour").click();
+    await page.getByText("All plants").first().waitFor({ timeout: 20000 });
+    await page.unroute("**/auth/v1/verify**");
+    if (verifiedHere) throw new Error("the link was used while another account was signed in");
+    if (page.url().includes("reset=")) throw new Error(`the token stayed in the address bar: ${page.url()}`);
   });
   await step("a tester can reach the bug report screen", async () => {
     await page.goto(base + "/account", { waitUntil: "domcontentloaded" });

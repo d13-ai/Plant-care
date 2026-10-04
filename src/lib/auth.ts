@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
@@ -15,9 +16,10 @@ import { supabase } from "./supabase";
  * bare link instead. So the code path was broken in production for everyone
  * without a Google account, and a password needs no mail server at all.
  *
- * The one thing that still does is resetting a forgotten password. Until the
- * SMTP settings are made (README → Accounts and sync), Google is the way back
- * in for anyone who forgets theirs.
+ * The one thing that does need one is resetting a forgotten password, and
+ * that no longer goes through Supabase's mailer at all: the `account-email`
+ * function sends the link itself, through Resend, from plantparlour.org. See
+ * requestPasswordReset() and resetPassword() below.
  */
 
 export interface Account {
@@ -78,6 +80,102 @@ export async function signInOrUp(email: string, password: string): Promise<Entry
     throw new Error("Check your email to confirm the address, then sign in.");
   }
   return "signup";
+}
+
+/**
+ * Ask for a reset link. The answer is the same whether or not there is an
+ * account for the address -- the function sees to that -- so the screen can
+ * only ever say "if there's an account, it's on its way".
+ */
+export async function requestPasswordReset(email: string): Promise<void> {
+  const address = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) throw new Error("That doesn't look like an email address.");
+  const { data, error } = await supabase.functions.invoke<{ ok?: boolean; error?: string }>("account-email", {
+    body: { kind: "reset", email: address },
+  });
+  if (error || !data?.ok) {
+    throw new Error(data?.error ?? "Couldn't send the email just now. Try again in a few minutes.");
+  }
+}
+
+/** The token a reset link carries, if this page was opened from one. */
+export function resetTokenInUrl(): string | null {
+  if (Platform.OS !== "web" || typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get("reset");
+}
+
+/**
+ * Leave the reset page for the same address without its token, so a reload,
+ * the history or a screenshot of the URL doesn't carry it about. A fresh
+ * load rather than history.replaceState: the router read the URL when the
+ * page opened and writes it back on its first navigation, token and all.
+ * Returns false where there is no address bar to clean (native).
+ */
+export function leaveResetPage(): boolean {
+  if (Platform.OS !== "web" || typeof window === "undefined") return false;
+  const url = new URL(window.location.href);
+  url.searchParams.delete("reset");
+  window.location.replace(url.pathname + url.search + url.hash);
+  return true;
+}
+
+/**
+ * Use a reset link: trade its token for a session, then set the new password
+ * on it. The token is only spent here, when the keeper presses the button --
+ * never on opening the page -- so a mail scanner that follows every link in
+ * an email can't use it up first.
+ */
+export async function resetPassword(tokenHash: string, password: string): Promise<void> {
+  if (password.length < MIN_PASSWORD) throw new Error(`Use at least ${MIN_PASSWORD} characters.`);
+  const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
+  if (verifyError) {
+    throw new Error(
+      /expired|invalid|not found/i.test(verifyError.message)
+        ? "This link has run out or has already been used. Ask for a new one from the sign-in page."
+        : friendly(verifyError.message),
+    );
+  }
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    if (/different from the old/i.test(error.message)) {
+      // The link worked and they are signed in; the password they chose is
+      // the one they already had. Nothing to change, nothing lost.
+      return;
+    }
+    throw new Error(friendly(error.message));
+  }
+}
+
+const welcomedKey = (userId: string) => `pp:welcomed:${userId}`;
+/** Asked already in this page's life. The account resolves more than once on
+ *  launch -- the stored session, then the server's answer -- and both land
+ *  before the first request has come back to record itself. */
+const welcomeAsked = new Set<string>();
+
+/**
+ * Ask for this account's welcome email, once per device. The function holds
+ * the real rule -- one welcome per account, ever, and only in its first week
+ * -- so this is just about not asking on every launch. A failure is quiet and
+ * tried again next time: nobody should see an error about an email they
+ * didn't ask for.
+ */
+export async function welcomeOnce(account: Account): Promise<void> {
+  if (account.anonymous || !account.email) return;
+  if (welcomeAsked.has(account.userId)) return;
+  welcomeAsked.add(account.userId);
+  try {
+    if (await AsyncStorage.getItem(welcomedKey(account.userId))) return;
+    const { data, error } = await supabase.functions.invoke<{ sent?: boolean; reason?: string }>("account-email", {
+      body: { kind: "welcome" },
+    });
+    if (error || !data) {
+      welcomeAsked.delete(account.userId);
+      return;
+    }
+    await AsyncStorage.setItem(welcomedKey(account.userId), data.sent ? "sent" : (data.reason ?? "no"));
+  } catch {
+    welcomeAsked.delete(account.userId); // next launch
+  }
 }
 
 /**
