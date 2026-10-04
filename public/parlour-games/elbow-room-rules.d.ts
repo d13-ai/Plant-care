@@ -40,6 +40,8 @@ export declare function shadowOf(b: Board, cell: number): number[];
 export declare function mayTouch(b: Board, a: number, c: number): boolean;
 export declare function clashes(b: Board, state: string): Clash[];
 export declare function isSolved(b: Board, state: string): boolean;
+export declare function deadEnds(b: Board, state: string): (Unit & { cells: number[]; words: string })[];
+export declare function cactusTouches(b: Board, state: string): [number, number][];
 export declare function solutions(b: Board, limit?: number, opts?: { plain?: boolean }): number[][];
 export declare function reason(b: Board): { solved: boolean; hardest: Technique; steps: number };
 export declare function nudge(b: Board, state: string): Step | null;

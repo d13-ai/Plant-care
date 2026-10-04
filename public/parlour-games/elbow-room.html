@@ -295,6 +295,7 @@ body.learn .sizes,body.learn #new,body.daily .sizes,body.daily #new{display:none
 #legend p{margin:0;display:flex;align-items:center;gap:8px;font-size:14px;color:var(--cream)}
 #legend .icon{width:26px;height:26px;flex:none}
 #legend .swatch{width:22px;height:22px;flex:none;border-radius:4px;border:1px solid var(--border)}
+#legend .bed-swatch{width:26px;height:26px;flex:none;border-radius:5px;border:2px solid var(--plot-wall)}
 #legend .swatch.sun{background:var(--sun)}
 #legend .swatch.trellis{background:repeating-linear-gradient(45deg,var(--leaf) 0 2px,transparent 2px 6px),repeating-linear-gradient(-45deg,var(--leaf) 0 2px,transparent 2px 6px)}
 
@@ -332,6 +333,12 @@ body.learn .sizes,body.learn #new,body.daily .sizes,body.daily #new{display:none
    it reads as a label on the bed rather than a plant somebody put there. */
 .cell .badge{position:absolute;left:3px;top:3px;width:48%;height:48%;pointer-events:none;
   background:rgba(20,10,23,.55);border-radius:50%;padding:2px;box-shadow:0 0 0 1.5px var(--gold-light)}
+/* Every cell of a twisted bed carries its plant, faintly, so the bed's rule is
+   on the bed itself rather than in one corner of it. */
+.cell .twist-mark{position:absolute;right:3px;bottom:3px;width:34%;height:34%;opacity:.42;pointer-events:none}
+.cell .twist-mark svg{display:block;width:100%;height:100%}
+/* A row, column or bed the plants have left no room for. */
+.cell.dead::after{content:"";position:absolute;inset:3px;border:2px dashed var(--plot-bad);border-radius:4px;pointer-events:none}
 .cell .mark{position:absolute;left:50%;top:50%;width:22%;height:22%;transform:translate(-50%,-50%);border-radius:50%;background:var(--plot-soil)}
 .cell .plant{position:absolute;inset:12%;pointer-events:none}
 .cell .plant svg,.cell .badge svg,#legend svg{display:block;width:100%;height:100%}
@@ -346,7 +353,7 @@ body.learn .sizes,body.learn #new,body.daily .sizes,body.daily #new{display:none
   .cell .plant{transition:transform .2s ease}
 }
 /* A nudge lights the units it is talking about, and the cells to act on. */
-.cell.hint-area::before{content:"";position:absolute;inset:0;background:rgba(230,196,107,.16);pointer-events:none}
+.cell.hint-area::before{content:"";position:absolute;inset:0;background:rgba(230,196,107,.30);box-shadow:inset 0 0 0 2px rgba(230,196,107,.6);pointer-events:none}
 .cell.hint-cell{box-shadow:inset 0 0 0 3px var(--gold-light)}
 
 .bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px 12px;margin-top:14px;font-size:14px;color:var(--muted)}
@@ -365,6 +372,7 @@ button.quiet:disabled{opacity:.45;cursor:default}
 .toggles .quiet{min-height:44px}
 #status{margin:10px 0 0;font-size:15px;color:var(--cream);min-height:1.5em}
 #status .bad{color:var(--bad);font-weight:700}
+#status .fine{color:var(--leaf)}
 #records{margin:6px 0 0;font-size:14px;color:var(--muted)}
 #records b{color:var(--gold-light)}
 #save{margin:6px 0 0;font-size:13px;color:var(--muted)}
@@ -519,7 +527,7 @@ window.va('beforeSend', function (event) {
     <dt>Timer, score or lives</dt>
     <dd>None. No clock, no points and nothing to lose.</dd>
     <dt>Plot sizes</dt>
-    <dd>Three: Seedling (5 × 5), Border (7 × 7, one twist) and Allotment (9 × 9, two twists).</dd>
+    <dd>Three: Seedling (5 × 5) and Border (7 × 7), both plain, and Allotment (9 × 9, with two twists). The daily board has one twist.</dd>
     <dt>Solvable</dt>
     <dd>Always, by reasoning alone. Every board has exactly one answer.</dd>
     <dt>Daily board</dt>
@@ -598,7 +606,7 @@ window.va('beforeSend', function (event) {
   var size = R.sizeOf(P.read(KEY.size, "border"));
   var tool = P.read(KEY.tool, "cycle");
   var tidy = P.read(KEY.tidy, false) === true;
-  var BOARD = null, state = "", undoStack = [], nudged = false, done = false, hint = null;
+  var BOARD = null, state = "", undoStack = [], nudged = false, done = false, hint = null, guide = null;
 
   var progress = P.read(KEY.progress, null) || R.emptyProgress();
   if (!progress.bySize) progress.bySize = {};
@@ -679,6 +687,7 @@ window.va('beforeSend', function (event) {
       if (BOARD.trellis[cell] && cares.trellis) inner += '<span class="trellis ' + BOARD.trellis[cell] + '"></span>';
       var kind = kindOf(cell);
       if (kind && firstCellOfBed(bed) === cell) inner += '<span class="badge">' + ART[kind] + "</span>";
+      else if (kind) inner += '<span class="twist-mark">' + ART[kind] + "</span>";
       inner += '<span class="mark" hidden></span><span class="plant" hidden></span>';
       b.innerHTML = inner;
       b.addEventListener("click", onTap);
@@ -692,8 +701,14 @@ window.va('beforeSend', function (event) {
     var el = document.getElementById("legend"), lines = [];
     var kinds = {};
     Object.keys(BOARD.twists).forEach(function (bed) { kinds[BOARD.twists[bed]] = 1; });
-    R.KINDS.forEach(function (k) {
-      if (kinds[k]) lines.push('<p><span class="icon">' + ART[k] + "</span>" + R.TWIST_LINES[k] + "</p>");
+    /* Each twist line shows the bed it belongs to, in that bed's own colour
+       and pattern, so "the cactus" is a place on the board, not a word. */
+    Object.keys(BOARD.twists).forEach(function (bed) {
+      var k = BOARD.twists[bed], b = +bed;
+      var pattern = BED_PATTERNS[b % BED_PATTERNS.length], colour = BED_COLOURS[b % BED_COLOURS.length];
+      var fill = pattern === "none" ? colour : pattern + ", " + colour;
+      lines.push('<p><span class="bed-swatch" style="background:' + fill + '"></span><span class="icon">' + ART[k] + "</span>" +
+        R.TWIST_LINES[k].replace(/^(\w+)/, "$1 (in this bed)") + "</p>");
     });
     var anySun = BOARD.sun.some(Boolean), anyTrellis = BOARD.trellis.some(Boolean);
     if (anySun && (kinds.fern || kinds.succulent)) lines.push('<p><span class="swatch sun"></span>Sun patch (marked ☀). Only ferns and succulents care.</p>');
@@ -704,10 +719,16 @@ window.va('beforeSend', function (event) {
   function render() {
     var n = BOARD.n, clash = R.clashes(BOARD, state), bad = {};
     clash.forEach(function (c) { c.cells.forEach(function (q) { bad[q] = 1; }); });
+    var dead = R.deadEnds(BOARD, state), deadCells = {};
+    dead.forEach(function (u) { u.cells.forEach(function (q) { deadCells[q] = 1; }); });
+    /* The practice board teaches by walking through it: the coach always has
+       the next deduction ready, lit up, so nobody is left to guess. */
+    guide = LEARN && lesson === 0 && !done && !R.isSolved(BOARD, state) ? R.nudge(BOARD, state) : null;
+    var shown = hint || guide;
     var hintArea = {}, hintCells = {};
-    if (hint) {
-      hint.units.forEach(function (u) { unitCells(u).forEach(function (q) { hintArea[q] = 1; }); });
-      hint.cells.forEach(function (q) { hintCells[q] = 1; });
+    if (shown) {
+      shown.units.forEach(function (u) { unitCells(u).forEach(function (q) { hintArea[q] = 1; }); });
+      shown.cells.forEach(function (q) { hintCells[q] = 1; });
     }
     Array.prototype.forEach.call(plotEl.children, function (el, cell) {
       var ch = state[cell];
@@ -721,19 +742,33 @@ window.va('beforeSend', function (event) {
       el.classList.toggle("clash", !!bad[cell] && ch === "p");
       el.classList.toggle("hint-area", !!hintArea[cell]);
       el.classList.toggle("hint-cell", !!hintCells[cell]);
-      el.setAttribute("aria-label", R.describeCell(BOARD, state, cell) + (bad[cell] ? ", clashes" : ""));
+      el.classList.toggle("dead", !!deadCells[cell]);
+      el.setAttribute("aria-label", R.describeCell(BOARD, state, cell) + (bad[cell] ? ", clashes" : "") + (deadCells[cell] ? ", no room left here" : ""));
     });
     var planted = state.split("").filter(function (ch) { return ch === "p"; }).length;
     document.getElementById("count").textContent = planted + " of " + n + " planted";
     document.getElementById("undo").disabled = undoStack.length === 0 || done;
     document.getElementById("nudge").disabled = done;
 
+    var touches = R.cactusTouches(BOARD, state);
     if (hint) {
       statusEl.textContent = hint.why;
-    } else if (clash.length) {
+    } else if (clash.length || dead.length) {
       var words = [];
       clash.forEach(function (c) { if (words.indexOf(c.words) < 0) words.push(c.words); });
-      statusEl.innerHTML = '<span class="bad">' + words.map(cap).join(" · ") + "</span>";
+      /* Not a penalty -- nothing is taken away -- but said at once, the way
+         Meowdoku says it, so a board in a dead end doesn't look broken. */
+      /* One dead end named, all of them outlined: three at once ("the bed,
+         row 3, column 5") is one mistake, and reads as three. A bed first,
+         because a bed is what the player can see. */
+      if (dead.length) {
+        var first = dead.filter(function (u) { return u.kind === "bed"; })[0] || dead[0];
+        words.push(first.kind === "bed" ? "no room left for the outlined bed" : first.words);
+      }
+      var tail = dead.length && !clash.length ? " — one of your plants needs to move." : "";
+      statusEl.innerHTML = '<span class="bad">' + words.map(cap).join(" · ") + tail + "</span>";
+    } else if (touches.length && !done) {
+      statusEl.innerHTML = '<span class="fine">🌵 The cactus doesn\'t mind the company.</span>';
     } else if (!done) {
       statusEl.textContent = planted ? "" : "Tap a cell to mark it bare; tap again to plant.";
     }
@@ -995,10 +1030,16 @@ window.va('beforeSend', function (event) {
     var marked = state.split("").filter(function (ch) { return ch === "x"; }).length;
     var line;
     if (done) line = "That's it: every bed, row and column has its plant, and nobody's touching.";
-    else if (lesson > 0) line = R.TWIST_LINES[R.KINDS[lesson - 1]] + " Press Nudge whenever you want a pointer.";
-    else if (!planted && !marked) line = "One plant to every bed, row and column, and no two touching — not even corner to corner. Look at the bed that runs straight down the left-hand edge: column 1's plant has to be in it.";
-    else if (!planted) line = "Tap a cell once to mark it bare, twice to plant. Marking where nothing can grow is most of the game.";
-    else line = "When you're not sure what's next, press Nudge. It points, it doesn't play for you.";
+    else if (lesson > 0) line = R.TWIST_LINES[R.KINDS[lesson - 1]] + " Its bed carries its picture in every cell. Press Nudge whenever you want a pointer.";
+    else if (guide) {
+      /* Each step of the practice board, in order: what can be worked out,
+         and what to do about it. Never "this bed has the plant" without
+         saying which cell -- that gap is exactly where a guess goes in. */
+      var todo = guide.action === "plant" ? " Plant it in the ringed cell (two taps)."
+        : guide.action === "clear" ? (guide.cells.length === 1 ? " Mark the ringed cell bare (one tap)." : " Mark the ringed cells bare (one tap each).")
+        : "";
+      line = (!planted && !marked ? "One plant to every bed, row and column, and no two touching — not even corner to corner. " : "") + guide.why + todo;
+    } else line = "When you're not sure what's next, press Nudge. It points, it doesn't play for you.";
     coachEl.textContent = line;
   }
 
@@ -1133,6 +1174,7 @@ window.va('beforeSend', function (event) {
     solved: function () { return R.isSolved(BOARD, state); },
     clashes: function () { return R.clashes(BOARD, state); },
     hint: function () { return hint; },
+    guide: function () { return guide; },
     done: function () { return done; },
     progress: function () { return progress; },
     streak: P.getStreak,
