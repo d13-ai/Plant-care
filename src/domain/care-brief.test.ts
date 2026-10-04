@@ -148,3 +148,45 @@ describe("a pot that stays wet", () => {
     expect(brief).toContain("Still moist — skipped watering: today.");
   });
 });
+
+describe("what earlier AI checks said", () => {
+  // The Birkin, 3 Oct 2026: the second check reversed the first's advice on
+  // its white new growth without ever having seen it.
+  const now = new Date("2026-10-03T23:45:00Z");
+  const ago = (d: number) => new Date(now.getTime() - d * 86_400_000).toISOString();
+  const SEP_15 = "Worth watching.\nNew leaves almost entirely white — watch that new leaves keep some green; cut back to a node below a well-striped leaf if they don't.";
+
+  test("travel, labelled as the AI's reading rather than the keeper's record", () => {
+    const brief = careBrief([{ type: "REPOT", occurredAt: ago(19) }, { type: "AI_CHECK", occurredAt: ago(18), notes: SEP_15 }], {}, now);
+    expect(brief).toContain("AI health check 18 days ago: Worth watching. New leaves almost entirely white");
+    expect(brief).toContain("not facts the keeper logged");
+    // The keeper's record comes first; an earlier guess never leads.
+    expect(brief.indexOf("Repotted")).toBeLessThan(brief.indexOf("AI health check"));
+  });
+
+  test("the last two, newest first, and no older", () => {
+    const brief = careBrief(
+      [
+        { type: "AI_CHECK", occurredAt: ago(30), notes: "Oldest check" },
+        { type: "AI_CHECK", occurredAt: ago(18), notes: SEP_15 },
+        { type: "AI_CHECK", occurredAt: ago(0), notes: "Looks healthy." },
+      ],
+      {},
+      now,
+    );
+    expect(brief).toContain("AI health check today: Looks healthy.");
+    expect(brief.indexOf("today")).toBeLessThan(brief.indexOf("18 days ago"));
+    expect(brief).not.toContain("Oldest check");
+  });
+
+  test("a long check is cut, and a full record still fits the bound", () => {
+    const record = [
+      ...Array.from({ length: 5 }, (_, i) => ({ type: "ISSUE", occurredAt: ago(i), resolvedAt: null, notes: "y".repeat(400) })),
+      { type: "AI_CHECK", occurredAt: ago(1), notes: "z".repeat(2000) },
+      { type: "AI_CHECK", occurredAt: ago(2), notes: "z".repeat(2000) },
+    ];
+    const brief = careBrief(record, { notes: "n".repeat(400) }, now);
+    expect(brief.length).toBeLessThanOrEqual(CARE_BRIEF_MAX);
+    expect(careBrief([{ type: "AI_CHECK", occurredAt: ago(1), notes: "z".repeat(2000) }], {}, now).length).toBeLessThan(500);
+  });
+});
