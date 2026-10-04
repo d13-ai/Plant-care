@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Platform, ScrollView, Share, StyleSheet } from "react-native";
 import { Badge, Body, Button, Card, Field, Heading, Row, SectionLabel } from "@/components/ui";
 import { pendingChanges } from "@/db";
-import { signOut, useAccount } from "@/lib/auth";
+import { DELETE_WORD, deleteAccount, signOut, useAccount } from "@/lib/auth";
 import { confirm } from "@/lib/confirm";
 import { getKeeperName, setKeeperName } from "@/lib/keeper";
 import { conservatoryUrl, getHandle, setHandle } from "@/lib/conservatory";
@@ -39,6 +39,24 @@ export default function AccountScreen() {
   const [wanted, setWanted] = useState("");
   const [claiming, setClaiming] = useState(false);
   const [handleError, setHandleError] = useState<string | null>(null);
+
+  // Deleting the account: a second step on this screen, not a dialog, so the
+  // list of what goes is read before the word is typed.
+  const [deleting, setDeleting] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const removeAccount = async () => {
+    setDeleteBusy(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount(db, typed);
+      // Signed out now: the gate in _layout takes this screen away.
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : String(err));
+      setDeleteBusy(false);
+    }
+  };
 
   const [name, setName] = useState("");
   const [savingName, setSavingName] = useState(false);
@@ -256,6 +274,64 @@ export default function AccountScreen() {
           onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
         />
       </Row>
+
+      {/* Last on the screen and plainly labelled: easy to find for someone
+          looking for it, hard to reach by accident. */}
+      <Card>
+        <SectionLabel>Delete account</SectionLabel>
+        {deleting ? (
+          <>
+            <Heading>Delete your account for good?</Heading>
+            <Body small>This can't be undone. It deletes, straight away:</Body>
+            <Body small>
+              {"• every plant, photo, care log and note in it\n" +
+                "• your published tags and your conservatory page — anyone with those links will find nothing there\n" +
+                "• your name, your handle and the calling cards you hold\n" +
+                "• your sign-in, and the copy of your plants on this phone"}
+            </Body>
+            <Body small muted>
+              A cutting you gave someone stays theirs; it just stops pointing back to your plant. What the AI cost
+              is kept as a daily total with nothing about you on it.
+            </Body>
+            <Field
+              label={`Type ${DELETE_WORD} to confirm`}
+              value={typed}
+              onChangeText={setTyped}
+              placeholder={DELETE_WORD}
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+            <Row>
+              <Button
+                title={deleteBusy ? "Deleting…" : "Delete my account"}
+                variant="danger"
+                disabled={deleteBusy || typed.trim().toUpperCase() !== DELETE_WORD}
+                onPress={removeAccount}
+              />
+              <Button
+                title="Keep it"
+                disabled={deleteBusy}
+                onPress={() => {
+                  setDeleting(false);
+                  setTyped("");
+                  setDeleteError(null);
+                }}
+              />
+            </Row>
+            {deleteError ? <Body small style={{ color: cardTheme.critical.fg }}>{deleteError}</Body> : null}
+          </>
+        ) : (
+          <>
+            <Body small muted>
+              Deletes your account and everything in it — plants, photos, care history, published tags. You can do
+              it here, now; there's no need to ask us.
+            </Body>
+            <Row>
+              <Button title="Delete account…" small onPress={() => setDeleting(true)} />
+            </Row>
+          </>
+        )}
+      </Card>
     </ScrollView>
   );
 }

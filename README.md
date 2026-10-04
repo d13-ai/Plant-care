@@ -213,6 +213,19 @@ contact address on /privacy.
   and `send` MX + TXT) before Resend will send from it. Click and open
   tracking are off on it, as the privacy page says.
 
+**Deleting an account (Oct 2026).** Account → *Delete account*, then type
+DELETE. The `delete-account` function empties the keeper's folder in the
+photo bucket, then calls `delete_account()`, which in one transaction folds
+their AI costs into `ai_usage_retired` (per day, no keeper) and deletes the
+`auth.users` row; every per-keeper table cascades from it, and
+bug reports are first copied, without the keeper, into `bug_reports_retired`. A second storage sweep catches
+an upload that was in flight. The app then wipes its own copy
+(`wipeLocalData`) and the per-keeper AsyncStorage keys, and signs out
+locally — without that, the next account to sign in on the phone would be
+handed the deleted keeper's plants. Checked live by
+`e2e/delete-account.e2e.test.ts`, which makes its own account and deletes it.
+Project AI spend is now `ai_usage` plus `ai_usage_retired`.
+
 Custom SMTP in Supabase is now only needed if "Confirm email" is ever turned
 on: Authentication → Emails → SMTP Settings, host `smtp.resend.com`, port
 `465`, user `resend`, a Resend sending key as the password, sender

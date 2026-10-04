@@ -794,6 +794,19 @@ export async function markAllDirty(db: SQLiteDatabase): Promise<void> {
   );
 }
 
+/**
+ * Forget every plant on this device, after the account they belonged to has
+ * been deleted. Without this the next account to sign in here would get them:
+ * markAllDirty() exists precisely so a phone's greenhouse follows whoever
+ * signs in next. The care-guide cache stays -- it is about species, not about
+ * anybody. Photo files are the caller's to remove (native keeps them as files).
+ */
+export async function wipeLocalData(db: SQLiteDatabase): Promise<void> {
+  await db.execAsync(
+    "DELETE FROM photos; DELETE FROM care_events; DELETE FROM plants; DELETE FROM sync_tombstones; DELETE FROM sync_meta;",
+  );
+}
+
 export type TombstoneKind = "plant" | "event" | "photo";
 
 /** A deletion still owed to the server. `path` is set only on "photo"
