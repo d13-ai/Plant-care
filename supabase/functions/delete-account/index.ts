@@ -17,7 +17,8 @@
 //   3. Sweep the folder again. A sync already in flight on another phone
 //      can still upload a photo with a token issued before step 2; the
 //      database refuses its row, but storage would keep the file.
-// See supabase/migrations/20261004100000_delete_account.sql.
+// See supabase/migrations/20261004100000_delete_account.sql and
+// 20261004110000_delete_account_fn.sql.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
