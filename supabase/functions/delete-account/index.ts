@@ -11,8 +11,9 @@
 //      reaches storage, so this is the one step the cascade can't do. If it
 //      fails, stop: the account is untouched and the keeper can try again.
 //   2. delete_account() -- one transaction: fold their AI costs into
-//      ai_usage_retired, then delete the auth.users row, which cascades to
-//      every table that holds their records.
+//      ai_usage_retired, copy their bug reports without them into
+//      bug_reports_retired, then delete the auth.users row, which cascades
+//      to every table that holds their records.
 //   3. Sweep the folder again. A sync already in flight on another phone
 //      can still upload a photo with a token issued before step 2; the
 //      database refuses its row, but storage would keep the file.

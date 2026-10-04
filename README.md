@@ -218,7 +218,7 @@ DELETE. The `delete-account` function empties the keeper's folder in the
 photo bucket, then calls `delete_account()`, which in one transaction folds
 their AI costs into `ai_usage_retired` (per day, no keeper) and deletes the
 `auth.users` row; every per-keeper table cascades from it, and
-`bug_reports.keeper_id` goes to null instead. A second storage sweep catches
+bug reports are first copied, without the keeper, into `bug_reports_retired`. A second storage sweep catches
 an upload that was in flight. The app then wipes its own copy
 (`wipeLocalData`) and the per-keeper AsyncStorage keys, and signs out
 locally — without that, the next account to sign in on the phone would be

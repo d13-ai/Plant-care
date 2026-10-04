@@ -16,9 +16,13 @@
 --                spent it, and the project's totals ("what did September
 --                cost?") must not shrink when somebody leaves. Folded into
 --                ai_usage_retired by day, with no keeper on it.
---   bug_reports  the report itself. Its keeper_id becomes null instead of the
---                row going: the app state and trail in it are already scrubbed
---                of addresses and tokens (src/lib/bug-report.ts).
+--   bug_reports  the report itself, copied into bug_reports_retired without
+--                the keeper before the cascade takes the original. The app
+--                state and trail in it are already scrubbed of addresses and
+--                tokens (src/lib/bug-report.ts). Copied rather than changing
+--                bug_reports' own foreign key to SET NULL: that version altered
+--                an existing table, which the Supabase tool holds for a second
+--                confirmation this session can't show, so it never ran.
 --
 -- A cutting someone else grew from one of this keeper's plants stays theirs;
 -- plants.mother_plant_id is ON DELETE SET NULL, so only the link goes.
@@ -33,10 +37,18 @@ create table if not exists public.ai_usage_retired (
 alter table public.ai_usage_retired enable row level security;
 -- No policies: the owner reads it with the service role, like ai_usage.
 
-alter table public.bug_reports alter column keeper_id drop not null;
-alter table public.bug_reports drop constraint if exists bug_reports_keeper_id_fkey;
-alter table public.bug_reports
-  add constraint bug_reports_keeper_id_fkey foreign key (keeper_id) references auth.users (id) on delete set null;
+create table if not exists public.bug_reports_retired (
+  id uuid primary key,
+  created_at timestamptz not null,
+  ref text,
+  note text,
+  app jsonb,
+  trail jsonb,
+  handled_at timestamptz,
+  retired_at timestamptz not null default now()
+);
+alter table public.bug_reports_retired enable row level security;
+-- No policies: read with the service role, like bug_reports.
 
 /**
  * Delete one account and everything it owns, or nothing at all. Returns what
@@ -71,7 +83,11 @@ begin
     output_tokens = r.output_tokens + excluded.output_tokens,
     cost_usd = r.cost_usd + excluded.cost_usd;
 
-  -- The cascade does the rest; bug_reports.keeper_id goes to null.
+  insert into public.bug_reports_retired (id, created_at, ref, note, app, trail, handled_at)
+    select id, created_at, ref, note, app, trail, handled_at from public.bug_reports where keeper_id = p_user
+  on conflict (id) do nothing;
+
+  -- The cascade does the rest, the original bug reports included.
   delete from auth.users where id = p_user;
 
   return jsonb_build_object('deleted', true, 'plants', v_plants, 'photos', v_photos, 'care_events', v_events);
