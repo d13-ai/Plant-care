@@ -625,6 +625,50 @@ try {
       }
     }
   });
+  // Last, because it empties this browser's greenhouse.
+  await step("deleting the account asks for the word, keeps everything if the server fails, and wipes this phone when it succeeds", async () => {
+    const asked = [];
+    let fail = true;
+    const errorsBefore = errors.length;
+    await page.route("**/functions/v1/delete-account", (route) => {
+      asked.push(route.request().postDataJSON());
+      return fail
+        ? route.fulfill({ status: 502, contentType: "application/json", body: JSON.stringify({ error: "Couldn't delete your photos just now, so nothing was deleted. Try again in a few minutes." }) })
+        : route.fulfill(asJson({ deleted: true, plants: 3, photos: 1, care_events: 9, files: 1 }));
+    });
+    await page.goto(base + "/account", { waitUntil: "domcontentloaded" });
+    await page.getByText("Delete account…").click();
+    await page.getByText("Delete your account for good?").waitFor({ timeout: 10000 });
+    await shot("29-delete-account");
+    // Nothing happens until the word is typed.
+    await page.getByText("Delete my account").click({ force: true });
+    await page.waitForTimeout(300);
+    if (asked.length) throw new Error("the delete went out before the word was typed");
+    await page.getByPlaceholder("DELETE").fill("delete");
+    await page.getByText("Delete my account").click();
+    await page.getByText("Couldn't delete your photos just now").waitFor({ timeout: 10000 });
+    if (asked.length !== 1 || asked[0].confirm !== "DELETE") throw new Error(`unexpected request: ${JSON.stringify(asked)}`);
+    // A failure leaves this phone as it was.
+    await page.goto(base + "/", { waitUntil: "domcontentloaded" });
+    await page.getByText("All plants").first().waitFor({ timeout: 20000 });
+
+    fail = false;
+    await page.goto(base + "/account", { waitUntil: "domcontentloaded" });
+    await page.getByText("Delete account…").click();
+    await page.getByPlaceholder("DELETE").fill("DELETE");
+    await page.getByText("Delete my account").click();
+    // Signed out, and back at the front door.
+    await page.getByText("Start your parlour").waitFor({ timeout: 15000 });
+    // And nothing left behind: sign the same session back in (the run's
+    // init script does that on every load) and the greenhouse is empty.
+    await page.goto(base + "/", { waitUntil: "domcontentloaded" });
+    await page.getByText("Start with one plant").waitFor({ timeout: 20000 });
+    if (await page.getByText("Big Monstera").count()) throw new Error("plants were left on this phone after the account was deleted");
+    await page.unroute("**/functions/v1/delete-account");
+    // The browser logs the 502 this step served on purpose; that one isn't a fault.
+    const own = errors.splice(errorsBefore).filter((e) => !/status of 502/.test(e));
+    errors.push(...own);
+  });
 } finally {
   await browser.close();
   server.close();

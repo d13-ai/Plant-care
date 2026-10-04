@@ -2,7 +2,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
-import { markAllDirty } from "@/db";
+import { Directory, Paths } from "expo-file-system";
+import { markAllDirty, wipeLocalData } from "@/db";
+import { OPT_OUT_KEY } from "@/domain/analytics";
 import { supabase } from "./supabase";
 
 /**
@@ -213,6 +215,59 @@ export async function signInWithGoogle(): Promise<void> {
     options: { redirectTo: `${window.location.origin}/account` },
   });
   if (error) throw new Error(error.message);
+}
+
+/** The one word that has to be typed before an account is deleted. */
+export const DELETE_WORD = "DELETE";
+
+/**
+ * Delete this account and everything in it, for good, then leave this device
+ * as if nobody had ever signed in: no plants, no photos, no remembered name.
+ *
+ * The server goes first. If it fails, nothing here is touched -- the account
+ * still exists and the keeper can try again. Only once it has gone are the
+ * plants on this phone wiped, because a phone that kept them would hand them
+ * to whoever signs in next (see markAllDirty).
+ *
+ * Other phones the keeper used still hold their copy until they next open;
+ * they then find no account and land on the welcome screen. Their plants stay
+ * on them, unsynced, which is what signing out leaves too.
+ */
+export async function deleteAccount(db: SQLiteDatabase, typed: string): Promise<void> {
+  if (typed.trim().toUpperCase() !== DELETE_WORD) throw new Error(`Type ${DELETE_WORD} to confirm.`);
+  const { data, error } = await supabase.functions.invoke<{ deleted?: boolean; error?: string }>("delete-account", {
+    body: { confirm: DELETE_WORD },
+  });
+  if (!data?.deleted) {
+    // invoke() puts a non-2xx answer in `error` and leaves the body unread.
+    let message = data?.error;
+    if (!message && error && "context" in error && error.context instanceof Response) {
+      message = await error.context.json().then((b: { error?: string }) => b.error).catch(() => undefined);
+    }
+    throw new Error(message ?? "Couldn't delete your account just now. Try again in a few minutes.");
+  }
+
+  await wipeLocalData(db);
+  if (Platform.OS !== "web") {
+    try {
+      const dir = new Directory(Paths.document, "photos");
+      if (dir.exists) dir.delete();
+    } catch {
+      /* the rows are gone; an orphaned file can't reach anyone */
+    }
+  }
+  // Everything this app keeps per keeper -- the name, the half-filled new
+  // plant, the last scan, "keep watering as is" answers. Not the analytics
+  // opt-out, which is about the device's owner, not the account.
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    await AsyncStorage.multiRemove(keys.filter((k) => k !== OPT_OUT_KEY && !k.startsWith("sb-")));
+  } catch {
+    /* nothing here identifies anyone once the account is gone */
+  }
+  // Local only: the session's account no longer exists, so there is nothing
+  // on the server to sign out of.
+  await supabase.auth.signOut({ scope: "local" });
 }
 
 /** Sign out. The plants stay on this device; they just stop syncing. */
