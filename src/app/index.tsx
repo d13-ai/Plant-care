@@ -3,10 +3,11 @@ import { useCallback, useMemo } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DueRing } from "@/components/due-ring";
+import { FirstPlant } from "@/components/first-plant";
 import { MonsteraIcon, PersonIcon, PlusIcon } from "@/components/icons";
 import { GamesCard, GamesLink } from "@/components/parlour-games";
 import { PlantCard, summarize } from "@/components/plant-card";
-import { Body, Button, Card, Heading, Row, SectionLabel, Title } from "@/components/ui";
+import { Body, SectionLabel, Title } from "@/components/ui";
 import { UndoBar, useUndo } from "@/components/undo-bar";
 import { coverPhoto, deleteEvent, listPlants, logCare, type PlantWithHistory } from "@/db";
 import { useQuery } from "@/hooks/use-query";
@@ -114,21 +115,7 @@ export default function Greenhouse() {
       </View>
 
       {data && data.length === 0 ? (
-        <View style={styles.empty}>
-          <Card>
-            <Heading>Your parlour's empty</Heading>
-            <Body muted>
-              Add a plant with a photo. Log when you water, feed or repot it, and it'll tell you
-              what's due. It's all kept in your account, so it follows you to any phone you sign
-              into.
-            </Body>
-            <Button
-              title="Add your first plant"
-              variant="primary"
-              onPress={() => router.push("/plant/new")}
-            />
-          </Card>
-        </View>
+        <FirstPlant />
       ) : (
         <FlatList
           data={items}
@@ -187,7 +174,6 @@ const styles = StyleSheet.create({
   listHeader: { gap: space.md, paddingTop: space.md, paddingBottom: 4 },
   strip: { gap: 14, paddingHorizontal: 4, paddingVertical: 6 },
   listTitle: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 4 },
-  empty: { flex: 1, justifyContent: "center", padding: space.lg },
   band: {
     marginTop: space.lg,
     paddingVertical: 14,

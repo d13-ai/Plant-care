@@ -107,20 +107,30 @@ const step = async (name, fn) => { await fn(); console.log("✓", name); };
 
 try {
   await page.goto(base + "/");
-  await step("empty greenhouse renders", () => page.getByText("Your parlour's empty").waitFor({ timeout: 20000 }));
+  await step("empty greenhouse renders", () => page.getByText("Start with one plant").waitFor({ timeout: 20000 }));
   await step("a new account asks for its welcome email once, not on every launch", async () => {
     const welcomes = () => accountEmails.filter((b) => b?.kind === "welcome").length;
     for (let i = 0; i < 50 && welcomes() === 0; i++) await page.waitForTimeout(100);
     if (welcomes() !== 1) throw new Error(`expected one welcome request, saw ${welcomes()}`);
     await page.reload();
-    await page.getByText("Your parlour's empty").waitFor({ timeout: 20000 });
+    await page.getByText("Start with one plant").waitFor({ timeout: 20000 });
     await page.waitForTimeout(1000);
     if (welcomes() !== 1) throw new Error(`the welcome was asked for again on reload (${welcomes()})`);
   });
   await shot("01-empty");
 
+  await step("a new keeper is shown the first step and what it gets them, marked as an example", async () => {
+    await page.getByText("What one photo gets you").waitFor({ timeout: 5000 });
+    await page.getByText("Example", { exact: true }).waitFor({ timeout: 5000 });
+    await page.getByText("Marble Queen pothos").waitFor({ timeout: 5000 });
+    // The other way in, for someone without a plant in front of them.
+    await page.getByText("Add by name").click();
+    await page.getByPlaceholder("Big Monstera").waitFor({ timeout: 10000 });
+    await page.goBack();
+    await page.getByText("Start with one plant").waitFor({ timeout: 10000 });
+  });
   await step("open add-plant", async () => {
-    await page.getByText("Add your first plant").click();
+    await page.getByText("Photograph a plant").click();
     await page.getByPlaceholder("Big Monstera").waitFor();
   });
   await step("the AI allowance is stated before anything is spent, and no price is", async () => {
@@ -553,7 +563,7 @@ try {
       if (shots) await visitor.screenshot({ path: path.join(shots, "28-reset-form.png"), fullPage: true });
       await visitor.getByPlaceholder("At least 8 characters").fill("NewPassword9");
       await visitor.getByText("Save and sign in").click();
-      await visitor.getByText("Your parlour's empty").waitFor({ timeout: 20000 });
+      await visitor.getByText("Start with one plant").waitFor({ timeout: 20000 });
       if (verified.length !== 1 || verified[0].token_hash !== "smoke-token-hash" || verified[0].type !== "recovery") {
         throw new Error(`unexpected verify: ${JSON.stringify(verified)}`);
       }
