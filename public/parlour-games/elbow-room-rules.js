@@ -7,15 +7,13 @@
  * corner. Rows and columns already keep plants from sitting side by side, so
  * "touching" only ever means the diagonal.
  *
- * Four beds can carry a twist, each one rule and each true of the plant:
- *   cactus     may touch its neighbours (they share a dish happily)
- *   fern       may not stand in a sun patch (direct sun scorches it)
- *   succulent  must stand in a sun patch (it stretches without it)
- *   climber    must stand by a trellis (it needs something to climb)
+ * That is the whole game: the rules of Meowdoku and Queens, with plants. It
+ * had four plants that bent the rules (a cactus that could touch, a fern, a
+ * succulent and a climber); they went in October 2026, because what people
+ * wanted was the plain puzzle.
  *
  * Cells are numbered row by row: cell = row * n + col. A board is
- *   { n, beds[cell] -> bed, sun[cell] -> bool, trellis[cell] -> side|null,
- *     twists: { bed: kind }, answer: [cell per row], size, version }
+ *   { n, beds[cell] -> bed, answer: [column per row], size, version }
  * and what the player has done is a string of n*n characters:
  *   "." empty, "x" marked bare, "p" planted.
  */
@@ -29,28 +27,16 @@
   /* Bumped whenever generation changes. It is part of the daily seed, so a
      change to the generator changes future dailies on purpose, never by
      accident -- the pinned-board test fails until this moves. */
-  var VERSION = 1;
-
-  var KINDS = ["cactus", "fern", "climber", "succulent"];
-  var TWIST_LINES = {
-    cactus: "Cactus doesn't mind company: it may touch its neighbours.",
-    fern: "Fern keeps out of the sun: never in a sun patch.",
-    climber: "Climber needs something to climb: only by a trellis.",
-    succulent: "Succulent needs the sun: only in a sun patch."
-  };
+  var VERSION = 2;
 
   /* Difficulty is the hardest named deduction a board needs, in this order. */
-  var TECHNIQUES = ["twist", "single", "confine", "crowding", "pigeonhole"];
+  var TECHNIQUES = ["single", "confine", "crowding", "pigeonhole"];
   var rank = function (t) { return TECHNIQUES.indexOf(t); };
 
   var SIZES = [
-    { key: "seedling", label: "Seedling", n: 5, twists: 0, min: "single", max: "confine" },
-    /* Plain, like Meowdoku and Queens: somebody arriving from those knows these
-       rules exactly, and a random twist on the default board -- a cactus that
-       *has* to touch -- read as the game breaking its own rule. Twists live
-       on the Allotment, the daily board and the practice lessons. */
-    { key: "border", label: "Border", n: 7, twists: 0, min: "crowding", max: "crowding" },
-    { key: "allotment", label: "Allotment", n: 9, twists: 2, min: "crowding", max: "pigeonhole" }
+    { key: "seedling", label: "Seedling", n: 5, min: "single", max: "confine" },
+    { key: "border", label: "Border", n: 7, min: "crowding", max: "crowding" },
+    { key: "allotment", label: "Allotment", n: 9, min: "crowding", max: "pigeonhole" }
   ];
   var sizeOf = function (key) { return SIZES.filter(function (s) { return s.key === key; })[0] || SIZES[1]; };
 
@@ -66,20 +52,6 @@
   var colOf = function (b, cell) { return cell % b.n; };
 
   /* ---------------------------------------------------------------- rules */
-
-  function kindAt(b, cell) { return b.twists[b.beds[cell]] || null; }
-
-  /** May a plant stand in this cell at all, as far as its bed's twist goes? */
-  function allowedByTwist(b, cell) {
-    var kind = kindAt(b, cell);
-    if (kind === "fern") return !b.sun[cell];
-    if (kind === "succulent") return !!b.sun[cell];
-    if (kind === "climber") return !!b.trellis[cell];
-    return true;
-  }
-
-  /** May plants in these two cells touch corner to corner? Only with a cactus. */
-  function mayTouch(b, a, c) { return kindAt(b, a) === "cactus" || kindAt(b, c) === "cactus"; }
 
   /** Diagonal neighbours of a cell -- the only way two plants can touch. */
   function diagonals(b, cell) {
@@ -115,20 +87,15 @@
     Object.keys(byBed).forEach(function (k) { if (byBed[k].length > 1) out.push({ type: "bed", index: +k, cells: byBed[k], words: "one per bed" }); });
     plants.forEach(function (p) {
       diagonals(b, p).forEach(function (q) {
-        if (q > p && state[q] === "p" && !mayTouch(b, p, q)) out.push({ type: "touch", cells: [p, q], words: "too close" });
+        if (q > p && state[q] === "p") out.push({ type: "touch", cells: [p, q], words: "too close" });
       });
-      var kind = kindAt(b, p);
-      if (kind === "fern" && b.sun[p]) out.push({ type: "sun", cells: [p], words: "too much sun" });
-      if (kind === "succulent" && !b.sun[p]) out.push({ type: "shade", cells: [p], words: "wants the sun" });
-      if (kind === "climber" && !b.trellis[p]) out.push({ type: "climb", cells: [p], words: "nothing to climb" });
     });
     return out;
   }
 
   /**
    * Rows, columns and beds the plants already in leave no room for: every
-   * cell is in the row, column, bed or (cactus aside) the corners of a plant
-   * that is in, or is somewhere this unit's twist forbids. A board in that
+   * cell is in the row, column, bed or corners of a plant that is in. A board in that
    * state can't be finished until a plant moves -- worth saying at once,
    * the way Meowdoku does, without taking anything away for it.
    *
@@ -140,19 +107,8 @@
     var out = [];
     unitsOf(b).forEach(function (u) {
       if (u.cells.some(function (q) { return state[q] === "p"; })) return;
-      var room = u.cells.some(function (q) { return !blocked[q] && allowedByTwist(b, q); });
+      var room = u.cells.some(function (q) { return !blocked[q]; });
       if (!room) out.push({ kind: u.kind, index: u.index, cells: u.cells, words: "no room left in " + unitName(u) });
-    });
-    return out;
-  }
-
-  /** Planted pairs touching corner to corner because a cactus allows it. */
-  function cactusTouches(b, state) {
-    var out = [];
-    plantsIn(state).forEach(function (p) {
-      diagonals(b, p).forEach(function (q) {
-        if (q > p && state[q] === "p" && mayTouch(b, p, q)) out.push([p, q]);
-      });
     });
     return out;
   }
@@ -165,25 +121,19 @@
 
   /**
    * Every answer, up to `limit`, as one column per row. Row by row, keeping
-   * columns and beds unused, the twist rules on, and the diagonal clear of the
-   * row above unless a cactus is involved. Pass { plain: true } to count as
-   * if no bed had a twist -- which is how a twist is shown to matter.
+   * columns and beds unused and the diagonal clear of the row above.
    */
-  function solutions(b, limit, opts) {
-    var n = b.n, plain = !!(opts && opts.plain), lim = limit || 2;
-    var board = plain ? { n: n, beds: b.beds, sun: b.sun, trellis: b.trellis, twists: {} } : b;
+  function solutions(b, limit) {
+    var n = b.n, lim = limit || 2;
     var found = [], cols = [], colUsed = [], bedUsed = [];
     (function go(r) {
       if (found.length >= lim) return;
       if (r === n) { found.push(cols.slice()); return; }
       for (var c = 0; c < n; c++) {
         if (colUsed[c]) continue;
-        var cell = r * n + c, bed = board.beds[cell];
-        if (bedUsed[bed] || !allowedByTwist(board, cell)) continue;
-        if (r > 0) {
-          var above = (r - 1) * n + cols[r - 1];
-          if (Math.abs(cols[r - 1] - c) === 1 && !mayTouch(board, above, cell)) continue;
-        }
+        var bed = b.beds[r * n + c];
+        if (bedUsed[bed]) continue;
+        if (r > 0 && Math.abs(cols[r - 1] - c) === 1) continue;
         colUsed[c] = bedUsed[bed] = true; cols.push(c);
         go(r + 1);
         cols.pop(); colUsed[c] = bedUsed[bed] = false;
@@ -212,12 +162,12 @@
     return u.kind === "row" ? "row " + (u.index + 1) : u.kind === "col" ? "column " + (u.index + 1) : "the highlighted bed";
   }
 
-  /** The cells a plant here rules out: its row, column, bed and (cactus aside) its diagonals. */
+  /** The cells a plant here rules out: its row, column, bed and its corners. */
   function shadowOf(b, cell) {
     var n = b.n, r = rowOf(b, cell), c = colOf(b, cell), out = {};
     for (var k = 0; k < n; k++) { out[r * n + k] = 1; out[k * n + c] = 1; }
     for (var i = 0; i < n * n; i++) if (b.beds[i] === b.beds[cell]) out[i] = 1;
-    diagonals(b, cell).forEach(function (q) { if (!mayTouch(b, cell, q)) out[q] = 1; });
+    diagonals(b, cell).forEach(function (q) { out[q] = 1; });
     delete out[cell];
     return Object.keys(out).map(Number);
   }
@@ -256,18 +206,6 @@
     var n = b.n, cand = pos.cand, placed = pos.placed;
     var done = function (u) { return u.cells.some(function (i) { return placed[i]; }); };
     var live = function (u) { return u.cells.filter(function (i) { return cand[i]; }); };
-
-    /* Twist rules first: they rule cells out before any thinking. */
-    for (var i = 0; i < n * n; i++) {
-      if (cand[i] && !allowedByTwist(b, i)) {
-        var kind = kindAt(b, i), bed = b.beds[i];
-        var cells = range(n * n).filter(function (j) { return cand[j] && b.beds[j] === bed && !allowedByTwist(b, j); });
-        var why = kind === "fern" ? "Ferns keep out of the sun, so the sun patches in this bed stay bare."
-          : kind === "succulent" ? "Succulents need the sun, so the shaded cells in this bed stay bare."
-          : "Climbers need a trellis, so the cells in this bed with nothing to climb stay bare.";
-        return { technique: "twist", action: "clear", cells: cells, units: [{ kind: "bed", index: bed }], why: why };
-      }
-    }
 
     for (var a = 0; a < units.length; a++) {
       var u = units[a];
@@ -355,7 +293,7 @@
    * full -- a board like that would need a guess, and is never dealt.
    */
   function reason(b) {
-    var pos = freshPosition(b), units = unitsOf(b), hardest = "twist", steps = 0, step;
+    var pos = freshPosition(b), units = unitsOf(b), hardest = "single", steps = 0, step;
     while ((step = nextStep(b, pos, units))) {
       if (step.technique === "stuck") return { solved: false, hardest: hardest, steps: steps };
       if (rank(step.technique) > rank(hardest)) hardest = step.technique;
@@ -398,15 +336,10 @@
 
   /* --------------------------------------------------------- the generator */
 
-  /** One plant per row and column, none touching, except that a cactus row may. */
-  function placement(n, rnd, cactusRow) {
+  /** One plant per row and column, none touching. */
+  function placement(n, rnd) {
     var cols = [], used = [];
-    var ok = function (r, c) {
-      if (used[c]) return false;
-      if (r === 0) return true;
-      var near = Math.abs(cols[r - 1] - c) === 1;
-      return !near || r === cactusRow || r - 1 === cactusRow;
-    };
+    var ok = function (r, c) { return !used[c] && (r === 0 || Math.abs(cols[r - 1] - c) !== 1); };
     return (function go(r) {
       if (r === n) return true;
       var order = shuffle(range(n), rnd);
@@ -419,31 +352,6 @@
       }
       return false;
     })(0) ? cols : null;
-  }
-
-  /** Sun falls through a window along the top: deeper in some columns than others. */
-  function laySun(n, rnd) {
-    var sun = [], depth = 1 + Math.floor(rnd() * Math.ceil(n / 2));
-    for (var c = 0; c < n; c++) {
-      depth = Math.max(1, Math.min(Math.ceil(n / 2), depth + (rnd() < 0.5 ? -1 : 1) * (rnd() < 0.6 ? 1 : 0)));
-      for (var r = 0; r < n; r++) sun[r * n + c] = r < depth;
-    }
-    return sun;
-  }
-
-  /** Trellis along two garden walls, in runs. Stored per cell as the side it is on. */
-  function layTrellis(n, rnd) {
-    var trellis = []; for (var i = 0; i < n * n; i++) trellis.push(null);
-    var walls = shuffle(["left", "right", "bottom"], rnd).slice(0, 2);
-    walls.forEach(function (wall) {
-      var len = Math.ceil(n / 2) + Math.floor(rnd() * Math.ceil(n / 3));
-      var start = Math.floor(rnd() * (n - len + 1));
-      for (var k = start; k < start + len; k++) {
-        var cell = wall === "left" ? k * n : wall === "right" ? k * n + n - 1 : (n - 1) * n + k;
-        if (!trellis[cell]) trellis[cell] = wall;
-      }
-    });
-    return trellis;
   }
 
   function growBeds(n, cols, rnd) {
@@ -482,51 +390,18 @@
     return count === cells.length;
   }
 
-  /** Which rows' plants can carry which twist, given where the answer put them. */
-  function assignTwists(n, cols, sun, trellis, kinds, cactusRow, rnd) {
-    var taken = {}, out = {};
-    for (var k = 0; k < kinds.length; k++) {
-      var kind = kinds[k], fits = [];
-      for (var r = 0; r < n; r++) {
-        if (taken[r]) continue;
-        var cell = r * n + cols[r];
-        if (kind === "cactus" ? r === cactusRow
-          : kind === "fern" ? !sun[cell]
-          : kind === "succulent" ? !!sun[cell]
-          : !!trellis[cell]) fits.push(r);
-      }
-      if (!fits.length) return null;
-      var pick = fits[Math.floor(rnd() * fits.length)];
-      taken[pick] = 1; out[pick] = kind;
-    }
-    return out;
-  }
-
   /**
    * Make a board. Every board it returns has exactly one answer, can be
-   * finished by reasoning alone within the size's band, has no single-cell
-   * bed, and -- if it has twists -- needs them: with the twists switched off
-   * it would not have this one answer.
+   * finished by reasoning alone within the size's band, and has no
+   * single-cell bed.
    */
-  function generate(sizeKey, rnd, opts) {
+  function generate(sizeKey, rnd) {
     var size = sizeOf(sizeKey), n = size.n;
-    var kinds = (opts && opts.twists) || shuffle(KINDS.slice(), rnd).slice(0, size.twists);
     for (var attempt = 0; attempt < 400; attempt++) {
-      var cactusRow = kinds.indexOf("cactus") >= 0 ? Math.floor(rnd() * n) : -1;
-      var cols = placement(n, rnd, cactusRow);
+      var cols = placement(n, rnd);
       if (!cols) continue;
-      /* A cactus only matters if it actually touches somebody. */
-      if (cactusRow >= 0) {
-        var touches = (cactusRow > 0 && Math.abs(cols[cactusRow - 1] - cols[cactusRow]) === 1) ||
-          (cactusRow < n - 1 && Math.abs(cols[cactusRow + 1] - cols[cactusRow]) === 1);
-        if (!touches) continue;
-      }
-      var sun = laySun(n, rnd), trellis = layTrellis(n, rnd);
-      var rowsTwist = assignTwists(n, cols, sun, trellis, kinds, cactusRow, rnd);
-      if (!rowsTwist) continue;
-      var beds = growBeds(n, cols, rnd), twists = {};
-      Object.keys(rowsTwist).forEach(function (r) { twists[r] = rowsTwist[r]; });
-      var b = { n: n, beds: beds, sun: sun, trellis: trellis, twists: twists, answer: cols, size: size.key, version: VERSION };
+      var beds = growBeds(n, cols, rnd);
+      var b = { n: n, beds: beds, answer: cols, size: size.key, version: VERSION };
       var answerCells = {}; cols.forEach(function (c, r) { answerCells[r * n + c] = 1; });
 
       var unique = false;
@@ -555,10 +430,6 @@
 
       var sizes = range(n).map(function (k) { return beds.filter(function (x) { return x === k; }).length; });
       if (Math.min.apply(null, sizes) < 2) continue;
-      if (kinds.length) {
-        var plain = solutions(b, 2, { plain: true });
-        if (plain.length === 1 && plain[0].every(function (c, r) { return c === cols[r]; })) continue;
-      }
       var how = reason(b);
       if (!how.solved || rank(how.hardest) < rank(size.min) || rank(how.hardest) > rank(size.max)) continue;
       b.hardest = how.hardest;
@@ -580,9 +451,7 @@
         if (ch !== ch.toUpperCase()) answer[r] = c;
       });
     });
-    var sun = [], trellis = [];
-    for (var i = 0; i < n * n; i++) { sun.push(false); trellis.push(null); }
-    var b = { n: n, beds: beds, sun: sun, trellis: trellis, twists: {}, answer: answer, size: "practice", version: VERSION };
+    var b = { n: n, beds: beds, answer: answer, size: "practice", version: VERSION };
     if (extra) Object.keys(extra).forEach(function (k) { b[k] = extra[k]; });
     return b;
   }
@@ -597,14 +466,9 @@
     "E e D D D"
   ]);
 
-  /* Meeting each twist: a small board built around just that plant, from a
-     fixed seed so it is the same for everybody. */
-  var MEET_SEEDS = { cactus: 11, fern: 12, climber: 13, succulent: 14 };
-
   /* ------------------------------------------------------------- the day */
 
   var DAILY_SEED = 7907;
-  function dailyTwist(day) { return KINDS[((day % KINDS.length) + KINDS.length) % KINDS.length]; }
   function dailySeed(day) { return (day * DAILY_SEED + VERSION * 1000003) >>> 0; }
 
   /* --------------------------------------------------------- progress */
@@ -641,40 +505,26 @@
   /** What a screen reader says for one cell. */
   function describeCell(b, state, cell) {
     var parts = ["row " + (rowOf(b, cell) + 1), "column " + (colOf(b, cell) + 1), "bed " + String.fromCharCode(65 + b.beds[cell])];
-    var kind = kindAt(b, cell);
-    if (kind) parts.push(kind + " bed");
-    /* Only what a plant on this board cares about: a sun patch on a board
-       with no fern or succulent is not a rule, and saying it suggests one. */
-    var kinds = Object.keys(b.twists).map(function (k) { return b.twists[k]; });
-    if (b.sun[cell] && (kinds.indexOf("fern") >= 0 || kinds.indexOf("succulent") >= 0)) parts.push("sun patch");
-    if (b.trellis[cell] && kinds.indexOf("climber") >= 0) parts.push("trellis");
     parts.push(state[cell] === "p" ? "planted" : state[cell] === "x" ? "marked bare" : "empty");
     return parts.join(", ");
   }
 
   return {
     VERSION: VERSION,
-    KINDS: KINDS,
-    TWIST_LINES: TWIST_LINES,
     TECHNIQUES: TECHNIQUES,
     SIZES: SIZES,
     PRACTICE: PRACTICE,
-    MEET_SEEDS: MEET_SEEDS,
     sizeOf: sizeOf,
     shuffle: shuffle,
-    allowedByTwist: allowedByTwist,
     shadowOf: shadowOf,
-    mayTouch: mayTouch,
     clashes: clashes,
     isSolved: isSolved,
     deadEnds: deadEnds,
-    cactusTouches: cactusTouches,
     solutions: solutions,
     reason: reason,
     nudge: nudge,
     generate: generate,
     fromPicture: fromPicture,
-    dailyTwist: dailyTwist,
     dailySeed: dailySeed,
     emptyProgress: emptyProgress,
     laterDaily: laterDaily,

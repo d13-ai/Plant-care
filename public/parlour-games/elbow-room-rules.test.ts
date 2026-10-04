@@ -2,8 +2,8 @@
  * Elbow Room's rules and generator.
  *
  * Written alongside the measurements in docs/elbow-room-spec.md, section 2:
- * random beds almost never have one answer, so the generator repairs them,
- * and a twist only matters if the board is built around it. These tests are
+ * random beds almost never have one answer, so the generator repairs them.
+ * These tests are
  * what keeps those promises true of the shipped module rather than of the
  * prototype they were measured on.
  */
@@ -83,51 +83,6 @@ describe("dead ends", () => {
   });
 });
 
-describe("the twists", () => {
-  // A 3x3 is too small for a real board but fine for a rule.
-  const base = (twists: Record<string, "cactus" | "fern" | "climber" | "succulent">) =>
-    R.fromPicture(["A B C", "A B C", "A B C"], { twists });
-
-  it("let a cactus touch its neighbours, and only a cactus", () => {
-    const plain = base({});
-    const cactus = base({ 0: "cactus" });
-    const touching = planted(plain, [0, 4]); // row 1 col 1, row 2 col 2: beds A and B
-    expect(R.clashes(plain, touching).some((c) => c.type === "touch")).toBe(true);
-    expect(R.clashes(cactus, touching).some((c) => c.type === "touch")).toBe(false);
-  });
-
-  it("keep a fern out of the sun", () => {
-    const b = base({ 0: "fern" });
-    b.sun = b.sun.map((_, i) => i < 3);
-    expect(R.clashes(b, planted(b, [0])).map((c) => c.words)).toContain("too much sun");
-    expect(R.clashes(b, planted(b, [3]))).toEqual([]);
-  });
-
-  it("keep a succulent in the sun", () => {
-    const b = base({ 0: "succulent" });
-    b.sun = b.sun.map((_, i) => i < 3);
-    expect(R.clashes(b, planted(b, [3])).map((c) => c.words)).toContain("wants the sun");
-    expect(R.clashes(b, planted(b, [0]))).toEqual([]);
-  });
-
-  it("give a climber nothing to climb away from the trellis", () => {
-    const b = base({ 0: "climber" });
-    b.trellis = b.trellis.map((_, i) => (i === 6 ? "left" : null));
-    expect(R.clashes(b, planted(b, [0])).map((c) => c.words)).toContain("nothing to climb");
-    expect(R.clashes(b, planted(b, [6]))).toEqual([]);
-  });
-
-  it("can say when a cactus is the reason two plants may touch", () => {
-    const cactus = base({ 0: "cactus" });
-    expect(R.cactusTouches(cactus, planted(cactus, [0, 4]))).toEqual([[0, 4]]);
-    expect(R.cactusTouches(base({}), planted(base({}), [0, 4]))).toEqual([]);
-  });
-
-  it("explain themselves in one line each", () => {
-    for (const k of R.KINDS) expect(R.TWIST_LINES[k]).toMatch(/\.$/);
-  });
-});
-
 describe("solving", () => {
   it("finds the practice board's one answer, and only that", () => {
     const sols = R.solutions(R.PRACTICE, 5);
@@ -198,42 +153,18 @@ describe("the generator", () => {
       }
       expect(seen.size).toBe(cells.length);
     }
-    // Twists are needed: without them this would not be the one answer.
-    if (Object.keys(board.twists).length) {
-      const plain = R.solutions(board, 2, { plain: true });
-      expect(plain.length === 1 && plain[0].join() === board.answer.join()).toBe(false);
-    }
     return board;
   };
 
-  it("makes seedling boards with no twists", () => {
-    for (let seed = 1; seed <= 6; seed++) {
-      const b = check(R.generate("seedling", Parlour.mulberry32(seed)), "seedling");
-      expect(Object.keys(b.twists)).toEqual([]);
-    }
-  });
-
-  it("makes plain border boards, the rules Meowdoku and Queens players already know", () => {
-    for (let seed = 1; seed <= 4; seed++) {
-      const b = check(R.generate("border", Parlour.mulberry32(seed * 13)), "border");
-      expect(Object.keys(b.twists)).toEqual([]);
-    }
-  });
-
-  for (const kind of ["cactus", "fern", "climber", "succulent"] as const) {
-    it(`makes border boards around a ${kind}, which they need`, () => {
-      for (let seed = 1; seed <= 4; seed++) {
-        const b = check(R.generate("border", Parlour.mulberry32(seed * 101), { twists: [kind] }), "border");
-        expect(Object.values(b.twists)).toEqual([kind]);
-      }
+  for (const size of ["seedling", "border", "allotment"]) {
+    it(`makes ${size} boards with one answer, reachable by reasoning`, () => {
+      for (let seed = 1; seed <= (size === "allotment" ? 2 : 5); seed++) check(R.generate(size, Parlour.mulberry32(seed * 13)), size);
     });
   }
 
-  it("makes allotment boards with two twists", () => {
-    for (let seed = 1; seed <= 2; seed++) {
-      const b = check(R.generate("allotment", Parlour.mulberry32(seed * 7)), "allotment");
-      expect(Object.keys(b.twists)).toHaveLength(2);
-    }
+  it("makes boards with the plain rules and nothing else on them", () => {
+    const b = R.generate("border", Parlour.mulberry32(5))!;
+    expect(Object.keys(b).sort()).toEqual(["answer", "attempts", "beds", "hardest", "n", "size", "version"]);
   });
 
   it("is the same board from the same seed", () => {
@@ -242,31 +173,21 @@ describe("the generator", () => {
     expect(a).toEqual(b);
   });
 
-  it("makes a meet-the-twist board for each twist, small and gentle", () => {
-    for (const kind of R.KINDS) {
-      const b = check(R.generate("seedling", Parlour.mulberry32(R.MEET_SEEDS[kind]), { twists: [kind] }), "seedling");
-      expect(Object.values(b.twists)).toEqual([kind]);
-    }
-  });
 });
 
 describe("the daily board", () => {
-  it("rotates through all four twists, one a day", () => {
-    expect(new Set([0, 1, 2, 3].map(R.dailyTwist))).toEqual(new Set(R.KINDS));
-  });
-
   /*
    * Pinned. The daily is made in the browser from its seed, so any change to
    * the generator changes every future daily for everybody. If this fails,
    * that is what is happening: bump VERSION on purpose, then re-pin.
    */
-  it("is pinned for version 1", () => {
+  // Version 2: the twists went (Oct 2026), so every daily from then on is plain.
+  it("is pinned for version 2", () => {
     const day = Parlour.dayNumber(new Date("2026-10-05T12:00:00Z"));
-    expect(R.VERSION).toBe(1);
-    const b = R.generate("border", Parlour.mulberry32(R.dailySeed(day)), { twists: [R.dailyTwist(day)] })!;
-    expect(R.dailyTwist(day)).toBe("succulent");
-    expect(b.beds.join("")).toBe("2201111200111620011162203466533344655566665556666");
-    expect(b.answer).toEqual([2, 4, 0, 3, 5, 1, 6]);
+    expect(R.VERSION).toBe(2);
+    const b = R.generate("border", Parlour.mulberry32(R.dailySeed(day)))!;
+    expect(b.beds.join("")).toBe("2001144221134422213442223344525344455554465555666");
+    expect(b.answer).toEqual([1, 3, 0, 4, 6, 2, 5]);
   });
 });
 

@@ -16,7 +16,7 @@ back.
 |---|---|
 | **The hub** | `/parlour-games` — lists the games, links back to the app. |
 | **Trickle** | `/parlour-games/trickle` — rotate the pipes until the water reaches every plant. Free boards, a daily board everyone shares, a practice mode, and an embeddable build at `/parlour-games/trickle/embed`. |
-| **Elbow Room** | `/parlour-games/elbow-room` — one plant per bed, row and column, none touching, with four twists (cactus, fern, succulent, climber). Three plot sizes, a nudge that explains the next deduction, practice and a lesson per twist, a daily board with a share line, and an embed. |
+| **Elbow Room** | `/parlour-games/elbow-room` — one plant per bed, row and column, none touching — the plain rules of Queens and Meowdoku, with plants. Three plot sizes, a nudge that explains the next deduction, a practice board that walks every step, a daily board with a share line, and an embed. |
 | **Windowsill** | `/parlour-games/windowsill` — arrange the plants on a stepped shelf so every one of them gets the light it wants. Three shelf sizes, boards dealt to a measured difficulty, practice, a daily board and an embed, all on the same routes Trickle uses. |
 | **The streak** | One run across the whole corner, shown on the hub: playing any of these today keeps it alive. |
 | **The way in** | A card on the greenhouse shown only when nothing needs attention, plus a permanent link at the foot of the plant list. Both point at the hub, not at a game. |
@@ -93,13 +93,14 @@ a whole family of plants a quarter of a unit short.
 A plot divided into coloured beds: one plant to each bed, one to each row and
 column, and no two plants touching, not even corner to corner. Star Battle
 underneath — the puzzle LinkedIn calls Queens and Meowdoku dresses in cats —
-with a plant keeper's reason for the rule, and three twists that bend it the
-way real plants do: a cactus that doesn't mind company, a fern that keeps out
-of the sun, a succulent that needs it, a climber that needs a trellis.
+with a plant keeper's reason for the rule: leaves that touch fight for light.
 
-Measured before it was written: random beds almost never give one answer, so
-the generator repairs them, and a twist only matters if the board is built
-around it. Spec and build plan in `docs/elbow-room-spec.md`.
+It shipped with four plants that bent the rules (a cactus, a fern, a
+succulent and a climber). The first person to play it wanted the plain puzzle
+they already knew, and found the bent rules read as the game breaking its own,
+so they came out in October 2026. Random beds almost never give one answer,
+so the generator repairs them; every board has exactly one answer and needs no
+guessing. Spec in `docs/elbow-room-spec.md`.
 
 ### Thicket — *later*
 

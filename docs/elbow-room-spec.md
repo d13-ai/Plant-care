@@ -1,5 +1,15 @@
 # Elbow Room — spec
 
+> **October 2026: the twists are gone.** Elbow Room is now the plain puzzle —
+> one plant per bed, row and column, none touching — on every board, the daily
+> and practice included. The first person to play it wanted exactly the game
+> they knew from Meowdoku, and the twists read as the game breaking its own
+> rules. Everything below about cactus, fern, succulent and climber is the
+> history of a design that was built, played and taken out; the generator,
+> the reasoning solver, the dead-end warning and the guided practice board are
+> what remain. Daily boards moved to version 2 of the generator, so they are
+> new boards from that day on.
+
 A plot divided into beds. One plant to each bed. Every plant needs room to
 grow.
 

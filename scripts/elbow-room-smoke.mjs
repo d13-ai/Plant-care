@@ -3,7 +3,7 @@
  *
  * Drives the page in Chromium: solving a board by tapping, clashes shown in
  * words, undo, the nudge, tidy-up, the size choice (an Allotment's cells
- * stay big enough to hit on a phone), practice and the twist lessons, the
+ * stay big enough to hit on a phone), practice, the
  * daily board with its share line and streak, the embed, the keyboard, and
  * no console errors anywhere.
  *
@@ -58,11 +58,9 @@ try {
     const n = await page.evaluate(() => window.__game.board().n);
     if (n !== 7) throw new Error(`expected a 7x7 Border by default, got ${n}`);
     if ((await page.locator("#plot .cell").count()) !== 49) throw new Error("wrong number of cells");
-    // A random twist on the default board -- a cactus that has to touch -- read
-    // to a player as the game breaking its own rule (4 Oct 2026).
-    const twists = await page.evaluate(() => Object.keys(window.__game.board().twists).length);
-    if (twists !== 0) throw new Error("the default board has a twist");
-    if ((await page.locator("#legend").innerText()).trim()) throw new Error("legend shown on a plain board");
+    // The plain rules and nothing else: no twists, no sun patches, no trellis.
+    const keys = await page.evaluate(() => Object.keys(window.__game.board()).sort().join());
+    if (/twists|sun|trellis/.test(keys)) throw new Error("the board carries more than the plain rules: " + keys);
     if (!(await page.locator('[data-size="border"].on').count())) throw new Error("Border isn't shown as chosen");
     await ctx.close();
   });
@@ -86,12 +84,11 @@ try {
     await ready(page);
     await page.locator('[data-tool="plant"]').click();
     // Row 1 column 1 and row 2 column 2: diagonal neighbours. Find a pair
-    // where neither bed is a cactus, so they genuinely clash.
     const pair = await page.evaluate(() => {
       const b = window.__game.board(), n = b.n;
       for (let r = 0; r < n - 1; r++) for (let c = 0; c < n - 1; c++) {
         const a = r * n + c, d = (r + 1) * n + c + 1;
-        if (b.twists[b.beds[a]] !== "cactus" && b.twists[b.beds[d]] !== "cactus" && b.beds[a] !== b.beds[d]) return [a, d];
+        if (b.beds[a] !== b.beds[d]) return [a, d];
       }
       return null;
     });
@@ -177,23 +174,12 @@ try {
     await ctx.close();
   });
 
-  await step("an Allotment is 9x9 with two twists, and its cells stay hittable on a phone", async () => {
+  await step("an Allotment is 9x9, and its cells stay hittable on a phone", async () => {
     const { ctx, page } = await fresh({ width: 360, height: 780 });
     await page.goto(base);
     await ready(page);
     await page.locator('[data-size="allotment"]').click();
     await page.waitForFunction(() => window.__game.board().n === 9, null, { timeout: 15000 });
-    const twists = await page.evaluate(() => Object.keys(window.__game.board().twists).length);
-    if (twists !== 2) throw new Error(`expected two twists, got ${twists}`);
-    // Every cell of a twisted bed carries the plant: one badge, the rest marks.
-    const marked = await page.evaluate(() => {
-      const b = window.__game.board();
-      const want = b.beds.filter((bed) => b.twists[bed]).length;
-      const have = document.querySelectorAll("#plot .cell .badge, #plot .cell .twist-mark").length;
-      return { want, have };
-    });
-    if (marked.want !== marked.have) throw new Error(`twisted beds marked in ${marked.have} of ${marked.want} cells`);
-    if (!/\(in this bed\)/.test(await page.locator("#legend").innerText())) throw new Error("legend doesn't point at the bed");
     const w = await page.locator("#plot .cell").first().evaluate((el) => el.getBoundingClientRect().width);
     if (w < 39.5) throw new Error(`cells are ${w}px, under the 40 a thumb needs`);
     // And the choice is remembered.
@@ -203,7 +189,7 @@ try {
     await ctx.close();
   });
 
-  await step("practice: the fixed board, then a board to meet each twist", async () => {
+  await step("practice: the fixed board, then a proper one, and nothing counted", async () => {
     const { ctx, page } = await fresh();
     await page.goto(base + "/learn");
     await ready(page);
@@ -213,35 +199,22 @@ try {
     if (await page.locator(".sizes").isVisible()) throw new Error("sizes shown in practice");
     await page.locator('[data-tool="plant"]').click();
     for (const cell of await answerCells(page)) await tapCell(page, cell);
-    await page.getByText("Meet the cactus", { exact: true }).click();
-    await page.waitForFunction(() => window.__game.lesson() === 1 && Object.values(window.__game.board().twists)[0] === "cactus", null, { timeout: 15000 });
-    await page.getByText("doesn't mind company").first().waitFor({ timeout: 5000 });
-    // The cactus's answer touches a neighbour; planting both says why that's fine.
-    const pair = await page.evaluate(() => {
-      const b = window.__game.board(), n = b.n, cells = b.answer.map((c, r) => r * n + c);
-      for (const a of cells) for (const d of cells) {
-        if (a < d && Math.abs(Math.floor(a / n) - Math.floor(d / n)) === 1 && Math.abs((a % n) - (d % n)) === 1) return [a, d];
-      }
-      return null;
-    });
-    if (!pair) throw new Error("the cactus board's answer has no touch in it");
-    await page.locator('[data-tool="plant"]').click();
-    for (const cell of pair) await tapCell(page, cell);
-    await page.getByText("The cactus doesn't mind the company.").waitFor({ timeout: 5000 });
-    if (await page.locator("#plot .cell.clash").count()) throw new Error("a cactus touch was shown as a clash");
+    await page.getByText("Play a proper board", { exact: true }).waitFor({ timeout: 5000 });
     // Practice counts nothing.
     if ((await page.evaluate(() => window.__game.progress().done)) !== 0) throw new Error("practice was counted");
+    await page.getByText("Play a proper board", { exact: true }).click();
+    await page.waitForFunction(() => !window.__game.learning() && window.__game.board().n === 7, null, { timeout: 15000 });
     await ctx.close();
   });
 
-  await step("the daily board: the same for everyone, a twist a day, a share line, and the streak", async () => {
+  await step("the daily board: the same for everyone, a share line, and the streak", async () => {
     const { ctx, page } = await fresh();
     await page.goto(base + "/daily");
     await ready(page);
     const info = await page.evaluate(() => ({ daily: window.__game.isDaily(), num: window.__game.board().num, day: window.__game.dayNumber(), n: window.__game.board().n }));
     if (!info.daily || info.num !== info.day || info.n !== 7) throw new Error("not today's 7x7: " + JSON.stringify(info));
     const tag = await page.locator(".tagline").innerText();
-    if (!/today's twist: the (cactus|fern|climber|succulent)/.test(tag)) throw new Error("the twist of the day isn't named: " + tag);
+    if (!/the same one for everybody today/.test(tag)) throw new Error("the daily isn't named as today's: " + tag);
     await page.locator('[data-tool="plant"]').click();
     const cells = await answerCells(page);
     await tapCell(page, cells[0]);
