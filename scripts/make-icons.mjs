@@ -94,6 +94,7 @@ const CARDS = [
   { file: "og-games.png", title: "Parlour Games", line: "Small, calm puzzles. No timers, no scores, nothing to lose.", accent: "#C9A24B" },
   { file: "og-trickle.png", title: "Trickle", line: "Turn the pipes until the water reaches every plant.", accent: LEAF },
   { file: "og-windowsill.png", title: "Windowsill", line: "Give every plant the light it actually wants.", accent: "#E6C46B" },
+  { file: "og-elbow-room.png", title: "Elbow Room", line: "Give every plant room to grow.", accent: "#8FC79E" },
 ];
 
 for (const c of CARDS) {
