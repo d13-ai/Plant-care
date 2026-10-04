@@ -8,9 +8,10 @@ import { StatusBar } from "expo-status-bar";
 import { Platform, View } from "react-native";
 import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
 import { Body, Button, Row, Title } from "@/components/ui";
+import { ResetPassword } from "@/components/reset-password";
 import { Welcome } from "@/components/welcome";
 import { migrate } from "@/db";
-import { useAccount } from "@/lib/auth";
+import { leaveResetPage, resetTokenInUrl, useAccount, welcomeOnce } from "@/lib/auth";
 import { loadSyncStatus, requestSync } from "@/lib/sync";
 import { sendBugReport, watchForTrouble } from "@/lib/bug-report";
 import { leave } from "@/domain/trail";
@@ -229,9 +230,29 @@ export default function RootLayout() {
  */
 function RequireAccount({ children }: PropsWithChildren) {
   const { account, loading } = useAccount();
+  // A reset link (plantparlour.org/?reset=...) comes before everything,
+  // because it is for the person who can't get past this gate.
+  const [resetToken, setResetToken] = useState(resetTokenInUrl);
+  const signedIn = Boolean(account && !account.anonymous);
+  // The welcome email, asked for once a new account is in. The function
+  // decides whether one is due; this only makes sure it is asked.
+  useEffect(() => {
+    if (account && signedIn) welcomeOnce(account);
+  }, [account, signedIn]);
   // Nothing at all while the session is being read: a flash of the welcome
   // screen for someone who is signed in reads as being logged out.
   if (loading) return null;
+  if (resetToken) {
+    return (
+      <ResetPassword
+        token={resetToken}
+        signedInAs={signedIn ? account : null}
+        onDone={() => {
+          if (!leaveResetPage()) setResetToken(null);
+        }}
+      />
+    );
+  }
   // An account means an email. A leftover anonymous session from before those
   // were turned off is not one, so it gets the welcome screen like anyone else.
   return account && !account.anonymous ? <>{children}</> : <Welcome />;

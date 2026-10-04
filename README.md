@@ -163,7 +163,7 @@ instance`, project-wide rather than per-provider, so the emailed-code path
 could never have made an account either.
 
 **"Confirm email" is off**, so `signUp` returns a live session and sends
-nothing. It has to stay off until SMTP is configured: with it on, signing up
+nothing from Supabase. It has to stay off until SMTP is configured: with it on, signing up
 waits on a confirmation email, and the built-in mailer both rate-limits to a
 few an hour and refuses any address outside the project team — so for a real
 keeper it never arrives. The cost of off is that someone can sign up with an
@@ -183,59 +183,40 @@ signs in, a wrong one is refused and reported as a wrong password rather than
 a failed signup, and a weak one is refused legibly. The account made for that
 was deleted afterwards by id.
 
-**Setup still owed: resetting a forgotten password.** Nothing else needs a
-mail server now — signing up and signing in don't send email at all (the
-project has email confirmation off, so `signUp` returns a live session). But
-a reset does, so until these two settings are made, someone who forgets their
-password has Google or nothing.
+**Account emails: welcome and password reset (Oct 2026).** These don't go
+through Supabase's mailer, which only delivers to the project's own team
+without custom SMTP. The `account-email` edge function sends them itself,
+through Resend, from `hello@plantparlour.org`, with replies going to the
+contact address on /privacy.
 
-*1. The reset template.* Authentication → Emails → Templates → **Reset
-Password**. The default carries a link, which is right for a reset. If you
-would rather it be a code the app asks for — the same argument as before, a
-link opens in whichever browser the mail app prefers — the body needs
-`{{ .Token }}`:
+- *Welcome* — the app asks once per device after sign-in (`welcomeOnce` in
+  `src/lib/auth.ts`); the function sends it once per account, ever, and only
+  in the account's first week. Accounts that existed before this shipped were
+  marked as welcomed by the migration, so nobody was written to out of the
+  blue.
+- *Reset* — "Forgot your password?" on the sign-in card emails a link to
+  `plantparlour.org/?reset=<token>`. The token comes from
+  `auth.admin.generateLink({ type: "recovery" })` and is only spent when the
+  keeper presses *Save and sign in* (`verifyOtp`, then `updateUser`), so a
+  mail scanner that opens every link can't use it up first. The form answers
+  the same whether or not an account exists.
+- *Limits* — every send is claimed first through `claim_account_email()`:
+  3 resets an hour and 6 a day to one address, 10 an hour from one IP, 200
+  emails a day across the project. A claim is handed back if Resend refuses
+  the email. Addresses and IPs are stored hashed.
+- *The key* is a Resend sending-only key restricted to `plantparlour.org`,
+  kept in Supabase Vault as `resend_api_key` and readable only by the service
+  role (`public.resend_api_key()`). To rotate it: make a new one in Resend,
+  then `select vault.update_secret((select id from vault.secrets where name =
+  'resend_api_key'), '<new key>');`.
+- *The domain* needs its DNS records at Squarespace (DKIM `resend._domainkey`,
+  and `send` MX + TXT) before Resend will send from it. Click and open
+  tracking are off on it, as the privacy page says.
 
-```html
-<h2>Your PlantParlour code</h2>
-<p style="font-size:28px;letter-spacing:4px"><strong>{{ .Token }}</strong></p>
-<p>Type it into the app. It's good for an hour.</p>
-```
-
-The app has no reset screen yet either way; this is the groundwork for one.
-
-*2. Mail has to go out through a real SMTP provider.* Not a preference:
-Supabase's own docs say that **without custom SMTP, Auth refuses to deliver to
-any address that isn't a member of the project team** — its built-in sender is
-for trying things out and testing templates against your own inboxes. A reset
-email that silently never arrives is the worst possible failure for the one
-message a locked-out person needs.
-
-Any SMTP provider does (Brevo, Postmark, SES, …). Resend is what's written
-here because it is already most of the way there — `bondcreativestudios.com`
-is verified with sending enabled and a key exists; another provider means
-redoing domain verification for no gain. Authentication → Emails → SMTP
-Settings → enable custom SMTP:
-
-| Field | Value |
-| --- | --- |
-| Host | `smtp.resend.com` |
-| Port | `465` |
-| Username | `resend` |
-| Password | a Resend API key with send permission |
-| Sender email | an address at `bondcreativestudios.com` (verified in Resend) |
-| Sender name | `PlantParlour` |
-
-The key is shown once when it's created, so make a new one in Resend →
-API Keys if the old one wasn't saved. Supabase's built-in mailer, which is
-what runs until this is set, sends only a few messages an hour across the
-whole project — fine for one tester, not for keepers. The app says so plainly
-when it hits the limit.
-
-Afterwards, Authentication → Rate Limits governs how many sign-in emails an
-hour the project will send; the default stays low even once custom SMTP is
-on. Resend's own dashboard (or `list-emails`) shows whether Supabase actually
-handed a message over, which is the quickest way to tell a template problem
-from a delivery one.
+Custom SMTP in Supabase is now only needed if "Confirm email" is ever turned
+on: Authentication → Emails → SMTP Settings, host `smtp.resend.com`, port
+`465`, user `resend`, a Resend sending key as the password, sender
+`hello@plantparlour.org`.
 
 ## Species catalogue
 

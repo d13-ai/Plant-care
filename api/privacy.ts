@@ -55,10 +55,11 @@ const sections = [
   },
   {
     heading: "Who else is involved",
-    html: `<p>Four companies, each doing one job:</p>
+    html: `<p>Five companies, each doing one job:</p>
 <ul>
 <li><strong>Supabase</strong> — stores your records and photos, and handles sign-in.</li>
 <li><strong>Vercel</strong> — serves the website.</li>
+<li><strong>Resend</strong> — sends the two emails an account can get: one welcome when you sign up, and a password-reset link when you ask for one. They receive your email address and the message, nothing else. Opens and clicks are not tracked.</li>
 <li><strong>Google</strong> — only if you choose to sign in with Google.</li>
 <li><strong>Anthropic</strong> — only the photos or species names you send for analysis.</li>
 </ul>
