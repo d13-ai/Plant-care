@@ -607,8 +607,11 @@
     var parts = ["row " + (rowOf(b, cell) + 1), "column " + (colOf(b, cell) + 1), "bed " + String.fromCharCode(65 + b.beds[cell])];
     var kind = kindAt(b, cell);
     if (kind) parts.push(kind + " bed");
-    if (b.sun[cell]) parts.push("sun patch");
-    if (b.trellis[cell]) parts.push("trellis");
+    /* Only what a plant on this board cares about: a sun patch on a board
+       with no fern or succulent is not a rule, and saying it suggests one. */
+    var kinds = Object.keys(b.twists).map(function (k) { return b.twists[k]; });
+    if (b.sun[cell] && (kinds.indexOf("fern") >= 0 || kinds.indexOf("succulent") >= 0)) parts.push("sun patch");
+    if (b.trellis[cell] && kinds.indexOf("climber") >= 0) parts.push("trellis");
     parts.push(state[cell] === "p" ? "planted" : state[cell] === "x" ? "marked bare" : "empty");
     return parts.join(", ");
   }
@@ -624,6 +627,7 @@
     sizeOf: sizeOf,
     shuffle: shuffle,
     allowedByTwist: allowedByTwist,
+    shadowOf: shadowOf,
     mayTouch: mayTouch,
     clashes: clashes,
     isSolved: isSolved,

@@ -64,6 +64,7 @@ const urls = [
   { loc: `${SITE}/parlour-games`, files: ["public/parlour-games/index.html"], priority: "0.6", changefreq: "weekly" },
   { loc: `${SITE}/parlour-games/trickle`, files: ["public/parlour-games/trickle.html"], priority: "0.6", changefreq: "weekly" },
   { loc: `${SITE}/parlour-games/windowsill`, files: ["public/parlour-games/windowsill.html"], priority: "0.6", changefreq: "weekly" },
+  { loc: `${SITE}/parlour-games/elbow-room`, files: ["public/parlour-games/elbow-room.html"], priority: "0.6", changefreq: "weekly" },
   { loc: `${SITE}/privacy`, files: ["api/privacy.ts", "api/legal.ts"], priority: "0.3", changefreq: "yearly" },
   { loc: `${SITE}/terms`, files: ["api/terms.ts", "api/legal.ts"], priority: "0.3", changefreq: "yearly" },
 ];

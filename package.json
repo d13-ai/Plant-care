@@ -22,7 +22,8 @@
     "icons": "node scripts/make-icons.mjs",
     "e2e": "vitest run --config vitest.e2e.config.ts",
     "start:tunnel": "expo start --tunnel",
-    "windowsill:smoke": "node scripts/windowsill-smoke.mjs"
+    "windowsill:smoke": "node scripts/windowsill-smoke.mjs",
+    "elbow-room:smoke": "node scripts/elbow-room-smoke.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/lora": "^0.4.2",

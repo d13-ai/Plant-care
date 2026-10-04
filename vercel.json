@@ -6,7 +6,7 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/((?!tag$|@|api/|plant-photos/|plant-thumb/|privacy$|terms$|parlour-games/trickle/embed$|parlour-games/windowsill/embed$).*)",
+      "source": "/((?!tag$|@|api/|plant-photos/|plant-thumb/|privacy$|terms$|parlour-games/trickle/embed$|parlour-games/windowsill/embed$|parlour-games/elbow-room/embed$).*)",
       "headers": [
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -41,7 +41,7 @@
       ]
     },
     {
-      "source": "/parlour-games/:game(trickle|windowsill)/embed",
+      "source": "/parlour-games/:game(trickle|windowsill|elbow-room)/embed",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -117,6 +117,18 @@
     {
       "source": "/parlour-games/windowsill/embed",
       "destination": "/parlour-games/windowsill"
+    },
+    {
+      "source": "/parlour-games/elbow-room/learn",
+      "destination": "/parlour-games/elbow-room"
+    },
+    {
+      "source": "/parlour-games/elbow-room/daily",
+      "destination": "/parlour-games/elbow-room"
+    },
+    {
+      "source": "/parlour-games/elbow-room/embed",
+      "destination": "/parlour-games/elbow-room"
     },
     {
       "source": "/(.*)",

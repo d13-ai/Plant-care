@@ -16,6 +16,7 @@ back.
 |---|---|
 | **The hub** | `/parlour-games` — lists the games, links back to the app. |
 | **Trickle** | `/parlour-games/trickle` — rotate the pipes until the water reaches every plant. Free boards, a daily board everyone shares, a practice mode, and an embeddable build at `/parlour-games/trickle/embed`. |
+| **Elbow Room** | `/parlour-games/elbow-room` — one plant per bed, row and column, none touching, with four twists (cactus, fern, succulent, climber). Three plot sizes, a nudge that explains the next deduction, practice and a lesson per twist, a daily board with a share line, and an embed. |
 | **Windowsill** | `/parlour-games/windowsill` — arrange the plants on a stepped shelf so every one of them gets the light it wants. Three shelf sizes, boards dealt to a measured difficulty, practice, a daily board and an embed, all on the same routes Trickle uses. |
 | **The streak** | One run across the whole corner, shown on the hub: playing any of these today keeps it alive. |
 | **The way in** | A card on the greenhouse shown only when nothing needs attention, plus a permanent link at the foot of the plant list. Both point at the hub, not at a game. |
@@ -87,14 +88,14 @@ And the art is drawn in the same unit space as the rule, so a plant cannot be
 drawn to a height the game does not count; the check that enforces that found
 a whole family of plants a quarter of a unit short.
 
-### Elbow Room — *specced*
+### Elbow Room — *built*
 
 A plot divided into coloured beds: one plant to each bed, one to each row and
 column, and no two plants touching, not even corner to corner. Star Battle
 underneath — the puzzle LinkedIn calls Queens and Meowdoku dresses in cats —
 with a plant keeper's reason for the rule, and three twists that bend it the
 way real plants do: a cactus that doesn't mind company, a fern that keeps out
-of the sun, a climber that needs a trellis.
+of the sun, a succulent that needs it, a climber that needs a trellis.
 
 Measured before it was written: random beds almost never give one answer, so
 the generator repairs them, and a twist only matters if the board is built

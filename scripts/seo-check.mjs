@@ -63,6 +63,7 @@ const ROUTES = new Map([
   ["/parlour-games", "parlour-games/index.html"],
   ["/parlour-games/trickle", "parlour-games/trickle.html"],
   ["/parlour-games/windowsill", "parlour-games/windowsill.html"],
+  ["/parlour-games/elbow-room", "parlour-games/elbow-room.html"],
   ["/privacy", null], // served by api/privacy.ts
   ["/terms", null], // served by api/terms.ts
   ...pages.map((p) => [`/plants/${p.slug}`, `plants/${p.slug}.html`]),

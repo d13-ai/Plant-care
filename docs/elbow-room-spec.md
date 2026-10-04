@@ -42,10 +42,13 @@ true of the real plant.
 |---|---|---|
 | **Cactus** | **Doesn't mind company.** A cactus may touch its neighbours corner to corner. Rows, columns and beds still apply. | Cacti and succulents are slow, dry-rooted and happy sharing a dish garden — about the only houseplants that are happy packed in together. |
 | **Fern** | **Keeps out of the sun.** Some cells are **sun patches** (warm light falling through the window). A fern may not be planted in one. | Direct sun scorches fern fronds; they want bright shade. |
+| **Succulent** | **Needs the sun.** A succulent must be planted *in* a sun patch — the fern's opposite. | Echeverias and their kin stretch and go pale away from direct light. |
 | **Climber** | **Needs something to climb.** Some cell edges carry a **trellis**. A climber must be planted in a cell with a trellis on one of its sides. | Pothos, philodendrons and monsteras are climbers; given a pole or a trellis they grow bigger leaves. |
 
 Sun patches and trellises only matter to the plant that cares about them.
-A cactus can sit in the sun; anything can stand by a trellis.
+A cactus can sit in the sun; anything can stand by a trellis. They are drawn
+only on boards with a fern, a succulent or a climber — a sun patch on a board
+where nothing cares is a rule that isn't there.
 
 ### Worked example — the practice board
 
@@ -299,6 +302,31 @@ blocker — the same as Windowsill.
 
 Each step lands working and tested before the next starts.
 
+**Built (Oct 2026), all on one branch.** `elbow-room-rules.js` with 29 tests;
+`/parlour-games/elbow-room` with practice, the twist lessons, the daily,
+streak, sync, nudge, tidy-up, undo, the embed, night and sound; the hub card,
+routes, sitemap, share image and SEO checks; `npm run elbow-room:smoke`
+(13 browser checks, including contrast in both modes). Re-measured from the
+shipped module, 40 boards per row, every one checked independently for one
+answer:
+
+| board | made | median | p90 | worst |
+|---|---|---|---|---|
+| Seedling 5 × 5 | 40 / 40 | 2 ms | 16 ms | 32 ms |
+| Border 7 × 7, cactus | 40 / 40 | 9 ms | 51 ms | 98 ms |
+| Border, fern | 40 / 40 | 6 ms | 17 ms | 45 ms |
+| Border, climber | 40 / 40 | 3 ms | 9 ms | 21 ms |
+| Border, succulent | 40 / 40 | 4 ms | 29 ms | 36 ms |
+| Allotment 9 × 9, two twists | 40 / 40 | 76 ms | 350 ms | 751 ms |
+
+Two things changed from the plan on the way. The board is not dimmed at night:
+it took plants, markers and the clash ring under 3:1 against the beds, so the
+night palette stops at the plot's edge. And practice is the fixed board
+followed by four small boards, one to meet each twist, in place of a single
+twist practice.
+
+The plan as written:
+
 1. **The rules module**: board model, the counting solver, the reasoning
    solver with named techniques, and tests — the practice board's one answer,
    each twist's rule, a guess-only board rejected.
@@ -316,9 +344,8 @@ Each step lands working and tested before the next starts.
 
 ## 10. Open questions
 
-- **A fourth twist?** Candidates: a **succulent** that must sit *in* a sun
-  patch (the fern's opposite, and good paired with it on one board); a **tall
-  plant** whose bed shades the cells behind it.
+- **A fifth twist?** A **tall plant** whose bed shades the cells behind it.
+  (The succulent, the first candidate here, was added before the build.)
 - **Two plants per bed** on a 10 × 10 — the classic harder Star Battle —
   would need boards made ahead of time and shipped as a file, since making
   10 × 10 live takes over a second. Worth it only if the Allotment proves too

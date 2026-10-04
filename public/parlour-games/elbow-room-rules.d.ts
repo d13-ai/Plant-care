@@ -36,6 +36,7 @@ export declare const MEET_SEEDS: Record<Kind, number>;
 export declare function sizeOf(key: string): Size;
 export declare function shuffle<T>(list: T[], rnd: () => number): T[];
 export declare function allowedByTwist(b: Board, cell: number): boolean;
+export declare function shadowOf(b: Board, cell: number): number[];
 export declare function mayTouch(b: Board, a: number, c: number): boolean;
 export declare function clashes(b: Board, state: string): Clash[];
 export declare function isSolved(b: Board, state: string): boolean;
