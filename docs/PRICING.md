@@ -32,6 +32,13 @@ an app whose buyers are collectors, naming the cultivar correctly *is* the
 product — but it is the biggest single cost lever, and worth revisiting for
 health-check-only scans, where no cultivar has to be named.
 
+**4 Oct 2026: identification moved to Opus 5.5** ($4/$20). Same tokenizer, so
+the same photo is the same input tokens at 80% of the price. Opus 5.5 always
+thinks and tends to think a little more than Opus 5 at the same effort, so
+expect a scan to cost about what it did, not a fifth less — the `cost_usd` on
+each answer and `ai_usage` will say. `AI_MODEL=claude-opus-5` puts it back
+without a redeploy.
+
 ## Correcting the first draft: the cap is not what I said it was
 
 This page previously claimed a heavy keeper could spend $12.82 a month inside

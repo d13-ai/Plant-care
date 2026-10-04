@@ -290,7 +290,8 @@ keeper gets 20 analyses a day (`ai_usage` table; the function alone writes
 it).
 
 Cost is a dial, set as function secrets with no redeploy: `AI_MODEL`
-(`claude-opus-5` default; `claude-sonnet-5` at a third of the cost;
+(`claude-opus-5-5` default since 4 Oct 2026, $4/$20 against `claude-opus-5`'s
+$5/$25; `claude-sonnet-5` at a third of the cost;
 `claude-haiku-4-5` cheapest) and `AI_EFFORT` (`low` | `medium` default |
 `high`). Measured on five real photos: Opus named all five, cultivars
 included (Thai Constellation, White Princess, Euphorbia 'Rubra'), at about

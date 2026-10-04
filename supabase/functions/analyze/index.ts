@@ -18,13 +18,20 @@ import { z } from "npm:zod";
 import { boundedText, claimAiCall, claimPhotoCall, refundAiCall, refundPhotoCall, today } from "../_shared/cap.ts";
 
 // Model and effort can be overridden by function secrets without a
-// redeploy: AI_MODEL (claude-opus-5 | claude-sonnet-5 | claude-haiku-4-5)
-// and AI_EFFORT (low | medium | high). Opus 5 is the default: on five real
-// photos it named every plant, cultivars included (Thai Constellation,
-// White Princess); Sonnet got two, calling the Thai Con an Albo. About 3¢ a
-// photo versus 1¢ — the difference a collector notices is worth it.
-const MODELS = ["claude-sonnet-5", "claude-opus-5", "claude-haiku-4-5"] as const;
-const DEFAULT_MODEL = MODELS.find((m) => m === Deno.env.get("AI_MODEL")) ?? "claude-opus-5";
+// redeploy: AI_MODEL (claude-opus-5-5 | claude-opus-5 | claude-sonnet-5 |
+// claude-haiku-4-5) and AI_EFFORT (low | medium | high). Opus is the
+// default: on five real photos Opus 5 named every plant, cultivars included
+// (Thai Constellation, White Princess); Sonnet got two, calling the Thai Con
+// an Albo. About 3¢ a photo versus 1¢ — the difference a collector notices
+// is worth it.
+//
+// Opus 5.5 since 4 Oct 2026: the newer Opus at $4/$20 against Opus 5's
+// $5/$25. It always thinks -- there is no switch for it -- and it tends to
+// think a little more per answer than Opus 5 at the same effort, so a
+// photo costs about what it did rather than a fifth less. Opus 5 stays on
+// the list so AI_MODEL can put it back without a redeploy.
+const MODELS = ["claude-sonnet-5", "claude-opus-5-5", "claude-opus-5", "claude-haiku-4-5"] as const;
+const DEFAULT_MODEL = MODELS.find((m) => m === Deno.env.get("AI_MODEL")) ?? "claude-opus-5-5";
 /**
  * A health check on a plant the keeper has already named does not need the
  * skill Opus is here for. What made Opus the default is cultivar-grade
@@ -32,8 +39,8 @@ const DEFAULT_MODEL = MODELS.find((m) => m === Deno.env.get("AI_MODEL")) ?? "cla
  * keeper asking "why are the leaves yellowing on my Monstera" has already
  * told us which plant it is. Reading a leaf is the cheaper job.
  *
- * So `mode: "health"` runs on Sonnet: $2/$10 per million against $5/$25, or
- * about 40% of the cost, on what will be the commonest scan once somebody's
+ * So `mode: "health"` runs on Sonnet: $2/$10 per million against $4/$20, or
+ * about half the cost, on what will be the commonest scan once somebody's
  * collection is photographed. Identification keeps Opus.
  *
  * Overridable with AI_HEALTH_MODEL, and an explicit `model` in the request
@@ -43,6 +50,7 @@ const HEALTH_MODEL = MODELS.find((m) => m === Deno.env.get("AI_HEALTH_MODEL")) ?
 // Anthropic list prices, $ per million tokens, so each answer can say what
 // it cost and the day's spend adds up in ai_usage. Update when prices move.
 const PRICES: Record<string, { input: number; output: number }> = {
+  "claude-opus-5-5": { input: 4, output: 20 },
   "claude-opus-5": { input: 5, output: 25 },
   "claude-sonnet-5": { input: 2, output: 10 },
   "claude-haiku-4-5": { input: 1, output: 5 },
@@ -111,6 +119,8 @@ When the keeper's app lists the cultivar names it tracks, prefer those names and
 Then read its health from what is actually visible: leaf colour and texture, spots, pests, drooping, soil, pot. Name only what you can see; say "unknown" when the photo doesn't show enough. For each finding give the likely cause and one concrete thing to do. Don't invent problems for a plant that looks fine.
 When the keeper's care record is given, treat it as fact — it is what they logged, not a guess from the photo — and read the photo in its light: wet soil eleven days after a repot means something different from wet soil on a plant watered twice this week. Weigh it against what you see, say plainly where the two disagree, and never repeat a piece of the record back as a finding on its own.
 When a photo's date is given, use it: say whether something has spread, held or improved between one photo and another, and between the photos and any issue already on the record. That comparison is what a keeper wants on a second look, and only the dates make it possible.
+Variegated plants: white or cream tissue has no chlorophyll, so it feeds nothing. New leaves coming in mostly or entirely white (a Birkin, a Thai Constellation, an Albo, a Marble Queen) mean the variegation is drifting towards white, and such leaves tend to brown and die off sooner, not that the plant is tolerating its light well. Treat a run of mostly-white new leaves as something to watch, and say what to do if it continues (cut back to a node below a leaf with good variegation). The same goes the other way: new leaves coming in solid green are reverting. Brown, dry tissue on the white parts first is that tissue failing, or scorched by sun through glass; say which the photo supports.
+When the record includes what earlier AI health checks said, those are readings, not facts — they may have been wrong. Don't simply repeat them, and don't contradict them silently: where your reading differs from an earlier one, say so in the notes, which one you think is right and why, so the keeper isn't left holding two opposite pieces of advice.
 Mark each finding with its kind. A problem is something wrong with the plant that a keeper might act on; an observation is a part of the plant that is fine, worth saying so they know you looked at it; photo_quality is a limit of the photograph rather than of the plant. Be strict about it: "the new leaf is unfurling and looks healthy" is an observation however welcome it is, and a keeper should never end up with it on their record as an unresolved problem.
 Say so plainly when the photo itself is the limit — leaves thick with dust, a picture taken at night under a warm lamp, motion blur, a plant too far from the camera. Name it as a finding and say which of your other findings it makes unreliable. A confident reading of a photograph you cannot actually read is worse than no reading.
 You are told to take the keeper's species as given, and you should — but if the plant in the photo plainly is not that species, say so in the notes and name what you think it is. Health advice keyed to the wrong plant is wrong advice, and a keeper who has mislabelled something would rather find out.
@@ -148,8 +158,9 @@ Deno.serve(async (req: Request) => {
   // CARE_BRIEF_MAX; bounded again here, because the app is not the only thing
   // that can call this. Keep the two numbers equal: this one was left at 600
   // when the app moved to 1200, which would have quietly cut every brief off
-  // mid-issue and dropped the pot notes entirely.
-  const care_brief = mode === "health" ? boundedText(body.care_brief, 1200) : "";
+  // mid-issue and dropped the pot notes entirely. 2000 since earlier AI
+  // checks started riding along (two, at most 320 characters each).
+  const care_brief = mode === "health" ? boundedText(body.care_brief, 2000) : "";
   const MEDIA = ["image/jpeg", "image/png", "image/webp"];
   type Img = { data: string; media_type: "image/jpeg" | "image/png" | "image/webp"; taken_at?: string };
   const images: Img[] = [];
@@ -227,7 +238,11 @@ Deno.serve(async (req: Request) => {
     const client = new Anthropic({ apiKey });
     const response = await client.messages.parse({
       model: MODEL,
-      max_tokens: 2048,
+      // Room for the thinking as well as the answer: Opus 5.5 always thinks,
+      // and thinking counts against this limit. A limit sized for the answer
+      // alone would cut the JSON off half-way and still bill for it. Only
+      // what is used is charged.
+      max_tokens: 8192,
       system: SYSTEM,
       output_config: { effort: EFFORT, format: zodOutputFormat(Verdict) },
       messages: [

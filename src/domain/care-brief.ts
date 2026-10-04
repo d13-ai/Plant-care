@@ -47,11 +47,15 @@ export type BriefPlant = {
 };
 
 /** Longest brief we will ever send; the function truncates to the same. */
-export const CARE_BRIEF_MAX = 1200;
+export const CARE_BRIEF_MAX = 2000;
 /** Per open issue. Enough for an observation, its cause and what to do. */
 const ISSUE_MAX = 240;
 /** The keeper's standing notes about the plant and its pot. */
 const NOTES_MAX = 240;
+/** Per earlier AI check: its overall call and the gist of its findings. */
+const CHECK_MAX = 320;
+/** How many earlier AI checks travel, newest first. */
+const CHECKS_TOLD = 2;
 
 const DAY = 86_400_000;
 
@@ -128,11 +132,31 @@ export function careBrief(
     lines.push(`Unresolved issue, first logged ${ago(d)}${note ? `: ${note}` : ""}.`);
   }
 
-  if (!lines.length && !plant.notes) return "";
+  // What the last health checks said. On 3 Oct 2026 a Birkin's check called
+  // its very white new leaves "good bright indirect light tolerance"; the
+  // check eighteen days earlier had said to watch that new leaves keep some
+  // green and to cut back if they didn't. The second check never saw the
+  // first, so it reversed the advice without knowing it had. Two, so a flip
+  // between the last pair is visible too. Labelled as the AI's reading, not
+  // the keeper's, because the model is told to treat the record as fact and
+  // an earlier guess is not one. Last in the brief, so if anything is cut by
+  // the bound it is this and not the keeper's own record.
+  const checks = events
+    .filter((e) => e.type === "AI_CHECK" && (e.notes ?? "").trim())
+    .map((e) => ({ e, d: daysAgo(e.occurredAt, now) }))
+    .filter((x): x is { e: BriefEvent; d: number } => x.d !== null)
+    .sort((a, b) => a.d - b.d)
+    .slice(0, CHECKS_TOLD)
+    .map(({ e, d }) => `AI health check ${ago(d)}: ${clip((e.notes ?? "").replace(/\s+/g, " "), CHECK_MAX)}`);
+
+  if (!lines.length && !plant.notes && !checks.length) return "";
   const parts = [];
   if (lines.length) parts.push(`What this keeper has logged for this plant:\n${lines.join("\n")}`);
   const notes = clip((plant.notes ?? "").replace(/\s+/g, " "), NOTES_MAX);
   if (notes) parts.push(`The keeper's own notes on this plant and its pot: ${notes}`);
+  if (checks.length) {
+    parts.push(`What earlier AI health checks said (the AI's readings of photos, not facts the keeper logged):\n${checks.join("\n")}`);
+  }
   const brief = parts.join("\n\n");
   return clip(brief, CARE_BRIEF_MAX);
 }
