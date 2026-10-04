@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2E1633">
 <title>Elbow Room — a free plant logic puzzle, no timer and no signup</title>
-<meta name="description" content="Plant one in every bed, one in every row and column, and give every plant room to grow — no two may touch, not even corner to corner. A cactus, a fern, a climber and a succulent bend the rules the way real plants do. A calm browser puzzle with no timer and no lives. Free, no signup, no ads.">
+<meta name="description" content="Plant one in every bed, one in every row and column, and give every plant room to grow — no two may touch, not even corner to corner. The plant-themed take on Queens and Meowdoku: a calm browser puzzle with no timer and no lives. Free, no signup, no ads.">
 <link rel="canonical" href="https://plantparlour.org/parlour-games/elbow-room">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="PlantParlour">
 <meta property="og:title" content="Elbow Room — a free plant logic puzzle, no timer and no signup">
-<meta property="og:description" content="Plant one in every bed, one in every row and column, and give every plant room to grow — no two may touch, not even corner to corner. A cactus, a fern, a climber and a succulent bend the rules the way real plants do. A calm browser puzzle with no timer and no lives. Free, no signup, no ads.">
+<meta property="og:description" content="Plant one in every bed, one in every row and column, and give every plant room to grow — no two may touch, not even corner to corner. The plant-themed take on Queens and Meowdoku: a calm browser puzzle with no timer and no lives. Free, no signup, no ads.">
 <meta property="og:url" content="https://plantparlour.org/parlour-games/elbow-room">
 <meta property="og:image" content="https://plantparlour.org/og-elbow-room.png">
 <meta property="og:image:width" content="1200">
@@ -25,7 +25,7 @@
   ],
   "name": "Elbow Room",
   "url": "https://plantparlour.org/parlour-games/elbow-room",
-  "description": "Plant one in every bed, one in every row and column, and give every plant room to grow — no two may touch, not even corner to corner. A cactus, a fern, a climber and a succulent bend the rules the way real plants do. A calm browser puzzle with no timer and no lives. Free, no signup, no ads.",
+  "description": "Plant one in every bed, one in every row and column, and give every plant room to grow — no two may touch, not even corner to corner. The plant-themed take on Queens and Meowdoku: a calm browser puzzle with no timer and no lives. Free, no signup, no ads.",
   "image": "https://plantparlour.org/og-elbow-room.png",
   "applicationCategory": "GameApplication",
   "genre": [
@@ -43,7 +43,6 @@
   "featureList": [
     "Three plot sizes: Seedling, Border and Allotment",
     "Every board has exactly one answer and can be solved by reasoning alone",
-    "Four plants that bend the rules: cactus, fern, climber and succulent",
     "No timer, no lives and no fail state",
     "A daily board that is the same for everyone",
     "A guided practice board and a nudge when you are stuck",
@@ -69,7 +68,7 @@
   "@type": "WebPage",
   "name": "Elbow Room — a calm plant logic puzzle",
   "url": "https://plantparlour.org/parlour-games/elbow-room",
-  "description": "Plant one in every bed, one in every row and column, and give every plant room to grow — no two may touch, not even corner to corner. A cactus, a fern, a climber and a succulent bend the rules the way real plants do. A calm browser puzzle with no timer and no lives. Free, no signup, no ads.",
+  "description": "Plant one in every bed, one in every row and column, and give every plant room to grow — no two may touch, not even corner to corner. The plant-themed take on Queens and Meowdoku: a calm browser puzzle with no timer and no lives. Free, no signup, no ads.",
   "inLanguage": "en",
   "isPartOf": {
     "@type": "WebSite",
@@ -119,12 +118,6 @@
     {
       "@type": "HowToStep",
       "position": 5,
-      "name": "Mind the twists",
-      "text": "A cactus may touch its neighbours, a fern stays out of the sun patches, a succulent stays in them, and a climber needs a trellis."
-    },
-    {
-      "@type": "HowToStep",
-      "position": 6,
       "name": "Finish the plot",
       "text": "When every bed, row and column has its plant and nothing clashes, the board is done."
     }
@@ -141,7 +134,7 @@
       "name": "How do you play Elbow Room?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Place one plant in every coloured bed, so that every row and every column also has exactly one, and no two plants touch — not even diagonally. Some beds hold a plant that bends a rule: a cactus may touch its neighbours, a fern must stay out of the sun, a succulent must be in it, and a climber needs a trellis."
+        "text": "Place one plant in every coloured bed, so that every row and every column also has exactly one, and no two plants touch — not even diagonally."
       }
     },
     {
@@ -149,7 +142,7 @@
       "name": "Is Elbow Room like Queens or Star Battle?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes — it is the same family of logic puzzle, with a plant keeper's reason for the rule and four plants that bend it. Every board has exactly one answer and can be finished by reasoning alone, without guessing."
+        "text": "Yes — it is the same family of logic puzzle, with plants, and a plant keeper's reason for the rule. Every board has exactly one answer and can be finished by reasoning alone, without guessing."
       }
     },
     {
@@ -181,7 +174,7 @@
       "name": "What is the daily board?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "One board a day, generated from the date, so everyone gets the same puzzle on the same day — with a different twist each day. Playing it keeps your Parlour Games streak alive, and the streak is shared across all the games."
+        "text": "One board a day, generated from the date, so everyone gets the same puzzle on the same day. Playing it keeps your Parlour Games streak alive, and the streak is shared across all the games."
       }
     }
   ]
@@ -231,7 +224,6 @@
   --leaf:#8FC79E;
   --bad:#E08BA6;
   --wall:#E6D2A0;     /* the thick line between two beds */
-  --sun:rgba(255,222,120,.46);
   --soil:#C9A27E;
   /* Inside the plot, the same in day and night. The beds are already dark
      and muted; dimming them at night took plants, markers and the clash ring
@@ -254,7 +246,6 @@ body.night{
   --leaf:#6E9B79;
   --bad:#AE6A80;
   --wall:#A8996F;
-  --sun:rgba(190,160,90,.30);
   --soil:#9C7E64;
 }
 body{transition:background .8s,color .8s}
@@ -290,15 +281,6 @@ body.learn .sizes,body.learn #new,body.daily .sizes,body.daily #new{display:none
 .tools{margin-top:10px}
 .tools button{font-size:13px;padding:6px 12px;min-height:40px}
 
-/* What the twists on this board do, said once, above it. */
-#legend{margin:12px 0 0;display:grid;gap:6px}
-#legend p{margin:0;display:flex;align-items:center;gap:8px;font-size:14px;color:var(--cream)}
-#legend .icon{width:26px;height:26px;flex:none}
-#legend .swatch{width:22px;height:22px;flex:none;border-radius:4px;border:1px solid var(--border)}
-#legend .bed-swatch{width:26px;height:26px;flex:none;border-radius:5px;border:2px solid var(--plot-wall)}
-#legend .swatch.sun{background:var(--sun)}
-#legend .swatch.trellis{background:repeating-linear-gradient(45deg,var(--leaf) 0 2px,transparent 2px 6px),repeating-linear-gradient(-45deg,var(--leaf) 0 2px,transparent 2px 6px)}
-
 /* ---- the plot ---- */
 /* Cells never shrink below 40px: on a narrow phone the Allotment scrolls
    sideways instead, because a cell too small to hit is worse than a scroll. */
@@ -319,29 +301,11 @@ body.learn .sizes,body.learn #new,body.daily .sizes,body.daily #new{display:none
 .cell.wb{border-bottom:3px solid var(--plot-wall)}
 .cell.wl{border-left:3px solid var(--plot-wall)}
 .cell:focus-visible{outline:3px solid var(--gold-light);outline-offset:-3px;z-index:2}
-/* Sun patches: warm light, and a small sun so it is not colour alone. */
-.cell .sun{position:absolute;inset:0;background:linear-gradient(160deg,var(--sun),rgba(255,222,120,.18));pointer-events:none}
-.cell .sun::after{content:"☀";position:absolute;top:1px;right:3px;font-size:10px;line-height:1;color:#F6D678;opacity:.9}
-/* The trellis: a lattice along the wall it stands against. */
-.cell .trellis{position:absolute;pointer-events:none;
-  background:repeating-linear-gradient(45deg,var(--leaf) 0 2px,transparent 2px 6px),repeating-linear-gradient(-45deg,var(--leaf) 0 2px,transparent 2px 6px)}
-.cell .trellis.left{left:0;top:0;bottom:0;width:7px}
-.cell .trellis.right{right:0;top:0;bottom:0;width:7px}
-.cell .trellis.bottom{left:0;right:0;bottom:0;height:7px}
-/* The bed's twist, shown on it from the start: a faint plant in its first cell. */
-/* The bed's twist, in its first cell from the start: on a ring of its own so
-   it reads as a label on the bed rather than a plant somebody put there. */
-.cell .badge{position:absolute;left:3px;top:3px;width:48%;height:48%;pointer-events:none;
-  background:rgba(20,10,23,.55);border-radius:50%;padding:2px;box-shadow:0 0 0 1.5px var(--gold-light)}
-/* Every cell of a twisted bed carries its plant, faintly, so the bed's rule is
-   on the bed itself rather than in one corner of it. */
-.cell .twist-mark{position:absolute;right:3px;bottom:3px;width:34%;height:34%;opacity:.42;pointer-events:none}
-.cell .twist-mark svg{display:block;width:100%;height:100%}
 /* A row, column or bed the plants have left no room for. */
 .cell.dead::after{content:"";position:absolute;inset:3px;border:2px dashed var(--plot-bad);border-radius:4px;pointer-events:none}
 .cell .mark{position:absolute;left:50%;top:50%;width:22%;height:22%;transform:translate(-50%,-50%);border-radius:50%;background:var(--plot-soil)}
 .cell .plant{position:absolute;inset:12%;pointer-events:none}
-.cell .plant svg,.cell .badge svg,#legend svg{display:block;width:100%;height:100%}
+.cell .plant svg{display:block;width:100%;height:100%}
 .leafy{fill:var(--plot-leaf)}
 .stemmy{stroke:var(--plot-leaf);fill:none;stroke-width:2.2;stroke-linecap:round}
 .potty{fill:#A2755C}
@@ -461,8 +425,6 @@ window.va('beforeSend', function (event) {
     <button type="button" data-size="allotment">Allotment</button>
   </div>
 
-  <div id="legend" aria-live="polite"></div>
-
   <div class="tools" role="group" aria-label="What a tap does">
     <button type="button" data-tool="cycle">Tap: mark, plant, clear</button>
     <button type="button" data-tool="plant">Plant</button>
@@ -514,7 +476,6 @@ window.va('beforeSend', function (event) {
 <aside class="about">
   <h2>About this game</h2>
   <p>Elbow Room is a logic puzzle about giving plants space. The plot is divided into coloured beds; plant one in every bed, one in every row and one in every column, and keep every plant clear of the others — not side by side, and not corner to corner. Leaves that touch fight for light and trap damp, which is how mildew spreads along a windowsill.</p>
-  <p>Some beds hold a plant that bends a rule the way the real one would. A cactus doesn't mind company and may touch its neighbours. A fern keeps out of the sun patches; a succulent needs to be in one. A climber needs a trellis to grow up.</p>
   <p>There is no timer, no score and no lives. Every board has exactly one answer and can be worked out by reasoning alone — never by guessing — and if you get stuck, Nudge points at the next thing that can be worked out and says why. Elbow Room is made by <a href="/">PlantParlour</a>; the <a href="/plants">plant care library</a> has the real light and spacing each houseplant wants.</p>
   <h2>Quick facts</h2>
   <dl>
@@ -527,13 +488,13 @@ window.va('beforeSend', function (event) {
     <dt>Timer, score or lives</dt>
     <dd>None. No clock, no points and nothing to lose.</dd>
     <dt>Plot sizes</dt>
-    <dd>Three: Seedling (5 × 5) and Border (7 × 7), both plain, and Allotment (9 × 9, with two twists). The daily board has one twist.</dd>
+    <dd>Three: Seedling (5 × 5), Border (7 × 7) and Allotment (9 × 9).</dd>
     <dt>Solvable</dt>
     <dd>Always, by reasoning alone. Every board has exactly one answer.</dd>
     <dt>Daily board</dt>
-    <dd>One board a day, the same for everyone, with a different twist each day. At /parlour-games/elbow-room/daily.</dd>
+    <dd>One board a day, the same for everyone. At /parlour-games/elbow-room/daily.</dd>
     <dt>Practice</dt>
-    <dd>A guided first board, then one to meet each twist, at /parlour-games/elbow-room/learn.</dd>
+    <dd>A guided first board that walks through every step, at /parlour-games/elbow-room/learn.</dd>
     <dt>Where it runs</dt>
     <dd>Any phone, tablet or computer with a browser. Keyboard and touch both work, and it plays offline once loaded.</dd>
     <dt>Embedding</dt>
@@ -543,9 +504,9 @@ window.va('beforeSend', function (event) {
   </dl>
   <h2>Questions people ask</h2>
   <h3>How do you play Elbow Room?</h3>
-  <p>Place one plant in every coloured bed, so that every row and every column also has exactly one, and no two plants touch — not even diagonally. Some beds hold a plant that bends a rule: a cactus may touch its neighbours, a fern must stay out of the sun, a succulent must be in it, and a climber needs a trellis.</p>
+  <p>Place one plant in every coloured bed, so that every row and every column also has exactly one, and no two plants touch — not even diagonally.</p>
   <h3>Is Elbow Room like Queens or Star Battle?</h3>
-  <p>Yes — it is the same family of logic puzzle, with a plant keeper's reason for the rule and four plants that bend it. Every board has exactly one answer and can be finished by reasoning alone, without guessing.</p>
+  <p>Yes — it is the same family of logic puzzle, with plants, and a plant keeper's reason for the rule. Every board has exactly one answer and can be finished by reasoning alone, without guessing.</p>
   <h3>Is Elbow Room free?</h3>
   <p>Yes. No payment, no account, no advertising and nothing to unlock. It is made by PlantParlour, a plant care app.</p>
   <h3>Is there a timer, a score or lives?</h3>
@@ -553,7 +514,7 @@ window.va('beforeSend', function (event) {
   <h3>What if I get stuck?</h3>
   <p>Press Nudge. It points at the next thing that can be worked out and says why, without placing anything for you.</p>
   <h3>What is the daily board?</h3>
-  <p>One board a day, generated from the date, so everyone gets the same puzzle on the same day — with a different twist each day. Playing it keeps your Parlour Games streak alive, and the streak is shared across all the games.</p>
+  <p>One board a day, generated from the date, so everyone gets the same puzzle on the same day. Playing it keeps your Parlour Games streak alive, and the streak is shared across all the games.</p>
 </aside>
 
 <script src="/parlour-games/harness.js"></script>
@@ -575,9 +536,6 @@ window.va('beforeSend', function (event) {
 
   var modes = P.mode();
   var LEARN = modes.learn, DAILY = modes.daily, EMBED = modes.embed;
-  /* Practice is a short course: the fixed board, then one small board to
-     meet each twist. */
-  var lesson = 0;
 
   /* Nine beds is the most a board has. Each has a colour AND a pattern, and
      the walls between beds are thick, so no bed is told apart by colour alone. */
@@ -596,11 +554,7 @@ window.va('beforeSend', function (event) {
 
   /* Plain SVG plants, one per kind. Amanda drawing them is a refinement. */
   var ART = {
-    plant: '<svg viewBox="0 0 40 40" aria-hidden="true"><path class="potty" d="M13 29h14l-2 9H15z"/><path class="stemmy" d="M20 29V15"/><ellipse class="leafy" cx="13" cy="18" rx="7" ry="4" transform="rotate(-30 13 18)"/><ellipse class="leafy" cx="27" cy="16" rx="7" ry="4" transform="rotate(30 27 16)"/><ellipse class="leafy" cx="20" cy="9" rx="4" ry="7"/></svg>',
-    cactus: '<svg viewBox="0 0 40 40" aria-hidden="true"><path class="potty" d="M12 30h16l-2 8H14z"/><rect class="leafy" x="16" y="6" width="8" height="24" rx="4"/><rect class="leafy" x="8" y="14" width="6" height="10" rx="3"/><rect class="leafy" x="26" y="11" width="6" height="11" rx="3"/><path class="leafy" d="M11 22h6v3h-6zM23 19h6v3h-6z"/></svg>',
-    fern: '<svg viewBox="0 0 40 40" aria-hidden="true"><path class="potty" d="M13 30h14l-2 8H15z"/><path class="stemmy" d="M20 30C20 20 14 12 6 8M20 30C20 20 26 12 34 8M20 30V6"/><path class="leafy" d="M9 12l3 2-4 1zM12 15l3 2-4 1zM15 19l3 2-4 1zM31 12l-3 2 4 1zM28 15l-3 2 4 1zM25 19l-3 2 4 1zM19 9h2v2h-2zM18 13h4v2h-4zM18 17h4v2h-4z"/></svg>',
-    climber: '<svg viewBox="0 0 40 40" aria-hidden="true"><path class="potty" d="M13 31h14l-2 7H15z"/><path class="stemmy" d="M20 31c0-6 6-6 6-12s-6-6-6-12"/><ellipse class="leafy" cx="27" cy="22" rx="5" ry="3.5" transform="rotate(25 27 22)"/><ellipse class="leafy" cx="14" cy="15" rx="5" ry="3.5" transform="rotate(-25 14 15)"/><ellipse class="leafy" cx="26" cy="9" rx="4.5" ry="3" transform="rotate(25 26 9)"/></svg>',
-    succulent: '<svg viewBox="0 0 40 40" aria-hidden="true"><path class="potty" d="M11 29h18l-3 9H14z"/><path class="leafy" d="M20 8c3 5 3 11 0 20-3-9-3-15 0-20zM9 17c6 1 10 5 11 11-6-1-10-5-11-11zM31 17c-6 1-10 5-11 11 6-1 10-5 11-11zM5 26c5-2 10-1 15 2-5 2-10 1-15-2zM35 26c-5-2-10-1-15 2 5 2 10 1 15-2z"/></svg>'
+    plant: '<svg viewBox="0 0 40 40" aria-hidden="true"><path class="potty" d="M13 29h14l-2 9H15z"/><path class="stemmy" d="M20 29V15"/><ellipse class="leafy" cx="13" cy="18" rx="7" ry="4" transform="rotate(-30 13 18)"/><ellipse class="leafy" cx="27" cy="16" rx="7" ry="4" transform="rotate(30 27 16)"/><ellipse class="leafy" cx="20" cy="9" rx="4" ry="7"/></svg>'
   };
 
   var size = R.sizeOf(P.read(KEY.size, "border"));
@@ -621,16 +575,12 @@ window.va('beforeSend', function (event) {
   function newBoard() {
     if (DAILY) {
       var num = P.dayNumber();
-      BOARD = R.generate("border", P.mulberry32(R.dailySeed(num)), { twists: [R.dailyTwist(num)] });
+      BOARD = R.generate("border", P.mulberry32(R.dailySeed(num)));
       BOARD.num = num;
       return;
     }
     if (LEARN) {
-      if (lesson === 0) BOARD = JSON.parse(JSON.stringify(R.PRACTICE));
-      else {
-        var kind = R.KINDS[lesson - 1];
-        BOARD = R.generate("seedling", P.mulberry32(R.MEET_SEEDS[kind]), { twists: [kind] });
-      }
+      BOARD = JSON.parse(JSON.stringify(R.PRACTICE));
       return;
     }
     /* A seed rather than raw randomness, so a board can be dealt again --
@@ -644,23 +594,8 @@ window.va('beforeSend', function (event) {
 
   /* ---- drawing -------------------------------------------------------- */
 
-  function kindOf(cell) { return BOARD.twists[BOARD.beds[cell]] || null; }
-
-  function firstCellOfBed(bed) {
-    for (var i = 0; i < BOARD.beds.length; i++) if (BOARD.beds[i] === bed) return i;
-    return -1;
-  }
-
-  function caresAbout() {
-    var kinds = Object.keys(BOARD.twists).map(function (b) { return BOARD.twists[b]; });
-    return {
-      sun: kinds.indexOf("fern") >= 0 || kinds.indexOf("succulent") >= 0,
-      trellis: kinds.indexOf("climber") >= 0
-    };
-  }
-
   function build() {
-    var n = BOARD.n, cares = caresAbout();
+    var n = BOARD.n;
     plotEl.innerHTML = "";
     plotEl.style.gridTemplateColumns = "repeat(" + n + ", minmax(40px, 1fr))";
     plotEl.style.width = "max(100%, " + (n * 40 + 6) + "px)";
@@ -681,39 +616,12 @@ window.va('beforeSend', function (event) {
       if (r < n - 1 && BOARD.beds[cell + n] !== bed) b.classList.add("wb");
       if (c > 0 && BOARD.beds[cell - 1] !== bed) b.classList.add("wl");
       var inner = "";
-      /* Sun and trellis are drawn only when a plant on this board cares: a
-         sun patch on a climber's board is a rule that isn't there. */
-      if (BOARD.sun[cell] && cares.sun) inner += '<span class="sun"></span>';
-      if (BOARD.trellis[cell] && cares.trellis) inner += '<span class="trellis ' + BOARD.trellis[cell] + '"></span>';
-      var kind = kindOf(cell);
-      if (kind && firstCellOfBed(bed) === cell) inner += '<span class="badge">' + ART[kind] + "</span>";
-      else if (kind) inner += '<span class="twist-mark">' + ART[kind] + "</span>";
       inner += '<span class="mark" hidden></span><span class="plant" hidden></span>';
       b.innerHTML = inner;
       b.addEventListener("click", onTap);
       b.addEventListener("keydown", onKey);
       plotEl.appendChild(b);
     }
-    drawLegend();
-  }
-
-  function drawLegend() {
-    var el = document.getElementById("legend"), lines = [];
-    var kinds = {};
-    Object.keys(BOARD.twists).forEach(function (bed) { kinds[BOARD.twists[bed]] = 1; });
-    /* Each twist line shows the bed it belongs to, in that bed's own colour
-       and pattern, so "the cactus" is a place on the board, not a word. */
-    Object.keys(BOARD.twists).forEach(function (bed) {
-      var k = BOARD.twists[bed], b = +bed;
-      var pattern = BED_PATTERNS[b % BED_PATTERNS.length], colour = BED_COLOURS[b % BED_COLOURS.length];
-      var fill = pattern === "none" ? colour : pattern + ", " + colour;
-      lines.push('<p><span class="bed-swatch" style="background:' + fill + '"></span><span class="icon">' + ART[k] + "</span>" +
-        R.TWIST_LINES[k].replace(/^(\w+)/, "$1 (in this bed)") + "</p>");
-    });
-    var anySun = BOARD.sun.some(Boolean), anyTrellis = BOARD.trellis.some(Boolean);
-    if (anySun && (kinds.fern || kinds.succulent)) lines.push('<p><span class="swatch sun"></span>Sun patch (marked ☀). Only ferns and succulents care.</p>');
-    if (anyTrellis && kinds.climber) lines.push('<p><span class="swatch trellis"></span>Trellis. Only the climber needs it.</p>');
-    el.innerHTML = lines.join("");
   }
 
   function render() {
@@ -723,7 +631,7 @@ window.va('beforeSend', function (event) {
     dead.forEach(function (u) { u.cells.forEach(function (q) { deadCells[q] = 1; }); });
     /* The practice board teaches by walking through it: the coach always has
        the next deduction ready, lit up, so nobody is left to guess. */
-    guide = LEARN && lesson === 0 && !done && !R.isSolved(BOARD, state) ? R.nudge(BOARD, state) : null;
+    guide = LEARN && !done && !R.isSolved(BOARD, state) ? R.nudge(BOARD, state) : null;
     var shown = hint || guide;
     var hintArea = {}, hintCells = {};
     if (shown) {
@@ -736,8 +644,7 @@ window.va('beforeSend', function (event) {
       var plant = el.querySelector(".plant");
       plant.hidden = ch !== "p";
       if (ch === "p") {
-        var art = ART[kindOf(cell) || "plant"];
-        if (plant.dataset.art !== (kindOf(cell) || "plant")) { plant.innerHTML = art; plant.dataset.art = kindOf(cell) || "plant"; }
+        if (!plant.dataset.art) { plant.innerHTML = ART.plant; plant.dataset.art = "plant"; }
       }
       el.classList.toggle("clash", !!bad[cell] && ch === "p");
       el.classList.toggle("hint-area", !!hintArea[cell]);
@@ -750,7 +657,6 @@ window.va('beforeSend', function (event) {
     document.getElementById("undo").disabled = undoStack.length === 0 || done;
     document.getElementById("nudge").disabled = done;
 
-    var touches = R.cactusTouches(BOARD, state);
     if (hint) {
       statusEl.textContent = hint.why;
     } else if (clash.length || dead.length) {
@@ -767,8 +673,6 @@ window.va('beforeSend', function (event) {
       }
       var tail = dead.length && !clash.length ? " — one of your plants needs to move." : "";
       statusEl.innerHTML = '<span class="bad">' + words.map(cap).join(" · ") + tail + "</span>";
-    } else if (touches.length && !done) {
-      statusEl.innerHTML = '<span class="fine">🌵 The cactus doesn\'t mind the company.</span>';
     } else if (!done) {
       statusEl.textContent = planted ? "" : "Tap a cell to mark it bare; tap again to plant.";
     }
@@ -935,11 +839,8 @@ window.va('beforeSend', function (event) {
 
   /* ---- finishing ------------------------------------------------------ */
 
-  var EMOJI = { cactus: "🌵", fern: "🌿", climber: "🪴", succulent: "☀️" };
-
   function shareText() {
-    var kinds = Object.keys(BOARD.twists).map(function (b) { return BOARD.twists[b]; });
-    return "Elbow Room #" + BOARD.num + " · " + kinds.map(function (k) { return EMOJI[k] + " " + k; }).join(", ") + " · " + BOARD.n + "×" + BOARD.n + "\n" +
+    return "Elbow Room #" + BOARD.num + " · " + BOARD.n + "×" + BOARD.n + "\n" +
       "Room for everyone" + (nudged ? ", with a nudge" : ", no nudges") + " 🌱\n" +
       "plantparlour.org/parlour-games/elbow-room/daily";
   }
@@ -952,10 +853,8 @@ window.va('beforeSend', function (event) {
     var shareBtn = document.getElementById("share"), shareEl = document.getElementById("share-text");
     shareBtn.hidden = !DAILY; shareEl.hidden = !DAILY;
     if (LEARN) {
-      line.textContent = lesson < R.KINDS.length
-        ? "Next: meet the " + R.KINDS[lesson] + ". " + R.TWIST_LINES[R.KINDS[lesson]]
-        : "You've met them all. Now a proper board.";
-      again.textContent = lesson < R.KINDS.length ? "Meet the " + R.KINDS[lesson] : "Play a proper board";
+      line.textContent = "That's the whole game. Now a proper board.";
+      again.textContent = "Play a proper board";
     } else if (DAILY) {
       line.textContent = "Board #" + BOARD.num + (nudged ? "." : ", without a nudge.");
       shareEl.textContent = shareText();
@@ -998,13 +897,8 @@ window.va('beforeSend', function (event) {
   });
 
   document.getElementById("again").addEventListener("click", function () {
-    if (LEARN && lesson < R.KINDS.length) {
-      lesson++;
-      dealAndLay();
-      return;
-    }
     if (LEARN || DAILY) {
-      LEARN = false; DAILY = false; lesson = 0;
+      LEARN = false; DAILY = false;
       if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
       try { window.history.replaceState(null, "", location.pathname.replace(/\/(learn|daily)\/?$/, "")); } catch (e) { /* fine */ }
       setChrome();
@@ -1030,7 +924,6 @@ window.va('beforeSend', function (event) {
     var marked = state.split("").filter(function (ch) { return ch === "x"; }).length;
     var line;
     if (done) line = "That's it: every bed, row and column has its plant, and nobody's touching.";
-    else if (lesson > 0) line = R.TWIST_LINES[R.KINDS[lesson - 1]] + " Its bed carries its picture in every cell. Press Nudge whenever you want a pointer.";
     else if (guide) {
       /* Each step of the practice board, in order: what can be worked out,
          and what to do about it. Never "this bed has the plant" without
@@ -1149,7 +1042,7 @@ window.va('beforeSend', function (event) {
     document.getElementById("learn-link").hidden = LEARN;
     document.getElementById("daily-link").hidden = DAILY;
     document.querySelector(".tagline").textContent = DAILY
-      ? "Board #" + P.dayNumber() + " — today's twist: the " + R.dailyTwist(P.dayNumber()) + "."
+      ? "Board #" + P.dayNumber() + " — the same one for everybody today."
       : "Give every plant room to grow.";
   }
 
@@ -1179,7 +1072,6 @@ window.va('beforeSend', function (event) {
     progress: function () { return progress; },
     streak: P.getStreak,
     learning: function () { return LEARN; },
-    lesson: function () { return lesson; },
     isDaily: function () { return DAILY; },
     isEmbed: function () { return EMBED; },
     size: function () { return size.key; },
