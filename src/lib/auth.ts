@@ -3,8 +3,10 @@ import type { SQLiteDatabase } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { Directory, Paths } from "expo-file-system";
+import * as WebBrowser from "expo-web-browser";
 import { markAllDirty, wipeLocalData } from "@/db";
 import { OPT_OUT_KEY } from "@/domain/analytics";
+import { NATIVE_REDIRECT, readOAuthReturn } from "@/domain/oauth";
 import { supabase } from "./supabase";
 
 /**
@@ -204,17 +206,43 @@ function friendly(message: string): string {
 }
 
 /**
- * Google sign-in. The browser goes to Google and comes back to /account
- * with the session in the URL, which the client picks up. Web only for now:
- * the native app needs a browser session handler it doesn't ship yet.
+ * Google sign-in.
+ *
+ * Web: the tab goes to Google and comes back to /account with the session
+ * in the URL, which the client picks up.
+ *
+ * App: the same Google page opens in an in-app browser sheet, which Supabase
+ * sends back to plantparlour://auth-callback with a one-time code (PKCE; see
+ * flowType in lib/supabase.ts). The code is traded for a session here, and
+ * the account screens follow the session as they do for a password sign-in.
+ * Closing the sheet is not an error -- it just leaves things as they were.
  */
 export async function signInWithGoogle(): Promise<void> {
-  if (Platform.OS !== "web") throw new Error("Google sign-in is available in the web app for now.");
-  const { error } = await supabase.auth.signInWithOAuth({
+  if (Platform.OS === "web") {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/account` },
+    });
+    if (error) throw new Error(error.message);
+    return;
+  }
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${window.location.origin}/account` },
+    options: { redirectTo: NATIVE_REDIRECT, skipBrowserRedirect: true },
   });
-  if (error) throw new Error(error.message);
+  if (error || !data?.url) throw new Error(error?.message ?? "Couldn't reach Google just now.");
+
+  const result = await WebBrowser.openAuthSessionAsync(data.url, NATIVE_REDIRECT);
+  if (result.type !== "success") return;
+
+  const back = readOAuthReturn(result.url);
+  if (back.kind === "error") throw new Error(back.message);
+  if (back.kind === "none") {
+    throw new Error("Google didn't send you back to the app. If this keeps happening, use your email and password.");
+  }
+  const { error: exchange } = await supabase.auth.exchangeCodeForSession(back.code);
+  if (exchange) throw new Error(exchange.message);
 }
 
 /** The one word that has to be typed before an account is deleted. */

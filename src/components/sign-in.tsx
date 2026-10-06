@@ -113,16 +113,12 @@ export function SignIn({ heading }: { heading?: string }) {
   return (
     <>
       {heading ? <Title>{heading}</Title> : null}
-      {Platform.OS === "web" ? (
-        <>
-          <GoogleButton onPress={() => run(signInWithGoogle)} disabled={busy} />
-          <View style={styles.divider}>
-            <View style={[styles.rule, { backgroundColor: cardTheme.hairline }]} />
-            <Body small muted>or use your email</Body>
-            <View style={[styles.rule, { backgroundColor: cardTheme.hairline }]} />
-          </View>
-        </>
-      ) : null}
+      <GoogleButton onPress={() => run(signInWithGoogle)} disabled={busy} />
+      <View style={styles.divider}>
+        <View style={[styles.rule, { backgroundColor: cardTheme.hairline }]} />
+        <Body small muted>or use your email</Body>
+        <View style={[styles.rule, { backgroundColor: cardTheme.hairline }]} />
+      </View>
       <Field
         label="Email"
         value={email}
