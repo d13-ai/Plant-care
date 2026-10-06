@@ -77,6 +77,14 @@ Both images come from `npm run icons`.
 ### Ads
 No, the app does not contain ads.
 
+### Advertising ID
+No, the app doesn't use it. `app.json` blocks
+`com.google.android.gms.permission.AD_ID` so no library can add it behind
+that answer; Play rejects a build that declares No but carries the permission.
+
+### Health apps
+No health features. ("Plant health" is about plants, not people.)
+
 ### App access
 **All or some functionality is restricted.** Every screen needs an account.
 Give the reviewer a test account made for them (not a real keeper's), with
