@@ -12,7 +12,7 @@
 // is_public — the same set the tag links expose — so a private plant is as
 // invisible here as everywhere else.
 
-import { page } from "./tag";
+import { LOGO, page } from "./tag";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "https://ixagjvntbgyqemxxinqe.supabase.co";
 const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY || "sb_publishable__A5fA6nyI8nrSqJWfaaJBQ_vqEZdRn6";
@@ -100,7 +100,7 @@ ${
 <section class="shelf">${plants.map(card).join("")}</section>`
 }
 
-<div class="foot"><span>Rare plants. Real community. Real pride.</span></div>`;
+<div class="foot"><span>Rare plants. Real community. Real pride.</span>${LOGO}</div>`;
 }
 
 export async function conservatoryPage(handle: string): Promise<{ status: number; html: string }> {

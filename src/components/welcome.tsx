@@ -1,5 +1,5 @@
 import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
-import { MonsteraIcon } from "@/components/icons";
+import { LogoMark } from "@/components/icons";
 import { InstallHint } from "@/components/install-hint";
 import { SignIn } from "@/components/sign-in";
 import { Body, Card, SectionLabel } from "@/components/ui";
@@ -50,7 +50,7 @@ export function Welcome() {
   return (
     <ScrollView contentContainerStyle={[styles.page, { backgroundColor: t.background }]}>
       <View style={styles.masthead}>
-        <MonsteraIcon size={44} color={t.leaf} />
+        <LogoMark size={64} />
         <Text style={[styles.wordmark, { color: t.text }]}>PlantParlour</Text>
         <Text style={[styles.tagline, { color: t.muted }]}>A room for the plants you're proud of.</Text>
         {/* The plain version, for a stranger and for a search engine: the

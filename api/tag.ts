@@ -126,8 +126,9 @@ ul{margin:0;padding-left:18px}
   return { status, html };
 }
 
-// Placeholder mark — kept in step with src/brand/monstera.json.
-const LEAF = `<svg width="16" height="16" viewBox="0 0 100 100" fill="none" aria-hidden="true"><mask id="ppleaf"><path d="M50 8C64 9 95 25 95 48c0 22-19 38-40 44-2 1-4-1-5-4-1 3-3 5-5 4C29 86 5 70 5 48 5 25 36 9 50 8z" fill="#fff"></path><path d="M56 29L86 20" stroke="#000" stroke-width="7" stroke-linecap="round" fill="none"></path><path d="M57 48L94 47" stroke="#000" stroke-width="7" stroke-linecap="round" fill="none"></path><path d="M55 67L85 76" stroke="#000" stroke-width="7" stroke-linecap="round" fill="none"></path><path d="M44 29L14 20" stroke="#000" stroke-width="7" stroke-linecap="round" fill="none"></path><path d="M43 48L6 47" stroke="#000" stroke-width="7" stroke-linecap="round" fill="none"></path><path d="M45 67L15 76" stroke="#000" stroke-width="7" stroke-linecap="round" fill="none"></path><path d="M50 94V84" stroke="#000" stroke-width="8" stroke-linecap="round" fill="none"></path></mask><path d="M50 86v9" stroke="#E6C46B" stroke-width="5" stroke-linecap="round"></path><path d="M50 8C64 9 95 25 95 48c0 22-19 38-40 44-2 1-4-1-5-4-1 3-3 5-5 4C29 86 5 70 5 48 5 25 36 9 50 8z" fill="#E6C46B" mask="url(#ppleaf)"></path></svg>`;
+// The logo, from public/logo.svg (made from src/brand/logo.json by `npm run icons`).
+// It sits on the plum footer bar, which is the brand's purple.
+export const LOGO = `<img src="/logo.svg" alt="PlantParlour" width="22" height="25" style="display:block;flex:none">`;
 
 export function render(p: Tag): string {
   const { plant, keeper, mother, cuttings, events, photos } = p;
@@ -162,7 +163,7 @@ ${hero ? `<img class="hero" src="${esc(photoUrl(hero.path, "hero"))}" alt="${esc
 </section>
 ${photos.length > 1 ? `<section><h2 class="caps">Photos over time</h2><div class="photos">${photos.map((ph) => `<figure style="margin:0"><img src="${esc(photoUrl(ph.path, "grid"))}" alt="" loading="lazy"><figcaption class="small muted">${day(ph.taken_at)}${ph.caption ? ` · ${esc(ph.caption)}` : ""}</figcaption></figure>`).join("")}</div></section>` : ""}
 ${plant.notes ? `<section><h2 class="caps">Notes</h2><p>${esc(plant.notes)}</p></section>` : ""}
-<div class="foot"><span>Self-reported by the plant's keeper · published ${day(plant.published_at)}</span>${LEAF}</div>`;
+<div class="foot"><span>Self-reported by the plant's keeper · published ${day(plant.published_at)}</span>${LOGO}</div>`;
 }
 
 /** Build the response for a token: the page, or a not-found page. Pure apart from the RPC call. */

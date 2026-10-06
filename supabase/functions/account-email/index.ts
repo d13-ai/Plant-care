@@ -20,7 +20,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { boundedText, PHOTO_TRIAL } from "../_shared/cap.ts";
-import { type Email, FROM, REPLY_TO, resetEmail, welcomeEmail } from "../_shared/account-emails.ts";
+import { type Email, FROM, LOGO_CONTENT_ID, REPLY_TO, resetEmail, welcomeEmail } from "../_shared/account-emails.ts";
+import { LOGO_PNG_BASE64 } from "../_shared/logo-email.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -59,6 +60,10 @@ async function send(key: string, to: string, kind: string, claimId: number, emai
       html: email.html,
       text: email.text,
       tags: [{ name: "kind", value: kind }],
+      // The logo travels inside the email; see LOGO_CONTENT_ID.
+      attachments: [
+        { filename: "plantparlour.png", content: LOGO_PNG_BASE64, content_type: "image/png", content_id: LOGO_CONTENT_ID },
+      ],
     }),
   });
   if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 300)}`);

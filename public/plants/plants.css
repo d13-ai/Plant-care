@@ -53,7 +53,8 @@ small{font-size:13px}
 
 /* Site chrome */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:720px;margin:0 auto 14px;padding:0 2px}
-.brand{font-family:Lora,Georgia,serif;font-style:italic;font-size:15px;color:var(--gold-light);text-decoration:none;font-weight:400}
+.brand{display:inline-flex;align-items:center;font-family:Lora,Georgia,serif;font-style:italic;font-size:15px;color:var(--gold-light);text-decoration:none;font-weight:400}
+.brand img{display:block;flex:none;margin-right:8px}
 .brand b{font-style:normal;font-weight:600;color:var(--cream,#F3ECDD)}
 .btn{display:inline-block;background:var(--gold);color:#2E1633;font-weight:700;font-size:14px;
   padding:8px 14px;border-radius:6px;text-decoration:none;border:1px solid var(--gold-deep)}

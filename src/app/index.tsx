@@ -4,7 +4,7 @@ import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-n
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DueRing } from "@/components/due-ring";
 import { FirstPlant } from "@/components/first-plant";
-import { MonsteraIcon, PersonIcon, PlusIcon } from "@/components/icons";
+import { LogoMark, PersonIcon, PlusIcon } from "@/components/icons";
 import { GamesCard, GamesLink } from "@/components/parlour-games";
 import { PlantCard, summarize } from "@/components/plant-card";
 import { Body, SectionLabel, Title } from "@/components/ui";
@@ -147,7 +147,7 @@ export default function Greenhouse() {
             <View>
               <View style={[styles.band, { backgroundColor: t.plum, borderColor: t.hairline }]}>
                 <Text style={[styles.tagline, { color: t.goldText }]}>Rare plants. Real community. Real pride.</Text>
-                <MonsteraIcon color={t.goldText} />
+                <LogoMark size={24} />
               </View>
               <GamesLink />
             </View>

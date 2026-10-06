@@ -24,6 +24,11 @@ const esc = (s: string) =>
 // The brand, as far as mail clients let it through: cream card, aubergine
 // text, gold for the one button. Tables and inline styles because that is
 // what Outlook and Gmail still read.
+// The logo on its aubergine tile, as a PNG (mail clients don't show SVG).
+// The sender attaches it inline (_shared/logo-email.ts) rather than the email
+// fetching it from the site: a remote image would tell us who opened what.
+export const LOGO_CONTENT_ID = "pp-logo";
+const LOGO = `cid:${LOGO_CONTENT_ID}`;
 const C = { page: "#F3ECDD", card: "#FBF7EE", text: "#2E1633", muted: "#5F4B5C", gold: "#C9A24B", plum: "#4B2142" };
 
 function frame(title: string, body: string, footer: string): string {
@@ -32,7 +37,10 @@ function frame(title: string, body: string, footer: string): string {
 <body style="margin:0;padding:0;background:${C.page};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.page};"><tr><td align="center" style="padding:32px 16px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:${C.card};border-radius:12px;">
-<tr><td style="padding:32px 28px 8px;font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:32px;color:${C.text};">PlantParlour</td></tr>
+<tr><td style="padding:28px 28px 8px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+<td style="padding-right:12px;"><img src="${LOGO}" width="48" height="48" alt="" style="display:block;border:0;"></td>
+<td style="font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:32px;color:${C.text};">PlantParlour</td>
+</tr></table></td></tr>
 <tr><td style="padding:8px 28px 28px;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:25px;color:${C.text};">
 ${body}
 </td></tr>
