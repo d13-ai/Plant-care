@@ -21,15 +21,15 @@ export interface Email {
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-// The brand, as far as mail clients let it through: cream card, aubergine
-// text, gold for the one button. Tables and inline styles because that is
-// what Outlook and Gmail still read.
 // The logo on its aubergine tile, as a PNG (mail clients don't show SVG).
 // The sender fetches public/logo-email.png and attaches it inline, so the
 // email carries it rather than loading it from the site when opened: a remote
 // image would tell us who opened what. Without it, the email simply has none.
 export const LOGO_CONTENT_ID = "pp-logo";
 export const LOGO_URL = "https://plantparlour.org/logo-email.png";
+// The brand, as far as mail clients let it through: cream card, aubergine
+// text, gold for the one button. Tables and inline styles because that is
+// what Outlook and Gmail still read.
 const C = { page: "#F3ECDD", card: "#FBF7EE", text: "#2E1633", muted: "#5F4B5C", gold: "#C9A24B", plum: "#4B2142" };
 
 function frame(title: string, body: string, footer: string, logo: boolean): string {
