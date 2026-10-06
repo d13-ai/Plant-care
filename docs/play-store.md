@@ -109,7 +109,9 @@ No. **Health app:** No (plant health, not human health). **Government app:** No.
 
 Data is **encrypted in transit**: yes. Users **can request deletion**: yes, in
 the app (Account → Delete account) and at
-`https://plantparlour.org/delete-account`.
+`https://plantparlour.org/delete-account`. Deleting some data without the
+account: yes, `https://plantparlour.org/delete-account#some-data`. Account
+creation method: username (email) and password.
 
 Sending photos to Anthropic for identification, and email addresses to
 Resend for the account emails, is processing by service providers on our
@@ -123,6 +125,8 @@ parties: none.**
 | Personal info → User IDs | Yes | Required | Account management |
 | Photos and videos → Photos | Yes | Optional | App functionality (plant records, AI identification) |
 | App activity → Other user-generated content | Yes | Optional | App functionality (plant notes, care history) |
+| App activity → App interactions | Yes | Optional, sent only in a bug report (the trail of recent actions) | Analytics; app functionality |
+| App info and performance → Crash logs | Yes | Optional, sent only in a bug report (errors the app hit) | Analytics; app functionality |
 | App info and performance → Diagnostics | Yes | Optional, sent only when the user files a bug or AI-answer report | Analytics; app functionality |
 
 Not collected: location, contacts, financial info, health info, messages,
