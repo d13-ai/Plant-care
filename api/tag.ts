@@ -130,6 +130,15 @@ ul{margin:0;padding-left:18px}
 // It sits on the plum footer bar, which is the brand's purple.
 export const LOGO = `<img src="/logo.svg" alt="PlantParlour" width="22" height="25" style="display:block;flex:none">`;
 
+/**
+ * Under every published page: anyone who thinks it breaks the Terms can say
+ * so, signed in or not. Google Play asks for this on shared content; see
+ * public/report-page.html and the report-content function.
+ */
+export function reportLink(page: string): string {
+  return `<p class="small muted" style="text-align:center;margin:0"><a href="/report-page?page=${encodeURIComponent(page)}" rel="nofollow" style="color:inherit;font-weight:400">Report this page</a></p>`;
+}
+
 export function render(p: Tag): string {
   const { plant, keeper, mother, cuttings, events, photos } = p;
   const last = (type: string) => events.find((e) => e.type === type)?.occurred_at ?? null;
@@ -163,7 +172,8 @@ ${hero ? `<img class="hero" src="${esc(photoUrl(hero.path, "hero"))}" alt="${esc
 </section>
 ${photos.length > 1 ? `<section><h2 class="caps">Photos over time</h2><div class="photos">${photos.map((ph) => `<figure style="margin:0"><img src="${esc(photoUrl(ph.path, "grid"))}" alt="" loading="lazy"><figcaption class="small muted">${day(ph.taken_at)}${ph.caption ? ` · ${esc(ph.caption)}` : ""}</figcaption></figure>`).join("")}</div></section>` : ""}
 ${plant.notes ? `<section><h2 class="caps">Notes</h2><p>${esc(plant.notes)}</p></section>` : ""}
-<div class="foot"><span>Self-reported by the plant's keeper · published ${day(plant.published_at)}</span>${LOGO}</div>`;
+<div class="foot"><span>Self-reported by the plant's keeper · published ${day(plant.published_at)}</span>${LOGO}</div>
+${reportLink(`/tag?t=${plant.passport_token}`)}`;
 }
 
 /** Build the response for a token: the page, or a not-found page. Pure apart from the RPC call. */

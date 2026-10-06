@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Report a page | PlantParlour</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#2E1633">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="stylesheet" href="/plants/plants.css">
+<!-- Linked from every plant tag and conservatory page (api/tag.ts,
+     api/conservatory.ts) as /report-page?page=<path>. Sends to the report-content
+     edge function, which stores the report and emails it to us. The reasons
+     are REPORT_REASONS in supabase/functions/_shared/content-report.ts:
+     change them together. -->
+<style>
+  fieldset{border:0;padding:0;margin:0 0 16px}
+  legend{font-weight:600;margin-bottom:8px}
+  .choice{display:flex;gap:10px;align-items:flex-start;padding:8px 0}
+  .choice input{margin-top:4px}
+  textarea{width:100%;min-height:110px;font:inherit;padding:10px;border-radius:8px;border:1px solid #b9a98f;box-sizing:border-box}
+  .msg{padding:10px 12px;border-radius:8px;margin:12px 0}
+  .msg.ok{background:#E3EFE6;color:#1F3D2B}
+  .msg.bad{background:#F0DCE2;color:#7A2141}
+  button.btn{cursor:pointer}
+  button.btn[disabled]{opacity:.5;cursor:default}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="brand" href="/"><img src="/logo.svg" alt="" width="23" height="26">Plant<b>Parlour</b></a>
+</div>
+<div class="wrap">
+<main>
+<h1>Report a page</h1>
+<p class="sub" id="what">A published plant tag or conservatory</p>
+
+<form id="form" novalidate>
+  <fieldset>
+    <legend>What's wrong with it?</legend>
+    <label class="choice"><input type="radio" name="reason" value="offensive"> Offensive, sexual, violent or hateful</label>
+    <label class="choice"><input type="radio" name="reason" value="not_theirs"> Uses my photos or writing, or shows me, without permission</label>
+    <label class="choice"><input type="radio" name="reason" value="spam"> Spam or a scam</label>
+    <label class="choice"><input type="radio" name="reason" value="other"> Something else</label>
+  </fieldset>
+  <p><label for="note"><strong>Anything to add?</strong> (optional)</label></p>
+  <textarea id="note" maxlength="1000"></textarea>
+  <p class="muted"><small>We read every report and remove anything that breaks the <a href="/terms">Terms</a>. You don't need an account, and we don't ask who you are. If you'd like a reply, email <a href="mailto:bondcreativestudios@gmail.com">bondcreativestudios@gmail.com</a> instead.</small></p>
+  <div id="msg" class="msg" hidden></div>
+  <p><button class="btn" id="send" type="submit">Send report</button></p>
+</form>
+</main>
+</div>
+<script>
+(function () {
+  var FN = "https://ixagjvntbgyqemxxinqe.supabase.co/functions/v1/report-content";
+  var page = new URLSearchParams(location.search).get("page") || "";
+  var form = document.getElementById("form");
+  var msg = document.getElementById("msg");
+  var send = document.getElementById("send");
+  var show = function (text, ok) { msg.textContent = text; msg.className = "msg " + (ok ? "ok" : "bad"); msg.hidden = false; };
+
+  if (/^\/tag\?t=[a-f0-9]{32}$/.test(page)) document.getElementById("what").textContent = "A published plant tag";
+  else if (/^\/@[A-Za-z0-9_]{3,20}$/.test(page)) document.getElementById("what").textContent = "The conservatory " + page.slice(1);
+  else { show("Open this from the Report link on the page you want to report.", false); send.disabled = true; }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var picked = form.querySelector("input[name=reason]:checked");
+    if (!picked) { show("Choose what's wrong with the page.", false); return; }
+    send.disabled = true;
+    send.textContent = "Sending…";
+    fetch(FN, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ page: page, reason: picked.value, note: document.getElementById("note").value }),
+    })
+      .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+      .then(function (r) {
+        if (!r.ok) throw new Error((r.body && r.body.error) || "Couldn't send the report.");
+        form.querySelector("fieldset").disabled = true;
+        document.getElementById("note").disabled = true;
+        send.hidden = true;
+        show("Thank you. Your report has been sent, and we'll look at the page.", true);
+      })
+      .catch(function (err) {
+        send.disabled = false;
+        send.textContent = "Send report";
+        show(err.message || "Couldn't send the report. Please try again.", false);
+      });
+  });
+})();
+</script>
+</body>
+</html>

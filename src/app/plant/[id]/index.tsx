@@ -28,6 +28,7 @@ import { issueNote, problemsIn, isProblem, scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, describeScan, photoAllowance, type Verdict } from "@/lib/ai";
 import { allowanceLine, type Allowance } from "@/domain/allowance";
 import { CareGuide } from "@/components/care-guide";
+import { ReportAnswer } from "@/components/report-answer";
 import { PhotoTips } from "@/components/photo-tips";
 import { PlantPhoto } from "@/components/plant-photo";
 import { getCareCard } from "@/lib/care-card";
@@ -731,6 +732,7 @@ export default function PlantDetail() {
             {!checkNote && allowance && allowanceLine(allowance) ? (
               <Body small muted>{allowanceLine(allowance)}</Body>
             ) : null}
+            <ReportAnswer surface="health_check" answer={checkup} species={plant.species} />
           </View>
         ) : null}
       </Card>

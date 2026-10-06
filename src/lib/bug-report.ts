@@ -12,6 +12,7 @@
  */
 import { Platform } from "react-native";
 import type { SQLiteDatabase } from "expo-sqlite";
+import { type AiReportReason, type AiSurface, aiReportNote, answerForReport } from "@/domain/ai-report";
 import { leave, trail } from "@/domain/trail";
 import { supabase } from "@/lib/supabase";
 import { getSyncStatus } from "@/lib/sync";
@@ -136,5 +137,40 @@ export async function sendBugReport(note: string, db: SQLiteDatabase | null): Pr
 
   if (error) throw new Error(error.message);
   leave("act", "sent a bug report", { ref: row.ref });
+  return { ref: row.ref as string };
+}
+
+/**
+ * A keeper flags something the AI said: see src/domain/ai-report.ts. Filed
+ * as a bug report so it lands in the same queue, with the answer attached so
+ * it can be judged without asking them to describe it.
+ */
+export async function reportAiAnswer(report: {
+  surface: AiSurface;
+  reason: AiReportReason;
+  note: string;
+  answer: unknown;
+  species?: string | null;
+}): Promise<BugReportResult> {
+  const { data } = await supabase.auth.getSession();
+  const keeperId = data.session?.user.id;
+  if (!keeperId) throw new Error("You need to be signed in to send a report.");
+
+  const app = {
+    ...environment(),
+    report: "ai_answer",
+    surface: report.surface,
+    reason: report.reason,
+    species: report.species ?? null,
+    answer: answerForReport(report.answer),
+  };
+  const { data: row, error } = await supabase
+    .from("bug_reports")
+    .insert({ keeper_id: keeperId, note: aiReportNote(report.surface, report.reason, report.note), app, trail: [] })
+    .select("ref")
+    .single();
+
+  if (error) throw new Error(error.message);
+  leave("act", "reported an AI answer", { ref: row.ref, surface: report.surface });
   return { ref: row.ref as string };
 }

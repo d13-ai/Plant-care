@@ -91,3 +91,8 @@ test("the handle rule matches the database's own constraint", () => {
   expect(HANDLE.test("has space")).toBe(false);
   expect(HANDLE.test("dot.dot")).toBe(false);
 });
+
+test("anyone can report the conservatory from the page itself", () => {
+  const html = renderConservatory(fixture);
+  expect(html).toContain(`href="/report-page?page=${encodeURIComponent("/@amanda")}"`);
+});

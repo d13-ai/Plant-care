@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSQLiteContext } from "expo-sqlite";
 import { Linking, StyleSheet, View } from "react-native";
+import { ReportAnswer } from "@/components/report-answer";
 import { Badge, Body, Button, Card, Heading, Row } from "@/components/ui";
 import { getCareCard, type CareCard } from "@/lib/care-card";
 import { supabaseConfigured } from "@/lib/supabase";
@@ -114,6 +115,7 @@ export function CareGuide({ species }: { species: string | null }) {
               <Button title={`Call ${APCC.phone}`} small onPress={() => Linking.openURL(APCC.tel).catch(() => {})} />
             </Row>
           </View>
+          <ReportAnswer surface="care_guide" answer={card} species={species} />
         </View>
       ) : null}
     </Card>

@@ -14,14 +14,22 @@
       }
     },
     "android": {
-      "package": "com.d13ai.plantparlour",
+      "package": "org.plantparlour.app",
       "adaptiveIcon": {
         "backgroundColor": "#2E1633",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "com.google.android.gms.permission.AD_ID"
+      ]
     },
     "web": {
       "output": "static",
@@ -34,7 +42,8 @@
         "expo-image-picker",
         {
           "cameraPermission": "Take photos of your plants for their care record.",
-          "photosPermission": "Choose photos of your plants for their care record."
+          "photosPermission": "Choose photos of your plants for their care record.",
+          "microphonePermission": false
         }
       ],
       [
