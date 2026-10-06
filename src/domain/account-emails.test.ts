@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { resetEmail, resetLink, SITE, welcomeEmail } from "../../supabase/functions/_shared/account-emails";
+import { LOGO_CONTENT_ID, resetEmail, resetLink, SITE, welcomeEmail } from "../../supabase/functions/_shared/account-emails";
 
 describe("the welcome email", () => {
   const email = welcomeEmail(5);
@@ -28,8 +28,9 @@ describe("the welcome email", () => {
     expect(email.text).toContain("If that wasn't you, reply and we'll remove it.");
   });
 
-  test("carries no tracking pixel or remote image", () => {
-    expect(email.html).not.toMatch(/<img/i);
+  test("carries no tracking pixel or remote image -- the one image is the logo, inside the email", () => {
+    const srcs = [...email.html.matchAll(/<img[^>]*src="([^"]*)"/gi)].map((m) => m[1]);
+    expect(srcs).toEqual([`cid:${LOGO_CONTENT_ID}`]);
   });
 });
 

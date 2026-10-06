@@ -6,7 +6,7 @@
 // JavaScript would see an empty page. These are plain server-rendered HTML,
 // readable by anyone and anything, and they reuse the tag page's `page()` so
 // they cannot drift from the brand.
-import { page } from "./tag";
+import { LOGO, page } from "./tag";
 
 export const SITE = "https://plantparlour.org";
 /**
@@ -57,7 +57,7 @@ ${sections
   .join("\n")}
 <div class="foot">
   <span>Questions? <a href="mailto:${CONTACT}">${CONTACT}</a></span>
-  <span><a href="${SITE}/">plantparlour.org</a></span>
+  <span style="display:flex;align-items:center;gap:8px"><a href="${SITE}/">plantparlour.org</a>${LOGO}</span>
 </div>`;
   return page(`${title} · PlantParlour`, body, 200, head);
 }

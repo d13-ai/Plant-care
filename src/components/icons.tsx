@@ -98,17 +98,25 @@ export function CloseIcon({ size = 14, color, strokeWidth = 2.2 }: IconProps) {
 }
 
 /**
- * The PlantParlour logo: Amanda's leaf monogram, two golds on whatever sits
- * behind it. The traced geometry lives in `src/brand/logo.json` so the app,
+ * The PlantParlour logo: Amanda's leaf monogram, gold filled and outlined in
+ * the deeper gold. The geometry lives in `src/brand/logo.json` so the app,
  * the PNG assets (`npm run icons`) and the public pages all draw the same
- * thing. Pass `color` for a one-colour mark (the whole silhouette in it).
- * Fits inside a `size` square; the artwork is a little taller than wide.
+ * thing. Pass `color` for a one-colour mark. Fits inside a `size` square;
+ * the artwork is a little taller than it is wide.
  */
 export function LogoMark({ size = 18, color }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox={logo.viewBox}>
-      <Path d={logo.ink} fill={color ?? logo.outline} />
-      {color ? null : <Path d={logo.fill} fill={logo.gold} />}
+      {logo.paths.map((d) => (
+        <Path
+          key={d.slice(0, 24)}
+          d={d}
+          fill={color ?? logo.fill}
+          stroke={color ?? logo.stroke}
+          strokeWidth={logo.strokeWidth}
+          strokeMiterlimit={10}
+        />
+      ))}
     </Svg>
   );
 }
