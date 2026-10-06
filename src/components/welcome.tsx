@@ -3,6 +3,7 @@ import { LogoMark } from "@/components/icons";
 import { InstallHint } from "@/components/install-hint";
 import { SignIn } from "@/components/sign-in";
 import { Body, Card, SectionLabel } from "@/components/ui";
+import { siteUrl } from "@/lib/links";
 import { font, space, useTheme } from "@/theme";
 
 /**
@@ -57,7 +58,7 @@ export function Welcome() {
             tagline says what it feels like, this says what it is. */}
         <Text style={[styles.plain, { color: t.muted }]}>
           A free plant care app: watering reminders, AI plant identification and a care record for every plant.{" "}
-          <Text style={styles.legalLink} onPress={() => Linking.openURL("/plant-care-app").catch(() => {})}>
+          <Text style={styles.legalLink} onPress={() => Linking.openURL(siteUrl("/plant-care-app")).catch(() => {})}>
             How it works
           </Text>
         </Text>
@@ -103,14 +104,14 @@ export function Welcome() {
       <Text style={[styles.footnote, { color: t.muted }]}>
         <Text
           style={styles.legalLink}
-          onPress={() => Linking.openURL("/privacy").catch(() => {})}
+          onPress={() => Linking.openURL(siteUrl("/privacy")).catch(() => {})}
         >
           Privacy
         </Text>
         {"  ·  "}
         <Text
           style={styles.legalLink}
-          onPress={() => Linking.openURL("/terms").catch(() => {})}
+          onPress={() => Linking.openURL(siteUrl("/terms")).catch(() => {})}
         >
           Terms
         </Text>

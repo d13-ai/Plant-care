@@ -7,7 +7,7 @@
  * Renders through the Playwright Chromium we already use for the smoke test,
  * so there's no image toolchain to install.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright";
 
 const AUBERGINE = "#2E1633";
@@ -138,5 +138,30 @@ for (const c of CARDS) {
   writeFileSync(new URL(`../public/${c.file}`, import.meta.url), png);
   console.log(`public/${c.file}`.padEnd(38) + `1200x630  ${png.length} bytes`);
 }
+
+/*
+ * Google Play's feature graphic: 1024x500, shown across the top of the store
+ * listing and wherever Play features the app. Kept out of public/, since it
+ * belongs to the listing rather than the site; see docs/play-store.md.
+ */
+mkdirSync(new URL("../store/", import.meta.url), { recursive: true });
+await page.setViewportSize({ width: 1024, height: 500 });
+await page.setContent(
+  `<!doctype html><meta charset="utf-8">
+   <style>
+     html,body{margin:0;width:1024px;height:500px;background:${AUBERGINE};
+       display:flex;align-items:center;justify-content:center;gap:56px;
+       font-family:Lora,Georgia,"Times New Roman",serif;color:#F3ECDD}
+     .mark{width:250px;height:250px;flex:none}
+     .words{max-width:560px}
+     h1{font-size:76px;line-height:1;margin:0 0 20px;font-weight:600}
+     p{font-size:30px;line-height:1.35;margin:0;color:${LEAF};font-style:italic}
+   </style>
+   <div class="mark">${logoSvg()}</div>
+   <div class="words"><h1>PlantParlour</h1><p>A care record for every plant you keep.</p></div>`,
+);
+const feature = await page.screenshot();
+writeFileSync(new URL("../store/feature-graphic.png", import.meta.url), feature);
+console.log("store/feature-graphic.png".padEnd(38) + `1024x500  ${feature.length} bytes`);
 
 await browser.close();

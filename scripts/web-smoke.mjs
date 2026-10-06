@@ -446,6 +446,30 @@ try {
     await shot("13-care-guide-toxicity-notice");
     await context.unroute("**/functions/v1/care");
   });
+  await step("an AI answer can be reported from where it is shown, with the answer attached", async () => {
+    // Google Play asks for this on every AI answer; see src/domain/ai-report.ts.
+    // The guide from the step before is still on the page.
+    let filed = null;
+    await page.route("**/rest/v1/bug_reports**", (route) => {
+      filed = route.request().postDataJSON();
+      route.fulfill(asJson({ ref: "PP-SMOKE1" }));
+    });
+    await page.getByText("Report this answer").first().click();
+    await page.getByText("Unsafe advice", { exact: true }).click();
+    await page.getByText("Send report", { exact: true }).click();
+    await page.getByText(/Thanks — reported \(PP-SMOKE1\)|signed in/).waitFor({ timeout: 10000 });
+    if (filed) {
+      const row = Array.isArray(filed) ? filed[0] : filed;
+      if (!String(row.note).startsWith("AI report (care guide): Unsafe advice")) throw new Error(`report note: ${row.note}`);
+      if (row.app?.report !== "ai_answer" || !String(JSON.stringify(row.app.answer)).includes("safe choice")) {
+        throw new Error("the report didn't carry the answer it was about");
+      }
+    } else {
+      throw new Error("no report was filed: " + (await page.getByText(/signed in/).first().textContent()));
+    }
+    await shot("13b-ai-answer-reported");
+    await page.unroute("**/rest/v1/bug_reports**");
+  });
   await step("still moist twice in a row suggests watering less often, and it can be taken or declined", async () => {
     // Waterings 9 days apart on a 7-day reminder, the soil found still
     // moist before each: the record argues for every 9 days. Back-dated

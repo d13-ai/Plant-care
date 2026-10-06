@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View
 import { SpeciesField } from "@/components/species-field";
 import { CloseIcon } from "@/components/icons";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
+import { ReportAnswer } from "@/components/report-answer";
 import { addPhoto, createPlant, listPlants, logCare, type Plant } from "@/db";
 import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "@/domain/species";
 import { isProblem, issueNote, preselectedIssues, problemsIn, scanSummary } from "@/domain/scan";
@@ -388,6 +389,7 @@ export default function NewPlant() {
                   ) : null}
                   {verdict.notes ? <Body small muted>{verdict.notes}</Body> : null}
                   {scanNote ? <Body small muted>{scanNote}</Body> : null}
+                  <ReportAnswer surface="identify" answer={verdict} species={species.trim() || null} />
                 </>
               )}
             </View>
