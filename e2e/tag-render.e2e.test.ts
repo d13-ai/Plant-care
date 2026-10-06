@@ -46,3 +46,9 @@ test("a plant with no mother still reads as an original", () => {
   const html = render(tag(null));
   expect(html).toContain("Original plant");
 });
+
+test("anyone can report the page, and the report form gets exactly this tag", () => {
+  const html = render(tag(null));
+  expect(html).toContain(`href="/report-page?page=${encodeURIComponent(`/tag?t=${"a".repeat(32)}`)}"`);
+  expect(html).toContain("Report this page");
+});

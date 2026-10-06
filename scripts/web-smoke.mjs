@@ -612,6 +612,29 @@ try {
     if (verifiedHere) throw new Error("the link was used while another account was signed in");
     if (page.url().includes("reset=")) throw new Error(`the token stayed in the address bar: ${page.url()}`);
   });
+  await step("a published page can be reported without an account, and only a real one", async () => {
+    // Linked from every tag and conservatory page (api/tag.ts reportLink).
+    let sent = null;
+    await page.route("**/functions/v1/report-content", (route) => {
+      sent = route.request().postDataJSON();
+      route.fulfill(asJson({ ok: true }));
+    });
+    const token = "0123456789abcdef0123456789abcdef";
+    await page.goto(`${base}/report-page?page=${encodeURIComponent(`/tag?t=${token}`)}`);
+    await page.getByText("A published plant tag").waitFor({ timeout: 15000 });
+    await page.getByText("Send report", { exact: true }).click();
+    await page.getByText("Choose what's wrong with the page.").waitFor();
+    await page.getByText("Spam or a scam").click();
+    await page.locator("textarea").fill("Selling something else entirely");
+    await page.getByText("Send report", { exact: true }).click();
+    await page.getByText("Your report has been sent").waitFor({ timeout: 10000 });
+    if (sent?.page !== `/tag?t=${token}` || sent?.reason !== "spam" || !/something else/.test(sent?.note)) {
+      throw new Error("report sent the wrong thing: " + JSON.stringify(sent));
+    }
+    await page.goto(`${base}/report-page?page=${encodeURIComponent("https://evil.example/")}`);
+    await page.getByText("Open this from the Report link").waitFor({ timeout: 10000 });
+    await page.unroute("**/functions/v1/report-content");
+  });
   await step("a tester can reach the bug report screen", async () => {
     await page.goto(base + "/account", { waitUntil: "domcontentloaded" });
     await page.getByText("Found a bug?").waitFor({ timeout: 15000 });

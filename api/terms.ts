@@ -36,8 +36,10 @@ const sections = [
 <li>Do not use PlantParlour for anything unlawful, or to harass anybody.</li>
 <li>Do not scrape it, hammer it, reverse-engineer it, or try to reach another keeper's records.</li>
 <li>Do not use it to sell plants whose sale or import is restricted where you are. A tag is a record, not a permit.</li>
+<li>Do not publish anything sexual, violent, hateful or threatening on a tag or conservatory page, or photos of other people without their agreement. Published pages are about plants.</li>
+<li>Do not use tags or conservatory pages for spam, scams or advertising unrelated to the plant.</li>
 </ul>
-<p>If an account is doing one of these, we may suspend or remove it without notice.</p>`,
+<p>Anyone can report a published page with the <em>Report this page</em> link on it. We read every report, and we may unpublish a page, remove a handle, or suspend or remove an account that does any of these, without notice.</p>`,
   },
   {
     heading: "The AI, and the care library, can be wrong",

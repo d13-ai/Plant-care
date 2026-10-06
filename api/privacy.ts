@@ -59,7 +59,7 @@ const sections = [
 <ul>
 <li><strong>Supabase</strong> — stores your records and photos, and handles sign-in.</li>
 <li><strong>Vercel</strong> — serves the website.</li>
-<li><strong>Resend</strong> — sends the two emails an account can get: one welcome when you sign up, and a password-reset link when you ask for one. They receive your email address and the message, nothing else. Opens and clicks are not tracked.</li>
+<li><strong>Resend</strong> — sends the two emails an account can get: one welcome when you sign up, and a password-reset link when you ask for one. They receive your email address and the message, nothing else. Opens and clicks are not tracked. Resend also delivers page reports to our own inbox (see below).</li>
 <li><strong>Google</strong> — only if you choose to sign in with Google.</li>
 <li><strong>Anthropic</strong> — only the photos or species names you send for analysis.</li>
 </ul>
@@ -79,6 +79,11 @@ const sections = [
     heading: "When you report a bug",
     html: `<p>While PlantParlour is still being tested there is a <strong>Report a bug</strong> button on your account screen. Pressing it sends us whatever you typed, plus a technical record of what the app was doing: which screens you opened, whether syncing was working, any errors it hit, your browser and screen size, and how many plants are on this device.</p>
 <p>It does <em>not</em> send your photos, your notes, or what any of your plants are. Email addresses and access tokens are stripped out of that record before it leaves your device. Nothing is sent unless you press the button.</p>`,
+  },
+  {
+    heading: "When you report something",
+    html: `<p><strong>An AI answer.</strong> Under every plant identification, health check and care guide there is a <em>Report this answer</em> link. A report sends us the reason you chose, anything you wrote, the answer itself as it was shown to you, and basic technical details (the app version, your browser and screen size), so we can see what went wrong. Not the photos.</p>
+<p><strong>A published page.</strong> Every plant tag and conservatory page has a <em>Report this page</em> link, which anyone can use without an account. We keep the page's address, the reason, and anything the person wrote, and it is emailed to us through Resend so we see it quickly. We also keep a scrambled (hashed) form of the network address the report came from, only to stop the same source sending reports over and over; it can't be turned back into the address. We don't ask who is reporting, and the keeper of the page is never told who reported it.</p>`,
   },
   {
     heading: "If something goes wrong",

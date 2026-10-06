@@ -98,6 +98,11 @@ its email and password, and this note:
 - Category: **All other app types** (a utility, not a game).
 - Violence, fear, sexuality, language, controlled substances, gambling:
   **No** to every question.
+- **Users can report users or user-generated content: Yes** (since 6 Oct
+  2026: *Report this page* on every tag and conservatory, which stores the
+  report in `content_reports` and emails it to us; see
+  `supabase/functions/report-content`). Block: No. Chat moderation: No.
+- **Online content: Yes** (AI-generated answers).
 - **Users can interact or share content: Yes.** A keeper can publish a
   plant's tag and a public conservatory page with their photos and notes.
   There is no chat or messaging between users.
