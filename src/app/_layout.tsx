@@ -181,7 +181,7 @@ export default function RootLayout() {
       databaseName="plant-passport.db"
       onError={openFailed}
       onInit={async (db) => {
-        await migrate(db);
+        await migrate(db, { wal: Platform.OS !== "web" });
         await loadSyncStatus(db);
         requestSync(db, 0);
       }}

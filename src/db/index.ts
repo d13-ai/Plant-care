@@ -205,9 +205,13 @@ const newer = (current: string | null, candidate: string) =>
  * transaction, so a version either lands whole or not at all, and an
  * interrupted upgrade simply starts that version again on the next launch.
  */
-export async function migrate(db: SQLiteDatabase): Promise<void> {
-  // Outside any transaction: this pragma is a no-op inside one.
+export async function migrate(db: SQLiteDatabase, options: { wal?: boolean } = {}): Promise<void> {
+  // Outside any transaction: foreign_keys is a no-op inside one, and the
+  // journal mode can't be changed inside one at all. WAL only on the phone
+  // apps: the browser's storage can't share memory between connections, which
+  // WAL needs, and the web build has always run without it.
   await db.execAsync("PRAGMA foreign_keys = ON;");
+  if (options.wal) await db.execAsync("PRAGMA journal_mode = WAL;");
   const row = await db.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
   let current = row?.user_version ?? 0;
 

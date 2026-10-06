@@ -5,6 +5,6 @@ import { defineConfig } from "vitest/config";
 // exercised on a device via Expo Go.
 export default defineConfig({
   test: {
-    include: ["src/domain/**/*.test.ts", "public/parlour-games/**/*.test.ts", "scripts/**/*.test.mjs"],
+    include: ["src/domain/**/*.test.ts", "src/db/**/*.test.ts", "public/parlour-games/**/*.test.ts", "scripts/**/*.test.mjs"],
   },
 });
