@@ -14,7 +14,7 @@
       }
     },
     "android": {
-      "package": "com.d13ai.plantparlour",
+      "package": "org.plantparlour.app",
       "adaptiveIcon": {
         "backgroundColor": "#2E1633",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

@@ -7,9 +7,9 @@ the same commit.
 
 ## Before the first upload
 
-- **Package name: `com.d13ai.plantparlour`.** It is set in `app.json` and
-  becomes permanent the moment the first build is uploaded. Check it is the
-  name you want before then.
+- **Package name: `org.plantparlour.app`.** Registered in Play Console when
+  the app was created (6 Oct 2026) and set in `app.json`. It can never
+  change, so it must never be edited there.
 - **Developer account:** an organization account, under the name on the
   D-U-N-S record. Organization accounts don't need the 14-day, 12-tester
   closed test that new personal accounts must run.
