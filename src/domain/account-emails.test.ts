@@ -32,6 +32,10 @@ describe("the welcome email", () => {
     const srcs = [...email.html.matchAll(/<img[^>]*src="([^"]*)"/gi)].map((m) => m[1]);
     expect(srcs).toEqual([`cid:${LOGO_CONTENT_ID}`]);
   });
+
+  test("goes without the logo, not with a broken image, when the sender couldn't get it", () => {
+    expect(welcomeEmail(5, false).html).not.toMatch(/<img/i);
+  });
 });
 
 describe("the password reset email", () => {

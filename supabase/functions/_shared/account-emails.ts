@@ -25,20 +25,21 @@ const esc = (s: string) =>
 // text, gold for the one button. Tables and inline styles because that is
 // what Outlook and Gmail still read.
 // The logo on its aubergine tile, as a PNG (mail clients don't show SVG).
-// The sender attaches it inline (_shared/logo-email.ts) rather than the email
-// fetching it from the site: a remote image would tell us who opened what.
+// The sender fetches public/logo-email.png and attaches it inline, so the
+// email carries it rather than loading it from the site when opened: a remote
+// image would tell us who opened what. Without it, the email simply has none.
 export const LOGO_CONTENT_ID = "pp-logo";
-const LOGO = `cid:${LOGO_CONTENT_ID}`;
+export const LOGO_URL = "https://plantparlour.org/logo-email.png";
 const C = { page: "#F3ECDD", card: "#FBF7EE", text: "#2E1633", muted: "#5F4B5C", gold: "#C9A24B", plum: "#4B2142" };
 
-function frame(title: string, body: string, footer: string): string {
+function frame(title: string, body: string, footer: string, logo: boolean): string {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title></head>
 <body style="margin:0;padding:0;background:${C.page};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.page};"><tr><td align="center" style="padding:32px 16px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:${C.card};border-radius:12px;">
 <tr><td style="padding:28px 28px 8px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
-<td style="padding-right:12px;"><img src="${LOGO}" width="48" height="48" alt="" style="display:block;border:0;"></td>
+${logo ? `<td style="padding-right:12px;"><img src="cid:${LOGO_CONTENT_ID}" width="48" height="48" alt="" style="display:block;border:0;"></td>` : ""}
 <td style="font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:32px;color:${C.text};">PlantParlour</td>
 </tr></table></td></tr>
 <tr><td style="padding:8px 28px 28px;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:25px;color:${C.text};">
@@ -75,7 +76,7 @@ const p = (html: string) => `<p style="margin:0 0 14px;">${html}</p>`;
  * thing to do -- photograph a plant -- and then the two things that make the
  * app worth coming back to.
  */
-export function welcomeEmail(photoChecks: number): Email {
+export function welcomeEmail(photoChecks: number, logo = true): Email {
   const subject = "Welcome to PlantParlour";
   const steps: [string, string][] = [
     [
@@ -103,6 +104,7 @@ export function welcomeEmail(photoChecks: number): Email {
       `<p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-style:italic;color:${C.plum};">David and Amanda</p>`,
     ].join("\n"),
     `You're getting this because an account was made at plantparlour.org with this address. If that wasn't you, reply and we'll remove it. <a href="${SITE}/privacy" style="color:${C.muted};">Privacy</a>`,
+    logo,
   );
   const text = [
     "Your parlour is ready. Three things to get it going:",
@@ -131,7 +133,7 @@ export function welcomeEmail(photoChecks: number): Email {
  */
 export const resetLink = (tokenHash: string) => `${SITE}/?reset=${encodeURIComponent(tokenHash)}`;
 
-export function resetEmail(address: string, tokenHash: string): Email {
+export function resetEmail(address: string, tokenHash: string, logo = true): Email {
   const subject = "Reset your PlantParlour password";
   const link = resetLink(tokenHash);
   const html = frame(
@@ -144,6 +146,7 @@ export function resetEmail(address: string, tokenHash: string): Email {
       `<p style="margin:0;font-size:13px;line-height:20px;color:${C.muted};word-break:break-all;">If the button doesn't work, paste this into your browser:<br>${esc(link)}</p>`,
     ].join("\n"),
     `Sent by PlantParlour because a password reset was asked for at plantparlour.org. <a href="${SITE}/privacy" style="color:${C.muted};">Privacy</a>`,
+    logo,
   );
   const text = [
     `Someone, hopefully you, asked to reset the password for the PlantParlour account ${address}.`,

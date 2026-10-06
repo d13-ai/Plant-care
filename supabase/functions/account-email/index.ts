@@ -20,8 +20,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { boundedText, PHOTO_TRIAL } from "../_shared/cap.ts";
-import { type Email, FROM, LOGO_CONTENT_ID, REPLY_TO, resetEmail, welcomeEmail } from "../_shared/account-emails.ts";
-import { LOGO_PNG_BASE64 } from "../_shared/logo-email.ts";
+import { type Email, FROM, LOGO_CONTENT_ID, LOGO_URL, REPLY_TO, resetEmail, welcomeEmail } from "../_shared/account-emails.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -43,7 +42,30 @@ async function sha256(text: string): Promise<string> {
   return Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function send(key: string, to: string, kind: string, claimId: number, email: Email): Promise<void> {
+/**
+ * The logo, base64, for the inline attachment: fetched once per instance from
+ * the site. A failure isn't kept, so the next email tries again; until then
+ * emails go out without the logo rather than with a broken image.
+ */
+let logo: Promise<string | null> | null = null;
+function logoBase64(): Promise<string | null> {
+  logo ??= fetch(LOGO_URL, { signal: AbortSignal.timeout(3000) })
+    .then(async (r) => {
+      if (!r.ok || !(r.headers.get("content-type") ?? "").startsWith("image/png")) throw new Error(`logo ${r.status}`);
+      const bytes = new Uint8Array(await r.arrayBuffer());
+      let binary = "";
+      for (const b of bytes) binary += String.fromCharCode(b);
+      return btoa(binary);
+    })
+    .catch((err) => {
+      log({ outcome: "logo_unavailable", error: err instanceof Error ? err.message : String(err) });
+      logo = null;
+      return null;
+    });
+  return logo;
+}
+
+async function send(key: string, to: string, kind: string, claimId: number, email: Email, logoPng: string | null): Promise<void> {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -61,9 +83,9 @@ async function send(key: string, to: string, kind: string, claimId: number, emai
       text: email.text,
       tags: [{ name: "kind", value: kind }],
       // The logo travels inside the email; see LOGO_CONTENT_ID.
-      attachments: [
-        { filename: "plantparlour.png", content: LOGO_PNG_BASE64, content_type: "image/png", content_id: LOGO_CONTENT_ID },
-      ],
+      ...(logoPng
+        ? { attachments: [{ filename: "plantparlour.png", content: logoPng, content_type: "image/png", content_id: LOGO_CONTENT_ID }] }
+        : {}),
     }),
   });
   if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 300)}`);
@@ -123,9 +145,10 @@ Deno.serve(async (req: Request) => {
   const { data: key } = await admin.rpc("resend_api_key");
   try {
     if (typeof key !== "string" || !key) throw new Error("no Resend key in Vault");
+    const logoPng = await logoBase64();
     let email: Email;
     if (kind === "welcome") {
-      email = welcomeEmail(PHOTO_TRIAL);
+      email = welcomeEmail(PHOTO_TRIAL, logoPng !== null);
     } else {
       // Generated only now, after the claim: a new link replaces the last one,
       // so generating one for a refused request would break a link that is
@@ -133,9 +156,9 @@ Deno.serve(async (req: Request) => {
       const { data: link, error } = await admin.auth.admin.generateLink({ type: "recovery", email: claim.email });
       const token = link?.properties?.hashed_token;
       if (error || !token) throw new Error(`generateLink: ${error?.message ?? "no token"}`);
-      email = resetEmail(claim.email, token);
+      email = resetEmail(claim.email, token, logoPng !== null);
     }
-    await send(key, claim.email, kind, claim.id, email);
+    await send(key, claim.email, kind, claim.id, email, logoPng);
     log({ kind, outcome: "sent" });
     return json(kind === "welcome" ? { sent: true } : { ok: true });
   } catch (err) {
