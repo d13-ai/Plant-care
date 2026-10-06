@@ -1,6 +1,6 @@
-import Svg, { Circle, Defs, Mask, Path } from "react-native-svg";
+import Svg, { Circle, Path } from "react-native-svg";
 
-import monstera from "@/brand/monstera.json";
+import logo from "@/brand/logo.json";
 
 type IconProps = { size?: number; color: string; strokeWidth?: number };
 
@@ -98,42 +98,17 @@ export function CloseIcon({ size = 14, color, strokeWidth = 2.2 }: IconProps) {
 }
 
 /**
- * PLACEHOLDER MARK — a monstera leaf, standing in until Amanda's logo lands.
- * The geometry lives in `src/brand/monstera.json` so the app, the PNG assets
- * (`npm run icons`) and the public pages all draw the same shape. Swap that
- * file for the real logo and rerun `npm run icons`.
+ * The PlantParlour logo: Amanda's leaf monogram, two golds on whatever sits
+ * behind it. The traced geometry lives in `src/brand/logo.json` so the app,
+ * the PNG assets (`npm run icons`) and the public pages all draw the same
+ * thing. Pass `color` for a one-colour mark (the whole silhouette in it).
+ * Fits inside a `size` square; the artwork is a little taller than wide.
  */
-export function MonsteraIcon({ size = 18, color }: { size?: number; color: string }) {
+export function LogoMark({ size = 18, color }: { size?: number; color?: string }) {
   return (
-    <Svg width={size} height={size} viewBox={monstera.viewBox} fill="none">
-      <Defs>
-        {/* White keeps the blade; black cuts the lobes and the basal notch clean through. */}
-        <Mask id="pp-monstera">
-          <Path d={monstera.blade} fill="#fff" />
-          {monstera.splits.map((d) => (
-            <Path
-              key={d}
-              d={d}
-              stroke="#000"
-              strokeWidth={monstera.splitWidth}
-              strokeLinecap="round"
-            />
-          ))}
-          <Path
-            d={monstera.notch}
-            stroke="#000"
-            strokeWidth={monstera.notchWidth}
-            strokeLinecap="round"
-          />
-        </Mask>
-      </Defs>
-      <Path
-        d={monstera.petiole}
-        stroke={color}
-        strokeWidth={monstera.petioleWidth}
-        strokeLinecap="round"
-      />
-      <Path d={monstera.blade} fill={color} mask="url(#pp-monstera)" />
+    <Svg width={size} height={size} viewBox={logo.viewBox}>
+      <Path d={logo.ink} fill={color ?? logo.outline} />
+      {color ? null : <Path d={logo.fill} fill={logo.gold} />}
     </Svg>
   );
 }

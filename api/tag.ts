@@ -126,7 +126,7 @@ ul{margin:0;padding-left:18px}
   return { status, html };
 }
 
-// Placeholder mark — kept in step with src/brand/monstera.json.
+// Old placeholder mark, until this page links /logo.svg (see src/brand/logo.json).
 const LEAF = `<svg width="16" height="16" viewBox="0 0 100 100" fill="none" aria-hidden="true"><mask id="ppleaf"><path d="M50 8C64 9 95 25 95 48c0 22-19 38-40 44-2 1-4-1-5-4-1 3-3 5-5 4C29 86 5 70 5 48 5 25 36 9 50 8z" fill="#fff"></path><path d="M56 29L86 20" stroke="#000" stroke-width="7" stroke-linecap="round" fill="none"></path><path d="M57 48L94 47" stroke="#000" stroke-width="7" stroke-linecap="round" fill="none"></path><path d="M55 67L85 76" stroke="#000" stroke-width="7" stroke-linecap="round" fill="none"></path><path d="M44 29L14 20" stroke="#000" stroke-width="7" stroke-linecap="round" fill="none"></path><path d="M43 48L6 47" stroke="#000" stroke-width="7" stroke-linecap="round" fill="none"></path><path d="M45 67L15 76" stroke="#000" stroke-width="7" stroke-linecap="round" fill="none"></path><path d="M50 94V84" stroke="#000" stroke-width="8" stroke-linecap="round" fill="none"></path></mask><path d="M50 86v9" stroke="#E6C46B" stroke-width="5" stroke-linecap="round"></path><path d="M50 8C64 9 95 25 95 48c0 22-19 38-40 44-2 1-4-1-5-4-1 3-3 5-5 4C29 86 5 70 5 48 5 25 36 9 50 8z" fill="#E6C46B" mask="url(#ppleaf)"></path></svg>`;
 
 export function render(p: Tag): string {

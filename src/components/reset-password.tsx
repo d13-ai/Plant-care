@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { MonsteraIcon } from "@/components/icons";
+import { LogoMark } from "@/components/icons";
 import { Body, Button, Card, Field, Row, Title } from "@/components/ui";
 import { resetPassword, type Account } from "@/lib/auth";
 import { cardTheme, font, space, useTheme } from "@/theme";
@@ -53,7 +53,7 @@ export function ResetPassword({
   return (
     <ScrollView contentContainerStyle={[styles.page, { backgroundColor: t.background }]}>
       <View style={styles.masthead}>
-        <MonsteraIcon size={40} color={t.leaf} />
+        <LogoMark size={56} />
         <Text style={[styles.wordmark, { color: t.text }]}>PlantParlour</Text>
       </View>
       <Card>

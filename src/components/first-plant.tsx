@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { DropIcon, MonsteraIcon } from "@/components/icons";
+import { DropIcon, LogoMark } from "@/components/icons";
 import { Badge, Body, Button, Card, Heading, SectionLabel, Title } from "@/components/ui";
 import { radius, space, useTheme } from "@/theme";
 
@@ -47,7 +47,7 @@ export function FirstPlant() {
       <Card>
         <View style={styles.exampleHead}>
           <View style={[styles.thumb, { backgroundColor: t.forest }]}>
-            <MonsteraIcon size={30} color={t.leaf} />
+            <LogoMark size={34} />
           </View>
           <View style={styles.headText}>
             <Heading>Marble Queen pothos</Heading>
