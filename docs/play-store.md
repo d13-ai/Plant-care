@@ -65,7 +65,7 @@ Free plant care library and calm plant puzzles at plantparlour.org.
 |---|---|---|
 | App icon | `public/icon-512.png` | 512×512 |
 | Feature graphic | `store/feature-graphic.png` | 1024×500 |
-| Phone screenshots | to take from the first Android test build | 2–8, 9:16 |
+| Phone screenshots | `store/screenshots/1-…6-*.png`, from the web build by `scripts/store-screenshots.mjs` (stubbed, no AI spend); retake from the Android build later if wanted | 1080×1920 |
 
 Both images come from `npm run icons`.
 
