@@ -463,6 +463,33 @@
     };
   }
 
+  /* ---- opened from the app ------------------------------------------- */
+  /* The Android app opens the games in a browser sheet with ?from=app. In
+     there a link to "/" would load the web app, signed out, inside the sheet;
+     pointed at the app's own address instead it brings the app back to the
+     front and the sheet goes with it. Remembered for the tab, because the
+     query string is gone after the first link from the hub to a game. */
+  var IN_APP_KEY = "pp:in-app";
+  var APP_HOME = "plantparlour://";
+  function fromApp(loc, store) {
+    var l = loc || (typeof location !== "undefined" ? location : { search: "" });
+    var marked = /[?&]from=app(&|$)/.test(l.search);
+    try {
+      var s = store || window.sessionStorage;
+      if (marked) s.setItem(IN_APP_KEY, "1");
+      return marked || s.getItem(IN_APP_KEY) === "1";
+    } catch (e) { return marked; }
+  }
+  function homeLinks(doc, loc, store) {
+    if (!fromApp(loc, store)) return 0;
+    var links = doc.querySelectorAll('a[href="/"]');
+    for (var i = 0; i < links.length; i++) {
+      links[i].setAttribute("href", APP_HOME);
+      links[i].removeAttribute("target");
+    }
+    return links.length;
+  }
+
   return {
     read: read, write: write,
     EPOCH: EPOCH, mulberry32: mulberry32, dayNumber: dayNumber, msUntilTomorrow: msUntilTomorrow,
@@ -471,6 +498,7 @@
     adoptLegacyStreak: adoptLegacyStreak,
     session: session, token: token, sync: sync, signInUrl: SIGN_IN_URL,
     clockSaysNight: clockSaysNight, night: night,
-    sound: sound
+    sound: sound,
+    fromApp: fromApp, homeLinks: homeLinks, APP_HOME: APP_HOME
   };
 });

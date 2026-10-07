@@ -33,3 +33,11 @@ export declare function sound(opts: Record<string, unknown>): {
   isOn(): boolean; setOn(on: boolean): void;
   levels(): { peak: number; rms: number } | null;
 };
+type SessionStore = { getItem(key: string): string | null; setItem(key: string, value: string): void };
+export declare function fromApp(loc?: { search: string }, store?: SessionStore): boolean;
+export declare function homeLinks(
+  doc: { querySelectorAll(selector: string): ArrayLike<{ setAttribute(n: string, v: string): void; removeAttribute(n: string): void }> },
+  loc?: { search: string },
+  store?: SessionStore,
+): number;
+export declare const APP_HOME: string;
