@@ -1,7 +1,7 @@
 {
   "https://plantparlour.org/": {
-    "hash": "dd1ddb5f91e877c7670adf9529573c9ba642f02d01defc92312347297c631493",
-    "lastmod": "2026-10-06"
+    "hash": "3813f9ca551b6bc27822f054657ed6d14593057b6d0ba406c91dc94068d82ad8",
+    "lastmod": "2026-10-07"
   },
   "https://plantparlour.org/parlour-games": {
     "hash": "7700211405535a2e523d1566b3744b54675994db8101f06c4feee39e30af1bdc",
@@ -676,8 +676,8 @@
     "lastmod": "2026-09-24"
   },
   "https://plantparlour.org/privacy": {
-    "hash": "c90a02965c663de588b977b353b1467a479dc9ec6c17b7fb3d5ab63af067f2d7",
-    "lastmod": "2026-10-06"
+    "hash": "ab9b9b908fbe23bb82261dc7253a24e9c5f29be6cfbe2bc468f3bcfe2ff99575",
+    "lastmod": "2026-10-07"
   },
   "https://plantparlour.org/problems": {
     "hash": "2d55bd68d89265673fe70cb31d1bc714039b8de183201f17dd06a19ab929fa84",
@@ -708,7 +708,7 @@
     "lastmod": "2026-09-24"
   },
   "https://plantparlour.org/terms": {
-    "hash": "c72cb863ce6e80b02c23ce96751e09921d860465ca64d9912c30e8b432d103dc",
-    "lastmod": "2026-10-06"
+    "hash": "4965fedc4209fee4bb2ad3fd25102ad5cd15e690ed0010dc58d0542cbacaea46",
+    "lastmod": "2026-10-07"
   }
 }
