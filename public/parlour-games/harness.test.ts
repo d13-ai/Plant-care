@@ -210,3 +210,46 @@ describe("the arcade's own row", () => {
     }
   });
 });
+
+describe("opened from the app", () => {
+  const store = () => {
+    const kept: Record<string, string> = {};
+    return {
+      getItem: (k: string) => (k in kept ? kept[k] : null),
+      setItem: (k: string, v: string) => { kept[k] = v; },
+    };
+  };
+  const page = (hrefs: string[]) => {
+    const links = hrefs.map((href) => {
+      const attrs: Record<string, string> = { href, target: "_blank" };
+      return {
+        attrs,
+        setAttribute: (n: string, v: string) => { attrs[n] = v; },
+        removeAttribute: (n: string) => { delete attrs[n]; },
+      };
+    });
+    return {
+      links,
+      doc: { querySelectorAll: (sel: string) => links.filter((l) => sel === 'a[href="/"]' && l.attrs.href === "/") },
+    };
+  };
+
+  it("points the links home at the app, and remembers for the rest of the visit", () => {
+    const tab = store();
+    const hub = page(["/", "/plants", "/"]);
+    expect(Parlour.homeLinks(hub.doc, { search: "?from=app" }, tab)).toBe(2);
+    expect(hub.links.map((l) => l.attrs.href)).toEqual([Parlour.APP_HOME, "/plants", Parlour.APP_HOME]);
+    expect(hub.links[0].attrs.target).toBeUndefined();
+    // The hub's link to a game carries no query string; the tab still knows.
+    const game = page(["/"]);
+    expect(Parlour.homeLinks(game.doc, { search: "" }, tab)).toBe(1);
+    expect(game.links[0].attrs.href).toBe(Parlour.APP_HOME);
+  });
+
+  it("leaves the website alone", () => {
+    const site = page(["/"]);
+    expect(Parlour.homeLinks(site.doc, { search: "?daily=1" }, store())).toBe(0);
+    expect(site.links[0].attrs.href).toBe("/");
+    expect(Parlour.fromApp({ search: "?from=application" }, store())).toBe(false);
+  });
+});

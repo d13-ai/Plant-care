@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { PipesIcon } from "@/components/icons";
-import { openPage } from "@/lib/links";
+import { openInApp } from "@/lib/links";
 import { font, radius, space, useTheme } from "@/theme";
 
 /**
@@ -29,7 +29,7 @@ export function GamesCard() {
     <Pressable
       accessibilityRole="link"
       accessibilityLabel="Parlour Games"
-      onPress={() => openPage(HUB)}
+      onPress={() => openInApp(HUB)}
       style={({ pressed }) => [
         styles.card,
         { backgroundColor: t.plum, borderColor: t.border, opacity: pressed ? 0.85 : 1 },
@@ -59,7 +59,7 @@ export function GamesLink() {
       accessibilityRole="link"
       accessibilityLabel="Parlour Games"
       hitSlop={8}
-      onPress={() => openPage(HUB)}
+      onPress={() => openInApp(HUB)}
       style={({ pressed }) => [styles.link, { opacity: pressed ? 0.7 : 1 }]}
     >
       <PipesIcon size={16} dry={t.dropRing} wet={t.leaf} node={t.gold} />

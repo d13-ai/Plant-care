@@ -19,7 +19,7 @@ back.
 | **Elbow Room** | `/parlour-games/elbow-room` — one plant per bed, row and column, none touching — the plain rules of Queens and Meowdoku, with plants. Three plot sizes, a nudge that explains the next deduction, a practice board that walks every step, a daily board with a share line, and an embed. |
 | **Windowsill** | `/parlour-games/windowsill` — arrange the plants on a stepped shelf so every one of them gets the light it wants. Three shelf sizes, boards dealt to a measured difficulty, practice, a daily board and an embed, all on the same routes Trickle uses. |
 | **The streak** | One run across the whole corner, shown on the hub: playing any of these today keeps it alive. |
-| **The way in** | A card on the greenhouse shown only when nothing needs attention, plus a permanent link at the foot of the plant list. Both point at the hub, not at a game. |
+| **The way in** | A card on the greenhouse shown only when nothing needs attention, plus a permanent link at the foot of the plant list. Both point at the hub, not at a game. In the Android app they open a browser sheet over the greenhouse (`openInApp`, with `?from=app`); the games then point their PlantParlour links at `plantparlour://`, so the way back lands in the app rather than in a signed-out web app. |
 
 ## What actually drives the habit
 
