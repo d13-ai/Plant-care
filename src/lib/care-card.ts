@@ -17,7 +17,8 @@ export interface CareCard {
   toxicity: string;
 }
 
-const keyFor = (species: string) => species.trim().toLowerCase().replace(/\s+/g, " ");
+/** How a species is filed in the on-device guide cache. */
+export const keyFor = (species: string) => species.trim().toLowerCase().replace(/\s+/g, " ");
 
 /**
  * The care guide for a species: the on-device copy if we have one, otherwise

@@ -12,7 +12,7 @@ export type { CalendarTask, CareInstructionsSource, BuildIcsOptions } from "@/do
 /**
  * Save/share an .ics file. On web this triggers a download that phones and
  * desktops open straight into the Calendar app; on native it writes a temp
- * file and opens the share sheet.
+ * file and opens the share sheet, from which the keeper picks their calendar app.
  */
 export async function saveIcs(filename: string, ics: string): Promise<void> {
   const { Platform } = await import("react-native");
@@ -30,8 +30,10 @@ export async function saveIcs(filename: string, ics: string): Promise<void> {
     return;
   }
 
+  // expo-sharing rather than React Native's Share: that one attaches a file
+  // only on iOS, and on Android handed the share sheet nothing at all.
   const { File, Paths } = await import("expo-file-system");
-  const { Share } = await import("react-native");
+  const Sharing = await import("expo-sharing");
   const file = new File(Paths.cache, filename);
   try {
     file.delete();
@@ -40,5 +42,5 @@ export async function saveIcs(filename: string, ics: string): Promise<void> {
   }
   file.create();
   file.write(ics);
-  await Share.share({ url: file.uri, title: filename });
+  await Sharing.shareAsync(file.uri, { mimeType: "text/calendar", UTI: "com.apple.ical.ics", dialogTitle: "Add to calendar" });
 }

@@ -26,6 +26,10 @@ export const supabase = createClient(SUPABASE_URL || "http://localhost", SUPABAS
     // the home-screen app uses, so a session arriving in the URL can be
     // picked up. (Email and password is the primary path.)
     detectSessionInUrl: Platform.OS === "web",
+    // Google sign-in in the app comes back with a one-time code to trade for
+    // a session (lib/auth.ts signInWithGoogle). The web keeps the implicit
+    // flow it has always used, where the session rides in the URL.
+    flowType: Platform.OS === "web" ? "implicit" : "pkce",
   },
 });
 

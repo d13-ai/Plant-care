@@ -8,6 +8,7 @@ import { StatusBar } from "expo-status-bar";
 import { Platform, View } from "react-native";
 import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
 import { Body, Button, Row, Title } from "@/components/ui";
+import { ReminderKeeper } from "@/components/reminders";
 import { ResetPassword } from "@/components/reset-password";
 import { Welcome } from "@/components/welcome";
 import { migrate } from "@/db";
@@ -181,12 +182,13 @@ export default function RootLayout() {
       databaseName="plant-passport.db"
       onError={openFailed}
       onInit={async (db) => {
-        await migrate(db);
+        await migrate(db, { wal: Platform.OS !== "web" });
         await loadSyncStatus(db);
         requestSync(db, 0);
       }}
     >
       <NavigationTrail />
+      <ReminderKeeper />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: t.background },

@@ -15,7 +15,7 @@ export const SITE = "https://plantparlour.org";
  * privacy notice silently re-dated the terms, which tells a keeper something
  * changed in an agreement that did not change at all.
  */
-export const UPDATED = { privacy: "6 October 2026", terms: "6 October 2026" };
+export const UPDATED = { privacy: "7 October 2026", terms: "6 October 2026" };
 /**
  * When the arbitration agreement was added, which is what an existing
  * keeper's 30-day opt-out window counts from. Kept apart from UPDATED.terms

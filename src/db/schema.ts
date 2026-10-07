@@ -75,9 +75,12 @@ export const MIGRATIONS: Record<number, string[]> = {
   ],
 };
 
+// No PRAGMAs in here: this runs inside migrate()'s transaction, and SQLite
+// refuses to change the journal mode inside one ("cannot change into wal mode
+// from within a transaction") -- which is exactly how the first Android build
+// failed to open its database at all. The browser build ignored it, so it
+// went unnoticed until then. migrate() sets both pragmas outside first.
 export const CREATE_TABLES = `
-PRAGMA journal_mode = WAL;
-PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS plants (
   id                  INTEGER PRIMARY KEY AUTOINCREMENT,

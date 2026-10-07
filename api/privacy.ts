@@ -26,7 +26,8 @@ const sections = [
   },
   {
     heading: "Where it lives",
-    html: `<p>Your records are stored in a Postgres database and file storage run by Supabase, hosted in the United States (US East). The site itself is served by Vercel. A copy of your plants is also kept on the device you use, so the app works when you have no signal.</p>`,
+    html: `<p>Your records are stored in a Postgres database and file storage run by Supabase, hosted in the United States (US East). The site itself is served by Vercel. A copy of your plants is also kept on the device you use, so the app works when you have no signal.</p>
+<p>Care reminders, if you turn them on in the app, are worked out and scheduled on your phone itself. Nothing about them is sent to us or to anyone else.</p>`,
   },
   {
     heading: "About your photos",
