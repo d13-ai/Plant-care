@@ -8,6 +8,7 @@ import { StatusBar } from "expo-status-bar";
 import { Platform, View } from "react-native";
 import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
 import { Body, Button, Row, Title } from "@/components/ui";
+import { ReminderKeeper } from "@/components/reminders";
 import { ResetPassword } from "@/components/reset-password";
 import { Welcome } from "@/components/welcome";
 import { migrate } from "@/db";
@@ -187,6 +188,7 @@ export default function RootLayout() {
       }}
     >
       <NavigationTrail />
+      <ReminderKeeper />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: t.background },

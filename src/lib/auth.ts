@@ -5,6 +5,7 @@ import { Platform } from "react-native";
 import { Directory, Paths } from "expo-file-system";
 import * as WebBrowser from "expo-web-browser";
 import { markAllDirty, wipeLocalData } from "@/db";
+import { stopReminders } from "./reminders";
 import { OPT_OUT_KEY } from "@/domain/analytics";
 import { NATIVE_REDIRECT, readOAuthReturn } from "@/domain/oauth";
 import { supabase } from "./supabase";
@@ -276,6 +277,7 @@ export async function deleteAccount(db: SQLiteDatabase, typed: string): Promise<
   }
 
   await wipeLocalData(db);
+  await stopReminders();
   if (Platform.OS !== "web") {
     try {
       const dir = new Directory(Paths.document, "photos");
@@ -301,6 +303,8 @@ export async function deleteAccount(db: SQLiteDatabase, typed: string): Promise<
 /** Sign out. The plants stay on this device; they just stop syncing. */
 export async function signOut(db: SQLiteDatabase): Promise<void> {
   await supabase.auth.signOut();
+  // The greenhouse stops showing; so do its reminders.
+  await stopReminders();
   await markAllDirty(db);
 }
 

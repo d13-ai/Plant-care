@@ -44,6 +44,8 @@ const ASSETS = [
   { file: "android-icon-foreground.png", size: 1024, bg: null, scale: 0.56 },
   { file: "android-icon-background.png", size: 1024, bg: AUBERGINE, scale: 0 },
   { file: "android-icon-monochrome.png", size: 1024, bg: null, color: "#FFFFFF", scale: 0.56 },
+  // Android's status-bar icon for reminders: white on transparent, the system tints it.
+  { file: "notification-icon.png", size: 96, bg: null, color: "#FFFFFF", scale: 0.84 },
 ];
 
 /**

@@ -167,3 +167,11 @@ else of note. Photos are chosen through the system photo picker, which needs
 no permission; `app.json` blocks the media-library and microphone
 permissions that libraries would otherwise add, because Play rejects
 photo-library access an app doesn't strictly need.
+
+Care reminders (version 5 on) add **notifications** (`POST_NOTIFICATIONS`,
+asked for only after the keeper taps "Turn on reminders") and
+`RECEIVE_BOOT_COMPLETED`, so queued reminders survive a restart. They are
+scheduled on the phone by `expo-notifications`: no push service, no device
+token, nothing sent anywhere — the Data safety answers don't change. No
+exact-alarm permission is declared; Android delivers them within a few
+minutes of the reminder time, which is all a watering reminder needs.

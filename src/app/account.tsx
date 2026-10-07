@@ -2,6 +2,7 @@ import { Stack, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { Platform, ScrollView, Share, StyleSheet } from "react-native";
+import { ReminderSettings } from "@/components/reminders";
 import { Badge, Body, Button, Card, Field, Heading, Row, SectionLabel } from "@/components/ui";
 import { pendingChanges } from "@/db";
 import { DELETE_WORD, deleteAccount, signOut, useAccount } from "@/lib/auth";
@@ -168,6 +169,8 @@ export default function AccountScreen() {
           <Button title="Sign out" small disabled={busy} onPress={leave} />
         </Row>
       </Card>
+
+      <ReminderSettings />
 
       <Card>
         <Heading>Your conservatory</Heading>

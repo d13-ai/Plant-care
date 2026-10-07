@@ -7,6 +7,7 @@ import { FirstPlant } from "@/components/first-plant";
 import { LogoMark, PersonIcon, PlusIcon } from "@/components/icons";
 import { GamesCard, GamesLink } from "@/components/parlour-games";
 import { PlantCard, summarize } from "@/components/plant-card";
+import { ReminderPrompt } from "@/components/reminders";
 import { Body, SectionLabel, Title } from "@/components/ui";
 import { UndoBar, useUndo } from "@/components/undo-bar";
 import { coverPhoto, deleteEvent, listPlants, logCare, type PlantWithHistory } from "@/db";
@@ -124,6 +125,7 @@ export default function Greenhouse() {
           ListHeaderComponent={
             data ? (
               <View style={styles.listHeader}>
+                <ReminderPrompt plants={data} />
                 {due.length > 0 && (
                   <View style={{ gap: space.sm }}>
                     <SectionLabel>Water due</SectionLabel>
