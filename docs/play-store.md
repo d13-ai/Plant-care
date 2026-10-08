@@ -5,6 +5,11 @@ the answers change when the app does: if a change here would make one of
 them untrue (a new kind of data, ads, a new third party), update this file in
 the same commit.
 
+## Status
+
+First production release (version 6) sent for review on 8 Oct 2026, with the
+listing text below.
+
 ## Before the first upload
 
 - **Package name: `org.plantparlour.app`.** Registered in Play Console when
@@ -23,34 +28,45 @@ the same commit.
 **App name** (30 max): `PlantParlour: Plant Care`
 
 **Short description** (80 max):
-`Plant care reminders, AI plant ID and a care record for every plant you keep.`
+`Plant ID, care reminders and a living care record for every plant you keep.`
 
 **Full description** (4000 max):
 
 ```
-PlantParlour is a care record for every plant you keep, and it goes with the plant.
+Every plant you love deserves a history. PlantParlour keeps it, and tells you what each one needs today.
 
-Photograph a plant and PlantParlour tells you what it is, down to the cultivar where it can, and how it's doing. Then it keeps track of the rest: when you watered, fed and repotted, what went wrong and what you did about it, and what each plant needs today.
+Snap a photo and PlantParlour names your plant, down to the cultivar where it can, including variegated and collector varieties. See how it's doing, get a care guide written for that species, and let reminders tell you when it's time to water, feed or repot.
 
-WHAT IT DOES
-• Identifies plants from a photo, including variegated and collector cultivars
-• Checks a plant's health from a photo and suggests what to do
-• Keeps a watering, feeding and repotting schedule for each plant
-• "Still moist" puts watering off when the soil is still wet, and learns how often each plant really needs it
-• Logs problems, treatments, repotting and cuttings, with photos
-• Gives a care guide for every species: light, water, humidity, soil and common problems
-• Works offline, and keeps your plants in step across your phones and computers
+NEVER MISS A WATERING
+• A reminder on the day each plant needs water, fertilizer, repotting or a fresh photo, with tips from its care guide
+• One gentle nudge a day for anything still waiting, so nothing slips through the cracks
+• Soil still damp? Tap "Still moist" and watering waits. Do it a few times and PlantParlour suggests a better schedule for that plant, in that spot
+• You pick the time. Reminders are scheduled on your phone
 
-PLANT TAGS
-Publish a plant and it gets its own tag: a link to its species, care history and photos. Pass it on with the plant when you sell, swap or gift a cutting, and its story goes with it. Nothing is public until you publish it.
+KNOW WHAT YOU'VE GOT
+• Identify plants from a photo, including variegated and rare collector cultivars
+• Health checks from a photo: what's going wrong and what to do about it
+• A care guide for every species: light, water, humidity, soil, feeding and the common problems to watch for
+
+A RECORD THAT GROWS WITH YOUR PLANT
+• Log watering, feeding, repotting, pests, treatments and cuttings, with photos
+• Watch every plant change over time in its own photo history
+• Trace each cutting back to its mother plant
+• Works offline, and keeps your collection in step across your phones and computers
+
+PLANT TAGS: ITS STORY GOES WITH IT
+Selling, swapping or gifting a cutting? Publish the plant and it gets its own tag, a link to its species, care history and photos, so whoever takes it home knows exactly what it's been through. Show off your collection on your own conservatory page and follow the collections of keepers you admire. Nothing is public until you publish it.
+
+A QUIET MINUTE
+On days when nothing needs you, sit down with Parlour Games: calm plant puzzles with a fresh daily board, no timers and nothing to lose, right inside the app.
 
 HONEST ABOUT THE AI
-Identification and health checks are AI answers, and AI can be wrong. Every answer can be reported from where it's shown. Toxicity notes always come with the ASPCA list and the Animal Poison Control number, because the AI is not the authority on whether a plant is safe around pets or children.
+AI can be wrong, so every answer can be reported right where it's shown. Toxicity notes always come with the ASPCA list and the Animal Poison Control number, because when it comes to pets and children, the AI is not the final word.
 
-YOUR DATA
-No ads. Your records aren't sold or shared. Delete your account and everything in it from inside the app, at any time.
+YOUR PLANTS, YOUR DATA
+No ads. Your records aren't sold or shared. Delete your account and everything in it from inside the app, any time.
 
-Free plant care library and calm plant puzzles at plantparlour.org.
+More free care guides for over 150 houseplants at plantparlour.org.
 ```
 
 **Category:** House & Home. **Tags:** Plant care, Gardening, Home & garden.

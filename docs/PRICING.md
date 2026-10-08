@@ -71,10 +71,30 @@ worst of both.
 Overridable with `AI_HEALTH_MODEL`, and an explicit `model` in the request
 still wins, so the two can be compared on one photo.
 
-**Untested.** The Opus-vs-Sonnet comparison recorded in the function was about
-identification, not health reading, and `CLAUDE.md` forbids spending the
-project's API key on evaluations without asking. A five-photo A/B across both
-models would cost about **50¢**. Worth doing before this is load-bearing.
+**Tested 8 Oct 2026, and moved to Sonnet 5.5** (same $2/$10). The comparison
+ran inside a Claude session on the owner's subscription, not on the project's
+key: 25 photos of the owner's 14 plants, the live system prompt and cultivar
+list, Opus 5.5 / Sonnet 5.5 / Haiku 5.5. (Sonnet 5 itself couldn't be run
+there.)
+
+| | Opus 5.5 | Sonnet 5.5 | Haiku 5.5 |
+|---|---|---|---|
+| Blind ID, top answer right (12 plants with trusted labels) | 11 | 11 | 6 |
+| Named the Rojo Congo | yes | no (Pink Princess) | no |
+| Said so when a plant was filed under the wrong species (2 cases) | both | both | neither |
+| Health readings on 10 plants with logged problems | thorough | about as good, different extras | thinner, repeats earlier checks |
+
+So identification stays on Opus 5.5 -- Sonnet 5.5 matched its score but missed
+the hardest collector cultivar, which is the job -- and health checks go to
+Sonnet 5.5. Haiku is not good enough for either. Ten plants with one opinion
+each is a sample, not proof; `AI_HEALTH_MODEL=claude-sonnet-5` puts the old
+model back without a redeploy.
+
+The same change opts both into `fallbacks: "default"`: a photo a model's
+safety filter declines is re-run on Anthropic's recommended fallback inside
+the same call, every attempt is costed at its own model's price
+(`_shared/ai-cost.ts`), and if every model declines the keeper keeps the
+trial identification.
 
 ## What a keeper actually uses
 
