@@ -44,6 +44,14 @@ window.va('beforeSend', function (event) {
   try {
     if (localStorage.getItem("pp:not-counted") === "1") return;
   } catch (e) {}
+  // Nor does a page opened inside the app, which counts nothing.
+  var fromApp = /[?&]from=app(&|$)/.test(location.search);
+  try {
+    if (fromApp) sessionStorage.setItem("pp:in-app", "1");
+    if (sessionStorage.getItem("pp:in-app") === "1") return;
+  } catch (e) {
+    if (fromApp) return;
+  }
   var s = document.createElement("script");
   s.defer = true;
   s.src = "/_vercel/insights/script.js";
