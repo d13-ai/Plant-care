@@ -13,13 +13,14 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk";
-import { zodOutputFormat } from "npm:@anthropic-ai/sdk/helpers/zod";
+import { betaZodOutputFormat } from "npm:@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "npm:zod";
+import { callCost } from "../_shared/ai-cost.ts";
 import { boundedText, claimAiCall, claimPhotoCall, refundAiCall, refundPhotoCall, today } from "../_shared/cap.ts";
 
 // Model and effort can be overridden by function secrets without a
-// redeploy: AI_MODEL (claude-opus-5-5 | claude-opus-5 | claude-sonnet-5 |
-// claude-haiku-4-5) and AI_EFFORT (low | medium | high). Opus is the
+// redeploy: AI_MODEL (claude-opus-5-5 | claude-opus-5 | claude-sonnet-5-5 |
+// claude-sonnet-5 | claude-haiku-4-5) and AI_EFFORT (low | medium | high). Opus is the
 // default: on five real photos Opus 5 named every plant, cultivars included
 // (Thai Constellation, White Princess); Sonnet got two, calling the Thai Con
 // an Albo. About 3¢ a photo versus 1¢ — the difference a collector notices
@@ -30,7 +31,7 @@ import { boundedText, claimAiCall, claimPhotoCall, refundAiCall, refundPhotoCall
 // think a little more per answer than Opus 5 at the same effort, so a
 // photo costs about what it did rather than a fifth less. Opus 5 stays on
 // the list so AI_MODEL can put it back without a redeploy.
-const MODELS = ["claude-sonnet-5", "claude-opus-5-5", "claude-opus-5", "claude-haiku-4-5"] as const;
+const MODELS = ["claude-sonnet-5-5", "claude-sonnet-5", "claude-opus-5-5", "claude-opus-5", "claude-haiku-4-5"] as const;
 const DEFAULT_MODEL = MODELS.find((m) => m === Deno.env.get("AI_MODEL")) ?? "claude-opus-5-5";
 /**
  * A health check on a plant the keeper has already named does not need the
@@ -43,22 +44,26 @@ const DEFAULT_MODEL = MODELS.find((m) => m === Deno.env.get("AI_MODEL")) ?? "cla
  * about half the cost, on what will be the commonest scan once somebody's
  * collection is photographed. Identification keeps Opus.
  *
+ * Sonnet 5.5 since 8 Oct 2026, at Sonnet 5's price. Compared on ten of the
+ * owner's plants against Opus 5.5 and Haiku 5.5 (docs/PRICING.md): it read
+ * the problems about as well as Opus, and like Opus it said so when a plant
+ * was filed under the wrong species -- which Haiku did not. Sonnet 5 stays on
+ * the list so AI_HEALTH_MODEL can put it back without a redeploy.
+ *
  * Overridable with AI_HEALTH_MODEL, and an explicit `model` in the request
  * still wins over both, so the two can be compared on the same photo.
  */
-const HEALTH_MODEL = MODELS.find((m) => m === Deno.env.get("AI_HEALTH_MODEL")) ?? "claude-sonnet-5";
-// Anthropic list prices, $ per million tokens, so each answer can say what
-// it cost and the day's spend adds up in ai_usage. Update when prices move.
-const PRICES: Record<string, { input: number; output: number }> = {
-  "claude-opus-5-5": { input: 4, output: 20 },
-  "claude-opus-5": { input: 5, output: 25 },
-  "claude-sonnet-5": { input: 2, output: 10 },
-  "claude-haiku-4-5": { input: 1, output: 5 },
-};
-const costOf = (model: string, input: number, output: number) => {
-  const p = PRICES[model] ?? { input: 0, output: 0 };
-  return (input * p.input + output * p.output) / 1_000_000;
-};
+const HEALTH_MODEL = MODELS.find((m) => m === Deno.env.get("AI_HEALTH_MODEL")) ?? "claude-sonnet-5-5";
+/**
+ * A model's safety filters can decline a request, and a plant photo is not
+ * immune -- a decline used to reach the keeper as "couldn't be analysed",
+ * billed, with one of their five trial identifications gone. With
+ * `fallbacks: "default"` Anthropic re-runs a declined request on the model it
+ * recommends for that kind of decline, inside the same call. Haiku has no
+ * server-side fallback, so it is asked without one.
+ */
+const FALLBACK_MODELS: readonly string[] = ["claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5"];
+const FALLBACK_BETA = "server-side-fallback-2026-07-01";
 
 const EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
 const EFFORT = EFFORTS.find((e) => e === Deno.env.get("AI_EFFORT")) ?? "medium";
@@ -236,15 +241,17 @@ Deno.serve(async (req: Request) => {
 
   try {
     const client = new Anthropic({ apiKey });
-    const response = await client.messages.parse({
+    const fallback = FALLBACK_MODELS.includes(MODEL);
+    const response = await client.beta.messages.parse({
       model: MODEL,
+      ...(fallback ? { betas: [FALLBACK_BETA], fallbacks: "default" as const } : {}),
       // Room for the thinking as well as the answer: Opus 5.5 always thinks,
       // and thinking counts against this limit. A limit sized for the answer
       // alone would cut the JSON off half-way and still bill for it. Only
       // what is used is charged.
       max_tokens: 8192,
       system: SYSTEM,
-      output_config: { effort: EFFORT, format: zodOutputFormat(Verdict) },
+      output_config: { effort: EFFORT, format: betaZodOutputFormat(Verdict) },
       messages: [
         {
           role: "user",
@@ -265,14 +272,20 @@ Deno.serve(async (req: Request) => {
     // Half of one month's Console bill was missing from our own table because
     // of it. What we record has to be what Anthropic charges, or nothing
     // downstream (the cap, docs/PRICING.md, "what did that cost") is true.
-    const { input_tokens, output_tokens } = response.usage;
-    const cost_usd = costOf(MODEL, input_tokens, output_tokens);
-    console.log(JSON.stringify({ fn: "analyze", model: MODEL, effort: EFFORT, mode, photos: images.length, brief: care_brief.length, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)), stop_reason: response.stop_reason }));
+    const { cost_usd, input_tokens, output_tokens } = callCost(MODEL, response.usage);
+    // `response.model` is whoever answered: the fallback, if the first model declined.
+    const answeredBy = response.model;
+    console.log(JSON.stringify({ fn: "analyze", model: MODEL, answered_by: answeredBy, effort: EFFORT, mode, photos: images.length, brief: care_brief.length, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)), stop_reason: response.stop_reason }));
     await admin.rpc("record_ai_usage", { p_keeper: user.id, p_day: day, p_input: input_tokens, p_output: output_tokens, p_cost: cost_usd });
 
-    if (response.stop_reason === "refusal") return json({ error: "The photo couldn't be analysed." }, 422);
+    if (response.stop_reason === "refusal") {
+      // Every model asked declined. That cost money and is recorded above,
+      // but it isn't an identification the keeper got, so the trial keeps it.
+      await refundPhotoCall(admin, user.id);
+      return json({ error: "The photo couldn't be analysed." }, 422);
+    }
     if (!response.parsed_output) return json({ error: "No usable answer came back — try another photo." }, 502);
-    return json({ verdict: response.parsed_output, remaining: claim.remaining, photos_left: photos.left, model: MODEL, effort: EFFORT, usage: { input_tokens, output_tokens }, cost_usd });
+    return json({ verdict: response.parsed_output, remaining: claim.remaining, photos_left: photos.left, model: answeredBy, effort: EFFORT, usage: { input_tokens, output_tokens }, cost_usd });
   } catch (err) {
     // Give the slot back only when the model cannot have run. An auth
     // failure, a rate limit or a connection that never opened cost nothing,
