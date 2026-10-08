@@ -144,7 +144,10 @@ parties: none.**
 
 Not collected: location, contacts, financial info, health info, messages,
 audio, files, calendar, web browsing, device IDs. The Android app has no
-analytics SDK; page-view counting is on the website only.
+analytics SDK; page-view counting is on the website only. The app opens
+Parlour Games in a browser sheet (`?from=app`), and those pages skip the
+counter for the whole visit (`IN_APP_KEY` in `src/domain/analytics.ts`), since
+Google treats what a page shown inside the app collects as the app collecting.
 
 **Is data processed ephemerally?** No for photos (they're stored as part of
 the record). **Is all collected data encrypted in transit?** Yes.

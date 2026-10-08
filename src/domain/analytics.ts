@@ -51,6 +51,16 @@ const REDACTIONS: [RegExp, string][] = [
  */
 export const OPT_OUT_KEY = "pp:not-counted";
 
+/**
+ * A page shown inside the Android app's browser sheet: Parlour Games, opened
+ * with `?from=app` (src/lib/links.ts, openInApp), remembered for the tab so
+ * the hub's links on to each game stay uncounted too. The app itself carries
+ * no analytics, and Play's Data safety form says so; a page it opens counts
+ * as the app collecting, so those pages don't count either. The games'
+ * harness reads the same key to point their links back at the app.
+ */
+export const IN_APP_KEY = "pp:in-app";
+
 /** The redaction, as source, so the browser and the tests share one copy. */
 export const BEFORE_SEND = `function (event) {
   try {
@@ -98,6 +108,14 @@ window.va('beforeSend', ${BEFORE_SEND});
   try {
     if (localStorage.getItem(${JSON.stringify(OPT_OUT_KEY)}) === "1") return;
   } catch (e) {}
+  // Nor does a page opened inside the app, which counts nothing.
+  var fromApp = /[?&]from=app(&|$)/.test(location.search);
+  try {
+    if (fromApp) sessionStorage.setItem(${JSON.stringify(IN_APP_KEY)}, "1");
+    if (sessionStorage.getItem(${JSON.stringify(IN_APP_KEY)}) === "1") return;
+  } catch (e) {
+    if (fromApp) return;
+  }
   var s = document.createElement("script");
   s.defer = true;
   s.src = ${JSON.stringify(ANALYTICS_SCRIPT_SRC_LITERAL)};

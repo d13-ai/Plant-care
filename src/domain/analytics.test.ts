@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, test } from "vitest";
-import { ANALYTICS_SNIPPET, BEFORE_SEND, OPT_OUT_KEY, redactUrl } from "./analytics";
+import { ANALYTICS_INLINE, ANALYTICS_SNIPPET, BEFORE_SEND, IN_APP_KEY, OPT_OUT_KEY, redactUrl } from "./analytics";
 
 const SITE = "https://plantparlour.org";
 
@@ -102,3 +102,39 @@ describe("our own visits", () => {
   });
 });
 
+
+describe("pages the Android app opens", () => {
+  /** Runs the real snippet against a fake page; says whether the counter got loaded. */
+  function loads(search: string, tab: Record<string, string> = {}): boolean {
+    let appended = false;
+    const store = (kept: Record<string, string>) => ({
+      getItem: (k: string) => (k in kept ? kept[k] : null),
+      setItem: (k: string, v: string) => { kept[k] = v; },
+    });
+    const window = {} as Record<string, unknown>;
+    new Function("window", "location", "localStorage", "sessionStorage", "document", ANALYTICS_INLINE)(
+      window,
+      { hostname: "plantparlour.org", search },
+      store({}),
+      store(tab),
+      { createElement: () => ({}), head: { appendChild: () => { appended = true; } } },
+    );
+    return appended;
+  }
+
+  test("a page opened in the app's sheet is not counted, nor the pages after it in that tab", () => {
+    const tab: Record<string, string> = {};
+    expect(loads("?from=app", tab)).toBe(false);
+    expect(tab[IN_APP_KEY]).toBe("1");
+    expect(loads("", tab)).toBe(false);
+  });
+
+  test("the website is counted as before", () => {
+    expect(loads("")).toBe(true);
+    expect(loads("?daily=1")).toBe(true);
+  });
+
+  test("the games' harness remembers the sheet under the same key", () => {
+    expect(readFileSync("public/parlour-games/harness.js", "utf-8")).toContain(`"${IN_APP_KEY}"`);
+  });
+});
