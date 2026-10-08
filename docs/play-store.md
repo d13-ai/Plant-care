@@ -194,3 +194,35 @@ scheduled on the phone by `expo-notifications`: no push service, no device
 token, nothing sent anywhere — the Data safety answers don't change. No
 exact-alarm permission is declared; Android delivers them within a few
 minutes of the reminder time, which is all a watering reminder needs.
+
+## Over-the-air updates (from version 7)
+
+Builds from version 7 on carry `expo-updates`, so a change to the app's
+JavaScript -- screens, wording, logic, like the health-check photo choice --
+can reach installed phones without a new store build:
+
+```
+npm run update:android -- --message "Health checks: one earlier photo for comparison"
+```
+
+That needs `EXPO_TOKEN`, so it runs from a cloud session in the Default
+environment, like the builds. The phone downloads the update in the background
+when the app opens and runs it the next time it starts.
+
+- **Only JavaScript.** Anything native -- a new permission, a new Expo module,
+  a config-plugin change in `app.json` -- changes the runtime fingerprint
+  (`runtimeVersion: { policy: "fingerprint" }`), and builds with the old
+  fingerprint never receive an update made for the new one. So a native change
+  still needs a store build; a JS change no longer does. Versions 2-6 predate
+  this and only change by store update.
+- **Channels:** production builds listen on `production`, preview on
+  `preview`. Publishing to `production` reaches internal testers and, once
+  live, everyone on that build.
+- **Play policy** allows updates like these as long as the app's purpose and
+  what the listing promises don't change; a new feature of any size still goes
+  through review as a build.
+- **Cost:** Expo's free plan covers 1,000 monthly active users and 100 GiB of
+  bandwidth, with no overage -- past 1,000 users, updates stop being served
+  until a paid plan (Starter, $19/month, 3,000 users) is on.
+- Bug reports from the app include the update it was running (`update`,
+  `channel`, `runtime` in the report's `app` field).

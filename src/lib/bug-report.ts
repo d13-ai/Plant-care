@@ -10,6 +10,7 @@
  * the button is pressed, so a report filed after the fact still has the
  * failure in it.
  */
+import * as Updates from "expo-updates";
 import { Platform } from "react-native";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { type AiReportReason, type AiSurface, aiReportNote, answerForReport } from "@/domain/ai-report";
@@ -58,7 +59,12 @@ export function watchForTrouble(): void {
 /** Where the app was running. No content, only shape. */
 function environment(): Record<string, unknown> {
   const base: Record<string, unknown> = { version: APP_VERSION, platform: Platform.OS };
-  if (Platform.OS !== "web" || typeof window === "undefined") return base;
+  if (Platform.OS !== "web") {
+    // Which over-the-air update the phone is running, not just which build:
+    // after an update the same build can be running different code.
+    return { ...base, update: Updates.updateId ?? "embedded", channel: Updates.channel ?? null, runtime: Updates.runtimeVersion ?? null };
+  }
+  if (typeof window === "undefined") return base;
   const nav = window.navigator;
   return {
     ...base,

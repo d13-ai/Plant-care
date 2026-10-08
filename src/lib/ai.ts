@@ -5,7 +5,7 @@ import { KNOWN_CULTIVARS } from "@/domain/species";
 import { ensureSession, supabase, supabaseConfigured } from "./supabase";
 
 /** Bump when the prompt changes, so a remembered answer from the old one isn't reused. */
-const PROMPT_VERSION = 6;
+const PROMPT_VERSION = 7;
 /** Photos per scan. Each one costs 3,000-4,000 input tokens depending on its
  *  shape -- about 2c on Opus, 0.7c on Sonnet. */
 export const MAX_SCAN_PHOTOS = 3;
@@ -23,6 +23,13 @@ export const MAX_SCAN_PHOTOS = 3;
  * photo, a fifth of a cent on Sonnet.
  */
 const LONG_EDGE = 2576;
+
+/**
+ * An earlier photo that rides along with a health check only to be compared
+ * against: enough to see that a patch has grown, at about a quarter of the
+ * tokens of a full-detail photo (src/domain/health-shots.ts).
+ */
+const COMPARISON_LONG_EDGE = 1280;
 
 /** What the analyze function returns — mirrors its zod schema. */
 export interface Verdict {
@@ -155,6 +162,9 @@ export async function analyzePhoto(
     /** When each photo was taken, parallel to `uris`, so the model can compare
      *  one against another instead of seeing a pile of undated pictures. */
     photoDates?: (string | null | undefined)[];
+    /** Parallel to `uris`: "earlier" marks a photo sent only for comparison,
+     *  smaller, and labelled as such for the model. */
+    roles?: ("current" | "earlier")[];
   } = {},
 ): Promise<Answer> {
   if (!supabaseConfigured) throw new Error("Supabase isn't configured.");
@@ -162,14 +172,15 @@ export async function analyzePhoto(
   if (!list.length) throw new Error("Pick a photo first.");
 
   const images: string[] = [];
-  for (const uri of list) {
+  for (const [i, uri] of list.entries()) {
     // Measure first: which edge is the long one decides which to cap, and a
     // photo already smaller than the cap is left alone rather than upscaled.
     const probe = await ImageManipulator.manipulateAsync(uri, [], {});
+    const cap = options.roles?.[i] === "earlier" ? COMPARISON_LONG_EDGE : LONG_EDGE;
     const resize =
       probe.width >= probe.height
-        ? { width: Math.min(probe.width, LONG_EDGE) }
-        : { height: Math.min(probe.height, LONG_EDGE) };
+        ? { width: Math.min(probe.width, cap) }
+        : { height: Math.min(probe.height, cap) };
     const shrunk = await ImageManipulator.manipulateAsync(uri, [{ resize }], {
       // 0.9 rather than 0.8: the camera has already compressed these once,
       // and a second lossy pass eats exactly the low-contrast detail a health
@@ -209,6 +220,7 @@ export async function analyzePhoto(
           data,
           media_type: "image/jpeg",
           taken_at: options.photoDates?.[i] ?? undefined,
+          role: options.roles?.[i] ?? undefined,
         })),
         mode: options.mode ?? "both",
         // What the keeper has logged for this plant. Only the health check

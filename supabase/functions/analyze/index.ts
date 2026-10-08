@@ -167,7 +167,10 @@ Deno.serve(async (req: Request) => {
   // checks started riding along (two, at most 320 characters each).
   const care_brief = mode === "health" ? boundedText(body.care_brief, 2000) : "";
   const MEDIA = ["image/jpeg", "image/png", "image/webp"];
-  type Img = { data: string; media_type: "image/jpeg" | "image/png" | "image/webp"; taken_at?: string };
+  // `role: "earlier"` marks a photo sent only to compare against (the app
+  // sends it smaller); anything else is the plant as it is now. Older app
+  // builds send no role, and get exactly what they always did.
+  type Img = { data: string; media_type: "image/jpeg" | "image/png" | "image/webp"; taken_at?: string; earlier: boolean };
   const images: Img[] = [];
   const raw = Array.isArray(body.images) ? body.images : body.image ? [{ data: body.image, media_type: body.media_type ?? "image/jpeg" }] : [];
   for (const r of raw.slice(0, 3)) {
@@ -181,6 +184,7 @@ Deno.serve(async (req: Request) => {
       data,
       media_type: media_type as Img["media_type"],
       taken_at: typeof taken === "string" ? taken : undefined,
+      earlier: (r as { role?: unknown })?.role === "earlier",
     });
   }
   if (!images.length) return json({ error: "Missing image." }, 400);
@@ -216,9 +220,15 @@ Deno.serve(async (req: Request) => {
       : mode === "identify"
         ? "Focus on identifying this plant."
         : `Identify this plant and read its health.${species_hint ? ` The keeper thinks it's a ${species_hint}.` : ""}`;
-  const several = images.length > 1
-    ? ` There are ${images.length} photos of the same plant: identify it from the first, the whole plant, and read its health from all of them — the close-ups especially.`
-    : "";
+  const nowCount = images.filter((img) => !img.earlier).length;
+  const several =
+    (nowCount > 1
+      ? ` There are ${nowCount} photos of the plant as it is now: identify it from the first, the whole plant, and read its health from all of them — the close-ups especially.`
+      : "") +
+    (nowCount < images.length
+      ? " The last photo is an earlier one of the same plant, sent smaller, only so you can say what has changed since: read its health now from the current photo" +
+        (nowCount > 1 ? "s" : "") + ", and use the earlier one for the comparison."
+      : "");
   const askWithKnown = known.length
     ? `${ask}${several}\n\nCultivar names the keeper's app tracks (prefer these names when one fits; the list isn't exhaustive): ${known.join("; ")}.`
     : `${ask}${several}`;
@@ -235,7 +245,11 @@ Deno.serve(async (req: Request) => {
     return d === 0 ? ", taken today" : d === 1 ? ", taken yesterday" : `, taken ${d} days ago`;
   };
   const label = (i: number) => {
-    const base = i === 0 ? (images.length > 1 ? "Photo 1 — the whole plant" : "The photo") : `Photo ${i + 1} — a closer look`;
+    const base = images[i].earlier
+      ? "An earlier photo, for comparison only"
+      : i === 0
+        ? (nowCount > 1 ? "Photo 1 — the whole plant" : "The photo")
+        : `Photo ${i + 1} — a closer look`;
     return `${base}${when(images[i].taken_at)}:`;
   };
 

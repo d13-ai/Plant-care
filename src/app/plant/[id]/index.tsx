@@ -26,6 +26,7 @@ import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/ta
 import { careBrief } from "@/domain/care-brief";
 import { issueNote, problemsIn, isProblem, scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, describeScan, photoAllowance, type Verdict } from "@/lib/ai";
+import { describeShots, healthCheckShots, type HealthShot } from "@/domain/health-shots";
 import { allowanceLine, type Allowance } from "@/domain/allowance";
 import { CareGuide } from "@/components/care-guide";
 import { ReportAnswer } from "@/components/report-answer";
@@ -204,6 +205,7 @@ export default function PlantDetail() {
   const issues = openIssues(events);
   const alerts = plantAlerts(statuses, issues.length);
   const hero = coverPhoto(plant, photos);
+  const healthShots = healthCheckShots(photos, MAX_SCAN_PHOTOS);
 
   const submitLog = async () => {
     const occurredAt = daysAgoIso(logDaysAgo);
@@ -269,9 +271,9 @@ export default function PlantDetail() {
   const shareLink = (url: string) =>
     Share.share({ message: `${plant.nickname}'s plant tag: ${url}`, url }).catch(() => {});
 
-  // The newest photos go together, newest first — a close-up taken just now
-  // rides along with the last full view.
-  const checkHealth = async (shots: { uri: string; takenAt: string }[], speciesHint: string | null) => {
+  // Today's photos at full detail, and the newest earlier one, smaller, to
+  // compare against -- src/domain/health-shots.ts; the button says which.
+  const checkHealth = async (shots: HealthShot[], speciesHint: string | null) => {
     setChecking(true);
     setCheckError(null);
     try {
@@ -288,6 +290,7 @@ export default function PlantDetail() {
           speciesHint,
           careBrief: careBrief(events, plant),
           photoDates: shots.map((sh) => sh.takenAt),
+          roles: shots.map((sh) => sh.role),
         },
       );
       setCheckup(answer.verdict);
@@ -645,15 +648,13 @@ export default function PlantDetail() {
               small
               variant="primary"
               disabled={checking}
-              onPress={() =>
-                checkHealth(
-                  photos.slice(0, MAX_SCAN_PHOTOS).map((ph) => ({ uri: ph.uri, takenAt: ph.takenAt })),
-                  plant.species,
-                )
-              }
+              onPress={() => checkHealth(healthShots, plant.species)}
             />
           ) : null}
         </Row>
+        {hero && supabaseConfigured && healthShots.length > 0 ? (
+          <Body small muted>{describeShots(healthShots)}</Body>
+        ) : null}
         <PhotoTips />
         {checkError ? (
           <Body small style={{ color: c.critical.fg } as never}>
