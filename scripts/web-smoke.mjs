@@ -125,13 +125,13 @@ try {
     await page.getByText("Marble Queen pothos").waitFor({ timeout: 5000 });
     // The other way in, for someone without a plant in front of them.
     await page.getByText("Add by name").click();
-    await page.getByPlaceholder("Big Monstera").waitFor({ timeout: 10000 });
+    await page.getByPlaceholder("e.g. Big Monstera").waitFor({ timeout: 10000 });
     await page.goBack();
     await page.getByText("Start with one plant").waitFor({ timeout: 10000 });
   });
   await step("open add-plant", async () => {
     await page.getByText("Photograph a plant").click();
-    await page.getByPlaceholder("Big Monstera").waitFor();
+    await page.getByPlaceholder("e.g. Big Monstera").waitFor();
   });
   await step("the AI allowance is stated before anything is spent, and no price is", async () => {
     // It used to be discoverable only by watching it count down, and the wall
@@ -150,18 +150,18 @@ try {
     await page.getByText("Pick a species").waitFor();
     await page.getByText("Ferns", { exact: true }).click();
     await page.getByText("Boston fern").click();
-    if ((await page.getByPlaceholder("Monstera deliciosa").inputValue()) !== "Nephrolepis exaltata") throw new Error("pick didn't fill the species");
+    if ((await page.getByPlaceholder("e.g. Monstera deliciosa").inputValue()) !== "Nephrolepis exaltata") throw new Error("pick didn't fill the species");
     await page.getByText(/reminders set: water every 4 days/).waitFor();
   });
   await step("a typed cultivar is suggested and filled", async () => {
-    await page.getByPlaceholder("Monstera deliciosa").fill("thai con");
+    await page.getByPlaceholder("e.g. Monstera deliciosa").fill("thai con");
     await page.getByText(/Thai Constellation \(Monstera deliciosa/).click();
-    if ((await page.getByPlaceholder("Monstera deliciosa").inputValue()) !== "Monstera deliciosa 'Thai Constellation'") throw new Error("cultivar suggestion didn't fill");
+    if ((await page.getByPlaceholder("e.g. Monstera deliciosa").inputValue()) !== "Monstera deliciosa 'Thai Constellation'") throw new Error("cultivar suggestion didn't fill");
   });
   await step("fill and save a plant acquired 40 days ago", async () => {
-    await page.getByPlaceholder("Big Monstera").fill("Big Monstera");
-    await page.getByPlaceholder("Monstera deliciosa").fill("Monstera deliciosa");
-    await page.getByPlaceholder("South window").fill("South window");
+    await page.getByPlaceholder("e.g. Big Monstera").fill("Big Monstera");
+    await page.getByPlaceholder("e.g. Monstera deliciosa").fill("Monstera deliciosa");
+    await page.getByPlaceholder("e.g. South window").fill("South window");
     await page.getByPlaceholder("Today if blank").fill(daysAgo(40));
     await page.getByText("Add plant", { exact: true }).last().click();
     await page.getByText("Care schedule").waitFor();
@@ -426,6 +426,34 @@ try {
     if (body.includes("All good")) throw new Error("the plant still says All good");
     await shot("12-unwell-scan-flagged");
   });
+  await step("after identifying, the likeliest plant is chosen and named, and Add plant says what it will do", async () => {
+    // 10 Oct 2026: the first outside keeper on an iPhone identified a plant
+    // and left: nothing chosen, no name, "Add plant" greyed out off-screen.
+    await page.evaluate(() => { localStorage.removeItem("newPlantDraft"); localStorage.removeItem("ai:lastScan"); });
+    const verdict = {
+      is_plant: true,
+      species: [
+        { genus: "Epipremnum", species: "aureum", cultivar: "Snow Queen", common_name: "Snow Queen pothos", confidence: 0.1 },
+        { genus: "Epipremnum", species: "aureum", cultivar: "Marble Queen", common_name: "Marble Queen pothos", confidence: 0.82 },
+      ],
+      health: { overall: "healthy", findings: [] },
+      notes: "",
+    };
+    await page.route("**/functions/v1/analyze", (route) => route.fulfill(asJson({ verdict, remaining: 19, photos_left: 4, cost_usd: 0.07, model: "claude-opus-5-5" })));
+    await page.goto(base + "/plant/new");
+    await page.getByText("Give it a name to add it.").waitFor({ timeout: 20000 });
+    const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.getByText("Choose from library").click()]);
+    await chooser.setFiles(path.resolve("assets/images/icon.png"));
+    await page.getByText("Identify with AI").click();
+    await page.getByText("Adds “Marble Queen pothos” to your greenhouse and starts its care schedule.").waitFor({ timeout: 20000 });
+    if ((await page.getByPlaceholder("e.g. Big Monstera").inputValue()) !== "Marble Queen pothos") throw new Error("the name wasn't filled in");
+    if ((await page.getByPlaceholder("e.g. Monstera deliciosa").inputValue()) !== "Epipremnum aureum 'Marble Queen'") throw new Error("the likeliest species wasn't chosen");
+    await page.getByText("Chosen", { exact: true }).waitFor();
+    await page.unroute("**/functions/v1/analyze");
+    await page.getByText("Add plant", { exact: true }).last().click();
+    await page.waitForURL(/\/plant\/\d+$/, { timeout: 20000 });
+    await page.getByText("Marble Queen pothos").first().waitFor({ timeout: 20000 });
+  });
   await step("the care guide's toxicity line always comes with the ASPCA notice", async () => {
     // 26 Sep 2026: an Easter cactus's AI guide called it "a safe choice for
     // households with pets or curious kids", with nothing beneath it. The
@@ -486,8 +514,8 @@ try {
     // A fresh plant: Big Monstera has been watered today by earlier steps,
     // and a same-day watering is a short gap that rightly argues against it.
     await page.goto(base + "/plant/new");
-    await page.getByPlaceholder("Big Monstera").fill("Slow Pot");
-    await page.getByPlaceholder("Monstera deliciosa").fill("Monstera deliciosa");
+    await page.getByPlaceholder("e.g. Big Monstera").fill("Slow Pot");
+    await page.getByPlaceholder("e.g. Monstera deliciosa").fill("Monstera deliciosa");
     await page.getByPlaceholder("Today if blank").fill(daysAgo(40));
     await page.getByText("Add plant", { exact: true }).last().click();
     await page.getByText("Care schedule").waitFor({ timeout: 20000 });

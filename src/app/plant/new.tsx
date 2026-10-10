@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SpeciesField } from "@/components/species-field";
 import { CloseIcon } from "@/components/icons";
 import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/components/ui";
@@ -11,6 +12,7 @@ import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "
 import { isProblem, issueNote, preselectedIssues, problemsIn, scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, clearLastScan, describeScan, loadLastScan, photoAllowance, type LastScan, type Verdict } from "@/lib/ai";
 import { allowanceLine, type Allowance } from "@/domain/allowance";
+import { addHint, defaultName, topCandidate } from "@/domain/new-plant";
 import { confirm } from "@/lib/confirm";
 import { clearDraft, loadDraft, saveDraftSoon } from "@/lib/draft";
 import { Calendar } from "@/components/calendar";
@@ -26,6 +28,11 @@ export default function NewPlant() {
   const c = cardTheme;
   const db = useSQLiteContext();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  // Where the AI's answer sits on the page, so the page can be brought to it.
+  const scroller = useRef<ScrollView>(null);
+  const answerY = useRef<number | null>(null);
+  const [scrollToAnswer, setScrollToAnswer] = useState(false);
 
   // The whole plant first, then close-ups; all of them go to the AI together.
   const [photos, setPhotos] = useState<string[]>([]);
@@ -56,6 +63,17 @@ export default function NewPlant() {
   const [issuePicks, setIssuePicks] = useState<Set<string>>(new Set());
   // Don't overwrite a saved draft with the empty form before it's been read back.
   const hydrated = useRef(false);
+
+  // Bring the page to a fresh answer once it has been laid out.
+  const cardY = useRef(0);
+  useEffect(() => {
+    if (!scrollToAnswer || !verdict) return;
+    const id = setTimeout(() => {
+      if (answerY.current != null) scroller.current?.scrollTo({ y: Math.max(0, cardY.current + answerY.current - space.md), animated: true });
+      setScrollToAnswer(false);
+    }, 50);
+    return () => clearTimeout(id);
+  }, [scrollToAnswer, verdict]);
 
   useEffect(() => {
     setIssuePicks(new Set(verdict?.is_plant ? preselectedIssues(verdict) : []));
@@ -144,6 +162,17 @@ export default function NewPlant() {
       // confirms or corrects it rather than guessing among look-alikes.
       const answer = await analyzePhoto(photos, { mode: "both", speciesHint: species.trim() || null });
       setVerdict(answer.verdict);
+      // 10 Oct 2026: a new keeper on an iPhone identified a plant and left
+      // without adding it. The answer had landed below the fold, nothing was
+      // chosen, the name was empty and "Add plant" sat greyed out under five
+      // fields. So: a confident top answer is chosen and named for them --
+      // both a tap to change -- and the page goes to the answer.
+      const top = topCandidate(answer.verdict);
+      if (top && !species.trim()) {
+        useCandidate(top);
+        if (!nickname.trim()) setNickname(defaultName(top));
+      }
+      setScrollToAnswer(true);
       setScanNote(describeScan(answer));
       setAllowance(await photoAllowance());
       setLastScan(null);
@@ -233,7 +262,7 @@ export default function NewPlant() {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scroller} style={{ flex: 1 }} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {restored ? (
           <Card>
             <Body small muted>Picked up where you left off — the photo, the AI's answer and what you'd typed are all here.</Body>
@@ -252,6 +281,7 @@ export default function NewPlant() {
             </Row>
           </Card>
         ) : null}
+        <View onLayout={(e) => { cardY.current = e.nativeEvent.layout.y; }}>
         <Card>
           <Heading>Photo</Heading>
           {photos[0] ? (
@@ -314,7 +344,7 @@ export default function NewPlant() {
           ) : null}
           {!verdict ? <PhotoTips open={photos.length === 0} /> : null}
           {verdict ? (
-            <View style={{ gap: space.sm }}>
+            <View style={{ gap: space.sm }} onLayout={(e) => { answerY.current = e.nativeEvent.layout.y; }}>
               {!verdict.is_plant ? (
                 <Body small muted>That doesn't look like a plant to me — try a clearer photo.</Body>
               ) : (
@@ -395,13 +425,14 @@ export default function NewPlant() {
             </View>
           ) : null}
         </Card>
+        </View>
 
         <Card>
-          <Field label="Name" value={nickname} onChangeText={setNickname} placeholder="Big Monstera" autoFocus />
+          <Field label="Name" value={nickname} onChangeText={setNickname} placeholder="e.g. Big Monstera" autoFocus />
           {nameIdeasRow}
           <SpeciesField value={species} onChangeText={(v) => { setSpecies(v); setPicked(null); }} onPick={setPicked} />
-          <Field label="Where it lives" value={location} onChangeText={setLocation} placeholder="South window" />
-          <Field label="Acquired from" value={acquiredFrom} onChangeText={setAcquiredFrom} placeholder="Local nursery, a friend, a trade" />
+          <Field label="Where it lives" value={location} onChangeText={setLocation} placeholder="e.g. South window" />
+          <Field label="Acquired from" value={acquiredFrom} onChangeText={setAcquiredFrom} placeholder="e.g. a nursery, a friend, a trade" />
           <Field
             label="Acquired on"
             value={acquiredAt}
@@ -435,14 +466,19 @@ export default function NewPlant() {
             />
           </Card>
         )}
-
+      </ScrollView>
+      {/* Always on screen, and always saying what it does or what it still
+          needs: at the foot of the form it was out of sight, greyed out, and
+          silent about why. */}
+      <View style={[styles.footer, { backgroundColor: t.background, borderColor: t.hairline, paddingBottom: space.md + insets.bottom }]}>
+        <Body small muted>{addHint(nickname, dateInvalid)}</Body>
         <Button
           title={saving ? "Saving…" : "Add plant"}
           variant="primary"
           disabled={!nickname.trim() || dateInvalid || saving}
           onPress={save}
         />
-      </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -458,7 +494,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     minHeight: 44,
   },
-  container: { padding: space.lg, gap: space.md, paddingBottom: space.xl * 2 },
+  container: { padding: space.lg, gap: space.md, paddingBottom: space.xl },
+  footer: { paddingHorizontal: space.lg, paddingTop: space.sm, gap: space.xs, borderTopWidth: 1 },
   photo: { width: "100%", aspectRatio: 4 / 3, borderRadius: radius.md },
   thumbWrap: { width: 56, height: 56 },
   thumb: { width: 56, height: 56, borderRadius: radius.sm },
