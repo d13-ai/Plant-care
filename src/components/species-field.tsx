@@ -14,7 +14,7 @@ export function SpeciesField({
   value,
   onChangeText,
   onPick,
-  placeholder = "Monstera deliciosa",
+  placeholder = "e.g. Monstera deliciosa",
 }: {
   value: string;
   onChangeText: (value: string) => void;

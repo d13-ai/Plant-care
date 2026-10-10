@@ -93,16 +93,16 @@ page.on("pageerror", (e) => console.log("pageerror", e.message));
 
 async function addPlant({ photo, name, species, acquired, location }) {
   await page.goto(base + "/plant/new");
-  await page.getByPlaceholder("Big Monstera").waitFor({ timeout: 20000 });
+  await page.getByPlaceholder("e.g. Big Monstera").waitFor({ timeout: 20000 });
   if (photo) {
     const chooser = page.waitForEvent("filechooser");
     await page.getByText("Choose from library", { exact: true }).click();
     await (await chooser).setFiles(path.join(photos, photo));
     await page.waitForTimeout(800);
   }
-  await page.getByPlaceholder("Big Monstera").fill(name);
-  await page.getByPlaceholder("Monstera deliciosa").fill(species);
-  if (location) await page.getByPlaceholder("South window").fill(location);
+  await page.getByPlaceholder("e.g. Big Monstera").fill(name);
+  await page.getByPlaceholder("e.g. Monstera deliciosa").fill(species);
+  if (location) await page.getByPlaceholder("e.g. South window").fill(location);
   await page.getByPlaceholder("Today if blank").fill(daysAgo(acquired));
   await page.getByText("Add plant", { exact: true }).last().click();
   await page.waitForURL(/\/plant\/\d+$/, { timeout: 20000 });
@@ -157,7 +157,7 @@ verdict = {
   notes: "Variegation is sectoral, so expect some leaves mostly green and some mostly white.",
 };
 await page.goto(base + "/plant/new");
-await page.getByPlaceholder("Big Monstera").waitFor({ timeout: 20000 });
+await page.getByPlaceholder("e.g. Big Monstera").waitFor({ timeout: 20000 });
 {
   const chooser = page.waitForEvent("filechooser");
   await page.getByText("Choose from library", { exact: true }).click();
