@@ -34,8 +34,24 @@ export const keyFor = (species: string) => species.trim().toLowerCase().replace(
 export async function getCareCard(db: SQLiteDatabase, species: string): Promise<CareCard> {
   const key = keyFor(species);
   const cached = await getCachedCareCard<CareCard>(db, key);
-  if (cached) return cached;
+  // A copy saved before guides said where they came from (no `source`) is
+  // from before the plant library was loaded: ask again, once, so the phone
+  // swaps it for the library's guide where there is one. If that fails the
+  // old copy stays, marked as what it is -- every guide before the library
+  // was AI-written -- so a name the server now refuses isn't asked about
+  // (and maybe paid for) on every visit.
+  if (cached?.source) return cached;
+  if (cached) {
+    return fetchCareCard(db, key, species).catch(async () => {
+      const kept: CareCard = { ...cached, source: "ai" };
+      await saveCareCard(db, key, kept).catch(() => {});
+      return kept;
+    });
+  }
+  return fetchCareCard(db, key, species);
+}
 
+async function fetchCareCard(db: SQLiteDatabase, key: string, species: string): Promise<CareCard> {
   if (!supabaseConfigured) throw new Error("Supabase isn't configured.");
   const session = await ensureSession();
   const { data, error } = await supabase.functions.invoke<{ card: CareCard; error?: string }>("care", {
