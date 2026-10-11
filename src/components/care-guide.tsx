@@ -5,7 +5,8 @@ import { ReportAnswer } from "@/components/report-answer";
 import { Badge, Body, Button, Card, Heading, Row } from "@/components/ui";
 import { getCareCard, type CareCard } from "@/lib/care-card";
 import { supabaseConfigured } from "@/lib/supabase";
-import { AI_TOXICITY_NOTICE, APCC, ASPCA_PLANT_LIST } from "@/domain/pet-safety";
+import { AI_TOXICITY_NOTICE, APCC, ASPCA_PLANT_LIST, LIBRARY_TOXICITY_NOTICE } from "@/domain/pet-safety";
+import { openInApp } from "@/lib/links";
 import { cardTheme, space, useTheme, type Tone } from "@/theme";
 
 const DIFFICULTY_TONE: Record<CareCard["difficulty"], Tone> = {
@@ -15,9 +16,10 @@ const DIFFICULTY_TONE: Record<CareCard["difficulty"], Tone> = {
 };
 
 /**
- * The AI care guide for a plant's species — light, water, feeding, common
- * problems, toxicity. Loads the on-device copy instantly and otherwise
- * fetches it once (the guide is shared and cached server-side too).
+ * The care guide for a plant's species — light, water, feeding, common
+ * problems, toxicity. From the plant library where it has the species,
+ * otherwise written by AI; it says which. Loads the on-device copy instantly
+ * and otherwise fetches it once (the guide is shared and cached server-side too).
  */
 export function CareGuide({ species }: { species: string | null }) {
   const t = useTheme();
@@ -72,6 +74,7 @@ export function CareGuide({ species }: { species: string | null }) {
       {card ? (
         <View style={{ gap: space.sm }}>
           <Body small muted>{card.summary}</Body>
+          {card.note ? <Body small>{card.note}</Body> : null}
           {(
             [
               ["Light", card.light],
@@ -109,12 +112,17 @@ export function CareGuide({ species }: { species: string | null }) {
             // The card's own light palette: this sits on the cream card, not the page.
             style={[styles.notice, { backgroundColor: cardTheme.critical.bg, borderColor: cardTheme.critical.ring }]}
           >
-            <Body small style={{ color: cardTheme.critical.fg } as never}>{AI_TOXICITY_NOTICE}</Body>
+            <Body small style={{ color: cardTheme.critical.fg } as never}>
+              {card.source === "library" ? LIBRARY_TOXICITY_NOTICE : AI_TOXICITY_NOTICE}
+            </Body>
             <Row>
               <Button title="Check the ASPCA list" small onPress={() => Linking.openURL(ASPCA_PLANT_LIST).catch(() => {})} />
               <Button title={`Call ${APCC.phone}`} small onPress={() => Linking.openURL(APCC.tel).catch(() => {})} />
             </Row>
           </View>
+          {card.url ? (
+            <Row><Button title="Full guide on plantparlour.org" small onPress={() => openInApp(card.url!.replace(/^https?:\/\/[^/]+/, ""))} /></Row>
+          ) : null}
           <ReportAnswer surface="care_guide" answer={card} species={species} />
         </View>
       ) : null}

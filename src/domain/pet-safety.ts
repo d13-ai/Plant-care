@@ -22,6 +22,13 @@ export const APCC = { phone: "(888) 426-4435", tel: "tel:+18884264435" };
 /** Poison Help, the US poison control line for people, around the clock and free. */
 export const POISON_HELP = { phone: "(800) 222-1222", tel: "tel:+18002221222" };
 
+/** The notice under the care guide's toxicity line, when the guide came from the plant library. */
+export const LIBRARY_TOXICITY_NOTICE =
+  "From the PlantParlour plant library, written to the ASPCA's classification — but a list can be out of date and a plant can be mislabelled. " +
+  "Check it on the ASPCA's plant list before trusting it around a pet, " +
+  `and if a pet has eaten part of a plant, call your vet or ASPCA Animal Poison Control on ${APCC.phone}. ` +
+  `If a child has, call Poison Help on ${POISON_HELP.phone}.`;
+
 /** The notice under the care guide's toxicity line. */
 export const AI_TOXICITY_NOTICE =
   "Written by AI, and it can be wrong. Always check a plant on the ASPCA's plant list before trusting it around a pet — " +

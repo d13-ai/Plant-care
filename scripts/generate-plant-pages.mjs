@@ -55,7 +55,7 @@ const lc = (s) => s.charAt(0).toLowerCase() + s.slice(1).replace(/\.$/, "");
 const indef = (s) => `${/^[aeiou]/i.test(s) ? "an" : "a"} ${s}`;
 
 /** A cadence in days, said the way a person would say it. */
-const everyDays = (d) => {
+export const everyDays = (d) => {
   if (d % 365 === 0 && d >= 365) return d === 365 ? "once a year" : `every ${d / 365} years`;
   if (d >= 365) return `every ${Math.round((d / 365) * 10) / 10} years`;
   if (d % 30 === 0 && d >= 60) return `every ${d / 30} months`;
