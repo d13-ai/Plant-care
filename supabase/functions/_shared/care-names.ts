@@ -1,6 +1,6 @@
 /**
  * How the care function finds a guide it already has before paying for a new
- * one. Pure -- no Deno, no Supabase -- so scripts/care-names.test.mjs can hold
+ * one. Pure -- no Deno, no Supabase -- so scripts/care-library.test.mjs can hold
  * it to its rules under vitest, and scripts/care-library.mjs files the library
  * under the same keys.
  *
