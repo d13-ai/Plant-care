@@ -67,6 +67,7 @@ describe("finding a guide we already have", () => {
     expect(baseSpecies("Epipremnum aureum cv. Marble Queen")).toBe("Epipremnum aureum");
     expect(baseSpecies("Philodendron 'Prince of Orange'")).toBeNull();
     expect(baseSpecies("Monstera deliciosa")).toBeNull();
+    expect(baseSpecies("Epipremnum aureum 'N'Joy'")).toBe("Epipremnum aureum");
     expect(cultivarOf("Epipremnum aureum cv. Marble Queen")).toBe("'Marble Queen'");
   });
 

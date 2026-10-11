@@ -33,7 +33,7 @@ export function careKey(name: string): string {
     .replace(/\s+/g, " ");
 }
 
-const CULTIVAR = /\s+(?:'[^']+'|cv\.?\s+.+)$/i;
+const CULTIVAR = /\s+(?:'.+'|cv\.?\s+.+)$/i;
 
 /** The cultivar part of a name, as written ("'Silvery Ann'"), or null. */
 export function cultivarOf(name: string): string | null {
