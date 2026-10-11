@@ -21,7 +21,7 @@
     "trickle:smoke": "node scripts/trickle-smoke.mjs",
     "icons": "node scripts/make-icons.mjs",
     "e2e": "vitest run --config vitest.e2e.config.ts",
-    "update:android": "npx eas-cli@latest update --channel production --platform android",
+    "update:android": "npx eas-cli@latest update --channel production --environment production --platform android",
     "start:tunnel": "expo start --tunnel",
     "windowsill:smoke": "node scripts/windowsill-smoke.mjs",
     "elbow-room:smoke": "node scripts/elbow-room-smoke.mjs"
