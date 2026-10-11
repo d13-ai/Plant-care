@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { AI_TOXICITY_NOTICE, APCC, ASPCA_PLANT_LIST, POISON_HELP } from "./pet-safety";
+import { AI_TOXICITY_NOTICE, APCC, ASPCA_PLANT_LIST, LIBRARY_TOXICITY_NOTICE, POISON_HELP } from "./pet-safety";
 
 describe("what the app says beside a toxicity line", () => {
   test("names the ASPCA as the authority, and both emergency lines", () => {
@@ -8,6 +8,14 @@ describe("what the app says beside a toxicity line", () => {
     expect(AI_TOXICITY_NOTICE).toContain("ASPCA");
     expect(AI_TOXICITY_NOTICE).toContain(APCC.phone);
     expect(AI_TOXICITY_NOTICE).toContain(POISON_HELP.phone);
+  });
+
+  test("a library guide says where it came from, and still sends people to the ASPCA and both lines", () => {
+    expect(LIBRARY_TOXICITY_NOTICE).toMatch(/plant library/);
+    expect(LIBRARY_TOXICITY_NOTICE).not.toMatch(/Written by AI/);
+    expect(LIBRARY_TOXICITY_NOTICE).toContain("ASPCA");
+    expect(LIBRARY_TOXICITY_NOTICE).toContain(APCC.phone);
+    expect(LIBRARY_TOXICITY_NOTICE).toContain(POISON_HELP.phone);
   });
 
   test("the app and the website give the same number and the same list", () => {
@@ -23,7 +31,8 @@ describe("what the app says beside a toxicity line", () => {
   test("the care guide never renders a toxicity line without the notice", () => {
     const guide = readFileSync("src/components/care-guide.tsx", "utf-8");
     const line = guide.indexOf("{card.toxicity}");
-    const notice = guide.indexOf("{AI_TOXICITY_NOTICE}");
+    // One notice or the other, by where the guide came from -- never neither.
+    const notice = guide.indexOf('{card.source === "library" ? LIBRARY_TOXICITY_NOTICE : AI_TOXICITY_NOTICE}');
     expect(line).toBeGreaterThan(0);
     expect(notice).toBeGreaterThan(line);
     expect(notice - line).toBeLessThan(800); // right under it, not elsewhere on the screen

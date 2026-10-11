@@ -55,7 +55,7 @@ const lc = (s) => s.charAt(0).toLowerCase() + s.slice(1).replace(/\.$/, "");
 const indef = (s) => `${/^[aeiou]/i.test(s) ? "an" : "a"} ${s}`;
 
 /** A cadence in days, said the way a person would say it. */
-const everyDays = (d) => {
+export const everyDays = (d) => {
   if (d % 365 === 0 && d >= 365) return d === 365 ? "once a year" : `every ${d / 365} years`;
   if (d >= 365) return `every ${Math.round((d / 365) * 10) / 10} years`;
   if (d % 30 === 0 && d >= 60) return `every ${d / 30} months`;
@@ -500,7 +500,7 @@ ${foot}`;
 }
 
 // ---------------------------------------------------------------- write it
-function main() {
+async function main() {
   const pages = plantPagesCache();
   mkdirSync(OUT, { recursive: true });
   // Clear out pages for plants that have since left the catalogue, but leave
@@ -514,6 +514,14 @@ function main() {
   for (const p of pages) writeFileSync(join(OUT, `${p.slug}.html`), dates.stamp(p.url, plantPage(p)), "utf-8");
   dates.save();
   console.log(`Generated ${pages.length + 1} pages in ${OUT.replace(ROOT + "/", "")}`);
+
+  // The same library, as the app's care guides and the care function's name
+  // list. Written here rather than as their own steps in `npm run plants`:
+  // package.json's scripts are part of the app's update fingerprint, so
+  // adding a step there would cut installed builds off from updates.
+  // Imported late because care-library.mjs imports this file.
+  (await import("./care-library.mjs")).writeLibraryJson();
+  (await import("./generate-species-names.mjs")).writeSpeciesNames();
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main();

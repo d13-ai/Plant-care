@@ -8,7 +8,8 @@ the same commit.
 ## Status
 
 First production release (version 6) sent for review on 8 Oct 2026, with the
-listing text below.
+listing text below. Version 7 followed, then version 8 (the add-plant fix,
+commit 61e12aa) was uploaded on 10 Oct 2026.
 
 ## Before the first upload
 
@@ -215,6 +216,16 @@ when the app opens and runs it the next time it starts.
   fingerprint never receive an update made for the new one. So a native change
   still needs a store build; a JS change no longer does. Versions 2-6 predate
   this and only change by store update.
+- **Version 8 is the first to update.** The first update, made on 10 Oct 2026,
+  was refused before publishing because its fingerprint didn't match
+  version 7's, so version 7 only changes by store update too. Before an update
+  goes out, check that `npx expo-updates fingerprint:generate --platform android` gives the
+  fingerprint the target build shows on its expo.dev build page.
+- **`package.json` scripts count as native.** The fingerprint hashes them, so
+  adding or editing an npm script cuts every installed build off from updates
+  just as a new module would (a one-line `npm run plants` change did exactly
+  that on 11 Oct 2026). Put new build steps inside an existing script's file
+  instead, as generate-plant-pages.mjs does for the care library.
 - **Channels:** production builds listen on `production`, preview on
   `preview`. Publishing to `production` reaches internal testers and, once
   live, everyone on that build.

@@ -6,12 +6,21 @@
 // signed-in keepers can call it (the function checks the session itself, so
 // the browser's CORS preflight isn't blocked). Generation counts against the
 // same daily AI cap as photo analysis, and only on a cache miss.
+//
+// Before it pays for one, it looks harder (../_shared/care-names.ts): a
+// common name we know finds its species' guide, and a cultivar finds its
+// species' guide with a note saying so. The plant library's own care is
+// loaded into care_cards with model "library" (scripts/care-library.mjs), so
+// the common houseplants never reach the model at all. A name the model
+// doesn't recognise as a plant is answered but never filed.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { zodOutputFormat } from "npm:@anthropic-ai/sdk/helpers/zod";
 import { z } from "npm:zod";
 import { claimAiCall, refundAiCall, today } from "../_shared/cap.ts";
+import { careKey, carePlan, cultivarNote, plausiblePlantName } from "../_shared/care-names.ts";
+import { SPECIES_NAMES } from "../_shared/species-names.ts";
 
 // Care text is general knowledge, not a hard vision task, so Sonnet is plenty
 // and cheaper — and it's cached once per species anyway. AI_CARE_MODEL overrides.
@@ -39,6 +48,9 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
 const CareCard = z.object({
+  recognized: z
+    .boolean()
+    .describe("false when the name isn't a plant you recognise (a typo, gibberish, not a plant); the guide is then not kept"),
   summary: z.string().describe("one plain sentence: what kind of plant and how demanding"),
   difficulty: z.enum(["easy", "moderate", "fussy"]),
   light: z.string().describe("light needs, in a sentence"),
@@ -58,13 +70,22 @@ const CareCard = z.object({
       "toxicity to cats, dogs and people, as the ASPCA's plant list classes it; say 'unconfirmed' when unsure; never call a plant safe for children or 'a safe choice'",
     ),
 });
-export type CareCard = z.infer<typeof CareCard>;
+export type CareCard = Omit<z.infer<typeof CareCard>, "recognized">;
+
+type CardRow = { species_key: string; species: string; card: CareCard; model: string };
+
+/** A stored card as the app gets it: where it came from, and a note when it is the species' guide for a cultivar. */
+const present = (card: CareCard, model: string, note?: string) => ({
+  ...card,
+  source: model === "library" ? "library" : "ai",
+  ...(note ? { note } : {}),
+});
 
 const SYSTEM = `You are a knowledgeable houseplant grower writing a short, practical care guide for one plant a keeper owns. Be specific to this plant, not generic — a fern and a cactus should read nothing alike. Keep each field to a sentence or two of plain, actionable advice a beginner can follow. If the plant is a named variegated cultivar, account for it (variegated leaves need brighter light and grow slower). Be honest about difficulty.
 
-On toxicity, be conservative, because a keeper may act on it with a pet or a child. Say what the ASPCA's plant list says for cats and dogs when you know it ("the ASPCA lists it as non-toxic to cats and dogs"), and what the symptoms are when it is toxic. If you are not sure, say it is unconfirmed rather than guessing it is safe. Never call a plant "safe for children", "child-safe", "a safe choice" or "harmless": the most a plant can be is non-toxic, and a pet or child can still be sick from eating any plant.`;
+On toxicity, be conservative, because a keeper may act on it with a pet or a child. Say what the ASPCA's plant list says for cats and dogs when you know it ("the ASPCA lists it as non-toxic to cats and dogs"), and what the symptoms are when it is toxic. If you are not sure, say it is unconfirmed rather than guessing it is safe. Never call a plant "safe for children", "child-safe", "a safe choice" or "harmless": the most a plant can be is non-toxic, and a pet or child can still be sick from eating any plant.
 
-const key = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+If the name isn't a plant you recognise — a typo, gibberish, something that isn't a plant — set recognized to false and keep every other field to a few words. Don't guess at a plant it might be.`;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -85,13 +106,25 @@ Deno.serve(async (req: Request) => {
   const species = (body.species ?? "").trim();
   if (!species) return json({ error: "Which species?" }, 400);
   if (species.length > 120) return json({ error: "Species name too long." }, 400);
-  const speciesKey = key(species);
+  if (!plausiblePlantName(species)) {
+    return json({ error: "That doesn't look like a plant name. Check the spelling, or pick it from the list." }, 422);
+  }
 
   const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-  // Cache first — the common path, and free.
-  const { data: hit } = await admin.from("care_cards").select("card, species").eq("species_key", speciesKey).maybeSingle();
-  if (hit) return json({ card: hit.card, species: hit.species, cached: true });
+  // Cache first — the common path, and free: the name as asked, then the
+  // species a common name stands for, then the species a cultivar belongs to.
+  const plan = carePlan(species, SPECIES_NAMES);
+  const { data: rows } = await admin
+    .from("care_cards")
+    .select("species_key, species, card, model")
+    .in("species_key", plan.lookups.map((l) => l.key));
+  for (const lookup of plan.lookups) {
+    const row = (rows as CardRow[] | null)?.find((r) => r.species_key === lookup.key);
+    if (!row) continue;
+    const note = lookup.via === "species" ? cultivarNote(species, row.species) : undefined;
+    return json({ card: present(row.card, row.model, note), species: row.species, cached: true, matched: lookup.via });
+  }
 
   // Miss: claim a slot against today's budget, then generate. Check and
   // increment happen in one locked statement, and a claim that can't be
@@ -107,23 +140,31 @@ Deno.serve(async (req: Request) => {
       max_tokens: 1500,
       system: SYSTEM,
       output_config: { effort: "medium", format: zodOutputFormat(CareCard) },
-      messages: [{ role: "user", content: `Write the care guide for: ${species}` }],
+      messages: [{ role: "user", content: `Write the care guide for: ${plan.generate.species}` }],
     });
     // Recorded before the answer is judged: a refusal costs what a guide
     // costs, and returning above this line spent money the table never saw.
     // See the same note in ../analyze/index.ts.
     const { input_tokens, output_tokens } = response.usage;
     const cost_usd = costOf(MODEL, input_tokens, output_tokens);
-    console.log(JSON.stringify({ fn: "care", model: MODEL, species, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)), stop_reason: response.stop_reason }));
+    console.log(JSON.stringify({ fn: "care", model: MODEL, species, wrote: plan.generate.species, recognized: response.parsed_output?.recognized ?? null, input_tokens, output_tokens, cost_usd: Number(cost_usd.toFixed(5)), stop_reason: response.stop_reason }));
     await admin.rpc("record_ai_usage", { p_keeper: user.id, p_day: day, p_input: input_tokens, p_output: output_tokens, p_cost: cost_usd });
 
     if (response.stop_reason === "refusal" || !response.parsed_output) {
       return json({ error: "Couldn't write a care guide for that." }, 502);
     }
-    const card = response.parsed_output;
-    // Cache for everyone. Ignore a conflict if another request beat us to it.
-    await admin.from("care_cards").upsert({ species_key: speciesKey, species, card, model: MODEL }, { onConflict: "species_key" });
-    return json({ card, species, cached: false, cost_usd });
+    const { recognized, ...card } = response.parsed_output;
+    // Not a plant it knows: say so, and file nothing -- a guide to a typo
+    // would be served to the next person who makes it.
+    if (!recognized) {
+      return json({ error: `We don't know a plant called “${species}”. Check the spelling, or pick it from the list.`, cost_usd }, 422);
+    }
+    // Cache for everyone, under the species it was written for. Ignore a
+    // conflict if another request beat us to it.
+    const written = plan.generate.species;
+    await admin.from("care_cards").upsert({ species_key: careKey(written), species: written, card, model: MODEL }, { onConflict: "species_key" });
+    const note = plan.generate.via === "species" ? cultivarNote(species, written) : undefined;
+    return json({ card: present(card, MODEL, note), species: written, cached: false, cost_usd });
   } catch (err) {
     // The slot goes back only when the model cannot have run -- see the note
     // in ../analyze/index.ts. A response that arrived and then failed to

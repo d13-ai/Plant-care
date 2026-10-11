@@ -15,6 +15,12 @@ export interface CareCard {
   repotting: string;
   common_problems: { problem: string; fix: string }[];
   toxicity: string;
+  /** "library": the plant library's own hand-written care. Absent on guides saved before it existed, which were all AI. */
+  source?: "library" | "ai";
+  /** Set when this is the species' guide shown for one of its cultivars. */
+  note?: string;
+  /** The library page it came from. */
+  url?: string;
 }
 
 /** How a species is filed in the on-device guide cache. */
