@@ -221,6 +221,11 @@ when the app opens and runs it the next time it starts.
   version 7's, so version 7 only changes by store update too. Before an update
   goes out, check that `npx expo-updates fingerprint:generate --platform android` gives the
   fingerprint the target build shows on its expo.dev build page.
+- **`package.json` scripts count as native.** The fingerprint hashes them, so
+  adding or editing an npm script cuts every installed build off from updates
+  just as a new module would (a one-line `npm run plants` change did exactly
+  that on 11 Oct 2026). Put new build steps inside an existing script's file
+  instead, as generate-plant-pages.mjs does for the care library.
 - **Channels:** production builds listen on `production`, preview on
   `preview`. Publishing to `production` reaches internal testers and, once
   live, everyone on that build.

@@ -5,7 +5,7 @@
  *
  * Generated rather than imported because the function is deployed on its own
  * and can't reach src/. care-library.test.mjs fails if the copy goes stale;
- * `npm run plants` rewrites it.
+ * generate-plant-pages.mjs (so `npm run plants`) rewrites it.
  *
  * Usage: node scripts/generate-species-names.mjs
  */
@@ -28,7 +28,9 @@ ${rows.join("\n")}
 `;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+export function writeSpeciesNames() {
   writeFileSync(OUT, speciesNamesSource());
   console.log(`Wrote ${SPECIES.length} species to ${OUT.slice(ROOT.length + 1)}`);
 }
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) writeSpeciesNames();

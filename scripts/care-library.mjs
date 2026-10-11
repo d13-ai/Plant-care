@@ -11,8 +11,8 @@
  * Each guide is filed with model "library", which is how the app knows to say
  * "From the PlantParlour plant library" rather than "Written by AI".
  *
- * Usage: node scripts/care-library.mjs   (part of `npm run plants`)
- *   writes public/care-library.json, which ships with the site. Once it is
+ * Usage: node scripts/care-library.mjs   (generate-plant-pages.mjs runs it too,
+ *   so `npm run plants` keeps it current) writes public/care-library.json, which ships with the site. Once it is
  *   live on plantparlour.org, scripts/care-library-load.sql reads it into
  *   care_cards. That upserts, so it is safe to run again after the library
  *   changes; it replaces model-written guides for the same species.
@@ -98,11 +98,13 @@ export const JSON_OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "pub
 /** What the site serves: [{ key, species, card }], in page order. */
 export const libraryJson = (rows = libraryCards()) => `${JSON.stringify(rows)}\n`;
 
+export function writeLibraryJson() {
+  const rows = libraryCards();
+  writeFileSync(JSON_OUT, libraryJson(rows));
+  console.log(`Wrote ${rows.length} care guides to public/care-library.json`);
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (process.argv.includes("--sql")) process.stdout.write(librarySql());
-  else {
-    const rows = libraryCards();
-    writeFileSync(JSON_OUT, libraryJson(rows));
-    console.log(`Wrote ${rows.length} care guides to public/care-library.json`);
-  }
+  else writeLibraryJson();
 }
