@@ -203,7 +203,7 @@ JavaScript -- screens, wording, logic, like the health-check photo choice --
 can reach installed phones without a new store build:
 
 ```
-npm run update:android -- --message "Health checks: one earlier photo for comparison"
+npm run update:android -- --environment production --message "Health checks: one earlier photo for comparison"
 ```
 
 That needs `EXPO_TOKEN`, so it runs from a cloud session in the Default
@@ -226,6 +226,12 @@ when the app opens and runs it the next time it starts.
   just as a new module would (a one-line `npm run plants` change did exactly
   that on 11 Oct 2026). Put new build steps inside an existing script's file
   instead, as generate-plant-pages.mjs does for the care library.
+- **`--environment production` goes on the command line**, not into the
+  script: eas-cli needs it when run non-interactively, and editing the script
+  would change the fingerprint (branch `claude/update-script-environment`
+  holds that edit -- merge it only alongside the next store build).
+- **Published:** 11 Oct 2026, update group a304c629 -- care guides from the
+  plant library, refreshed saved guides -- to build 8's runtime (36f72ba2…).
 - **Channels:** production builds listen on `production`, preview on
   `preview`. Publishing to `production` reaches internal testers and, once
   live, everyone on that build.
