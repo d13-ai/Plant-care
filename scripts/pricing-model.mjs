@@ -232,7 +232,7 @@ for (let k = 50; k <= 200_000; k += 50) {
 console.log(`  $1,000/month profit while growing: about ${target?.toLocaleString()} keepers (${Math.round((target ?? 0) * CONVERSION)} subscribers).`);
 
 console.log("\n=== 6. the ceilings that protect the bill ===");
-const GLOBAL_DAILY_CAP = 500; // _shared/cap.ts default since 12 Oct 2026
+const GLOBAL_DAILY_CAP = 200; // _shared/cap.ts default; set the secret to 500 before a launch
 console.log(`  AI_DAILY_GLOBAL_CAP ${GLOBAL_DAILY_CAP} calls/day: worst case ${usd0(GLOBAL_DAILY_CAP * SCAN.identify)}/day, ${usd0(GLOBAL_DAILY_CAP * SCAN.identify * 30)}/month.`);
 console.log(`  It binds at about ${Math.round(GLOBAL_DAILY_CAP / TRIAL_USED)} new keepers in one day, if each uses the trial on day one;`);
 console.log("  raise it before a launch or a post that might travel, or new keepers are refused.");
