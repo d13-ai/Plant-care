@@ -7,7 +7,7 @@
  * Which version plays, and its timings, live here so they can be tuned in one
  * place and held to the brief by threshold.test.ts:
  *
- *  - every time the app is opened: the full sequence, about 4.2 seconds --
+ *  - every time the app is opened: the full sequence, about 4.1 seconds --
  *    on a cold start, and on coming back after being away a while
  *    (REPLAY_AFTER_MS), but not after a quick trip to the photo picker or a
  *    share sheet, which also send the app to the background;
@@ -37,7 +37,7 @@ export interface ThresholdPlan {
  *
  * Full: a beat on the closed doors, 1.6 s of opening, the wordmark rising as
  * they clear it, a long hold on the lit room and the wordmark, then a slow
- * fade -- 4.2 s in all. The brief asked for under 3 s with half a second's hold,
+ * fade -- 4.1 s in all. The brief asked for under 3 s with half a second's hold,
  * and a shorter doors-only version after the first launch; after seeing it,
  * David and Amanda wanted it slower, to linger on the room, and to have the
  * whole thing every time the app opens (12 Oct 2026). A tap skips it.
@@ -48,8 +48,8 @@ export const TIMING = {
     doorsMs: 1600,
     wordmarkDelayMs: 1300,
     wordmarkMs: 800,
-    // wordmark fully in at 2100; held for 1400
-    fadeDelayMs: 3500,
+    // wordmark fully in at 2100; held for 1300
+    fadeDelayMs: 3400,
     fadeMs: 700,
   },
   fade: {
