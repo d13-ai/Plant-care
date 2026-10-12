@@ -69,7 +69,7 @@ function fingerprint(text: string): string {
 type Answer = {
   verdict: Verdict;
   remaining: number;
-  /** Identifications left on the lifetime trial; null for an unlimited keeper. */
+  /** Photo checks left on the lifetime trial; null for an unlimited keeper. */
   photosLeft?: number | null;
   cached?: boolean;
   cost_usd?: number;

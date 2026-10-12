@@ -1,10 +1,10 @@
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { BucketImage } from "@/components/bucket-image";
 import { Body, Button, Card, Field, Row, Title } from "@/components/ui";
 import { confirm } from "@/lib/confirm";
 import { PHOTO_SIZES } from "@/domain/photo-uri";
-import { displayPhotoUri } from "@/lib/photo-uri";
 import { leaveCard, myRounds, takeCardBack, type Round } from "@/lib/rounds";
 import { photoUrl } from "@/lib/sync";
 import { font, radius, space, useTheme } from "@/theme";
@@ -124,11 +124,12 @@ export default function Rounds() {
               {r.photos.length > 0 ? (
                 <View style={styles.strip}>
                   {r.photos.map((path) => (
-                    <Image
+                    <BucketImage
                       key={path}
-                      source={{ uri: displayPhotoUri(photoUrl(path), PHOTO_SIZES.thumb) }}
+                      uri={photoUrl(path)}
+                      size={PHOTO_SIZES.thumb}
                       style={styles.shot}
-                      resizeMode="cover"
+                      contentFit="cover"
                     />
                   ))}
                 </View>

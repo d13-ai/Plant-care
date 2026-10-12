@@ -2,6 +2,7 @@ import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LogoMark } from "@/components/icons";
 import { GetItOnPlay, InstallHint } from "@/components/install-hint";
 import { SignIn } from "@/components/sign-in";
+import { PHOTO_TRIAL } from "@/domain/allowance";
 import { Body, Card, SectionLabel } from "@/components/ui";
 import { siteUrl } from "@/lib/links";
 import { font, space, useTheme } from "@/theme";
@@ -57,7 +58,8 @@ export function Welcome() {
         {/* The plain version, for a stranger and for a search engine: the
             tagline says what it feels like, this says what it is. */}
         <Text style={[styles.plain, { color: t.muted }]}>
-          A free plant care app: watering reminders, AI plant identification and a care record for every plant.{" "}
+          A free plant care app: watering reminders, care guides and a record for every plant, plus {PHOTO_TRIAL} free
+          AI photo checks to identify them.{" "}
           <Text style={styles.legalLink} onPress={() => Linking.openURL(siteUrl("/plant-care-app")).catch(() => {})}>
             How it works
           </Text>

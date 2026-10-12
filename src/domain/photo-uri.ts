@@ -57,16 +57,19 @@ export type PhotoSize = {
   fit?: "cover" | "contain";
   /** JPEG quality, 20–100. Smaller boxes can take a lower number. */
   q?: number;
+  /** The copy saved beside the photo at upload that answers for this size,
+   *  if there is one -- see "Copies saved at upload" below. */
+  saved?: SavedSize;
 };
 
 /** The sizes this app actually draws, named so they stay consistent. */
 export const PHOTO_SIZES = {
   /** A row thumbnail or a due-ring avatar. */
-  thumb: { w: 320, h: 320, fit: "cover", q: 65 } as PhotoSize,
+  thumb: { w: 320, h: 320, fit: "cover", q: 65, saved: "thumb" } as PhotoSize,
   /** A card's cover photo, and the hero on a tag page. */
   card: { w: 640, h: 640, fit: "cover", q: 72 } as PhotoSize,
   /** Opened full width on a phone, where its shape matters. */
-  full: { w: 900, fit: "contain", q: 75 } as PhotoSize,
+  full: { w: 900, fit: "contain", q: 75, saved: "view" } as PhotoSize,
 } as const;
 
 const OBJECT_PATH = "/storage/v1/object/public/";
@@ -100,4 +103,51 @@ export const THUMB_PROXY_PREFIX = "/plant-thumb/";
 export function proxiedSizedUri(uri: string, prefix: string, size: PhotoSize): string {
   if (!prefix || !uri.startsWith(prefix)) return uri;
   return THUMB_PROXY_PREFIX + uri.slice(prefix.length) + "?" + sizeQuery(size);
+}
+
+/* ---- copies saved at upload ------------------------------------------- */
+
+/**
+ * Resizing on the way out is billed: on Supabase Pro, $5 for every 1,000
+ * distinct photos resized in a month, after the first 100. That grows with
+ * every keeper's whole collection, and the cost model (docs/PRICING.md) had it
+ * as the biggest platform bill at scale -- more than storage, egress and Expo
+ * together.
+ *
+ * So the phone that uploads a photo also uploads the two copies the app and
+ * the public pages draw, made on the phone for free:
+ *
+ *   <photo>.thumb.jpg   320 square, centre-cropped -- grids, rows, avatars
+ *   <photo>.view.jpg    900 wide, the photo's own shape -- heroes, full size
+ *
+ * about 12 KB and 145 KB beside a ~600 KB original. Photos uploaded before
+ * this, or by an app that hasn't updated yet, have no copies; for those the
+ * render endpoint is still asked, as before, which is why every caller gets a
+ * list to try in order rather than one URL.
+ */
+export type SavedSize = "thumb" | "view";
+
+/** Where a saved copy of the photo at `path` lives in the bucket. */
+export function savedSizePath(path: string, which: SavedSize): string {
+  return path.replace(/(\.jpe?g)?$/i, `.${which}.jpg`);
+}
+
+/**
+ * Every URL worth trying for a photo at `size`, best first: the copy saved at
+ * upload, then the render endpoint. A photo that isn't in this bucket comes
+ * back alone and untouched.
+ */
+export function photoSources(uri: string, prefix: string, size: PhotoSize): string[] {
+  if (!prefix || !uri.startsWith(prefix)) return [uri];
+  const rendered = sizedPhotoUri(uri, prefix, size);
+  if (!size.saved) return [rendered];
+  return [prefix + savedSizePath(uri.slice(prefix.length), size.saved), rendered];
+}
+
+/** The same list for the web build, through the app's own origin. */
+export function proxiedPhotoSources(uri: string, prefix: string, size: PhotoSize): string[] {
+  if (!prefix || !uri.startsWith(prefix)) return [uri];
+  const rendered = proxiedSizedUri(uri, prefix, size);
+  if (!size.saved) return [rendered];
+  return [PHOTO_PROXY_PREFIX + savedSizePath(uri.slice(prefix.length), size.saved), rendered];
 }

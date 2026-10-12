@@ -1,8 +1,8 @@
-import { Image, type ImageContentPosition } from "expo-image";
+import { type ImageContentPosition } from "expo-image";
 import { useState, type ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { PHOTO_SIZES } from "@/domain/photo-uri";
-import { displayPhotoUri } from "@/lib/photo-uri";
+import { BucketImage } from "./bucket-image";
 import { radius, useTheme } from "@/theme";
 
 /**
@@ -31,8 +31,9 @@ export function PlantPhoto({
   // a hero keeps the photo's shape, because the aspect ratio below is read
   // off the image that actually loads, and a cropped square would report a
   // square. The full-size viewer reuses the hero's URL so opening a photo
-  // costs nothing to fetch.
-  const uri = displayPhotoUri(stored, mode === "thumb" ? PHOTO_SIZES.thumb : PHOTO_SIZES.full);
+  // costs nothing to fetch. Both come from copies saved at upload where the
+  // photo has them (BucketImage).
+  const size = mode === "thumb" ? PHOTO_SIZES.thumb : PHOTO_SIZES.full;
   const t = useTheme();
   const [ratio, setRatio] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
@@ -40,7 +41,7 @@ export function PlantPhoto({
   const position: ImageContentPosition = portrait ? "top" : "center";
 
   if (mode === "thumb") {
-    return <Image source={{ uri }} style={style as never} contentFit="cover" />;
+    return <BucketImage uri={stored} size={size} style={style as never} contentFit="cover" />;
   }
 
   // Between 4:5 and 3:2 the photo keeps its own shape; beyond that it's cropped, from the top if tall.
@@ -48,8 +49,9 @@ export function PlantPhoto({
   return (
     <>
       <Pressable accessibilityRole="imagebutton" accessibilityLabel="Open the photo full size" onPress={() => setOpen(true)} style={style}>
-        <Image
-          source={{ uri }}
+        <BucketImage
+          uri={stored}
+          size={size}
           style={[styles.hero, { aspectRatio }]}
           contentFit="cover"
           contentPosition={position}
@@ -60,7 +62,7 @@ export function PlantPhoto({
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={() => setOpen(false)} style={[styles.viewer, { backgroundColor: t.background }]}>
           <View style={styles.viewerInner} pointerEvents="none">
-            <Image source={{ uri }} style={styles.full} contentFit="contain" />
+            <BucketImage uri={stored} size={size} style={styles.full} contentFit="contain" />
           </View>
         </Pressable>
       </Modal>

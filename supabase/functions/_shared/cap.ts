@@ -50,7 +50,7 @@ export async function claimPhotoCall(
   return {
     ok: false,
     status: 429,
-    error: `You have used all ${PHOTO_TRIAL} of your AI plant identifications. You can still add plants and keep their records — just without the camera doing the naming.`,
+    error: `You have used all ${PHOTO_TRIAL} of your free AI photo checks. You can still add plants and keep their records — just without the camera doing the naming.`,
   };
 }
 
@@ -63,8 +63,12 @@ export async function refundPhotoCall(admin: SupabaseClient, keeperId: string): 
 /**
  * Calls the whole project will pay for in a day, across every keeper. Set
  * AI_DAILY_GLOBAL_CAP as a function secret to change it without a redeploy.
- * The default is deliberately low: at Opus prices ~200 calls is a few dollars,
- * and a personal greenhouse never comes near it.
+ *
+ * Kept at 200 (12 Oct 2026, the owner's call): about a $15 worst day at 7.6c
+ * an identification. It binds at roughly 80 new keepers scanning on the same
+ * day, after which new keepers are refused until midnight UTC -- the cost
+ * simulation (scripts/cost-montecarlo.mjs) put that at about one year in five.
+ * Before a launch or a post that might travel, set the secret to 500.
  */
 export const GLOBAL_DAILY_CAP = Number(Deno.env.get("AI_DAILY_GLOBAL_CAP") ?? 200);
 

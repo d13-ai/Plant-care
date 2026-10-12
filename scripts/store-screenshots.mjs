@@ -37,21 +37,12 @@ const session = { access_token: "t", refresh_token: "r", token_type: "bearer", e
 const asJson = (body, status = 200) => ({ status, contentType: "application/json", body: JSON.stringify(body) });
 
 let verdict = null;
+// The guide the app really shows for a Birkin: the plant library's own page
+// for Philodendron erubescens, with the note it gets as a cultivar.
+const library = JSON.parse(fs.readFileSync(path.join(root, "care-library.json"), "utf8"));
 const card = {
-  summary: "A compact, slow-growing philodendron with cream pinstripes on deep green leaves. Forgiving, and at its best in bright, indirect light.",
-  difficulty: "easy",
-  light: "Bright, indirect light. Too little and new leaves come in plain green; direct afternoon sun scorches them.",
-  water: "When the top 2–3 cm of soil is dry. Water thoroughly and let it drain; never leave it standing in water.",
-  humidity: "Average room humidity is fine; it grows faster above 50%.",
-  temperature: "18–27 °C (65–80 °F). Keep it away from cold drafts below 13 °C.",
-  soil: "Chunky aroid mix: potting soil with bark and perlite.",
-  feeding: "Balanced liquid feed at half strength every 4 weeks in spring and summer.",
-  repotting: "Every 1–2 years, one pot size up, when roots circle the pot.",
-  common_problems: [
-    { problem: "Yellow lower leaves", fix: "Usually too much water. Let the top of the soil dry before watering again." },
-    { problem: "New leaves losing their stripes", fix: "Move it somewhere brighter, out of direct sun." },
-  ],
-  toxicity: "Toxic to cats and dogs if chewed: like all philodendrons it contains calcium oxalate crystals, which irritate the mouth and throat.",
+  ...library.find((r) => r.key === "philodendron erubescens").card,
+  note: "This is the guide for Philodendron erubescens. 'Birkin' is grown the same way; if yours is variegated, give it a little more light — it will grow more slowly than the plain species.",
 };
 
 async function makeContext(signedIn) {
@@ -141,7 +132,7 @@ await snap(page, "2-plant");
 
 // 4. The care guide.
 await page.getByText("Care guide").first().scrollIntoViewIfNeeded();
-await page.getByText("Chunky aroid mix", { exact: false }).waitFor({ timeout: 20000 });
+await page.getByText("is grown the same way", { exact: false }).waitFor({ timeout: 20000 });
 await page.evaluate(() => { const el = [...document.querySelectorAll("div")].find((d) => d.textContent?.trim().startsWith("Care guide")); el?.scrollIntoView({ block: "start" }); });
 await page.waitForTimeout(800);
 await snap(page, "5-care-guide");

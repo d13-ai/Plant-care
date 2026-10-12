@@ -52,3 +52,19 @@ test("anyone can report the page, and the report form gets exactly this tag", ()
   expect(html).toContain(`href="/report-page?page=${encodeURIComponent(`/tag?t=${"a".repeat(32)}`)}"`);
   expect(html).toContain("Report this page");
 });
+
+test("photos come from the copies saved at upload, with the resizer behind them", () => {
+  const path = "keeper/plant/photo.jpg";
+  const html = render({
+    ...tag(null),
+    photos: [
+      { path, caption: null, taken_at: "2026-09-01T00:00:00.000Z" },
+      { path: "keeper/plant/older.jpg", caption: null, taken_at: "2026-08-01T00:00:00.000Z" },
+    ],
+  } as Tag);
+  expect(html).toContain(`/object/public/plant-photos/keeper/plant/photo.view.jpg"`);
+  expect(html).toContain(`/object/public/plant-photos/keeper/plant/older.thumb.jpg"`);
+  expect(html).toMatch(/data-fallback="[^"]*render\/image\/public\/plant-photos\/keeper\/plant\/photo\.jpg\?width=900/);
+  expect(html, "no inline handlers on the page").not.toContain("onerror=");
+  expect(html, "never the original").not.toMatch(/object\/public\/plant-photos\/keeper\/plant\/photo\.jpg/);
+});

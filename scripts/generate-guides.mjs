@@ -402,7 +402,9 @@ ${foot}`;
  *
  * Every claim here was checked against the code on 27 Sep 2026, and three
  * are worded carefully because the true answer is narrower than the usual
- * one: an account is needed; AI scans are a free allowance, not unlimited;
+ * one: an account is needed; AI photo checks are a free allowance of five,
+ * not unlimited (stated with the number since 12 Oct 2026 -- "a number of"
+ * left people to find the limit by hitting it);
  * and reminders come from the calendar, not push notifications.
  */
 export const APP_FEATURES = [
@@ -420,7 +422,7 @@ export const APP_FAQ = [
   // Worded for today, not for ever: a paid plan is planned (docs/PRICING.md),
   // and "there's no subscription" would be quoted back by every search
   // result and AI answer that had read it, long after it stopped being true.
-  ["Is PlantParlour free?", "Yes, it's free to use, with no advertising. Your account includes a number of free AI photo scans; everything else — reminders, the care record, photos, care guides and tags — is free, and keeps working after the scans are used."],
+  ["Is PlantParlour free?", "Yes, it's free to use, with no advertising. Every account includes 5 free AI photo checks — identifying a plant or checking its health from a photo uses one. Everything else — reminders, the care record, photos, care guides and tags — is free without a limit, and keeps working after the photo checks are used."],
   ["Does it work on iPhone and Android?", "Yes. On Android, get PlantParlour from Google Play. On an iPhone it runs in Safari: add it to your home screen and it opens like any other app. There's no App Store version yet."],
   ["Do I need an account?", "Yes. Sign in with Google, or with an email and password. The account is what backs your plants up and keeps them in step across your phones. The care library, the problem guides and the pet-safe list need no account at all."],
   ["Does it work offline?", "Yes. Your plants live on your phone, so you can log care with no signal. A photo taken offline uploads the next time you have a connection."],
@@ -492,7 +494,7 @@ ${faqHtml(APP_FAQ)}
 
 <div class="cta">
   <h2>Start your greenhouse</h2>
-  <p>Free. Get it from Google Play on Android, or open it in your phone's browser. Sign in with Google or an email, add your first plant from a photo, and it takes it from there.</p>
+  <p>Free, with 5 AI photo checks to identify your plants or check their health. Get it from Google Play on Android, or open it in your phone's browser. Sign in with Google or an email, add your first plant from a photo, and it takes it from there.</p>
   <div class="get-app">
     ${PLAY_BADGE}
     <a class="btn btn-lg" href="/">Open in the browser</a>

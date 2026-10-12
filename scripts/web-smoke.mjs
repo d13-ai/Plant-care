@@ -138,7 +138,7 @@ try {
     // at zero arrived unannounced. And the note that carried it led with what
     // the scan cost -- a number that answers the owner's question, not the
     // keeper's, and is recorded in ai_usage either way.
-    await page.getByText(/AI identifications/).first().waitFor({ timeout: 20000 });
+    await page.getByText(/AI photo checks/).first().waitFor({ timeout: 20000 });
     const body = await page.evaluate(() => document.body.innerText);
     if (/¢|cost about|\$\d/.test(body)) {
       throw new Error(`the add-plant screen quotes a price: ${/[^\n]*(¢|cost about|\$\d)[^\n]*/.exec(body)?.[0]}`);

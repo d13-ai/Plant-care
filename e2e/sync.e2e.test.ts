@@ -30,6 +30,7 @@ import {
   updatePlant,
   type Plant,
 } from "@/db";
+import { savedSizePath } from "@/domain/photo-uri";
 import { SUPABASE_URL, supabase, supabaseConfigured } from "@/lib/supabase";
 import { signInTestAccount as signInFixture } from "./test-account";
 import { getSyncStatus, syncNow } from "@/lib/sync";
@@ -41,6 +42,9 @@ const PHOTO_DATA_URL =
   "cICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJico" +
   "KSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7" +
   "i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oACAEBAAA/APn+iiiv/9k=";
+
+/** A stored photo and the two copies uploaded beside it. */
+const withSavedSizes = (path: string) => [path, savedSizePath(path, "view"), savedSizePath(path, "thumb")];
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -86,7 +90,7 @@ async function removeTestData(signedInAs: string): Promise<void> {
   const ids = [...createdPlantIds];
   if (ids.length) {
     const { data: photos } = await supabase.from("photos").select("path").in("plant_id", ids);
-    if (photos?.length) await supabase.storage.from("plant-photos").remove(photos.map((p) => p.path));
+    if (photos?.length) await supabase.storage.from("plant-photos").remove(photos.flatMap((p) => withSavedSizes(p.path)));
     await supabase.from("plants").delete().in("id", ids);
   }
   // The keeper row is the account's own profile. It is the test's to remove
@@ -217,6 +221,14 @@ describe("syncing a greenhouse between two devices", () => {
     );
     const image = await fetch(fullB.photos[0].uri);
     expect(image.status).toBe(200);
+    // ...and the copies the screens draw went up beside it, so the bucket
+    // isn't asked to resize the original on every view.
+    for (const which of ["view", "thumb"] as const) {
+      const copy = await fetch(
+        `${SUPABASE_URL}/storage/v1/object/public/plant-photos/${savedSizePath(fullB.photos[0].remotePath!, which)}`,
+      );
+      expect(copy.status, `the ${which} copy is in the bucket`).toBe(200);
+    }
 
     const cuttingB = (await byName(b.db, "Sync Cutting"))!;
     expect(cuttingB.motherPlantId, "lineage survives the trip").toBe(motherB.id);

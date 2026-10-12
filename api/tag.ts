@@ -8,6 +8,7 @@
 // Anyone with the link can read it; that is the point of a tag.
 
 import { ANALYTICS_SNIPPET } from "../src/domain/analytics";
+import { savedSizePath, type SavedSize } from "../src/domain/photo-uri";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "https://ixagjvntbgyqemxxinqe.supabase.co";
 const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY || "sb_publishable__A5fA6nyI8nrSqJWfaaJBQ_vqEZdRn6";
@@ -60,6 +61,28 @@ const photoUrl = (path: string, size: keyof typeof SIZES | "raw" = "raw") =>
     ? `${SUPABASE_URL}/storage/v1/object/public/plant-photos/${path}`
     : `${SUPABASE_URL}/storage/v1/render/image/public/plant-photos/${path}?${SIZES[size]}`;
 
+/** Which copy saved beside the photo at upload answers for each size. */
+const SAVED: Record<keyof typeof SIZES, SavedSize> = { hero: "view", grid: "thumb" };
+
+/**
+ * An <img> for a stored photo at `size`: the copy the uploading phone saved
+ * beside it, so the bucket isn't asked to resize (billed per photo on Supabase
+ * Pro), and the resizer if that copy isn't there -- photos from before the
+ * copies existed. See "Copies saved at upload" in src/domain/photo-uri.ts.
+ */
+export function photoImg(path: string, size: keyof typeof SIZES, attrs: string): string {
+  const saved = photoUrl(savedSizePath(path, SAVED[size]));
+  return `<img src="${esc(saved)}" data-fallback="${esc(photoUrl(path, size))}" ${attrs}>`;
+}
+
+/**
+ * Swaps an <img> that fails to load for its `data-fallback`, once. One
+ * listener in the head, capturing -- an image's error event doesn't bubble --
+ * rather than an onerror attribute on each image: the pages' escaping tests
+ * hold that no `onerror="` ever reaches the markup, and that stays true.
+ */
+const PHOTO_FALLBACK = `<script>document.addEventListener("error",function(e){var t=e.target,f=t&&t.getAttribute&&t.getAttribute("data-fallback");if(f){t.removeAttribute("data-fallback");t.src=f}},true)</script>`;
+
 /**
  * The PlantParlour look: aubergine page, one cream card with the double gold
  * rule, Lora and Source Sans 3. `head` is extra markup for the document head —
@@ -103,6 +126,7 @@ ${head}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap">
 ${ANALYTICS_SNIPPET}
+${PHOTO_FALLBACK}
 <style>
 :root{--bg:#2E1633;--card:#F3ECDD;--text:#2E1633;--muted:#6B5A6B;--label:#1F3D2B;--gold:#C9A24B;--gold-deep:#7A5A12;--gold-light:#E6C46B;--plum:#4B2142;--hair:rgba(201,162,75,.6);--hair2:rgba(201,162,75,.35);--ok-bg:#E3EFE6;--ok:#1F3D2B;--bad-bg:#F0DCE2;--bad:#7A2141;--neu-bg:#EDE3D3;--neu:#4B2142}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 'Source Sans 3','Segoe UI',system-ui,sans-serif;padding:20px 16px;-webkit-font-smoothing:antialiased}
@@ -151,7 +175,7 @@ export function render(p: Tag): string {
   return `
 <div class="top"><div class="caps">Plant tag</div><div class="brand">PlantParlour</div></div>
 <header><h1>${esc(plant.nickname)}</h1><div class="sub">${esc(plant.species || "Species not listed")}</div></header>
-${hero ? `<img class="hero" src="${esc(photoUrl(hero.path, "hero"))}" alt="${esc(plant.nickname)}">` : ""}
+${hero ? photoImg(hero.path, "hero", `class="hero" alt="${esc(plant.nickname)}"`) : ""}
 <div class="badges">
   <span class="badge ${plant.status === "ACTIVE" ? "ok" : ""}">${esc(plant.status.toLowerCase())}</span>
   <span class="badge ${open ? "bad" : "ok"}">${open ? `${open} open issue${open === 1 ? "" : "s"}` : "No open issues"}</span>
@@ -170,7 +194,7 @@ ${hero ? `<img class="hero" src="${esc(photoUrl(hero.path, "hero"))}" alt="${esc
 <section><h2 class="caps">Health &amp; handling</h2>
   ${health.length ? `<table>${health.map((e) => `<tr><td>${day(e.occurred_at)}</td><td>${esc(LABELS[e.type] ?? e.type)}${e.type === "ISSUE" ? (e.resolved_at ? ` · resolved ${day(e.resolved_at)}` : " · <strong>unresolved</strong>") : ""}${e.notes ? `<br><span class="small muted">${esc(e.notes)}</span>` : ""}</td></tr>`).join("")}</table>` : `<p class="muted">Nothing reported — no issues, treatments or repottings on record.</p>`}
 </section>
-${photos.length > 1 ? `<section><h2 class="caps">Photos over time</h2><div class="photos">${photos.map((ph) => `<figure style="margin:0"><img src="${esc(photoUrl(ph.path, "grid"))}" alt="" loading="lazy"><figcaption class="small muted">${day(ph.taken_at)}${ph.caption ? ` · ${esc(ph.caption)}` : ""}</figcaption></figure>`).join("")}</div></section>` : ""}
+${photos.length > 1 ? `<section><h2 class="caps">Photos over time</h2><div class="photos">${photos.map((ph) => `<figure style="margin:0">${photoImg(ph.path, "grid", `alt="" loading="lazy"`)}<figcaption class="small muted">${day(ph.taken_at)}${ph.caption ? ` · ${esc(ph.caption)}` : ""}</figcaption></figure>`).join("")}</div></section>` : ""}
 ${plant.notes ? `<section><h2 class="caps">Notes</h2><p>${esc(plant.notes)}</p></section>` : ""}
 <div class="foot"><span>Self-reported by the plant's keeper · published ${day(plant.published_at)}</span>${LOGO}</div>
 ${reportLink(`/tag?t=${plant.passport_token}`)}`;

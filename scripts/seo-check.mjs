@@ -280,15 +280,17 @@ if (!existsSync(join(PUBLIC, "robots.txt"))) {
 }
 
 // --- a public page never serves a full-size photo into a small box.
-// Supabase resizes on the way out; asking for the raw object instead means a
-// 704 KB original filling a 320px square. Every <img> on a server-rendered
-// page has to name the size it draws.
+// A 704 KB original filling a 320px square. Every stored photo on a
+// server-rendered page goes through photoImg(path, size), which draws the copy
+// saved at upload for that size and falls back to the bucket's resizer.
 for (const file of ["tag.ts", "conservatory.ts"]) {
-  const src = readFileSync(join(ROOT, "api", file), "utf8");
-  for (const [, call] of src.matchAll(/<img[^>]*?photoUrl\(([^)]*)\)/g)) {
-    if (!/,/.test(call)) {
-      err(`api/${file}`, `an <img> asks for photoUrl(${call.trim()}) at full size — name the size it is drawn at`);
-    }
+  // photoImg itself is the one place allowed to build the <img>.
+  const src = readFileSync(join(ROOT, "api", file), "utf8").replace(/export function photoImg[\s\S]*?\n}\n/, "");
+  if (/<img[^>]*?photoUrl\(/.test(src)) {
+    err(`api/${file}`, "an <img> builds its own photoUrl() — use photoImg(path, size, attrs), which names the size and its saved copy");
+  }
+  for (const m of src.matchAll(/(?<!function )photoImg\([^,]+,\s*("[a-z]+"|[a-z]+)/g)) {
+    if (!/^"(hero|grid)"$/.test(m[1])) err(`api/${file}`, `photoImg(…, ${m[1]}) — name the size it is drawn at, "hero" or "grid"`);
   }
 }
 
