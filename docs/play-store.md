@@ -37,14 +37,22 @@ new fingerprint, tested on internal testing before production.
 
 ## Store listing
 
-**App name** (30 max): `PlantParlour: Plant Care`
+Updated 12 Oct 2026 for search (the first version, live from 11 Oct, was
+"PlantParlour: Plant Care" and "Plant ID, care reminders and a living care
+record for every plant you keep."). Play weighs the name, then the short
+description, then the full description: they now carry the words people
+search with -- plant care, plant identifier, watering reminders, houseplant.
+
+**App name** (30 max): `PlantParlour: Plant Care & ID`
 
 **Short description** (80 max):
-`Plant ID, care reminders and a living care record for every plant you keep.`
+`Plant identifier, watering reminders and care guides for every houseplant.`
 
 **Full description** (4000 max):
 
 ```
+PlantParlour is a plant care app: identify plants from a photo, get watering reminders, and keep a care journal for every houseplant.
+
 Every plant you love deserves a history. PlantParlour keeps it, and tells you what each one needs today.
 
 Snap a photo and PlantParlour names your plant, down to the cultivar where it can, including variegated and collector varieties. See how it's doing, get a care guide written for that species, and let reminders tell you when it's time to water, feed or repot.
@@ -78,7 +86,7 @@ AI can be wrong, so every answer can be reported right where it's shown. Toxicit
 YOUR PLANTS, YOUR DATA
 No ads. Your records aren't sold or shared. Delete your account and everything in it from inside the app, any time.
 
-More free care guides for over 150 houseplants at plantparlour.org.
+More free care guides for 160+ houseplants at plantparlour.org.
 ```
 
 **Category:** House & Home. **Tags:** Plant care, Gardening, Home & garden.
@@ -93,7 +101,8 @@ More free care guides for over 150 houseplants at plantparlour.org.
 |---|---|---|
 | App icon | `public/icon-512.png` | 512×512 |
 | Feature graphic | `store/feature-graphic.png` | 1024×500 |
-| Phone screenshots | `store/screenshots/1-…6-*.png`, from the web build by `scripts/store-screenshots.mjs` (stubbed, no AI spend); retake from the Android build later if wanted | 1080×1920 |
+| Phone screenshots (upload these) | `store/captioned/1-…6-*.png`: captioned, in store order, by `scripts/store-captions.mjs` | 1080×1920 |
+| Raw screenshots | `store/screenshots/*.png`, from the web build by `scripts/store-screenshots.mjs` (stubbed, no AI spend); `7-doors` and `8-come-in` are the opening sequence (`?threshold`) | 1080×1920 |
 
 Both images come from `npm run icons`.
 
