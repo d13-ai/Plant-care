@@ -12,7 +12,7 @@
 // is_public — the same set the tag links expose — so a private plant is as
 // invisible here as everywhere else.
 
-import { LOGO, page, reportLink } from "./tag";
+import { LOGO, page, photoImg, reportLink } from "./tag";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "https://ixagjvntbgyqemxxinqe.supabase.co";
 const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY || "sb_publishable__A5fA6nyI8nrSqJWfaaJBQ_vqEZdRn6";
@@ -37,25 +37,6 @@ export type Conservatory = {
 
 const esc = (s: unknown) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-/**
- * A photo, at the size this page draws it. Supabase resizes on the way out,
- * and the saving is the difference between a page and a download: one real
- * photo in the bucket is 1600x3463 and 704 KB, and comes back as 10 KB at
- * 320px square, 144 KB at 900px wide. A tag with a dozen photos was several
- * megabytes of full-size originals to fill thumbnails a centimetre across.
- *
- * `hero` keeps the photo's shape; the strip below crops to squares, which is
- * what the grid draws anyway.
- */
-const SIZES = {
-  hero: "width=900&resize=contain&quality=75",
-  grid: "width=320&height=320&resize=cover&quality=65",
-} as const;
-
-const photoUrl = (path: string, size: keyof typeof SIZES | "raw" = "raw") =>
-  size === "raw"
-    ? `${SUPABASE_URL}/storage/v1/object/public/plant-photos/${path}`
-    : `${SUPABASE_URL}/storage/v1/render/image/public/plant-photos/${path}?${SIZES[size]}`;
 const year = (iso: string | null) => (iso ? new Date(iso).getFullYear() : null);
 
 export function renderConservatory(data: Conservatory): string {
@@ -66,7 +47,7 @@ export function renderConservatory(data: Conservatory): string {
   const card = (p: Plant) => {
     const kept = year(p.acquired_at);
     return `<a class="plant" href="/tag?t=${esc(p.passport_token)}">
-      ${p.photo ? `<img src="${esc(photoUrl(p.photo, "grid"))}" alt="" loading="lazy">` : `<div class="noshot"></div>`}
+      ${p.photo ? photoImg(p.photo, "grid", `alt="" loading="lazy"`) : `<div class="noshot"></div>`}
       <div class="pbody">
         <p class="pname">${esc(p.nickname)}</p>
         ${p.species ? `<p class="small muted"><em>${esc(p.species)}</em></p>` : ""}

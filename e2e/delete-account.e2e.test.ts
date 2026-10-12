@@ -72,7 +72,9 @@ describe("deleting an account", () => {
   test("deletes the account and says what went", async () => {
     const { data, error } = await supabase.functions.invoke("delete-account", { body: { confirm: "DELETE" } });
     expect(error).toBeNull();
-    expect(data).toMatchObject({ deleted: true, plants: 1, photos: 1, files: 1 });
+    // One photo is three files: the original and the view and thumb copies
+    // the phone saved beside it at upload. All three have to go.
+    expect(data).toMatchObject({ deleted: true, plants: 1, photos: 1, files: 3 });
     expect(data.care_events).toBeGreaterThanOrEqual(1);
     deleted = true;
   });

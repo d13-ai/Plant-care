@@ -1,5 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
 import type { SQLiteDatabase } from "expo-sqlite";
+import { savedSizePath } from "@/domain/photo-uri";
 import { leave } from "@/domain/trail";
 import {
   applyRemoteEvent,
@@ -24,6 +25,7 @@ import {
   type RemotePlant,
 } from "@/db";
 import { getKeeperName } from "./keeper";
+import { savedSizes } from "./photo-sizes";
 import { BUCKET, SUPABASE_URL, supabase, supabaseConfigured } from "./supabase";
 
 /**
@@ -251,9 +253,25 @@ async function pull(db: SQLiteDatabase): Promise<number> {
 // ---------------------------------------------------------------------------
 
 async function uploadPhoto(keeperId: string, plantUuid: string, photoUuid: string, uri: string): Promise<string> {
+  const path = `${keeperId}/${plantUuid}/${photoUuid}.jpg`;
+  await putPhoto(path, uri);
+  // The copies the app and the public pages actually draw, so the bucket
+  // doesn't have to resize the original on every view (billed per photo on
+  // Supabase Pro). Best effort: a photo without them still shows, through the
+  // resizer, so a failure here must not wedge the sync behind it.
+  try {
+    const sizes = await savedSizes(uri);
+    await putPhoto(savedSizePath(path, "view"), sizes.view);
+    await putPhoto(savedSizePath(path, "thumb"), sizes.thumb);
+  } catch (e) {
+    console.warn("Saved sizes:", e instanceof Error ? e.message : e);
+  }
+  return path;
+}
+
+async function putPhoto(path: string, uri: string): Promise<void> {
   const response = await fetch(uri);
   const body = await response.arrayBuffer();
-  const path = `${keeperId}/${plantUuid}/${photoUuid}.jpg`;
   // A photo's path carries its uuid and a new photo always gets a new uuid, so
   // the bytes at a path never change: cache it hard. Supabase defaults to
   // no-cache, which meant a phone re-downloaded the whole greenhouse's photos
@@ -262,7 +280,6 @@ async function uploadPhoto(keeperId: string, plantUuid: string, photoUuid: strin
     .from(BUCKET)
     .upload(path, body, { contentType: "image/jpeg", cacheControl: "31536000", upsert: true });
   if (error) throw new Error(`Upload: ${error.message}`);
-  return path;
 }
 
 /**
@@ -298,7 +315,9 @@ export async function pushAll(db: SQLiteDatabase, session: Session): Promise<num
   for (const t of tombstones) {
     if (t.kind === "photo") {
       if (t.path) {
-        const { error } = await supabase.storage.from(BUCKET).remove([t.path]);
+        const { error } = await supabase.storage
+          .from(BUCKET)
+          .remove([t.path, savedSizePath(t.path, "view"), savedSizePath(t.path, "thumb")]);
         if (error) throw new Error(`Delete photo file: ${error.message}`);
       }
       // The row last: while it exists, the plant it belongs to still grants

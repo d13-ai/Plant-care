@@ -22,6 +22,7 @@
  * The fallback account is a fixture, reused run to run rather than minted
  * fresh each time — see e2e/test-account.ts for why.
  */
+import { savedSizePath } from "@/domain/photo-uri";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { addPhoto, createPlant, getPlant, logCare, migrate, propagate, resolveIssue } from "@/db";
 import { publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
@@ -134,7 +135,10 @@ describe("publishing a tag to Supabase", () => {
         // The paths come from the photos table, not a bucket listing: listing
         // the bucket is no longer permitted, and these rows go with the plants.
         const { data: photos } = await supabase.from("photos").select("path").in("plant_id", ids);
-        if (photos?.length) await supabase.storage.from("plant-photos").remove(photos.map((p) => p.path));
+        if (photos?.length) {
+          const paths = photos.flatMap((p) => [p.path, savedSizePath(p.path, "view"), savedSizePath(p.path, "thumb")]);
+          await supabase.storage.from("plant-photos").remove(paths);
+        }
         await supabase.from("plants").delete().in("id", ids);
       }
       // The keeper row is the account's own profile. Delete it only when this
@@ -209,13 +213,13 @@ describe("publishing a tag to Supabase", () => {
     expect(html).toContain("No open issues");
     expect(html).toContain("Treatment applied");
     expect(html).toContain("Neem oil, twice a week");
-    // The page asks the bucket to resize on the way out rather than serving
-    // the stored 1600px original into a thumbnail: 10 KB against 704 KB on a
-    // real photo. seo-check enforces the same thing at the source; this
-    // checks what the deployed page actually emits.
-    expect(html).toContain("/storage/v1/render/image/public/plant-photos/");
-    expect(html).toMatch(/render\/image\/public\/plant-photos\/[^"]*width=\d+/);
-    expect(html).not.toContain("/storage/v1/object/public/plant-photos/");
+    // The page never serves the stored 1600px original into a thumbnail:
+    // 704 KB against 10 KB on a real photo. It draws the copy saved at upload,
+    // with the bucket's resizer as the fallback for photos that have none.
+    // seo-check enforces the same at the source; this checks what the
+    // deployed page actually emits.
+    expect(html).toMatch(/render\/image\/public\/plant-photos\/[^"']*width=\d+/);
+    expect(html).not.toMatch(/object\/public\/plant-photos\/[^"'?]*[0-9a-f]\.jpg["']/);
   });
 
   test("republishing replaces the snapshot and keeps the link", async () => {
@@ -296,13 +300,13 @@ describe("publishing a tag to Supabase", () => {
     expect(link).toBe(tagLink);
     const { status, html } = await fetchTagPage(link);
     expect(status).toBe(200);
-    // The page asks the bucket to resize on the way out rather than serving
-    // the stored 1600px original into a thumbnail: 10 KB against 704 KB on a
-    // real photo. seo-check enforces the same thing at the source; this
-    // checks what the deployed page actually emits.
-    expect(html).toContain("/storage/v1/render/image/public/plant-photos/");
-    expect(html).toMatch(/render\/image\/public\/plant-photos\/[^"]*width=\d+/);
-    expect(html).not.toContain("/storage/v1/object/public/plant-photos/");
+    // The page never serves the stored 1600px original into a thumbnail:
+    // 704 KB against 10 KB on a real photo. It draws the copy saved at upload,
+    // with the bucket's resizer as the fallback for photos that have none.
+    // seo-check enforces the same at the source; this checks what the
+    // deployed page actually emits.
+    expect(html).toMatch(/render\/image\/public\/plant-photos\/[^"']*width=\d+/);
+    expect(html).not.toMatch(/object\/public\/plant-photos\/[^"'?]*[0-9a-f]\.jpg["']/);
 
     const after = await getPlant(local.db, plantId);
     const photo = await fetch(

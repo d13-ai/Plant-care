@@ -6,7 +6,7 @@ import { defineConfig } from "vitest/config";
  * Config for `npm run e2e` — the live check against Supabase. Kept apart from
  * `vitest.config.ts` so `npm test` stays offline and instant.
  *
- * The app's code is written for React Native, so the three device-only
+ * The app's code is written for React Native, so the device-only
  * modules are aliased to Node stand-ins; everything else (the db layer, the
  * Supabase client, the publish path) is the real thing.
  */
@@ -18,6 +18,7 @@ export default defineConfig({
       { find: /^react-native-url-polyfill\/auto$/, replacement: stub("empty.ts") },
       { find: /^@react-native-async-storage\/async-storage$/, replacement: stub("async-storage.ts") },
       { find: /^react-native$/, replacement: stub("react-native.ts") },
+      { find: /^expo-image-manipulator$/, replacement: stub("image-manipulator.ts") },
       { find: /^@\//, replacement: path.resolve(__dirname, "src") + "/" },
     ],
   },

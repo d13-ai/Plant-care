@@ -2,8 +2,11 @@ import { describe, expect, test } from "vitest";
 import {
   bucketPrefix,
   PHOTO_SIZES,
+  photoSources,
+  proxiedPhotoSources,
   proxiedPhotoUri,
   proxiedSizedUri,
+  savedSizePath,
   sizedPhotoUri,
 } from "./photo-uri";
 
@@ -74,5 +77,39 @@ describe("asking the bucket for the size we actually draw", () => {
       expect(size.w, name).toBeLessThan(1600);
       expect(size.q ?? 70, name).toBeLessThanOrEqual(80);
     }
+  });
+});
+
+describe("copies saved at upload", () => {
+  test("sit beside the photo, named for the size they answer", () => {
+    expect(savedSizePath("k/p/photo.jpg", "thumb")).toBe("k/p/photo.thumb.jpg");
+    expect(savedSizePath("k/p/photo.jpg", "view")).toBe("k/p/photo.view.jpg");
+    expect(savedSizePath("k/p/photo.JPEG", "thumb")).toBe("k/p/photo.thumb.jpg");
+    expect(savedSizePath("k/p/photo", "thumb")).toBe("k/p/photo.thumb.jpg");
+  });
+
+  test("are tried first, with the resizer behind them for photos that have none", () => {
+    const stored = `${PREFIX}keeper/plant/photo.jpg`;
+    const [saved, rendered] = photoSources(stored, PREFIX, PHOTO_SIZES.thumb);
+    expect(saved).toBe(`${PREFIX}keeper/plant/photo.thumb.jpg`);
+    expect(new URL(rendered).pathname).toBe("/storage/v1/render/image/public/plant-photos/keeper/plant/photo.jpg");
+    expect(photoSources(stored, PREFIX, PHOTO_SIZES.full)[0]).toBe(`${PREFIX}keeper/plant/photo.view.jpg`);
+  });
+
+  test("a size with no saved copy goes straight to the resizer", () => {
+    const sources = photoSources(`${PREFIX}keeper/plant/photo.jpg`, PREFIX, PHOTO_SIZES.card);
+    expect(sources).toHaveLength(1);
+    expect(sources[0]).toContain("/render/image/");
+  });
+
+  test("on the web, both come through the app's own origin", () => {
+    const [saved, rendered] = proxiedPhotoSources(`${PREFIX}keeper/plant/photo.jpg`, PREFIX, PHOTO_SIZES.thumb);
+    expect(saved).toBe("/plant-photos/keeper/plant/photo.thumb.jpg");
+    expect(rendered.startsWith("/plant-thumb/keeper/plant/photo.jpg?")).toBe(true);
+  });
+
+  test("a photo on this device is left alone", () => {
+    expect(photoSources("file:///photos/a.jpg", PREFIX, PHOTO_SIZES.thumb)).toEqual(["file:///photos/a.jpg"]);
+    expect(proxiedPhotoSources("data:image/jpeg;base64,xx", PREFIX, PHOTO_SIZES.full)).toEqual(["data:image/jpeg;base64,xx"]);
   });
 });
