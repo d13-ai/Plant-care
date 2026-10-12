@@ -1,6 +1,6 @@
 import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LogoMark } from "@/components/icons";
-import { InstallHint } from "@/components/install-hint";
+import { GetItOnPlay, InstallHint } from "@/components/install-hint";
 import { SignIn } from "@/components/sign-in";
 import { Body, Card, SectionLabel } from "@/components/ui";
 import { siteUrl } from "@/lib/links";
@@ -63,6 +63,8 @@ export function Welcome() {
           </Text>
         </Text>
       </View>
+
+      <GetItOnPlay />
 
       <Card>
         <SectionLabel>Come in</SectionLabel>

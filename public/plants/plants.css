@@ -142,3 +142,8 @@ nav.crumbs a{font-weight:600}
 
 footer{max-width:720px;margin:20px auto 0;color:var(--gold-light);font-size:13px;text-align:center;font-family:Lora,Georgia,serif;font-style:italic}
 footer a{color:var(--gold-light)}
+/* Get it on Google Play: Google's own badge, unaltered (its transparent margin is the clear space it requires). */
+.get-app{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.play-badge{display:inline-block;line-height:0}
+.play-badge img{height:60px;width:auto}
+.cta .tm{margin:10px 0 0;font-size:11px;opacity:.75}
