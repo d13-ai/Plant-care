@@ -31,6 +31,7 @@ Newest last. Each includes everything before it.
 | 12 Oct 2026 | `09f18f6` | see expo.dev | Opening sequence on every opening, slower. |
 | 12 Oct 2026 | `1f5eb56` | see expo.dev | Green-room hold 1.3 s. |
 | 12 Oct 2026 | `46ab00a` | see expo.dev | Green-room hold 1.1 s (3.9 s in all). |
+| 12 Oct 2026 | `e3a5e90` | e2bafae7 | Thumbnail and view copies saved at upload; "5 free AI photo checks" wording. |
 
 ## Release notes, version 8 (production)
 
