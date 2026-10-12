@@ -12,7 +12,7 @@ import { createContext, useContext } from "react";
  * right one for wherever the component is rendered: Card sets the surface.
  * Every pair was measured against WCAG AA (4.5:1 text, 3:1 graphics).
  */
-const brand = {
+export const brand = {
   aubergine: "#2E1633",
   cream: "#F3ECDD",
   creamBright: "#FBF7EE",
