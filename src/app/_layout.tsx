@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState, type PropsWithChildren } from "react"
 import { Body, Button, Row, Title } from "@/components/ui";
 import { ReminderKeeper } from "@/components/reminders";
 import { ResetPassword } from "@/components/reset-password";
+import { Threshold } from "@/components/threshold";
 import { Welcome } from "@/components/welcome";
 import { migrate } from "@/db";
 import { leaveResetPage, resetTokenInUrl, useAccount, welcomeOnce } from "@/lib/auth";
@@ -216,6 +217,8 @@ export default function RootLayout() {
       {/* Outside the provider: signing in needs no database, and putting one in
           front of the sign-in screen only gave signing in a way to fail. */}
       <RequireAccount>{parlour}</RequireAccount>
+      {/* The opening sequence, over everything while it all loads underneath. */}
+      <Threshold />
     </>
   );
 }
