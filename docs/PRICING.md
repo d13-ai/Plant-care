@@ -86,6 +86,38 @@ as in September, this is a distribution problem, not a pricing one.
 day) refuses new keepers after about 80 sign up and scan in one day. Raise it
 first; at 7.6¢ a call, 500 a day is a $38/day ceiling.
 
+## 12 October 2026: Monte Carlo, what to do about the five free scans
+
+`node scripts/cost-montecarlo.mjs` simulates 20,000 possible next twelve
+months. Each one draws growth, how many scans people use, and unit costs from
+ranges, then runs six courses of action on the same draws. Median year: about
+930 keepers, and 168 of them have used all five free scans with nothing to
+buy.
+
+| Median net for the year | Under 500 keepers (31%) | 500–2,000 (41%) | Over 2,000 (28%) |
+|---|---|---|---|
+| As now | −$45 | −$315 | −$888 |
+| As now + thumbnails at upload | −$44 | −$256 | −$619 |
+| Thumbnails + 3 free scans | −$36 | −$230 | −$547 |
+| Thumbnails + scan packs from month 3 | −$228 | −$397 | −$525 |
+| Thumbnails + subscription from month 3 | −$189 | −$210 | **+$89** |
+| Thumbnails + subscription once 100 keepers have used all 5 | −$44 | −$230 | −$255 |
+
+What it says:
+
+- **Cost isn't the danger.** The worst plausible year (90th percentile) with
+  nothing changed is about $1,100. The danger is the people who hit the wall.
+- **Thumbnails at upload come out ahead in 81% of years and never behind.**
+- **Keep five free scans.** Three saves about $21 in a median year. That
+  isn't worth a thinner first impression.
+- **Skip scan packs.** They beat the subscription in 1% of years.
+- **A subscription pays only if the year grows.** Selling costs $20/month of
+  Vercel Pro from the day it starts, so in a small year it loses about $145.
+  Building it now and switching it on once ~100 keepers have used all five
+  avoids that loss and keeps most of the upside.
+- **Raise the daily AI cap to 500.** At 200 it turns people away in about one
+  year in five.
+
 ## What a keeper actually costs
 
 Measured, from `ai_usage` and `storage.objects`:
