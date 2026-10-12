@@ -11,6 +11,9 @@ First production release (version 6) sent for review on 8 Oct 2026, with the
 listing text below. Version 7 followed, then version 8 (the add-plant fix,
 commit 61e12aa) was uploaded on 10 Oct 2026.
 
+**Live on Google Play on 12 Oct 2026**: production, 100% rollout, phones and
+tablets: https://play.google.com/store/apps/details?id=org.plantparlour.app
+
 ## Before the first upload
 
 - **Package name: `org.plantparlour.app`.** Registered in Play Console when
