@@ -63,10 +63,15 @@ export async function refundPhotoCall(admin: SupabaseClient, keeperId: string): 
 /**
  * Calls the whole project will pay for in a day, across every keeper. Set
  * AI_DAILY_GLOBAL_CAP as a function secret to change it without a redeploy.
- * The default is deliberately low: at Opus prices ~200 calls is a few dollars,
- * and a personal greenhouse never comes near it.
+ *
+ * 500 since 12 Oct 2026, up from 200. At 7.6c an identification that is a
+ * $38 worst day. At 200 the cost simulation (scripts/cost-montecarlo.mjs)
+ * had new keepers refused in about one year in five -- around 80 sign-ups
+ * scanning on the same day is enough -- and a refused first scan is a lost
+ * keeper. It is a ceiling for a runaway, not a budget; the Anthropic
+ * Console's monthly spend limit is the budget.
  */
-export const GLOBAL_DAILY_CAP = Number(Deno.env.get("AI_DAILY_GLOBAL_CAP") ?? 200);
+export const GLOBAL_DAILY_CAP = Number(Deno.env.get("AI_DAILY_GLOBAL_CAP") ?? 500);
 
 export const today = () => new Date().toISOString().slice(0, 10);
 
