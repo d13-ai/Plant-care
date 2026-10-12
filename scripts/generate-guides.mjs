@@ -50,6 +50,10 @@ const called = (p) => p.common ?? p.sci;
 
 const byName = (a, b) => called(a).localeCompare(called(b));
 
+/** PlantParlour on Google Play, and Google's own badge for it (unaltered: its transparent margin is the clear space Google asks for). */
+const PLAY_URL = "https://play.google.com/store/apps/details?id=org.plantparlour.app";
+const PLAY_BADGE = `<a class="play-badge" href="${PLAY_URL}"><img src="/google-play-badge.png" alt="Get it on Google Play" width="646" height="250"></a>`;
+
 /** The health check, described as what it is: a second pair of eyes, not a diagnosis. */
 const HEALTH_CTA = `<div class="cta">
   <h2>Not sure which one it is?</h2>
@@ -417,7 +421,7 @@ export const APP_FAQ = [
   // and "there's no subscription" would be quoted back by every search
   // result and AI answer that had read it, long after it stopped being true.
   ["Is PlantParlour free?", "Yes, it's free to use, with no advertising. Your account includes a number of free AI photo scans; everything else — reminders, the care record, photos, care guides and tags — is free, and keeps working after the scans are used."],
-  ["Does it work on iPhone and Android?", "Yes. It runs in the browser on both, and you can add it to your home screen so it opens like any other app. There's no App Store or Google Play download — if you see a PlantParlour app in a store, it isn't this one."],
+  ["Does it work on iPhone and Android?", "Yes. On Android, get PlantParlour from Google Play. On an iPhone it runs in Safari: add it to your home screen and it opens like any other app. There's no App Store version yet."],
   ["Do I need an account?", "Yes. Sign in with Google, or with an email and password. The account is what backs your plants up and keeps them in step across your phones. The care library, the problem guides and the pet-safe list need no account at all."],
   ["Does it work offline?", "Yes. Your plants live on your phone, so you can log care with no signal. A photo taken offline uploads the next time you have a connection."],
   ["Does it send notifications?", "Not push notifications. The app shows what's due each time you open it, and Add to calendar puts a plant's watering, feeding and repotting dates into your phone's calendar, which reminds you."],
@@ -431,7 +435,7 @@ export function appPage(pages) {
   const description =
     "PlantParlour is a free plant care app: watering and feeding reminders set for each plant, AI plant identification and health checks from a photo, a care history for every plant, and a record that goes with it when you sell or trade. Runs in your phone's browser.";
   const answer =
-    "PlantParlour is a free plant care app that runs in your phone's browser. Add a plant from a photo and it works out what it is, sets watering, feeding and repotting reminders for that plant, and keeps a record of everything you do for it — every watering, repot, problem and fix. When you sell, trade or give a plant away, its whole history can go with it at a link. It works on iPhone and Android without an app store, keeps working offline, and keeps your plants in step across your phones once you sign in.";
+    "PlantParlour is a free plant care app for your phone. Add a plant from a photo and it works out what it is, sets watering, feeding and repotting reminders for that plant, and keeps a record of everything you do for it — every watering, repot, problem and fix. When you sell, trade or give a plant away, its whole history can go with it at a link. It's on Google Play for Android and runs in the browser on an iPhone, keeps working offline, and keeps your plants in step across your phones once you sign in.";
 
   const jsonld = [
     ld({
@@ -448,7 +452,8 @@ export function appPage(pages) {
         name: "PlantParlour",
         url: `${SITE}/`,
         applicationCategory: "LifestyleApplication",
-        operatingSystem: "Web, iOS, Android",
+        operatingSystem: "Android, Web, iOS",
+        downloadUrl: PLAY_URL,
         featureList: APP_FEATURES.map(([name]) => name),
         offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
       },
@@ -487,8 +492,12 @@ ${faqHtml(APP_FAQ)}
 
 <div class="cta">
   <h2>Start your greenhouse</h2>
-  <p>Free, in your phone's browser. Sign in with Google or an email, add your first plant from a photo, and it takes it from there.</p>
-  <a class="btn btn-lg" href="/">Open PlantParlour</a>
+  <p>Free. Get it from Google Play on Android, or open it in your phone's browser. Sign in with Google or an email, add your first plant from a photo, and it takes it from there.</p>
+  <div class="get-app">
+    ${PLAY_BADGE}
+    <a class="btn btn-lg" href="/">Open in the browser</a>
+  </div>
+  <p class="tm">Google Play and the Google Play logo are trademarks of Google LLC.</p>
 </div>
 ${foot}`;
 }

@@ -673,28 +673,35 @@ try {
     await page.getByText("What gets sent").waitFor({ timeout: 5000 });
     await shot("26-report");
   });
-  await step("iPhone visitors are told how to install; nobody else is", async () => {
-    // The hint is the only thing standing in for an install prompt on iOS,
-    // which never offers one -- and it is the one piece of this that cannot be
-    // checked on a real iPhone from here. So check the decision itself: an
-    // iPhone user agent sees it, a desktop one must not.
+  await step("iPhone visitors are told how to install, Android visitors get Google Play, desktop neither", async () => {
+    // The iPhone hint is the only thing standing in for an install prompt on
+    // iOS, which never offers one; on Android the app is on Google Play. Both
+    // are decided from the user agent after mount, and that decision is what
+    // can be checked from here.
     const IPHONE =
       "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 " +
       "(KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1";
-    for (const [label, userAgent, expected] of [
-      ["iPhone", IPHONE, true],
-      ["desktop", undefined, false],
+    const ANDROID =
+      "Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) " +
+      "Chrome/128.0.0.0 Mobile Safari/537.36";
+    for (const [label, userAgent, wantsIos, wantsPlay] of [
+      ["iPhone", IPHONE, true, false],
+      ["Android", ANDROID, false, true],
+      ["desktop", undefined, false, false],
     ]) {
       const ctx = await browser.newContext({ viewport: { width: 420, height: 860 }, userAgent });
       try {
         const visitor = await ctx.newPage();
         await visitor.goto(base + "/", { waitUntil: "domcontentloaded" });
         await visitor.getByText("Start your parlour").waitFor({ timeout: 15000 });
-        const hint = visitor.getByText("Add to Home Screen");
-        if (expected) await hint.waitFor({ timeout: 15000 });
-        // The hint decides after mount, so give it the same beat before
-        // concluding it stayed away.
-        else if (await hint.count()) throw new Error("install hint shown to a " + label + " visitor");
+        const ios = visitor.getByText("Add to Home Screen");
+        const play = visitor.getByRole("link", { name: "Get it on Google Play" });
+        if (wantsIos) await ios.waitFor({ timeout: 15000 });
+        if (wantsPlay) await play.waitFor({ timeout: 15000 });
+        // Each decides after mount; the waits above (or the welcome text) give
+        // it that beat before concluding the other stayed away.
+        if (!wantsIos && (await ios.count())) throw new Error("iPhone install hint shown to a " + label + " visitor");
+        if (!wantsPlay && (await play.count())) throw new Error("Google Play badge shown to a " + label + " visitor");
       } finally {
         await ctx.close();
       }

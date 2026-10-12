@@ -2,6 +2,9 @@ import { Linking, Platform } from "react-native";
 
 import { SITE_URL } from "@/lib/supabase";
 
+/** PlantParlour on Google Play. */
+export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=org.plantparlour.app";
+
 /**
  * Opens a page that is part of plantparlour.org but not part of the app —
  * the games, the legal pages — in the same tab.
