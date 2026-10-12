@@ -50,7 +50,7 @@ export async function claimPhotoCall(
   return {
     ok: false,
     status: 429,
-    error: `You have used all ${PHOTO_TRIAL} of your AI plant identifications. You can still add plants and keep their records — just without the camera doing the naming.`,
+    error: `You have used all ${PHOTO_TRIAL} of your free AI photo checks. You can still add plants and keep their records — just without the camera doing the naming.`,
   };
 }
 

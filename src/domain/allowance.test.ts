@@ -3,12 +3,12 @@ import { afterScanLine, allowanceLine, PHOTO_TRIAL } from "./allowance";
 
 describe("what a keeper is told about their AI allowance", () => {
   test("before they have scanned anything, the allowance is stated rather than implied", () => {
-    expect(allowanceLine({ left: null })).toBe(`${PHOTO_TRIAL} free AI identifications with your account.`);
+    expect(allowanceLine({ left: null })).toBe(`${PHOTO_TRIAL} free AI photo checks with your account.`);
   });
 
   test("the count is singular when it should be", () => {
-    expect(allowanceLine({ left: 1 })).toBe("1 AI identification left.");
-    expect(allowanceLine({ left: 2 })).toBe("2 AI identifications left.");
+    expect(allowanceLine({ left: 1 })).toBe("1 AI photo check left.");
+    expect(allowanceLine({ left: 2 })).toBe("2 AI photo checks left.");
   });
 
   test("at zero it says what still works, not only what stopped", () => {
@@ -25,7 +25,7 @@ describe("what a keeper is told about their AI allowance", () => {
 
   test("an answer that came from the cache says so, and says it cost nothing of theirs", () => {
     const line = afterScanLine({ left: 3, cached: true });
-    expect(line).toMatch(/didn't use an identification/);
+    expect(line).toMatch(/didn't use a photo check/);
   });
 
   test("nothing anywhere quotes a price", () => {

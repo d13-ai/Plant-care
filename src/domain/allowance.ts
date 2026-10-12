@@ -1,7 +1,7 @@
 /**
- * How many AI identifications a keeper has left, in words.
+ * How many AI photo checks a keeper has left, in words.
  *
- * A new keeper gets a fixed number of photo identifications — not per day,
+ * A new keeper gets a fixed number of AI photo checks — not per day,
  * for their account's lifetime (`PHOTO_TRIAL` in
  * `supabase/functions/_shared/cap.ts`). Until now the only place that number
  * appeared was a trailing clause after a scan had already happened, so the
@@ -12,6 +12,12 @@
  * So it is said before the button rather than after the answer. The wording
  * lives here, apart from the screens, because it is the line that will become
  * an upgrade prompt and it should read the same in both places.
+ *
+ * One name for it everywhere: an "AI photo check". Identifying a plant and
+ * checking its health both spend one, and the welcome email, the website and
+ * the Play listing say the same words. It used to be "identifications" here,
+ * "scans" on the site and "photo checks" in the email, and somebody who ran a
+ * health check was told how many *identifications* they had left.
  */
 
 /**
@@ -23,7 +29,7 @@
 export const PHOTO_TRIAL = 5;
 
 export type Allowance = {
-  /** Identifications left, or null when they are unlimited or unknown. */
+  /** Photo checks left, or null when they are unlimited or unknown. */
   left: number | null;
   unlimited?: boolean;
 };
@@ -34,10 +40,10 @@ export type Allowance = {
  */
 export function allowanceLine(a: Allowance): string | null {
   if (a.unlimited) return null;
-  if (a.left == null) return `${PHOTO_TRIAL} free AI identifications with your account.`;
-  if (a.left <= 0) return "No AI identifications left — you can still add the plant and keep its record.";
-  if (a.left === 1) return "1 AI identification left.";
-  return `${a.left} AI identifications left.`;
+  if (a.left == null) return `${PHOTO_TRIAL} free AI photo checks with your account.`;
+  if (a.left <= 0) return "No AI photo checks left — you can still add the plant and keep its record.";
+  if (a.left === 1) return "1 AI photo check left.";
+  return `${a.left} AI photo checks left.`;
 }
 
 /**
@@ -47,10 +53,10 @@ export function allowanceLine(a: Allowance): string | null {
  * four cents invites the thought that the next one will too.
  */
 export function afterScanLine(a: Allowance & { cached?: boolean }): string | null {
-  if (a.cached) return "Remembered from before — that didn't use an identification.";
+  if (a.cached) return "Remembered from before — that didn't use a photo check.";
   if (a.unlimited) return null;
   if (a.left == null) return null;
-  if (a.left <= 0) return "That was your last AI identification. You can still add plants and keep their records.";
-  if (a.left === 1) return "1 AI identification left.";
-  return `${a.left} AI identifications left.`;
+  if (a.left <= 0) return "That was your last AI photo check. You can still add plants and keep their records.";
+  if (a.left === 1) return "1 AI photo check left.";
+  return `${a.left} AI photo checks left.`;
 }

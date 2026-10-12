@@ -67,6 +67,7 @@ KNOW WHAT YOU'VE GOT
 • Identify plants from a photo, including variegated and rare collector cultivars
 • Health checks from a photo: what's going wrong and what to do about it
 • A care guide for every species: light, water, humidity, soil, feeding and the common problems to watch for
+• Every account includes 5 free AI photo checks; identifying a plant or checking its health uses one. Reminders, care guides, your records and tags are free without a limit
 
 A RECORD THAT GROWS WITH YOUR PLANT
 • Log watering, feeding, repotting, pests, treatments and cuttings, with photos
