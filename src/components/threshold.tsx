@@ -24,8 +24,10 @@ const SEEN_KEY = "thresholdSeen";
 const native = Platform.OS !== "web";
 /** Longer than the longest plan; only reached if something here has stalled. */
 const BACKSTOP_MS = 4000;
+/** The leaf mark above the wordmark. */
+const LOGO_SIZE = 88;
 /** The logo, wordmark, rule and "Come in." stacked: used to centre them on the lamp. */
-const WORDS_HEIGHT = 72 + 8 + 62 + 25 + 26;
+const WORDS_HEIGHT = LOGO_SIZE + 8 + 62 + 25 + 26;
 /** How far the doors swing, in degrees -- just short of edge-on. */
 const SWING_DEG = 86;
 
@@ -166,7 +168,9 @@ export function Threshold() {
             { opacity: words, transform: [{ translateY: words.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] },
           ]}
         >
-          <LogoMark size={72} />
+          {/* In the light gold, one colour: the logo's darker outline gold
+              disappears against the green room. */}
+          <LogoMark size={LOGO_SIZE} color={brand.goldLight} />
           <Text style={styles.wordmark}>PlantParlour</Text>
           <View style={styles.rule} />
           <Text style={styles.comeIn}>Come in.</Text>

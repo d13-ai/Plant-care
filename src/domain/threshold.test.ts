@@ -2,16 +2,16 @@ import { describe, expect, test } from "vitest";
 import { planLength, SKIP_FADE_MS, thresholdPlan } from "./threshold";
 
 describe("the opening sequence", () => {
-  test("first launch: doors over about 1.2 s, the wordmark, half a second's hold, all under 3 s", () => {
+  test("first launch: doors over about 1.2 s, the wordmark, a long hold on the room, about 3 s", () => {
     const plan = thresholdPlan({ seenBefore: false, reduceMotion: false });
     expect(plan.kind).toBe("full");
     expect(plan.doorsSwing && plan.wordmark).toBe(true);
     expect(plan.doorsMs).toBe(1200);
     // The wordmark comes up as the doors clear it, not after a pause.
     expect(plan.wordmarkDelayMs).toBeLessThan(plan.doorsDelayMs + plan.doorsMs);
-    // Held for about half a second before the fade.
-    expect(plan.fadeDelayMs - (plan.wordmarkDelayMs + plan.wordmarkMs)).toBe(500);
-    expect(planLength(plan)).toBeLessThan(3000);
+    // Held on the lit room for over a second before the fade.
+    expect(plan.fadeDelayMs - (plan.wordmarkDelayMs + plan.wordmarkMs)).toBeGreaterThanOrEqual(1000);
+    expect(planLength(plan)).toBeLessThan(3500);
   });
 
   test("every launch after: the doors alone, about a second", () => {
