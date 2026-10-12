@@ -6,6 +6,86 @@ measured from our own tables, not estimated; the platform prices are list
 prices of this date and should be re-checked before a spreadsheet is built on
 them.*
 
+## 12 October 2026: the model rerun
+
+`scripts/pricing-model.mjs` was rebuilt from this month's measurements and
+the plans actually in use. Where this section and the September sections
+below disagree, this one is current.
+
+**What has been spent.** $1.80 of AI since launch, all of it on the
+project's key: $1.72 was the owner testing, **8¢ was keepers**. Platform
+bills: $0, plus Google Play's one-off $25.
+
+**The fixed bill is $0, not $45.** Supabase is on Free, Vercel on Hobby,
+Expo on Free, Resend on its free tier. The September model charged $25 of
+Supabase Pro and $20 of Vercel Pro from the first keeper.
+
+**Unit costs, from `ai_usage`, 7–11 Oct:**
+
+| | Cost | Note |
+|---|---|---|
+| Identification (Opus 5.5) | **7.6¢** | 9.2k tokens in, 1.9k out, most of it thinking |
+| Health check (Sonnet 5.5) | **4.4¢** | 14–17k tokens in: it carries an earlier photo and the care brief. September's 2.8¢ assumed one photo |
+| Care guide, a new species | 0.7¢ | once; 161 species are in the library at no cost |
+| A keeper's trial, all 5 used | 38¢ | measured so far: 1 scan across 9 keepers. The model assumes 2.5 |
+
+**When the bills start:**
+
+| What | When | Cost |
+|---|---|---|
+| Supabase Pro | photos pass 1 GB: about **1,700 photos, ~140 keepers** at 12 photos each | $25/month |
+| Supabase image resizing | from Pro on. Documented as Pro-only; it answers on our Free project today | $5 per 1,000 photos resized a month |
+| Vercel Pro | once anything is sold: Hobby is "non-commercial, personal use only" | $20/month |
+| Expo Starter | over 1,000 Android users a month opening the app (EAS Update) | $19/month, then $0.005 a user over 3,000 |
+| Resend Pro | over 3,000 emails a month, or 100 a day | $20/month |
+| Anthropic | per call; the global cap of 200 a day bounds it at ~$15/day | |
+
+**As a free app** (no revenue, keepers arriving over twelve months, 40%
+active in a month):
+
+| Keepers | AI/mo | Platform/mo | of which resizing | Total/mo |
+|---|---|---|---|---|
+| 100 | $1 | $0 | | **$1** |
+| 1,000 | $14 | $41 | $16 | **$55** |
+| 10,000 | $145 | $204 | $160 | **$349** |
+| 50,000 | $725 | $945 | $800 | **$1,670** |
+
+About 3–8¢ a keeper a month while growing. Once growth stops the AI column
+falls to almost nothing, because the trial is a one-off.
+
+**Three things the rerun changes:**
+
+1. **Image resizing is the biggest platform line at scale**, more than
+   storage, egress and Expo together. It is billed per distinct photo resized
+   a month, so it grows with every keeper's whole collection. Saving a 320px
+   thumbnail next to each photo at upload (a few KB of storage) would remove
+   most of it. Worth doing before 1,000 keepers, and before Supabase starts
+   enforcing Pro-only on our project.
+2. **Google Play takes 15% of an Android subscription** (10% service + 5%
+   billing fee). With 70% of subscribers on Android, a subscriber nets
+   **$3.63 a month, not $3.90**. A web checkout keeps more; whether the app
+   may link to one in the US needs checking against Play's current rules
+   before it is built on.
+3. **A paid allowance of 50 no longer pays** if all 50 are identifications
+   (-17¢ at 7.6¢ each). **30 a month** keeps every corner positive (37% margin
+   at worst), or 50 with health checks counted at half.
+
+**With a subscription** (3% convert, $5.99/month or $39.99/year, 70% annual):
+
+| Keepers | Subscribers | Revenue | Costs | Profit/mo |
+|---|---|---|---|---|
+| 1,000 | 30 | $109 | $82 | **$27** |
+| 10,000 | 300 | $1,088 | $433 | **$656** |
+| 50,000 | 1,500 | $5,442 | $2,011 | **$3,431** |
+
+**Break-even at about 650 keepers** (20 subscribers). **$1,000/month at about
+14,900 keepers** (447 subscribers). The margin on a subscriber is still 94%;
+as in September, this is a distribution problem, not a pricing one.
+
+**Before a launch push:** the global AI cap (`AI_DAILY_GLOBAL_CAP`, 200 calls a
+day) refuses new keepers after about 80 sign up and scan in one day. Raise it
+first; at 7.6¢ a call, 500 a day is a $38/day ceiling.
+
 ## What a keeper actually costs
 
 Measured, from `ai_usage` and `storage.objects`:
