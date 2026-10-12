@@ -1,29 +1,28 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AccessibilityInfo, Animated, AppState, Easing, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Svg, { Circle, Defs, G, Line, Path, Polygon, RadialGradient, Rect, Stop } from "react-native-svg";
 import { LogoMark } from "@/components/icons";
-import { SKIP_FADE_MS, thresholdPlan, type ThresholdPlan } from "@/domain/threshold";
+import { planLength, replayOnReturn, SKIP_FADE_MS, thresholdPlan, type ThresholdPlan } from "@/domain/threshold";
 import { brand, font } from "@/theme";
 
 /**
  * The opening sequence: a pair of parlour doors, aubergine and plum with
  * brass, swings open onto a lit room; "PlantParlour / Come in." comes up;
- * the room fades into the app. Which version plays and every timing are in
- * src/domain/threshold.ts.
+ * the room fades into the app. It plays every time the app is opened -- a
+ * cold start, or coming back after a while away. When, and every timing, is
+ * in src/domain/threshold.ts.
  *
  * It is a cover, not a gate. The root layout mounts it over everything else,
  * which loads and syncs underneath from the first frame; a tap anywhere skips
  * it; and if anything here stalls, a backstop takes it away regardless
- * (BACKSTOP_MS) -- the app is never kept waiting by a door.
+ * (BACKSTOP_SLACK_MS) -- the app is never kept waiting by a door.
  *
  * All vector, drawn below: no images, no video, nothing to download.
  */
 
-const SEEN_KEY = "thresholdSeen";
 const native = Platform.OS !== "web";
-/** Longer than the longest plan; only reached if something here has stalled. */
-const BACKSTOP_MS = 4000;
+/** How long past the end of the plan before the backstop takes the cover away; only reached if something here has stalled. */
+const BACKSTOP_SLACK_MS = 1500;
 /** The leaf mark above the wordmark. */
 const LOGO_SIZE = 88;
 /** The logo, wordmark, rule and "Come in." stacked: used to centre them on the lamp. */
@@ -59,27 +58,43 @@ export function Threshold() {
   const running = useRef<Animated.CompositeAnimation | null>(null);
   const skipped = useRef(false);
 
-  // Which version, and remember that this one has been seen.
+  // One opening: doors shut again, then play whichever version suits.
+  const open = useCallback(() => {
+    skipped.current = false;
+    running.current?.stop();
+    doors.setValue(0);
+    words.setValue(0);
+    veil.setValue(1);
+    setPlan(null);
+    setOn(true);
+    AccessibilityInfo.isReduceMotionEnabled()
+      .catch(() => false)
+      .then((reduceMotion) => setPlan(thresholdPlan({ reduceMotion })));
+  }, [doors, words, veil]);
+
+  // On launch, and again on coming back after a while away.
   useEffect(() => {
     if (!native && !wantedOnWeb()) return;
-    setOn(true);
-    let live = true;
-    const backstop = setTimeout(() => setOn(false), BACKSTOP_MS);
-    Promise.all([
-      AsyncStorage.getItem(SEEN_KEY)
-        .then((v) => v !== null)
-        .catch(() => false),
-      AccessibilityInfo.isReduceMotionEnabled().catch(() => false),
-    ]).then(([seenBefore, reduceMotion]) => {
-      if (!live) return;
-      AsyncStorage.setItem(SEEN_KEY, "1").catch(() => {});
-      setPlan(thresholdPlan({ seenBefore, reduceMotion }));
+    open();
+    let awaySince: number | null = null;
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "background") {
+        awaySince = Date.now();
+      } else if (state === "active" && awaySince !== null) {
+        const away = Date.now() - awaySince;
+        awaySince = null;
+        if (replayOnReturn(away)) open();
+      }
     });
-    return () => {
-      live = false;
-      clearTimeout(backstop);
-    };
-  }, []);
+    return () => sub.remove();
+  }, [open]);
+
+  // The backstop: never more than a moment past the plan, whatever happens.
+  useEffect(() => {
+    if (!on) return;
+    const t = setTimeout(() => setOn(false), (plan ? planLength(plan) : 1500) + BACKSTOP_SLACK_MS);
+    return () => clearTimeout(t);
+  }, [on, plan]);
 
   // Play it.
   useEffect(() => {

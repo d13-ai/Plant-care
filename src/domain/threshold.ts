@@ -7,13 +7,15 @@
  * Which version plays, and its timings, live here so they can be tuned in one
  * place and held to the brief by threshold.test.ts:
  *
- *  - first launch: the full sequence, about 3.3 seconds;
- *  - every launch after: the doors alone, about a second;
+ *  - every time the app is opened: the full sequence, about 4.2 seconds --
+ *    on a cold start, and on coming back after being away a while
+ *    (REPLAY_AFTER_MS), but not after a quick trip to the photo picker or a
+ *    share sheet, which also send the app to the background;
  *  - "reduce motion" on: no doors swinging, only a fade.
  *
  * A tap anywhere skips it (SKIP_FADE_MS). src/components/threshold.tsx draws it.
  */
-export type ThresholdKind = "full" | "short" | "fade";
+export type ThresholdKind = "full" | "fade";
 
 export interface ThresholdPlan {
   kind: ThresholdKind;
@@ -33,27 +35,22 @@ export interface ThresholdPlan {
 /**
  * Every number in the sequence. Change timings here.
  *
- * Full: a beat on the closed doors, 1.2 s of opening, the wordmark rising as
- * they clear it, a long hold on the lit room and the wordmark, then the fade
- * -- 3.3 s in all. The brief asked for under 3 s with half a second's hold;
- * after seeing it, David and Amanda wanted to linger on the room (12 Oct
- * 2026), so the hold is 1.1 s. It is the first launch only, and a tap skips it.
+ * Full: a beat on the closed doors, 1.6 s of opening, the wordmark rising as
+ * they clear it, a long hold on the lit room and the wordmark, then a slow
+ * fade -- 4.2 s in all. The brief asked for under 3 s with half a second's hold,
+ * and a shorter doors-only version after the first launch; after seeing it,
+ * David and Amanda wanted it slower, to linger on the room, and to have the
+ * whole thing every time the app opens (12 Oct 2026). A tap skips it.
  */
 export const TIMING = {
   full: {
-    doorsDelayMs: 150,
-    doorsMs: 1200,
-    wordmarkDelayMs: 1000,
-    wordmarkMs: 600,
-    // wordmark fully in at 1600; held for 1100
-    fadeDelayMs: 2700,
-    fadeMs: 600,
-  },
-  short: {
-    doorsDelayMs: 0,
-    doorsMs: 700,
-    fadeDelayMs: 600,
-    fadeMs: 350,
+    doorsDelayMs: 250,
+    doorsMs: 1600,
+    wordmarkDelayMs: 1300,
+    wordmarkMs: 800,
+    // wordmark fully in at 2100; held for 1400
+    fadeDelayMs: 3500,
+    fadeMs: 700,
   },
   fade: {
     fadeDelayMs: 250,
@@ -64,7 +61,19 @@ export const TIMING = {
 /** How long a tap-to-skip takes to clear the doors away. */
 export const SKIP_FADE_MS = 200;
 
-export function thresholdPlan({ seenBefore, reduceMotion }: { seenBefore: boolean; reduceMotion: boolean }): ThresholdPlan {
+/**
+ * Away this long and coming back counts as opening the app again. Shorter
+ * absences are the app's own detours -- the photo picker, the camera, a share
+ * sheet, the in-app browser -- and doors after those would be in the way.
+ */
+export const REPLAY_AFTER_MS = 5 * 60 * 1000;
+
+/** Whether coming back after `awayMs` in the background plays the doors again. */
+export function replayOnReturn(awayMs: number): boolean {
+  return awayMs >= REPLAY_AFTER_MS;
+}
+
+export function thresholdPlan({ reduceMotion }: { reduceMotion: boolean }): ThresholdPlan {
   if (reduceMotion) {
     return {
       kind: "fade",
@@ -76,9 +85,6 @@ export function thresholdPlan({ seenBefore, reduceMotion }: { seenBefore: boolea
       wordmarkMs: 0,
       ...TIMING.fade,
     };
-  }
-  if (seenBefore) {
-    return { kind: "short", doorsSwing: true, wordmark: false, wordmarkDelayMs: 0, wordmarkMs: 0, ...TIMING.short };
   }
   return { kind: "full", doorsSwing: true, wordmark: true, ...TIMING.full };
 }
