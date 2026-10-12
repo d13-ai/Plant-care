@@ -14,9 +14,9 @@ What is on which phones. Two kinds of release:
 
 | Version | Built from | Track | Notes |
 |---|---|---|---|
-| 6 | -- | **Production**, live 11 Oct 2026 | First public release. No expo-updates: no OTA update reaches it. |
+| 6 | -- | Production 11–12 Oct 2026, replaced by 8 | First public release. No expo-updates: no OTA update reaches it. |
 | 7 | -- | Internal testing | First with expo-updates; health checks compare an earlier photo. Its fingerprint doesn't match `main` (the first update for it was refused). |
-| 8 | `61e12aa` | Internal testing; **being promoted to production, 12 Oct 2026** | The add-plant fix. Runtime `36f72ba23e93c968444de0e785e78881baed602b`. |
+| 8 | `61e12aa` | **Production, full rollout, published 12 Oct 2026** (submission 2: sent 06:39, live 06:55) | The add-plant fix. Runtime `36f72ba23e93c968444de0e785e78881baed602b`: every update below reaches store installs. |
 | 9 | -- | Not built | Planned: R8 minification (Play's DEX obfuscation warning, fix by Feb 2027). Native, so a new runtime; test on internal testing first. |
 
 ## Over-the-air updates to version 8 (runtime 36f72ba2…)

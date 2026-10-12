@@ -14,9 +14,10 @@ commit 61e12aa) was uploaded on 10 Oct 2026.
 **Live on Google Play on 12 Oct 2026**: production, 100% rollout, phones and
 tablets: https://play.google.com/store/apps/details?id=org.plantparlour.app
 
-The production release is **version 6**, which predates expo-updates: no
-over-the-air update reaches it. Version 8 (on internal testing) is to be
-promoted to production so store installs can take updates. Play also flags
+The first production release was **version 6**, which predates expo-updates.
+**Version 8 replaced it in production on 12 Oct 2026** (full rollout, approved
+in about 16 minutes), so store installs now take over-the-air updates. See
+docs/releases.md. Play also flags
 DEX obfuscation at 1% (fix by Feb 2027): R8 minification for release builds,
 via expo-build-properties, in the next store build -- a native change, so a
 new fingerprint, tested on internal testing before production.
