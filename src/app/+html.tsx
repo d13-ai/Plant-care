@@ -93,6 +93,10 @@ export default function Root({ children }: PropsWithChildren) {
             of the page and Android scales up the favicon. */}
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        {/* The icon Google shows beside the site in search results comes from
+            this page. It wants a square of at least 48px and prefers more;
+            favicon.ico (Expo's, from app.json) is only 48. */}
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
