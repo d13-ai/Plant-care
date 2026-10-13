@@ -123,6 +123,7 @@ export const head = ({ title, description, canonical, extra = "" }) => `<!doctyp
 <link rel="canonical" href="${canonical}">
 <meta name="theme-color" content="#2E1633">
 <link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="PlantParlour">
