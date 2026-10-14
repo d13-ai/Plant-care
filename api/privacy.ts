@@ -56,11 +56,12 @@ const sections = [
   },
   {
     heading: "Who else is involved",
-    html: `<p>Five companies, each doing one job:</p>
+    html: `<p>Six companies, each doing one job:</p>
 <ul>
 <li><strong>Supabase</strong> — stores your records and photos, and handles sign-in.</li>
 <li><strong>Vercel</strong> — serves the website.</li>
 <li><strong>Resend</strong> — sends the emails an account can get: one welcome when you sign up, a password-reset link when you ask for one, and occasional news about PlantParlour — no more than once a month, and each one says how to stop them. They receive your email address and the message, nothing else. Opens and clicks are not tracked. Resend also delivers page reports to our own inbox (see below).</li>
+<li><strong>Expo</strong> — delivers updates to the Android app. When the app checks for one it sends Expo its version and a random number the app made for itself on your phone, which lets Expo count installs, along with your phone's network address. Nothing from your account or your plants.</li>
 <li><strong>Google</strong> — only if you choose to sign in with Google.</li>
 <li><strong>Anthropic</strong> — only the photos or species names you send for analysis.</li>
 </ul>

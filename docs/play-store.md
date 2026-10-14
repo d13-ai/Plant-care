@@ -164,16 +164,17 @@ the app (Account → Delete account) and at
 account: yes, `https://plantparlour.org/delete-account#some-data`. Account
 creation method: username (email) and password.
 
-Sending photos to Anthropic for identification, and email addresses to
-Resend for the account emails, is processing by service providers on our
-behalf, which Google does not count as sharing. **Shared with third
+Sending photos to Anthropic for identification, email addresses to Resend
+for the account emails, and the update check to Expo, is processing by
+service providers on our behalf, which Google does not count as sharing. **Shared with third
 parties: none.**
 
 | Data type | Collected | Required? | Why |
 |---|---|---|---|
-| Personal info → Email address | Yes | Required | Account management; app functionality (sign-in, password reset); developer communications (the one welcome email) |
+| Personal info → Email address | Yes | Required | Account management; app functionality (sign-in, password reset); developer communications (the welcome email, and occasional news, which can be switched off in Account) |
 | Personal info → Name | Yes | Optional (display name) | App functionality |
 | Personal info → User IDs | Yes | Required | Account management |
+| Device or other IDs | Yes | Required | App functionality: from version 7 on, every update check sends Expo the random install ID expo-updates keeps on the phone (`EAS-Client-ID`), which Expo uses to deliver and count updates. Missed until 14 Oct 2026 -- the form said none |
 | Photos and videos → Photos | Yes | Optional | App functionality (plant records, AI identification) |
 | App activity → Other user-generated content | Yes | Optional | App functionality (plant notes, care history) |
 | App activity → App interactions | Yes | Optional, sent only in a bug report (the trail of recent actions) | Analytics; app functionality |
@@ -181,7 +182,7 @@ parties: none.**
 | App info and performance → Diagnostics | Yes | Optional, sent only when the user files a bug or AI-answer report | Analytics; app functionality |
 
 Not collected: location, contacts, financial info, health info, messages,
-audio, files, calendar, web browsing, device IDs. The Android app has no
+audio, files, calendar, web browsing. The Android app has no
 analytics SDK; page-view counting is on the website only. The app opens
 Parlour Games in a browser sheet (`?from=app`), and those pages skip the
 counter for the whole visit (`IN_APP_KEY` in `src/domain/analytics.ts`), since

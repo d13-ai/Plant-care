@@ -121,7 +121,7 @@ export default function NewPlant() {
     if (!lastScan) return;
     setPhotos(lastScan.photos.slice(0, MAX_SCAN_PHOTOS));
     setVerdict(lastScan.answer.verdict);
-    setScanNote("Brought back from your last scan — no charge.");
+    setScanNote("Brought back from your last scan — that didn't use a photo check.");
     setChosen(null);
     setRestored(false);
     setLastScan(null);
@@ -143,7 +143,7 @@ export default function NewPlant() {
   const startOver = async () => {
     const ok = await confirm(
       "Start over?",
-      "The photos, the AI's answer and everything typed here will be cleared. A scan of the same photos is remembered, so re-adding them costs nothing.",
+      "The photos, the AI's answer and everything typed here will be cleared. A scan of the same photos is remembered, so adding them again doesn't use another photo check.",
       { confirmText: "Start over", destructive: true },
     );
     if (!ok) return;
