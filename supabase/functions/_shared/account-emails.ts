@@ -1,6 +1,8 @@
-// The two emails an account gets: a welcome, and a link to reset a forgotten
-// password. Plain functions with no imports, so the edge function can send
-// them and vitest can read them (src/domain/account-emails.test.ts).
+// The two emails an account gets on its own: a welcome, and a link to reset a
+// forgotten password. (News, at most monthly, is sent by hand; /privacy
+// promises it and says how to stop it.) Plain functions with no imports, so
+// the edge function can send them and vitest can read them
+// (src/domain/account-emails.test.ts).
 //
 // Written like the rest of PlantParlour: say what is true, in plain words.
 // No tracking pixels and no rewritten links -- click and open tracking are off
@@ -11,6 +13,9 @@ export const SITE = "https://plantparlour.org";
 export const FROM = "PlantParlour <hello@plantparlour.org>";
 /** Replies go to the address already published on /privacy and /terms. */
 export const REPLY_TO = "bondcreativestudios@gmail.com";
+/** PlantParlour on Google Play -- the same as src/domain/store-listing.ts,
+ *  which the test holds it to; this file can't import from the app. */
+export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=org.plantparlour.app";
 
 export interface Email {
   subject: string;
@@ -78,6 +83,10 @@ const p = (html: string) => `<p style="margin:0 0 14px;">${html}</p>`;
  */
 export function welcomeEmail(photoChecks: number, logo = true): Email {
   const subject = "Welcome to PlantParlour";
+  // The third step names Google Play; in the HTML that name is the link. A
+  // text link rather than Google's badge, because the badge would be a remote
+  // image, and a remote image tells the sender who opened the email.
+  const playLink = `<a href="${esc(PLAY_STORE_URL)}" style="color:${C.plum};">Google Play</a>`;
   const steps: [string, string][] = [
     [
       "Add your first plant with a photo.",
@@ -88,8 +97,8 @@ export function welcomeEmail(photoChecks: number, logo = true): Email {
       "Each plant keeps its own schedule and tells you what it needs today. If the soil is still wet when watering comes round, press Still moist and we'll put it off for you.",
     ],
     [
-      "Keep it on your home screen.",
-      "On an iPhone: open plantparlour.org in Safari, tap Share, then Add to Home Screen. It opens like an app, and your plants follow you to any phone you sign into.",
+      "Get it on your phone.",
+      "On Android, PlantParlour is on Google Play. On an iPhone, open plantparlour.org in Safari, tap Share, then Add to Home Screen, and it opens like an app. Either way, your plants follow you to any phone you sign into.",
     ],
   ];
   const html = frame(
@@ -97,7 +106,7 @@ export function welcomeEmail(photoChecks: number, logo = true): Email {
     [
       p("Your parlour is ready. Three things to get it going:"),
       `<ol style="margin:0 0 14px;padding-left:22px;">${steps
-        .map(([head, body]) => `<li style="margin:0 0 12px;"><strong>${esc(head)}</strong> ${esc(body)}</li>`)
+        .map(([head, body]) => `<li style="margin:0 0 12px;"><strong>${esc(head)}</strong> ${esc(body).replace("Google Play", playLink)}</li>`)
         .join("")}</ol>`,
       button(SITE, "Open your parlour"),
       p("Questions, ideas, or something that doesn't work? Reply to this email. It comes straight to us, and we read every one."),
@@ -112,6 +121,7 @@ export function welcomeEmail(photoChecks: number, logo = true): Email {
     ...steps.map(([head, body], i) => `${i + 1}. ${head} ${body}`),
     "",
     `Open your parlour: ${SITE}`,
+    `On Android, get it on Google Play: ${PLAY_STORE_URL}`,
     "",
     "Questions, ideas, or something that doesn't work? Reply to this email. It comes straight to us, and we read every one.",
     "",
