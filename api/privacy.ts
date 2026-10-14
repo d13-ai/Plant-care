@@ -73,7 +73,7 @@ const sections = [
 <li><strong>Unpublish</strong> a plant, and its tag link stops working.</li>
 <li><strong>Give up your handle</strong>, and the conservatory page goes with it.</li>
 <li><strong>Delete your account entirely.</strong> In the app, open Account and choose <em>Delete account</em>. It erases the account and everything in it — plants, photos, care history, published tags and your conservatory page — straight away, and the copy on that phone with it. Two things are kept with nothing identifying you left on them: a daily total of what the AI cost us, and any bug report you sent. Our hosting provider's automatic backups age out on their own schedule. If you can't get into your account, email <a href="mailto:${CONTACT}">${CONTACT}</a> from the address you signed up with and we will do it for you.</li>
-<li><strong>Stop the news emails.</strong> Reply "unsubscribe" to any of them, or email <a href="mailto:${CONTACT}">${CONTACT}</a>, and you won't get another. It changes nothing else about your account.</li>
+<li><strong>Stop the news emails.</strong> Turn off <em>News emails</em> in Account, reply "unsubscribe" to any of them, or email <a href="mailto:${CONTACT}">${CONTACT}</a>, and you won't get another. It changes nothing else about your account.</li>
 <li><strong>Ask for a copy</strong> of everything we hold on you, and we will send it.</li>
 </ul>`,
   },

@@ -89,6 +89,10 @@ await context.route("**/functions/v1/account-email", (route) => {
   return route.fulfill(asJson(body?.kind === "welcome" ? { sent: true } : { ok: true }));
 });
 
+// The News emails switch on Account reads this on every visit. No row means
+// news is on; the step that switches it off stubs writes on the page itself.
+await context.route("**/rest/v1/news_opt_outs**", (route) => route.fulfill(asJson([])));
+
 const page = await context.newPage();
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
 page.on("console", (m) => {
@@ -681,6 +685,29 @@ try {
     // check stops at the screen -- but it must say plainly what it collects.
     await page.getByText("What gets sent").waitFor({ timeout: 5000 });
     await shot("26-report");
+  });
+  await step("news emails can be switched off from Account, and the choice reaches the server", async () => {
+    // /privacy promises a way to stop news emails; this is it. No row in
+    // news_opt_outs means news is on, so the stub starts empty.
+    const writes = [];
+    await page.route("**/rest/v1/news_opt_outs**", (route) => {
+      const req = route.request();
+      if (req.method() === "GET") return route.fulfill(asJson(writes.some((w) => w.method === "POST") ? [{ user_id: user.id }] : []));
+      writes.push({ method: req.method(), body: req.postDataJSON?.() ?? null });
+      return route.fulfill({ status: req.method() === "POST" ? 201 : 204, contentType: "application/json", body: req.method() === "POST" ? "[]" : "" });
+    });
+    await page.goto(base + "/account", { waitUntil: "domcontentloaded" });
+    await page.getByText("News emails", { exact: true }).waitFor({ timeout: 15000 });
+    const toggle = page.getByRole("switch", { name: "News emails" });
+    if (!(await toggle.isChecked())) throw new Error("news emails showed off for an account that never opted out");
+    await toggle.click();
+    await page.waitForTimeout(500);
+    const optOut = writes.find((w) => w.method === "POST");
+    if (!optOut) throw new Error(`switching news off wrote nothing (${JSON.stringify(writes)})`);
+    const row = Array.isArray(optOut.body) ? optOut.body[0] : optOut.body;
+    if (row?.user_id !== user.id || row?.via !== "app") throw new Error(`the opt-out row was ${JSON.stringify(optOut.body)}`);
+    if (await toggle.isChecked()) throw new Error("the switch stayed on after news was turned off");
+    await page.unroute("**/rest/v1/news_opt_outs**");
   });
   await step("iPhone visitors are told how to install, Android visitors get Google Play, desktop neither", async () => {
     // The iPhone hint is the only thing standing in for an install prompt on

@@ -1,7 +1,7 @@
 import { Stack, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
-import { Platform, ScrollView, Share, StyleSheet } from "react-native";
+import { Platform, ScrollView, Share, StyleSheet, Switch, View } from "react-native";
 import { ReminderSettings } from "@/components/reminders";
 import { Badge, Body, Button, Card, Field, Heading, Row, SectionLabel } from "@/components/ui";
 import { pendingChanges } from "@/db";
@@ -9,8 +9,68 @@ import { DELETE_WORD, deleteAccount, signOut, useAccount } from "@/lib/auth";
 import { confirm } from "@/lib/confirm";
 import { getKeeperName, setKeeperName } from "@/lib/keeper";
 import { conservatoryUrl, getHandle, setHandle } from "@/lib/conservatory";
+import { getNewsEmails, setNewsEmails } from "@/lib/news";
 import { getSyncStatus, requestSync, subscribeSync, syncNow, type SyncStatus } from "@/lib/sync";
-import { cardTheme, font, space } from "@/theme";
+import { cardTheme, font, space, useTheme } from "@/theme";
+
+/**
+ * The news-email switch. /privacy promises occasional news, no more than
+ * monthly, and a way to stop it; this is the way that doesn't depend on
+ * anyone reading a reply. Hidden until the setting has been read, so it never
+ * shows "on" to someone who turned it off.
+ */
+function NewsEmails() {
+  const t = useTheme();
+  const [on, setOn] = useState<boolean | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getNewsEmails()
+      .then(setOn)
+      .catch(() => setError("Couldn't read this setting just now."));
+  }, []);
+
+  const change = async (next: boolean) => {
+    const before = on;
+    setOn(next);
+    setSaving(true);
+    setError(null);
+    try {
+      await setNewsEmails(next);
+    } catch {
+      setOn(before);
+      setError("Couldn't save that. Check your connection and try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (on === null && !error) return null;
+  return (
+    <Card>
+      <Row style={{ justifyContent: "space-between", flexWrap: "nowrap" }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Heading>News emails</Heading>
+          <Body small muted>
+            Now and then, no more than once a month: what's new in PlantParlour. The welcome and password
+            emails aren't affected.
+          </Body>
+        </View>
+        {on !== null ? (
+          <Switch
+            accessibilityLabel="News emails"
+            value={on}
+            onValueChange={change}
+            disabled={saving}
+            trackColor={{ true: t.primary, false: t.border }}
+          />
+        ) : null}
+      </Row>
+      {error ? <Body small style={{ color: cardTheme.critical.fg }}>{error}</Body> : null}
+    </Card>
+  );
+}
 
 function ago(iso: string | null): string {
   if (!iso) return "never";
@@ -171,6 +231,8 @@ export default function AccountScreen() {
       </Card>
 
       <ReminderSettings />
+
+      <NewsEmails />
 
       <Card>
         <Heading>Your conservatory</Heading>
