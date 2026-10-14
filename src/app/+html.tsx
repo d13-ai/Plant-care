@@ -1,5 +1,6 @@
 import { ScrollViewStyleReset } from "expo-router/html";
 import { ANALYTICS_INLINE } from "@/domain/analytics";
+import { PLAY_STORE_URL } from "@/domain/store-listing";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -17,9 +18,10 @@ const TITLE = "PlantParlour — free plant care app with watering reminders";
 const SOCIAL_TITLE = "PlantParlour — a room for the plants you're proud of";
 // Said to search engines, so it has to be true of what a stranger gets: an
 // account is needed (it has been since the welcome screen became the front
-// door), and the word people search for is "app".
+// door), and the word people search for is "app". Since 12 Oct 2026 it is on
+// Google Play; before that it said it ran in the browser, which was all it did.
 const DESCRIPTION =
-  "A free plant care app for every houseplant you keep: watering and feeding reminders set per plant, AI plant identification from a photo, a full care history, and a record that goes with the plant when you trade or sell it. Runs in your phone's browser, offline too.";
+  "A free plant care app for every houseplant you keep: watering and feeding reminders set per plant, AI plant identification from a photo, a full care history, and a record that goes with the plant when you trade or sell it. On Google Play for Android, and in the browser on iPhone.";
 const SOCIAL_DESCRIPTION =
   "Every plant you keep, given the care and the credit it's due: what it is, what it needs today, and the whole story to hand on to whoever gets it next. Made by two plant people who'd rather share it than keep it to themselves.";
 
@@ -29,14 +31,22 @@ const SITE = "https://plantparlour.org";
  * Structured data for the site itself. Every app route renders this same
  * document — they are one client-rendered application — so the description
  * here is the application's, not any particular screen's.
+ *
+ * `alternateName` is for the name as people type it. "plant parlour", with
+ * the space, is how it is searched, and plant shops called "The Plant
+ * Parlour" outranked the site for it; Google reads the WebSite block on the
+ * home page to decide what a site is called. `sameAs` and `downloadUrl` tie
+ * the site to the app on Google Play.
  */
 const JSON_LD = [
   {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "PlantParlour",
+    alternateName: "Plant Parlour",
     url: `${SITE}/`,
     logo: `${SITE}/icon-512.png`,
+    sameAs: [PLAY_STORE_URL],
     description:
       "PlantParlour keeps a care record for every houseplant you own — and the record belongs to the plant, so it travels with it when the plant changes hands.",
   },
@@ -44,6 +54,7 @@ const JSON_LD = [
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "PlantParlour",
+    alternateName: ["Plant Parlour", "plantparlour.org"],
     url: `${SITE}/`,
     inLanguage: "en",
     description: DESCRIPTION,
@@ -54,8 +65,9 @@ const JSON_LD = [
     name: "PlantParlour",
     url: `${SITE}/`,
     applicationCategory: "LifestyleApplication",
-    operatingSystem: "Web, iOS, Android",
+    operatingSystem: "Android, Web, iOS",
     browserRequirements: "Works in any modern browser; installs to the home screen",
+    downloadUrl: PLAY_STORE_URL,
     image: `${SITE}/og-image.png`,
     description: DESCRIPTION,
     featureList: [
@@ -146,10 +158,11 @@ export default function Root({ children }: PropsWithChildren) {
       </head>
       <body>
         {children}
-        {/* Search crawlers run the bundle; most answer engines do not, and an
-            empty <div id="root"> tells them nothing about what this is or
-            where the rest of the site lives. This is the same claim the app
-            makes, in markup, with the two links that matter. */}
+        {/* Search crawlers run the bundle (robots.txt has to let them into
+            /_expo/ for that); most answer engines do not, and an empty
+            <div id="root"> tells them nothing about what this is or where the
+            rest of the site lives. This is the same claim the app makes, in
+            markup, with the links that matter. */}
         <noscript>
           <div style={{ padding: 24, color: "#F3ECDD", fontFamily: "Georgia, serif", maxWidth: 640 }}>
             <h1>PlantParlour</h1>
@@ -160,8 +173,10 @@ export default function Root({ children }: PropsWithChildren) {
               traces back to the plant it came from.
             </p>
             <p>
-              It runs in the browser and works offline. Sign in with Google or an email to start; your account backs
-              the greenhouse up and keeps it in step across your phones.
+              It is free, with 5 AI photo checks to identify your plants or check their health. On Android, get it
+              from <a href={PLAY_STORE_URL} style={{ color: "#C9A24B" }}>Google Play</a>; on an iPhone it runs in
+              Safari and works offline. Sign in with Google or an email to start; your account backs the greenhouse up
+              and keeps it in step across your phones.
             </p>
             <p>
               <a href="/plant-care-app" style={{ color: "#C9A24B" }}>
@@ -170,6 +185,14 @@ export default function Root({ children }: PropsWithChildren) {
               &middot;{" "}
               <a href="/plants" style={{ color: "#C9A24B" }}>
                 Plant care library
+              </a>{" "}
+              &middot;{" "}
+              <a href="/problems" style={{ color: "#C9A24B" }}>
+                Plant problems
+              </a>{" "}
+              &middot;{" "}
+              <a href="/pet-safe-houseplants" style={{ color: "#C9A24B" }}>
+                Pet-safe houseplants
               </a>{" "}
               &middot;{" "}
               <a href="/parlour-games" style={{ color: "#C9A24B" }}>

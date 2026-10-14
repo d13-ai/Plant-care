@@ -560,6 +560,15 @@ try {
         if (await visitor.getByText("All plants").count()) throw new Error(`${route} showed the greenhouse to a stranger`);
         if (await visitor.getByText("Big Monstera").count()) throw new Error(`${route} leaked a plant to a stranger`);
       }
+      // The front page is where every link to the site lands, so its links to
+      // the rest of the site have to be real anchors a crawler can follow --
+      // tap handlers are invisible to one.
+      await visitor.goto(base + "/", { waitUntil: "domcontentloaded" });
+      await visitor.getByText("Start your parlour").waitFor({ timeout: 15000 });
+      const hrefs = await visitor.$$eval("a[href]", (as) => as.map((a) => a.getAttribute("href")));
+      for (const path of ["/plant-care-app", "/plants", "/problems", "/pet-safe-houseplants", "/privacy", "/terms"]) {
+        if (!hrefs.includes(path)) throw new Error(`the welcome page has no <a href="${path}"> (has: ${hrefs.join(", ")})`);
+      }
     } finally {
       await stranger.close();
     }

@@ -15,6 +15,12 @@
 # it publicly, which is the one outcome this file exists to prevent. Letting
 # those two in is what keeps tags out of search results.
 #
+# The same two are also let into /_expo/, where the app's JavaScript lives.
+# The front page is the app, and it is empty until that script runs: shut
+# out of /_expo/, Google rendered a blank page for the one URL every link to
+# the site points at (found 14 Oct 2026). Search crawlers render; the rest
+# don't run scripts, so for them the rule changes nothing.
+#
 # Every other group keeps `Disallow: /tag`. `noindex` is an instruction to
 # search indexes; a crawler collecting text for a model has no index to be
 # excluded from, so the only thing that binds it is not being allowed to
@@ -108,7 +114,7 @@ User-agent: Googlebot
 Allow: /
 Disallow: /api/
 # must fetch a tag to read its noindex -- see the note at the top
-Disallow: /_expo/
+# and must fetch /_expo/ to render the front page -- see the note at the top
 Disallow: /_sitemap
 
 User-agent: GoogleOther
@@ -136,7 +142,7 @@ User-agent: Bingbot
 Allow: /
 Disallow: /api/
 # must fetch a tag to read its noindex -- see the note at the top
-Disallow: /_expo/
+# and must fetch /_expo/ to render the front page -- see the note at the top
 Disallow: /_sitemap
 
 User-agent: Bytespider

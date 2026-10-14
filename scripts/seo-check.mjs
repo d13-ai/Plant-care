@@ -232,6 +232,11 @@ if (!existsSync(join(PUBLIC, "robots.txt"))) {
       err("robots.txt", `${g.name} may fetch /tag but nothing stops it keeping what it finds`);
     }
     if (!g.lines.includes("Disallow: /api/")) err("robots.txt", `${g.name} may crawl /api/`);
+    // The front page is the app and is empty until /_expo/ runs: a search
+    // crawler shut out of it indexes a blank page (it did, until 14 Oct 2026).
+    if (search && g.lines.some((l) => /^Disallow:\s*\/_expo/.test(l))) {
+      err("robots.txt", `${g.name} is disallowed from /_expo/, so it can't render the front page`);
+    }
   }
 
   for (const bot of ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended", "Applebot-Extended"]) {

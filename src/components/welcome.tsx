@@ -1,4 +1,4 @@
-import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Linking, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LogoMark } from "@/components/icons";
 import { GetItOnPlay, InstallHint } from "@/components/install-hint";
 import { SignIn } from "@/components/sign-in";
@@ -59,10 +59,7 @@ export function Welcome() {
             tagline says what it feels like, this says what it is. */}
         <Text style={[styles.plain, { color: t.muted }]}>
           A free plant care app: watering reminders, care guides and a record for every plant, plus {PHOTO_TRIAL} free
-          AI photo checks to identify them.{" "}
-          <Text style={styles.legalLink} onPress={() => Linking.openURL(siteUrl("/plant-care-app")).catch(() => {})}>
-            How it works
-          </Text>
+          AI photo checks to identify them. <SiteLink path="/plant-care-app">How it works</SiteLink>
         </Text>
       </View>
 
@@ -103,24 +100,47 @@ export function Welcome() {
         photo taken without a signal uploads the next time you have one.
       </Text>
 
+      {/* The rest of the site, readable without an account. On the web this is
+          the front page, the one every link to the site lands on, so it is
+          also how a search engine finds the library; in the app the sign-in
+          screen doesn't need a way out to the website. */}
+      {Platform.OS === "web" ? (
+        <Text style={[styles.footnote, { color: t.muted }]}>
+          Free without an account: the <SiteLink path="/plants">plant care library</SiteLink>,{" "}
+          <SiteLink path="/problems">plant problems</SiteLink>,{" "}
+          <SiteLink path="/pet-safe-houseplants">pet-safe houseplants</SiteLink> and{" "}
+          <SiteLink path="/parlour-games">Parlour Games</SiteLink>.
+        </Text>
+      ) : null}
+
       {/* Served as plain HTML outside the app, so they're readable without an
           account -- which is what anyone checking them needs. */}
       <Text style={[styles.footnote, { color: t.muted }]}>
-        <Text
-          style={styles.legalLink}
-          onPress={() => Linking.openURL(siteUrl("/privacy")).catch(() => {})}
-        >
-          Privacy
-        </Text>
+        <SiteLink path="/privacy">Privacy</SiteLink>
         {"  ·  "}
-        <Text
-          style={styles.legalLink}
-          onPress={() => Linking.openURL(siteUrl("/terms")).catch(() => {})}
-        >
-          Terms
-        </Text>
+        <SiteLink path="/terms">Terms</SiteLink>
       </Text>
     </ScrollView>
+  );
+}
+
+/**
+ * A link to one of the site's own pages. On the web it is a real
+ * `<a href>` -- react-native-web renders a Text with `href` as an anchor --
+ * because this screen is the front page, and a crawler only follows links that
+ * are in the markup; a tap handler is invisible to it. It opens in the same
+ * tab, which is what openPage (src/lib/links.ts) does for our own pages too.
+ * In the app it opens the page in the browser, as before.
+ */
+function SiteLink({ path, children }: { path: string; children: string }) {
+  if (Platform.OS === "web") {
+    // `href` isn't in React Native's Text types; react-native-web reads it.
+    return <Text style={styles.legalLink} {...({ href: path } as object)}>{children}</Text>;
+  }
+  return (
+    <Text style={styles.legalLink} onPress={() => Linking.openURL(siteUrl(path)).catch(() => {})}>
+      {children}
+    </Text>
   );
 }
 
