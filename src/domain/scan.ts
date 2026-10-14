@@ -66,6 +66,22 @@ export interface Finding {
  * story. The health check and the add-plant scan both write issues through
  * this, so the same problem reads the same wherever it was found.
  */
+/**
+ * One finding as a line of text: what was seen, then the likely cause and
+ * what to do when there are any. An observation ("the new leaf looks
+ * healthy") has neither, and used to end in a dangling "—".
+ */
+export function findingLine(
+  f: { observation: string; likely_cause?: string; suggested_action: string },
+  withCause = false,
+): string {
+  const seen = f.observation.trim();
+  const cause = withCause ? (f.likely_cause ?? "").trim().replace(/\.$/, "") : "";
+  const action = f.suggested_action.trim();
+  const after = [cause ? `likely ${cause.charAt(0).toLowerCase()}${cause.slice(1)}.` : "", action].filter(Boolean).join(" ");
+  return after ? `${seen.replace(/\.$/, "")} — ${after}` : seen;
+}
+
 export const issueNote = (f: Finding) => `${f.observation} — likely ${f.likely_cause.toLowerCase()}. ${f.suggested_action}`;
 
 /**

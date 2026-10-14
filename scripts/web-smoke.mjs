@@ -133,9 +133,18 @@ try {
     await page.goBack();
     await page.getByText("Start with one plant").waitFor({ timeout: 10000 });
   });
-  await step("open add-plant", async () => {
+  await step("open add-plant on the photo, not the name", async () => {
     await page.getByText("Photograph a plant").click();
     await page.getByPlaceholder("e.g. Big Monstera").waitFor();
+    // 14 Oct 2026: the Name box took the focus, which scrolled the photo
+    // buttons out of sight and, on an iPhone, put the keyboard up in front of
+    // someone who had asked for the camera.
+    await page.waitForTimeout(300);
+    const focused = await page.evaluate(() => document.activeElement?.getAttribute("placeholder"));
+    if (focused === "e.g. Big Monstera") throw new Error("Photograph a plant opened with the Name box focused");
+    const take = await page.getByText("Take photo", { exact: true }).boundingBox();
+    const viewport = page.viewportSize();
+    if (!take || take.y < 0 || take.y + take.height > viewport.height) throw new Error(`Take photo is out of view (${JSON.stringify(take)})`);
   });
   await step("the AI allowance is stated before anything is spent, and no price is", async () => {
     // It used to be discoverable only by watching it count down, and the wall
@@ -448,7 +457,10 @@ try {
     await page.getByText("Give it a name to add it.").waitFor({ timeout: 20000 });
     const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.getByText("Choose from library").click()]);
     await chooser.setFiles(path.resolve("assets/images/icon.png"));
-    await page.getByText("Identify with AI").click();
+    // With a photo in and no answer yet, the bar at the foot offers the
+    // identification -- the card's own button can be below the fold.
+    await page.getByText("Find out what it is from the photo, or give it a name to add it.").waitFor({ timeout: 10000 });
+    await page.getByText("Identify with AI").last().click();
     await page.getByText("Adds “Marble Queen pothos” to your greenhouse and starts its care schedule.").waitFor({ timeout: 20000 });
     if ((await page.getByPlaceholder("e.g. Big Monstera").inputValue()) !== "Marble Queen pothos") throw new Error("the name wasn't filled in");
     if ((await page.getByPlaceholder("e.g. Monstera deliciosa").inputValue()) !== "Epipremnum aureum 'Marble Queen'") throw new Error("the likeliest species wasn't chosen");

@@ -88,7 +88,7 @@ export function FirstPlant() {
           Add a plant by name instead. Pick it from the list and its reminders set themselves; you can add a
           photo whenever you like.
         </Body>
-        <Button title="Add by name" onPress={add} />
+        <Button title="Add by name" onPress={() => router.push("/plant/new?by=name")} />
       </Card>
     </ScrollView>
   );

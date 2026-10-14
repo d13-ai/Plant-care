@@ -33,6 +33,35 @@ export function defaultName(c: Candidate): string {
   return [c.genus, c.species].filter(Boolean).join(" ").trim();
 }
 
+/**
+ * What the button at the foot of the add-plant screen is for right now.
+ *
+ * 14 Oct 2026: a new keeper on an iPhone chose a photo and left. "Identify
+ * with AI" sat just below the bottom of the screen, and the one button in
+ * view was a greyed-out "Add plant" saying "Give it a name to add it" -- an
+ * invitation to type, not to identify. With a photo in and no answer yet, the
+ * bar offers the identification instead; once there is a name it goes back to
+ * adding the plant.
+ */
+export type FooterAction = { kind: "identify" | "add"; hint: string };
+
+export function footerAction(s: {
+  nickname: string;
+  dateInvalid: boolean;
+  hasPhotos: boolean;
+  identified: boolean;
+  /** Whether a photo check can be spent: signed in to a server, with some left. */
+  canIdentify: boolean;
+}): FooterAction {
+  if (!s.nickname.trim() && s.hasPhotos && !s.identified && s.canIdentify) {
+    return { kind: "identify", hint: "Find out what it is from the photo, or give it a name to add it." };
+  }
+  if (!s.nickname.trim() && s.identified) {
+    return { kind: "add", hint: "Tap one of the answers above, or give it a name to add it." };
+  }
+  return { kind: "add", hint: addHint(s.nickname, s.dateInvalid) };
+}
+
 /** The line above "Add plant": what tapping it does, or what it still needs. */
 export function addHint(nickname: string, dateInvalid: boolean): string {
   if (!nickname.trim()) return "Give it a name to add it.";

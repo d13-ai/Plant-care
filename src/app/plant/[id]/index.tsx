@@ -24,7 +24,7 @@ import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
 import { careBrief } from "@/domain/care-brief";
-import { issueNote, problemsIn, isProblem, scanSummary } from "@/domain/scan";
+import { findingLine, isProblem, issueNote, problemsIn, scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, describeScan, photoAllowance, type Verdict } from "@/lib/ai";
 import { describeShots, healthCheckShots, type HealthShot } from "@/domain/health-shots";
 import { allowanceLine, type Allowance } from "@/domain/allowance";
@@ -691,9 +691,7 @@ export default function PlantDetail() {
               ) : null}
               {checkup.health.findings.map((f) => (
                 <View key={f.observation} style={{ gap: 4 }}>
-                  <Body small>
-                    {f.observation} — likely {f.likely_cause.toLowerCase()}. {f.suggested_action}
-                  </Body>
+                  <Body small>{findingLine(f, true)}</Body>
                   {isProblem(f) ? (
                   <Row>
                     <Button

@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
@@ -9,10 +9,10 @@ import { Badge, Body, Button, Card, Chips, Field, Heading, Row } from "@/compone
 import { ReportAnswer } from "@/components/report-answer";
 import { addPhoto, createPlant, listPlants, logCare, type Plant } from "@/db";
 import { findSpecies, matchCandidate, scientificName, type SpeciesEntry } from "@/domain/species";
-import { isProblem, issueNote, preselectedIssues, problemsIn, scanSummary } from "@/domain/scan";
+import { findingLine, isProblem, issueNote, preselectedIssues, problemsIn, scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, clearLastScan, describeScan, loadLastScan, photoAllowance, type LastScan, type Verdict } from "@/lib/ai";
 import { allowanceLine, type Allowance } from "@/domain/allowance";
-import { addHint, defaultName, topCandidate } from "@/domain/new-plant";
+import { defaultName, footerAction, topCandidate } from "@/domain/new-plant";
 import { confirm } from "@/lib/confirm";
 import { clearDraft, loadDraft, saveDraftSoon } from "@/lib/draft";
 import { Calendar } from "@/components/calendar";
@@ -28,6 +28,11 @@ export default function NewPlant() {
   const c = cardTheme;
   const db = useSQLiteContext();
   const router = useRouter();
+  // "Add by name" (?by=name) goes straight to the name; "Photograph a plant"
+  // and the + button open on the photo. The Name box used to take the focus
+  // either way, which on an iPhone scrolled the photo buttons out of sight and
+  // put the keyboard up in front of someone who had asked for the camera.
+  const { by } = useLocalSearchParams<{ by?: string }>();
   const insets = useSafeAreaInsets();
   // Where the AI's answer sits on the page, so the page can be brought to it.
   const scroller = useRef<ScrollView>(null);
@@ -228,6 +233,13 @@ export default function NewPlant() {
 
   const acquiredIso = parseDate(acquiredAt);
   const dateInvalid = acquiredAt.trim() !== "" && !acquiredIso;
+  const footer = footerAction({
+    nickname,
+    dateInvalid,
+    hasPhotos: photos.length > 0,
+    identified: verdict != null,
+    canIdentify: supabaseConfigured && !(allowance && !allowance.unlimited && allowance.left != null && allowance.left <= 0),
+  });
 
   const save = async () => {
     if (!nickname.trim() || dateInvalid) return;
@@ -393,9 +405,7 @@ export default function NewPlant() {
                       </Row>
                       {verdict.health.findings.map((f) => (
                         <View key={f.observation} style={{ gap: 4 }}>
-                          <Body small>
-                            {f.observation} — {f.suggested_action}
-                          </Body>
+                          <Body small>{findingLine(f)}</Body>
                           {isProblem(f) ? (
                             <Row>
                               <Button
@@ -428,7 +438,7 @@ export default function NewPlant() {
         </View>
 
         <Card>
-          <Field label="Name" value={nickname} onChangeText={setNickname} placeholder="e.g. Big Monstera" autoFocus />
+          <Field label="Name" value={nickname} onChangeText={setNickname} placeholder="e.g. Big Monstera" autoFocus={by === "name"} />
           {nameIdeasRow}
           <SpeciesField value={species} onChangeText={(v) => { setSpecies(v); setPicked(null); }} onPick={setPicked} />
           <Field label="Where it lives" value={location} onChangeText={setLocation} placeholder="e.g. South window" />
@@ -471,13 +481,17 @@ export default function NewPlant() {
           needs: at the foot of the form it was out of sight, greyed out, and
           silent about why. */}
       <View style={[styles.footer, { backgroundColor: t.background, borderColor: t.hairline, paddingBottom: space.md + insets.bottom }]}>
-        <Body small muted>{addHint(nickname, dateInvalid)}</Body>
-        <Button
-          title={saving ? "Saving…" : "Add plant"}
-          variant="primary"
-          disabled={!nickname.trim() || dateInvalid || saving}
-          onPress={save}
-        />
+        <Body small muted>{footer.hint}</Body>
+        {footer.kind === "identify" ? (
+          <Button title={analyzing ? "Looking…" : "Identify with AI"} variant="primary" disabled={analyzing} onPress={identify} />
+        ) : (
+          <Button
+            title={saving ? "Saving…" : "Add plant"}
+            variant="primary"
+            disabled={!nickname.trim() || dateInvalid || saving}
+            onPress={save}
+          />
+        )}
       </View>
     </KeyboardAvoidingView>
   );
