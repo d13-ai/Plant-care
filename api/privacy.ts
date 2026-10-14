@@ -60,7 +60,7 @@ const sections = [
 <ul>
 <li><strong>Supabase</strong> — stores your records and photos, and handles sign-in.</li>
 <li><strong>Vercel</strong> — serves the website.</li>
-<li><strong>Resend</strong> — sends the two emails an account can get: one welcome when you sign up, and a password-reset link when you ask for one. They receive your email address and the message, nothing else. Opens and clicks are not tracked. Resend also delivers page reports to our own inbox (see below).</li>
+<li><strong>Resend</strong> — sends the emails an account can get: one welcome when you sign up, a password-reset link when you ask for one, and occasional news about PlantParlour — no more than once a month, and each one says how to stop them. They receive your email address and the message, nothing else. Opens and clicks are not tracked. Resend also delivers page reports to our own inbox (see below).</li>
 <li><strong>Google</strong> — only if you choose to sign in with Google.</li>
 <li><strong>Anthropic</strong> — only the photos or species names you send for analysis.</li>
 </ul>
@@ -73,6 +73,7 @@ const sections = [
 <li><strong>Unpublish</strong> a plant, and its tag link stops working.</li>
 <li><strong>Give up your handle</strong>, and the conservatory page goes with it.</li>
 <li><strong>Delete your account entirely.</strong> In the app, open Account and choose <em>Delete account</em>. It erases the account and everything in it — plants, photos, care history, published tags and your conservatory page — straight away, and the copy on that phone with it. Two things are kept with nothing identifying you left on them: a daily total of what the AI cost us, and any bug report you sent. Our hosting provider's automatic backups age out on their own schedule. If you can't get into your account, email <a href="mailto:${CONTACT}">${CONTACT}</a> from the address you signed up with and we will do it for you.</li>
+<li><strong>Stop the news emails.</strong> Reply "unsubscribe" to any of them, or email <a href="mailto:${CONTACT}">${CONTACT}</a>, and you won't get another. It changes nothing else about your account.</li>
 <li><strong>Ask for a copy</strong> of everything we hold on you, and we will send it.</li>
 </ul>`,
   },

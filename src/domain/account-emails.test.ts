@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { LOGO_CONTENT_ID, resetEmail, resetLink, SITE, welcomeEmail } from "../../supabase/functions/_shared/account-emails";
+import { LOGO_CONTENT_ID, PLAY_STORE_URL, resetEmail, resetLink, SITE, welcomeEmail } from "../../supabase/functions/_shared/account-emails";
+import { PLAY_STORE_URL as APP_PLAY_STORE_URL } from "./store-listing";
 
 describe("the welcome email", () => {
   const email = welcomeEmail(5);
@@ -21,6 +22,14 @@ describe("the welcome email", () => {
     // Reminders are calendar entries, not push notifications, and there is
     // no price to quote.
     expect(email.text).not.toMatch(/notification|push|\$|price|premium|trial/i);
+  });
+
+  test("tells an Android keeper it's on Google Play, with a link that goes there", () => {
+    expect(PLAY_STORE_URL).toBe(APP_PLAY_STORE_URL);
+    expect(email.html).toContain(`href="${PLAY_STORE_URL}"`);
+    expect(email.html.match(/Google Play<\/a>/g)).toHaveLength(1);
+    expect(email.text).toContain(PLAY_STORE_URL);
+    expect(email.text).toContain("Add to Home Screen");
   });
 
   test("says how to get it removed if the address was used by someone else", () => {
