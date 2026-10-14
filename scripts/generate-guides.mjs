@@ -405,10 +405,13 @@ ${foot}`;
  * one: an account is needed; AI photo checks are a free allowance of five,
  * not unlimited (stated with the number since 12 Oct 2026 -- "a number of"
  * left people to find the limit by hitting it);
- * and reminders come from the calendar, not push notifications.
+ * and reminders are notifications only in the Android app -- on an iPhone,
+ * in Safari, the phone's calendar does the reminding (checked again
+ * 14 Oct 2026; the page said "not push notifications" for a month after the
+ * Android app started sending them).
  */
 export const APP_FEATURES = [
-  ["Care reminders set for each plant", "Every plant gets its own schedule for watering, feeding, repotting and a fresh photo, starting from the cadence in the PlantParlour care library for its species. Log a watering and the next one counts from that day, not from the calendar. If the soil is still wet when watering comes due, tap Still moist and it checks back in a couple of days instead — and if the pot keeps staying wet, it suggests watering that plant less often. The greenhouse shows what's due today, and Add to calendar puts a plant's dates in your phone's calendar so your phone does the reminding."],
+  ["Care reminders set for each plant", "Every plant gets its own schedule for watering, feeding, repotting and a fresh photo, starting from the cadence in the PlantParlour care library for its species. Log a watering and the next one counts from that day, not from the calendar. If the soil is still wet when watering comes due, tap Still moist and it checks back in a couple of days instead — and if the pot keeps staying wet, it suggests watering that plant less often. The greenhouse shows what's due today. In the Android app a notification on the day says what's due, with one gentle nudge a day for anything still waiting, at a time you pick; on an iPhone, Add to calendar puts a plant's dates in your phone's calendar so it does the reminding."],
   ["Identify a plant from a photo", "Photograph the whole plant, then a close-up or two, and the AI reads them together to name it — the species, and often the named cultivar, with how sure it is. You choose the answer, and it sets the reminders from there. Or skip the camera and pick from a built-in list of houseplants and named cultivars."],
   ["A health check that remembers", "Ask about a plant that looks off and the AI reads its photos alongside what you've logged for it — when it was watered, when it was repotted, what went wrong before — and says what it sees and the likely cause. Take another photo a few days later and it compares the two. It's an AI's considered guess, not a diagnosis."],
   ["Problems and fixes on the record", "Report an issue and the plant is marked Special care needed until it's resolved. What you did about it is written down with it, so the plant's history shows what went wrong and what fixed it."],
@@ -426,7 +429,7 @@ export const APP_FAQ = [
   ["Does it work on iPhone and Android?", "Yes. On Android, get PlantParlour from Google Play. On an iPhone it runs in Safari: add it to your home screen and it opens like any other app. There's no App Store version yet."],
   ["Do I need an account?", "Yes. Sign in with Google, or with an email and password. The account is what backs your plants up and keeps them in step across your phones. The care library, the problem guides and the pet-safe list need no account at all."],
   ["Does it work offline?", "Yes. Your plants live on your phone, so you can log care with no signal. A photo taken offline uploads the next time you have a connection."],
-  ["Does it send notifications?", "Not push notifications. The app shows what's due each time you open it, and Add to calendar puts a plant's watering, feeding and repotting dates into your phone's calendar, which reminds you."],
+  ["Does it send notifications?", "In the Android app, yes: a reminder on the day a plant needs water, feeding, repotting or a fresh photo, and one gentle nudge a day for anything still waiting, at a time you choose. They're scheduled on your phone, and nothing about them is sent to us. On an iPhone, where PlantParlour runs in Safari, there are no notifications: it shows what's due when you open it, and Add to calendar puts a plant's dates into your phone's calendar, which reminds you."],
   ["Can it tell me what my plant is?", "Usually, from a photo — down to the species and often the named cultivar. It can be wrong, especially between look-alikes, so it shows how sure it is and you make the final call."],
   ["Is it useful if I sell or trade plants?", "That's what it was built for. A plant's tag carries its whole record — where it came from, how it's been cared for, what went wrong and what fixed it — and a cutting traces back to the plant it was taken from."],
 ];
@@ -435,7 +438,7 @@ export function appPage(pages) {
   const url = `${SITE}/plant-care-app`;
   const title = titled("Free plant care app with watering reminders");
   const description =
-    "PlantParlour is a free plant care app: watering and feeding reminders set for each plant, AI plant identification and health checks from a photo, a care history for every plant, and a record that goes with it when you sell or trade. Runs in your phone's browser.";
+    "PlantParlour is a free plant care app: watering and feeding reminders set for each plant, AI plant identification and health checks from a photo, a care history for every plant, and a record that goes with it when you sell or trade. On Google Play for Android, and in the browser on iPhone.";
   const answer =
     "PlantParlour is a free plant care app for your phone. Add a plant from a photo and it works out what it is, sets watering, feeding and repotting reminders for that plant, and keeps a record of everything you do for it — every watering, repot, problem and fix. When you sell, trade or give a plant away, its whole history can go with it at a link. It's on Google Play for Android and runs in the browser on an iPhone, keeps working offline, and keeps your plants in step across your phones once you sign in.";
 
