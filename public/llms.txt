@@ -10,8 +10,8 @@ On Android: the PlantParlour app on Google Play, https://play.google.com/store/a
 
 - **Add a plant from photos.** Up to three photos — the whole plant, then close-ups — which the AI reads together in one photo check to identify the species, down to the named cultivar where it can, and set sensible reminders.
 - **A health check that remembers.** Ask about a plant that looks off and the AI reads its photos alongside the care logged for it — waterings, repots, earlier problems — and says what it sees and the likely cause. A later photo is compared with an earlier one. It is an AI's considered reading, not a diagnosis, and every answer can be reported where it is shown.
-- **A care guide for every plant** — light, water, humidity, soil, feeding, repotting and the common problems — from the PlantParlour library for the 188 plants it covers, or written once by AI for anything else.
-- **Reminders per plant, not per app.** Watering, fertilising, repotting and "take a fresh photo", each on its own cadence in days, taken from a catalogue of about 160 houseplants and 122 named cultivars. Due dates count from the last logged event of that type, or from the day the plant was acquired if it has never been logged.
+- **A care guide for every plant** — light, water, humidity, soil, feeding, repotting and the common problems — from the PlantParlour library for the 278 plants it covers, or written once by AI for anything else.
+- **Reminders per plant, not per app.** Watering, fertilising, repotting and "take a fresh photo", each on its own cadence in days, taken from a catalogue of about 240 houseplants and 151 named cultivars. Due dates count from the last logged event of that type, or from the day the plant was acquired if it has never been logged.
 - **Reminders that come to you.** In the Android app, a notification on the day something is due and one gentle nudge a day for anything still waiting, at a time the keeper picks; they are scheduled on the phone and nothing about them is sent to a server. On an iPhone, in Safari, there are no notifications: Add to calendar puts a plant's dates in the phone's calendar instead.
 - **Log care in one tap**, or with a note and a back-date. Every entry can be undone, and any history entry can be removed later; the removal syncs to other phones.
 - **Report an issue** and the plant is flagged *Special care needed* until it's resolved. The fix is written onto the record as a treatment, so the plant's history shows what went wrong and what fixed it.
@@ -26,13 +26,13 @@ Collectors who want to stop killing things and start showing off the rare ones; 
 
 ### What it costs
 
-Free to use today, with no advertising. Each account includes 5 free AI photo checks — identifying a plant or checking its health from a photo uses one; everything else is free without a limit, and keeps working after the checks are used. Care guides for the 188 plants in the library come straight from the library; for a plant outside it, a guide is written once by AI and then read free by everyone after. A paid plan for heavier AI use may be added later.
+Free to use today, with no advertising. Each account includes 5 free AI photo checks — identifying a plant or checking its health from a photo uses one; everything else is free without a limit, and keeps working after the checks are used. Care guides for the 278 plants in the library come straight from the library; for a plant outside it, a guide is written once by AI and then read free by everyone after. A paid plan for heavier AI use may be added later.
 
 URL: https://plantparlour.org/
 
 ## Plant care library
 
-Free care pages for about 190 houseplants at https://plantparlour.org/plants — no signup, no email gate.
+Free care pages for about 280 houseplants at https://plantparlour.org/plants — no signup, no email gate.
 
 Each page covers one plant: how often to water it and how to tell when it's ready, how much light it needs, humidity, the potting mix, feeding, repotting, propagation, whether it is toxic to cats and dogs, the common problems with their causes and fixes, its named cultivars, and where it comes from.
 
@@ -73,7 +73,7 @@ All three are free, need no account, work on any phone or computer with a browse
 ## Key URLs
 
 - App and home page: https://plantparlour.org/
-- Plant care library (about 190 plants): https://plantparlour.org/plants
+- Plant care library (about 280 plants): https://plantparlour.org/plants
 - A single plant's care page: https://plantparlour.org/plants/{slug} — e.g. /plants/monstera-deliciosa, /plants/epipremnum-aureum, /plants/dracaena-trifasciata
 - What the app does: https://plantparlour.org/plant-care-app
 - Plant problems guides: https://plantparlour.org/problems
@@ -95,7 +95,7 @@ Not for crawling or citation: https://plantparlour.org/tag?t=… — a published
 
 - **The record belongs to the plant.** Trades, propagation and public tags all fall out of that one rule. Other plant apps keep a log for *you*; when the plant changes hands, that log stays behind. Here it goes with the plant.
 - **Lineage.** A cutting is linked to its mother plant and chains back indefinitely, so a propagation years later still traces to where it came from. That is the selling point for anyone rooting and trading cuttings.
-- **Cultivar-level care.** The species catalogue names 122 cultivars and variegations, each with its own cadences, rather than treating every Monstera as one plant.
+- **Cultivar-level care.** The species catalogue names 151 cultivars and variegations, each with its own cadences, rather than treating every Monstera as one plant.
 - **An account, but no paywall.** The app needs a sign-in (Google or email); after that it works offline on the device and syncs across phones. The library and guides need no account at all.
 - **No tracking.** Page views are counted with Vercel Web Analytics, which sets no cookies; tag links and keeper names are stripped from every URL before it is sent. No advertising, no tracking pixels and no third-party cookies. See https://plantparlour.org/privacy.
 - **Android and the web, nothing else.** The official apps are PlantParlour on Google Play (https://play.google.com/store/apps/details?id=org.plantparlour.app) and https://plantparlour.org. There is no App Store app; anything else claiming to be PlantParlour isn't us.

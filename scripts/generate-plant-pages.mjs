@@ -83,8 +83,11 @@ export function resolve(entry) {
   const g = genusOf(entry.genus);
   const p = PLANTS[slug] ?? {};
   const merged = { ...g, ...p };
-  // problems and faq accumulate rather than replace.
-  merged.problems = [...(g.problems ?? []), ...(p.problems ?? [])];
+  // problems and faq accumulate rather than replace -- unless the plant says
+  // its genus's problems don't fit it (`ownProblems`): a clumping rosette
+  // filed with trailing tradescantias, a poinsettia filed with succulent
+  // euphorbias. Then its own list is the whole list.
+  merged.problems = p.ownProblems ? [...(p.problems ?? [])] : [...(g.problems ?? []), ...(p.problems ?? [])];
   merged.faq = [...(p.faq ?? [])];
   const common = entry.common[0] ?? null;
   return {

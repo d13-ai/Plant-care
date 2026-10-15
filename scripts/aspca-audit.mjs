@@ -39,6 +39,7 @@ const LIST = (animal) => `${BASE}/pet-care/animal-poison-control/${animal}-plant
 const SYNONYMS = {
   Goeppertia: "Calathea", // most Calathea species moved to Goeppertia in 2012
   Haworthiopsis: "Haworthia", // split from Haworthia in 2013
+  Neoregelia: "Neoregalia", // the ASPCA's spelling of its genus-wide entry ("Neoregalia spp.")
 };
 
 /**
@@ -53,6 +54,9 @@ const SPECIES_SYNONYMS = {
   "Cordyline fruticosa": ["Cordyline terminalis"], // old name
   "Crassula ovata": ["Crassula argentea"], // old name
   "Pilea cadierei": ["Pilea cadieri"], // the ASPCA's spelling
+  "Plectranthus verticillatus": ["Plectranthus australis"], // the name it is listed under (Swedish ivy)
+  "Cryptanthus bivittatus": ["Cryptanthus bivattus"], // the ASPCA's spelling
+  "Graptopetalum paraguayense": ["Sedum weinbergii"], // old name; the ASPCA's "Ghost Plant"
 };
 
 const unescape = (s) =>
