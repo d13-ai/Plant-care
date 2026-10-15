@@ -33,6 +33,7 @@ Newest last. Each includes everything before it.
 | 12 Oct 2026 | `46ab00a` | see expo.dev | Green-room hold 1.1 s (3.9 s in all). |
 | 12 Oct 2026 | `e3a5e90` | e2bafae7 | Thumbnail and view copies saved at upload; "5 free AI photo checks" wording. |
 | 14 Oct 2026 | `e825a98` | 3a33d087 | News emails switch in Account; "didn't use a photo check" on the add-plant screen; real links on the web welcome page. |
+| 14 Oct 2026 | `62a5025` | a65be7fa | Add plant opens on the photo; Identify with AI in the bottom bar. |
 
 ## Release notes, version 8 (production)
 
