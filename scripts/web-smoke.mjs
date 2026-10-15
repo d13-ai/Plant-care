@@ -166,6 +166,21 @@ try {
     if ((await page.getByPlaceholder("e.g. Monstera deliciosa").inputValue()) !== "Nephrolepis exaltata") throw new Error("pick didn't fill the species");
     await page.getByText(/reminders set: water every 4 days/).waitFor();
   });
+  await step("a plant the list doesn't have can be kept as typed from the picker", async () => {
+    // A near-miss used to be a dead end: the only way out was Close.
+    await page.getByText("Browse", { exact: true }).click();
+    await page.getByPlaceholder(/Search by name/).fill("Philodendron spiritus-sancti");
+    await page.getByText("Not here? Use “Philodendron spiritus-sancti”").click();
+    if ((await page.getByPlaceholder("e.g. Monstera deliciosa").inputValue()) !== "Philodendron spiritus-sancti") throw new Error("use-as-typed didn't fill the species");
+    await page.getByText("Pick a species").waitFor({ state: "hidden", timeout: 5000 });
+    // A name the list knows isn't offered as typed: its own row is the answer.
+    await page.getByText("Browse", { exact: true }).click();
+    await page.getByPlaceholder(/Search by name/).fill("Boston fern");
+    await page.getByText("Boston fern").first().waitFor();
+    if (await page.getByText(/^Not here\?/).count()) throw new Error("a catalogue name was offered as typed");
+    await page.getByText("Close", { exact: true }).click();
+    await page.getByText("Pick a species").waitFor({ state: "hidden", timeout: 5000 });
+  });
   await step("a typed cultivar is suggested and filled", async () => {
     await page.getByPlaceholder("e.g. Monstera deliciosa").fill("thai con");
     await page.getByText(/Thai Constellation \(Monstera deliciosa/).click();

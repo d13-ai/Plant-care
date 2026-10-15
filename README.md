@@ -233,7 +233,7 @@ on: Authentication → Emails → SMTP Settings, host `smtp.resend.com`, port
 
 ## Species catalogue
 
-`src/domain/species.ts` knows ~135 houseplants and ~110 named cultivars and
+`src/domain/species.ts` knows ~160 houseplants and ~120 named cultivars and
 variegations — Thai Constellation, Albo, Marble Queen, Pink Princess, Tineke,
 Raven ZZ — each with the reminder cadences that suit it. Type in the species
 box and it suggests as you go (a genus prefix leads with scientific names, a
@@ -245,7 +245,7 @@ parent's care and sit right under it in the list.
 
 ## Plant care library
 
-`/plants` — a care page for each of the 158 plants the catalogue knows, and
+`/plants` — a care page for each of the 188 plants the catalogue knows, and
 the only part of the site a crawler or an answer engine can actually read
 (every app route renders the same empty shell and paints itself from the
 bundle). Each page covers watering and how to tell when it's due, light,

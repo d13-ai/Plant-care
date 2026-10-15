@@ -8,8 +8,8 @@ at Perenual showed, and the recommendation.*
 
 Two layers, both already live:
 
-1. **A curated species catalogue** (`src/domain/species.ts`): ~135 houseplants
-   and ~110 named cultivars and variegations — Thai Constellation, Albo, Pink
+1. **A curated species catalogue** (`src/domain/species.ts`): ~160 houseplants
+   and ~120 named cultivars and variegations — Thai Constellation, Albo, Pink
    Princess, Dragon Scale, Raven ZZ — each with the watering, feeding,
    repotting and photo cadences that suit it. It powers the species picker and
    sets a plant's reminders the moment it's named.

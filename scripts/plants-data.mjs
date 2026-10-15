@@ -509,6 +509,40 @@ export const GENUS = {
   Rhapis: { inherit: "Chamaedorea", light: "Medium indirect light", propagation: "Divide the clump in spring — unusually for a palm, lady palms sucker and divide well." },
   Phoenix: { inherit: "Chamaedorea", light: "Bright light with some direct sun", toxicity: "Non-toxic to cats and dogs, but the spines at the base of each frond are needle-sharp — site it away from walkways." },
   Livistona: { toxicity: UNLISTED, inherit: "Chamaedorea", light: "Bright indirect light with some direct sun" },
+  Ravenea: {
+    inherit: "Chamaedorea",
+    light: "Bright light; a little direct sun is fine",
+    lightLong:
+      "Bright light — far more than a parlour palm wants. Majesty palms are sold as low-light plants and slowly decline in them: the fronds thin and yellow, and the plant never fills back in.",
+    humidity: "Above 50%; dry air brings spider mites",
+    waterHow:
+      "Keep the compost consistently damp. Unusually for a palm it is a riverbank plant in the wild and wants it, but it still must not stand in water.",
+  },
+  // A cycad, not a palm, though it is sold as one and filed with them.
+  Cycas: {
+    light: "Bright light, with some direct sun",
+    lightLong:
+      "Bright light, with a few hours of direct sun if you can give it. A sago in a dim room puts out few, weak, stretched fronds — and it only makes a flush or two a year to begin with.",
+    humidity: "Room humidity is fine",
+    soil: "Gritty, free-draining compost",
+    soilLong:
+      "Cactus or palm compost with extra grit or perlite. The stout trunk and thick roots store water, and a mix that stays wet rots them.",
+    feed: "A palm feed with micronutrients two or three times in spring and summer",
+    repotNote:
+      "Every three years or so, and only when the roots fill the pot — it grows slowly and likes a snug pot. Keep the trunk at the depth it was; buried deeper, it rots.",
+    toxicity:
+      "Toxic to cats, dogs and people, and seriously so: every part is poisonous, the seeds most of all. Chewing it can cause vomiting, liver failure and death in dogs and cats. If a pet has eaten any, call a vet or animal poison line straight away rather than waiting for symptoms.",
+    propagation:
+      "Pups that form at the base of an older plant can be cut off, left to dry for a week and potted in gritty mix. Seed is very slow. Wear gloves either way.",
+    waterHow:
+      "Water thoroughly when the top half of the pot has dried out, and much less in winter. Keep water out of the crown at the top of the trunk.",
+    problems: [
+      ["The oldest ring of fronds turning yellow", "Normal ageing if it is only the oldest fronds; overwatering if new ones yellow too.", "Cut old fronds off close to the trunk once they are fully yellow, and let the mix dry further between waterings."],
+      ["New fronds come out pale, stunted or frizzled", "Too little light, or a shortage of manganese — sagos are known for it.", "Move it brighter, and feed with a palm fertiliser that contains micronutrients."],
+      ["Soft, rotting trunk at the base", "Overwatering, or a trunk planted too deep.", "Unpot it, cut away soft tissue if it is limited, and replant at the right depth in gritty mix. A trunk that is soft right through can't be saved."],
+      ["Small brown or white bumps on the fronds", "Scale insects; sagos are prone to them.", "Scrape off what you can and treat with horticultural oil or soap every week for a month."],
+    ],
+  },
 
   // ------------------------------------------------------- Vines & trailers
   Hoya: {
@@ -585,18 +619,18 @@ export const GENUS = {
   },
   Senecio: {
     light: "Bright light with some direct sun",
-    lightLong: "Bright light with a few hours of direct sun. String of pearls stretches into a bare thread with beads far apart when it is too dark.",
+    lightLong: "Bright light with a few hours of direct sun. Too dark, and string plants stretch into bare threads with the leaves far apart.",
     humidity: "Indifferent; dry air suits it",
     soil: "Cactus compost with extra perlite",
-    soilLong: "Cactus compost with more perlite still, in a shallow pot. The beads are water stores and the roots are fine and shallow — depth of wet compost below them is what kills these plants.",
+    soilLong: "Cactus compost with more perlite still, in a shallow pot. The swollen leaves are water stores and the roots are fine and shallow — depth of wet compost below them is what kills these plants.",
     feed: "A weak cactus feed two or three times over the summer",
     repotNote: "Every two or three years, into a shallow wide pot rather than a deep one.",
     toxicity: "Toxic to cats, dogs and people; causes vomiting and, on contact, skin irritation.",
     propagation: "Lay a strand on damp compost and pin it down — it roots at the nodes within a few weeks. Or push cuttings in a circle around the pot's edge to thicken it.",
-    waterHow: "Water thoroughly when the pot is completely dry and the beads have just started to look slightly flat. Every two to three weeks in summer, monthly in winter.",
+    waterHow: "Water thoroughly when the pot is completely dry and the leaves have just started to look slightly flat or wrinkled. Every two to three weeks in summer, monthly in winter.",
     problems: [
-      ["Shrivelled flat beads", "Thirsty — or rotting roots that can no longer take water up.", "Check the roots before you water. Firm roots mean it needs a drink; mushy ones mean rot."],
-      ["Bare strings with beads only at the ends", "Too little light.", "Move it into direct sun and cut the bare strings back; they will branch."],
+      ["Shrivelled, flattened leaves", "Thirsty — or rotting roots that can no longer take water up.", "Check the roots before you water. Firm roots mean it needs a drink; mushy ones mean rot."],
+      ["Bare strings with leaves only at the ends", "Too little light.", "Move it into direct sun and cut the bare strings back; they will branch."],
       ["Mushy stems at soil level", "Rot from overwatering.", "Take healthy strand cuttings and start again."],
     ],
   },
@@ -628,12 +662,11 @@ export const GENUS = {
     inherit: "Peperomia",
     light: "Bright indirect light",
     lightLong: "Bright indirect light, and turn the pot weekly — a pilea leans hard toward its light source and goes permanently lopsided otherwise.",
-    propagation: "Pot up the babies that come up from the soil around the parent once they have a few leaves; cut them off below soil level with a little root attached.",
+    propagation: "Stem cuttings with a node root in water or damp compost within a few weeks.",
     problems: [
       ["Leaning heavily to one side", "It grows toward light faster than most.", "Turn the pot a quarter turn every week."],
       ["Yellow lower leaves dropping", "Overwatering, or simply age as the stem lengthens.", "Let it dry out more between waterings; a bare lower stem on an older pilea is normal."],
       ["Curling or cupping leaves", "Usually too much light; sometimes too little water.", "Move it out of direct sun and check the compost."],
-      ["No babies", "Too young, or not enough light.", "Give it a bright spot and wait — pileas pup freely once established."],
     ],
   },
   Cissus: {
@@ -648,7 +681,6 @@ export const GENUS = {
     propagation: "Node cuttings root in water or sphagnum within a few weeks.",
     waterHow: "Keep evenly damp. It wilts dramatically when dry and the leaves often do not fully recover.",
     problems: [
-      ["Crispy edges and leaf drop", "Dry air. This is the whole story with this plant.", "Get it above 60% humidity — a cabinet or terrarium is the honest answer."],
       ["Powdery white coating", "Mildew from still, damp air.", "Improve the airflow; humidity without circulation is what causes it."],
     ],
   },
@@ -725,6 +757,14 @@ export const GENUS = {
     light: "Bright indirect light",
     toxicity: "Toxic to cats and dogs. The berries cause vomiting and the sap can give a skin rash — and despite the name it is not a fern at all, but a relative of asparagus.",
     propagation: "Divide the tuberous root ball in spring. It is tough work; a serrated knife helps.",
+    humidity: "Room humidity is fine; more keeps the foliage fuller",
+    waterHow:
+      "Keep the compost lightly damp in spring and summer, letting the top few centimetres dry between waterings. The tubers store water, so it forgives a missed watering far better than a real fern — but not a pot left standing wet.",
+    problems: [
+      ["Yellowing, shedding needles", "Too dark, or the pot dried right out.", "Move it brighter and water more regularly. Cut bare stems back to the base; new ones come up from the tubers."],
+      ["Yellowing stems in a pot that stays wet", "Overwatering — the tubers rot if they sit wet.", "Let the top third dry out between waterings, and make sure the pot drains."],
+      ["Fine webbing and pale speckling", "Spider mites, which like its dense foliage in dry air.", "Shower it thoroughly and treat every week for a month."],
+    ],
   },
 
   // ------------------------------------------------------ Begonias & violets
@@ -801,11 +841,8 @@ export const GENUS = {
     inherit: "Echeveria",
     light: "Bright light with some direct sun",
     toxicity: "Toxic to cats and dogs. Kalanchoes contain cardiac glycosides, which affect the heart — this is one of the more seriously toxic houseplants sold, and worth keeping out of reach.",
-    feed: "A balanced feed monthly in spring and summer while in flower",
-    repotNote: "After flowering. To get it to flower again it needs fourteen hours of complete darkness a night for six weeks — that, not care, is why supermarket kalanchoes never rebloom.",
     problems: [
-      ["Flowers once, then never again", "Kalanchoes are short-day plants and need long nights to set buds.", "Give it fourteen hours of total darkness a night for six weeks in autumn."],
-      ["Stretched leggy growth", "Not enough light.", "Move it into direct sun and cut it back after flowering."],
+      ["Stretched leggy growth", "Not enough light.", "Move it into direct sun, and cut it back in spring."],
       ["Mushy stem at the base", "Overwatering.", "Take healthy cuttings and start again."],
     ],
   },
@@ -1354,6 +1391,15 @@ export const PLANTS = {
     origin: "South America",
     difficulty: "Easy",
   },
+  "thaumatophyllum-xanadu": {
+    blurb:
+      "Sold as Philodendron 'Xanadu': a compact, self-heading plant that forms a dense mound of glossy, deeply lobed leaves — the tree philodendron's look at a size that fits a room. It doesn't climb and builds little trunk, and it is one of the toughest plants in the group.",
+    size: "60–90 cm tall, spreading to 1.2 m",
+    origin: "Brazil",
+    difficulty: "Easy",
+    repotNote:
+      "Every second spring, one size up. It grows as a clump rather than on a trunk, and the clump can be divided when you repot.",
+  },
   "epipremnum-aureum": {
     blurb:
       "Pothos, golden pothos, devil's ivy — the plant given to people who say they kill everything. It trails, it climbs, it roots in a glass of water, and it puts up with light levels that would finish most houseplants. Left to climb it eventually makes huge split leaves, which is why a mature wild pothos looks nothing like the pot on your shelf.",
@@ -1408,6 +1454,14 @@ export const PLANTS = {
     difficulty: "Needs attention",
     humidity: "Above 70%",
   },
+  "anthurium-warocqueanum": {
+    blurb:
+      "The queen anthurium: long, narrow, dark velvet leaves with pale veins, hanging from a climbing stem, that can pass a metre on a mature plant. It is a collector's plant and a demanding one — it comes from wet Colombian cloud forest and wants the kind of steady humidity most homes only manage inside a cabinet.",
+    size: "Leaves 60 cm to over 1 m on a mature plant",
+    origin: "Colombia",
+    difficulty: "Fussy",
+    humidity: "Above 70%, steadily",
+  },
   "alocasia-amazonica": {
     blurb:
       "Alocasia Polly, or African mask — a hybrid, despite the name, and not from the Amazon at all. Arrow-shaped leaves with scalloped edges and thick white veins on near-black green. It is the alocasia most people meet first and the one most people assume they have killed, because it goes dormant at the slightest provocation and comes back from the corm weeks later.",
@@ -1450,6 +1504,20 @@ export const PLANTS = {
     size: "60–90 cm tall",
     origin: "The Philippines",
     difficulty: "Needs attention",
+  },
+  "alocasia-cuprea": {
+    blurb:
+      "Grown for the sheen: thick, puckered leaves in metallic copper and red that catch the light like beaten metal — hence 'Red Secret' and 'mirror plant'. A small, slow jewel alocasia rather than a statement one, and like the rest of the genus it sulks into dormancy if it gets cold.",
+    size: "30–50 cm tall",
+    origin: "Borneo",
+    difficulty: "Fussy",
+  },
+  "alocasia-lauterbachiana": {
+    blurb:
+      "Purple sword: long, narrow leaves with wavy edges, green on top and purple underneath, on tall purple-flushed stems. One of the more forgiving alocasias — less given to sudden dormancy, and more tolerant of ordinary room humidity than the velvet-leaved species.",
+    size: "60–100 cm tall",
+    origin: "New Guinea",
+    difficulty: "Straightforward",
   },
   "colocasia-esculenta": {
     blurb:
@@ -1557,6 +1625,13 @@ export const PLANTS = {
     origin: "A cultivated hybrid",
     difficulty: "Needs attention",
   },
+  "philodendron-burle-marx": {
+    blurb:
+      "A fast, shrubby philodendron with glossy, elongated heart-shaped leaves on long stems. It spreads sideways and scrambles rather than climbing far, filling a pot quickly — in the tropics it is planted as ground cover. The plain green parent of the variegated Burle Marx, and a good deal easier.",
+    size: "60–90 cm tall, spreading wider",
+    origin: "Named for the Brazilian landscape architect Roberto Burle Marx",
+    difficulty: "Easy",
+  },
   "philodendron-burle-marx-variegata": {
     blurb:
       "The variegated form of the fast, shrubby Burle Marx philodendron, splashed in cream and yellow. It spreads sideways rather than climbing far and is a good deal quicker than most variegated philodendrons — which is unusual, and makes it the sensible first variegate to try.",
@@ -1570,6 +1645,20 @@ export const PLANTS = {
     size: "2 m on a pole; leaves 40–60 cm",
     origin: "A cultivated hybrid",
     difficulty: "Needs attention",
+  },
+  "philodendron-golden-dragon": {
+    blurb:
+      "A slow climbing hybrid with long, lobed leaves marbled in cream and yellow on green — the smooth-edged look-alike of Ring of Fire. Run a finger along the margin to tell them apart: Golden Dragon's edge is smooth, Ring of Fire's is toothed. Every leaf is different.",
+    size: "1.5 m on a pole over several years; leaves 25–40 cm",
+    origin: "A cultivated hybrid",
+    difficulty: "Needs attention",
+  },
+  "monstera-burle-marx-flame": {
+    blurb:
+      "Grown for what it becomes: mature leaves cut so deeply into narrow, upswept lobes that they look like a flame. What it is botanically isn't settled — it is sold under this name. Young plants look nothing like it: their leaves are plain, glossy and elongated on long stems, which is why a small one is so hard to name from a photo. The cuts come with size and age, and like the rest of the genus it gets there faster with something to climb.",
+    size: "Climbs to 2 m on a pole; leaves grow much larger as it matures",
+    origin: "Not settled — a cultivated plant sold under this name",
+    difficulty: "Straightforward",
   },
   "alocasia-pink-dragon": {
     blurb:
@@ -1662,6 +1751,13 @@ export const PLANTS = {
     origin: "Taiwan and Hainan",
     difficulty: "Easy",
   },
+  "schefflera-actinophylla": {
+    blurb:
+      "The full-size umbrella tree: large glossy leaves of seven to sixteen leaflets fanned out like the spokes of an umbrella, on a plant that can reach the ceiling. The bigger cousin of the dwarf umbrella plant — it wants more light and more room, and the same care otherwise.",
+    size: "2–3 m indoors",
+    origin: "Northern Australia and New Guinea",
+    difficulty: "Easy",
+  },
   "dracaena-trifasciata": {
     blurb:
       "The snake plant — still called Sansevieria by almost everyone, though it was moved to Dracaena in 2017. Stiff upright leaves banded in grey-green, growing from a spreading rhizome. It survives deep shade, direct sun, and being forgotten for two months, and it is the plant most often recommended for a bedroom because it keeps its stomata shut by day and releases oxygen at night.",
@@ -1685,6 +1781,13 @@ export const PLANTS = {
       "The corn plant: broad strap leaves in a rosette on top of a thick cane, most often sold in the yellow-striped 'Massangeana' form. It tolerates low light better than almost any other large houseplant, which is why it has furnished offices for fifty years.",
     size: "1.5–2 m indoors",
     origin: "Tropical Africa",
+    difficulty: "Easy",
+  },
+  "dracaena-reflexa": {
+    blurb:
+      "Pleomele: a branching, shrubby dracaena with dense spirals of narrow leaves along every stem. The gold-edged form, 'Song of India', is the one usually sold. Slow and tolerant, and as sensitive as the rest of the genus to fluoride in tap water.",
+    size: "1–2 m indoors",
+    origin: "Madagascar and the Indian Ocean islands",
     difficulty: "Easy",
   },
   "dracaena-angolensis": {
@@ -1811,6 +1914,23 @@ export const PLANTS = {
   },
 
   // ------------------------------------------------------- Vines & trailers
+  "ravenea-rivularis": {
+    blurb:
+      "The majesty palm: feathery, arching fronds on a single stem, sold cheaply and in huge numbers as an indoor palm — and one of the harder ones to keep looking good indoors. It is a riverbank tree from Madagascar and wants far more light and water than most rooms give it.",
+    size: "1.5–3 m indoors",
+    origin: "Madagascar",
+    difficulty: "Needs attention",
+  },
+  "cycas-revoluta": {
+    blurb:
+      "The sago palm, which is not a palm at all but a cycad, from a group of plants older than the dinosaurs. A stiff crown of glossy, feathery fronds rises from a stout trunk, a single flush a year at most. It is very slow, very tough, and extremely poisonous: every part of it, the seeds most of all, can kill a dog or cat that chews it.",
+    size: "60 cm–1 m indoors, over many years",
+    origin: "Southern Japan",
+    difficulty: "Easy",
+    faq: [
+      ["Is a sago palm safe around pets?", "No. The ASPCA lists sago palm as toxic to dogs and cats. Every part is poisonous and the seeds are the worst; eating it can cause vomiting, liver failure and death. If a pet has chewed one, call a vet or animal poison line straight away."],
+    ],
+  },
   "hoya-carnosa": {
     blurb:
       "The wax plant: thick leathery leaves on woody vines, and — given enough light and enough patience — umbels of star-shaped flowers that smell of chocolate at night and drip nectar onto whatever is underneath. Hoyas flower from short spurs that they reuse year after year, so the one rule is never to cut off an old flower stalk.",
@@ -1841,6 +1961,14 @@ export const PLANTS = {
     difficulty: "Needs attention",
     humidity: "Above 60%, with air moving",
   },
+  "hoya-obovata": {
+    toxicity: RELATIVES,
+    blurb:
+      "A hoya grown for its leaves: thick, round and dark green, often speckled with silver, on vigorous climbing stems. One of the faster and easier hoyas, and in good light it flowers with clusters of pale pink stars.",
+    size: "Vines to 2–3 m",
+    origin: "Southeast Asia",
+    difficulty: "Easy",
+  },
   "tradescantia-zebrina": {
     blurb:
       "Inch plant: fast-trailing stems with purple-backed leaves striped in silver. It grows at a rate that makes it disposable — root a handful of cuttings each spring, throw the tired parent out, and you always have a full pot. The colour only holds in bright light.",
@@ -1853,6 +1981,13 @@ export const PLANTS = {
       "A patented cultivar bred in the Netherlands: thick stems and broad leaves striped in pink, cream and green, much sturdier and denser than the older tradescantias. It is one of the few houseplants that is genuinely a recent invention — released in 2017.",
     size: "Trails to 60 cm",
     origin: "A Dutch cultivar of a South American species",
+    difficulty: "Easy",
+  },
+  "tradescantia-pallida": {
+    blurb:
+      "Purple heart: long, deep purple leaves on fleshy, sprawling stems, with small pink flowers in summer. Tougher and more drought-tolerant than the inch plant — in warm climates it is planted outdoors as ground cover — but it turns green and leggy without bright light.",
+    size: "Trails or sprawls to 50 cm",
+    origin: "Eastern Mexico",
     difficulty: "Easy",
   },
   "chlorophytum-comosum": {
@@ -1880,6 +2015,20 @@ export const PLANTS = {
     origin: "Southwest Africa",
     difficulty: "Needs attention",
   },
+  "senecio-radicans": {
+    blurb:
+      "String of bananas: trailing stems lined with small, curved, banana-shaped leaves. Faster and more forgiving than string of pearls — less prone to rot, and quicker to recover from a missed watering.",
+    size: "Strands to 1 m and more",
+    origin: "South Africa",
+    difficulty: "Easy",
+  },
+  "senecio-peregrinus": {
+    blurb:
+      "String of dolphins: a trailing hybrid whose leaves curve into the shape of a leaping dolphin, complete with little fins. It wants the same sun and the same dry spells as string of pearls, and is just as easily lost to a wet pot.",
+    size: "Strands to 60 cm",
+    origin: "A cultivated hybrid",
+    difficulty: "Needs attention",
+  },
   "ceropegia-woodii": {
     blurb:
       "String of hearts: fine purple strands of small marbled heart-shaped leaves, growing from a tuber. It makes small round tubers along the strands too, which makes it one of the easiest plants to propagate — press one onto compost and it roots. Non-toxic to cats and dogs, unlike its string-of-pearls shelf-mate.",
@@ -1902,6 +2051,35 @@ export const PLANTS = {
     size: "Vines to 2 m",
     origin: "Southeast Asia",
     difficulty: "Fussy",
+    problems: [
+      ["Crispy edges and leaf drop", "Dry air. This is the whole story with this plant.", "Get it above 60% humidity — a cabinet or terrarium is the honest answer."],
+    ],
+  },
+  "cissus-rhombifolia": {
+    blurb:
+      "Grape ivy: glossy leaves in three parts on vines that climb by tendrils, like the grapevine it is related to. One of the most tolerant vines for a dim room and dry air, and the easiest member of its genus by a distance.",
+    size: "Vines to 3 m",
+    origin: "Tropical Central and South America",
+    difficulty: "Easy",
+    light: "Medium to bright indirect light",
+    humidity: "Room humidity is fine",
+    waterHow: "Water when the top 2–3 cm is dry. It forgives a missed watering far better than the rex begonia vine does.",
+  },
+  "ficus-pumila": {
+    blurb:
+      "Creeping fig: small, heart-shaped leaves on thin stems that cling to whatever they touch with tiny roots, the way ivy does. Indoors it trails from a pot or climbs a moss pole — and on a wall it is hard to get off, so choose the surface. Unlike the tree figs it wants damp compost and humid air.",
+    size: "Trails or climbs to 2 m and beyond; leaves 2–3 cm",
+    origin: "East Asia",
+    difficulty: "Easy",
+    light: "Medium to bright indirect light",
+    lightLong: "Medium to bright indirect light. Unlike the tree figs it is an understorey climber, and it scorches in hard direct sun.",
+    humidity: "Above 50%; the thin leaves crisp in dry air",
+    waterHow: "Keep the compost lightly damp. The leaves are thin and it crisps within days of drying out — and crisped leaves don't recover.",
+    repotNote: "Every spring while it is growing, or keep it in the same pot and trim it back.",
+    propagation: "Stem cuttings root easily in water or damp compost, and any stem that has rooted where it touches the soil can be cut off and potted.",
+    problems: [
+      ["Leaves crisp and brown all at once", "It dried out.", "Water more often; creeping fig is far thirstier than the tree figs."],
+    ],
   },
   "pilea-peperomioides": {
     toxicity: RELATIVES,
@@ -1910,6 +2088,18 @@ export const PLANTS = {
     size: "30–40 cm tall and wide",
     origin: "Yunnan province, China",
     difficulty: "Easy",
+    propagation: "Pot up the babies that come up from the soil around the parent once they have a few leaves; cut them off below soil level with a little root attached.",
+    problems: [
+      ["No babies", "Too young, or not enough light.", "Give it a bright spot and wait — pileas pup freely once established."],
+    ],
+  },
+  "pilea-cadierei": {
+    blurb:
+      "The aluminium plant: quilted dark-green leaves with raised silver patches that look painted on. A fast, bushy grower that turns leggy within a year or two, so pinch it back often and root the tips to keep the pot full.",
+    size: "20–30 cm tall",
+    origin: "Vietnam and southern China",
+    difficulty: "Easy",
+    waterHow: "Keep the compost lightly damp and never let it dry out completely — it wilts quickly.",
   },
   "peperomia-obtusifolia": {
     blurb:
@@ -1932,7 +2122,16 @@ export const PLANTS = {
     origin: "South America",
     difficulty: "Easy",
   },
+  "peperomia-polybotrya": {
+    toxicity: RELATIVES,
+    blurb:
+      "Raindrop peperomia: glossy, fleshy leaves shaped like falling drops, on upright stems. Often taken for a Chinese money plant, but its leaves come to a point. Slow, compact and easy.",
+    size: "20–30 cm tall",
+    origin: "Colombia and Peru",
+    difficulty: "Easy",
+  },
   "hoya-publicalyx-splash": {
+    toxicity: RELATIVES,
     blurb:
       "A fast, tough hoya with long dark leaves flecked in silver, and clusters of deep burgundy-black flowers. It is the hoya to start with: vigorous, quick to climb, and readier to bloom young than most of the genus.",
     size: "Vines to 3 m",
@@ -1940,6 +2139,7 @@ export const PLANTS = {
     difficulty: "Easy",
   },
   "hoya-australis-lisa": {
+    toxicity: RELATIVES,
     blurb:
       "A variegated australis with rounded leaves splashed in gold and cream on pink-tinged stems. It is vigorous for a variegated hoya and produces scented white flowers with red centres once established.",
     size: "Vines to 3 m",
@@ -1954,6 +2154,7 @@ export const PLANTS = {
     difficulty: "Easy",
   },
   "peperomia-ginny": {
+    toxicity: RELATIVES,
     blurb:
       "Also sold as rainbow peperomia: thick oval leaves edged in cream and rose over mid-green. It is a sport of the baby rubber plant and wants the same treatment — small pot, bright indirect light, and much less water than you would think.",
     size: "25–30 cm tall",
@@ -1962,6 +2163,14 @@ export const PLANTS = {
   },
 
   // ------------------------------------------------------- Prayer plants
+  "peperomia-hope": {
+    toxicity: RELATIVES,
+    blurb:
+      "A trailing hybrid with small, round, thick leaves set in threes and fours along its stems. Slow, compact, and very forgiving of a missed watering — the leaves are little water stores.",
+    size: "Trails to 30 cm",
+    origin: "A cultivated hybrid",
+    difficulty: "Easy",
+  },
   "maranta-leuconeura": {
     toxicity: RELATIVES,
     blurb:
@@ -1998,6 +2207,20 @@ export const PLANTS = {
     blurb:
       "The rattlesnake plant: long wavy-edged leaves marked with alternating large and small dark blotches, with deep purple undersides. It is the toughest and most tolerant member of this family — the one to try first if calatheas have defeated you before.",
     size: "50–75 cm tall",
+    origin: "Brazil",
+    difficulty: "Needs attention",
+  },
+  "goeppertia-zebrina": {
+    blurb:
+      "The zebra calathea: large, soft, velvety leaves striped in dark and pale green, purple underneath. One of the bigger calatheas and one of the more tolerant, though it still browns at the edges in dry air or with hard tap water.",
+    size: "60–90 cm tall",
+    origin: "Southeastern Brazil",
+    difficulty: "Needs attention",
+  },
+  "goeppertia-rufibarba": {
+    blurb:
+      "Furry feather calathea: long, narrow, wavy leaves with soft, furred burgundy undersides — the fur is the point, in a family of smooth leaves. Less showy than the patterned calatheas, and the same care.",
+    size: "50–80 cm tall",
     origin: "Brazil",
     difficulty: "Needs attention",
   },
@@ -2045,6 +2268,24 @@ export const PLANTS = {
     size: "50–90 cm tall and wide",
     origin: "Tropical America; the cultivar arose in Boston in 1894",
     difficulty: "Needs attention",
+  },
+  "nephrolepis-obliterata": {
+    toxicity: RELATIVES,
+    blurb:
+      "Kimberly queen fern: stiff, upright, sword-shaped fronds that grow outwards rather than flopping. The toughest of the sword ferns — more tolerant of dry air and a missed watering than a Boston fern, though it still wants damp compost.",
+    size: "60–90 cm tall and wide",
+    origin: "Australia",
+    difficulty: "Easy",
+    light: "Medium to bright indirect light",
+    humidity: "Room humidity is tolerated; above 50% is better",
+  },
+  "nephrolepis-cordifolia-duffii": {
+    toxicity: RELATIVES,
+    blurb:
+      "Lemon button fern: a compact sword fern with tiny round leaflets on short fronds. Small and neat enough for a shelf or a terrarium, and as thirsty as any fern.",
+    size: "20–30 cm tall",
+    origin: "A cultivated form; the species grows across the tropics",
+    difficulty: "Straightforward",
   },
   "adiantum-raddianum": {
     blurb:
@@ -2159,6 +2400,18 @@ export const PLANTS = {
     size: "20–40 cm tall",
     origin: "Madagascar",
     difficulty: "Easy",
+    feed: "A balanced feed monthly in spring and summer while in flower",
+    repotNote: "After flowering. To get it to flower again it needs fourteen hours of complete darkness a night for six weeks — that, not care, is why supermarket kalanchoes never rebloom.",
+    problems: [
+      ["Flowers once, then never again", "Kalanchoes are short-day plants and need long nights to set buds.", "Give it fourteen hours of total darkness a night for six weeks in autumn."],
+    ],
+  },
+  "kalanchoe-tomentosa": {
+    blurb:
+      "Panda plant: upright stems of thick, felted, grey-green leaves edged with rust-brown spots, soft as a cat's ear. A slow, easy succulent grown for its leaves — it rarely flowers indoors — and, like every kalanchoe, toxic to pets.",
+    size: "30–50 cm tall",
+    origin: "Madagascar",
+    difficulty: "Easy",
   },
   "sempervivum-tectorum": {
     blurb:
@@ -2187,6 +2440,14 @@ export const PLANTS = {
     size: "1–2 m indoors",
     origin: "Eastern and southern Africa",
     difficulty: "Easy",
+  },
+  "euphorbia-milii": {
+    blurb:
+      "Crown of thorns: woody, viciously spiny stems with fresh green leaves at the tips and small red, pink or yellow bracts that it carries for much of the year. It takes more water than a cactus, and drops its leaves when it is too dry or too cold — then grows them back.",
+    size: "50–90 cm indoors",
+    origin: "Madagascar",
+    difficulty: "Easy",
+    waterHow: "Water when the top half of the pot is dry. It is a leafy shrub, not a cactus, and drops leaves if left dry too long; water less in winter.",
   },
   "schlumbergera-truncata": {
     toxicity: RELATIVES,
@@ -2477,6 +2738,13 @@ export const PLANTS = {
       "Asparagus fern: soft, flat, feathery sprays that look like fern fronds and aren't — this is a relative of edible asparagus, with true leaves reduced to scales. It is tougher than any real fern, grows from a mass of water-storing tubers, and is toxic to cats and dogs, unlike the ferns it imitates.",
     size: "50–100 cm, climbing or trailing",
     origin: "Southern Africa",
+    difficulty: "Easy",
+  },
+  "asparagus-densiflorus": {
+    blurb:
+      "Foxtail fern and Sprenger's asparagus are two forms of this one tough, tuberous-rooted plant: Sprenger's arches and trails, while the foxtail form grows dense upright plumes. Not a fern at all, and much more drought-tolerant than one. The stems carry small hooked spines, so wear gloves to handle it.",
+    size: "40–60 cm tall and wide",
+    origin: "South Africa",
     difficulty: "Easy",
   },
   "bambusa-vulgaris": {
