@@ -55,6 +55,7 @@ export function SpeciesField({
           onChangeText(scientificName(entry));
           onPick(entry);
         }}
+        onUseTyped={onChangeText}
       />
       {suggestions.length > 0 && (
         <View style={styles.list}>

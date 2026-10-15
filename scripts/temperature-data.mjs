@@ -47,6 +47,8 @@ export const TEMPERATURE = {
   Rhapis: "Comfortable at 60–80°F (15–27°C) and tolerant of a cool room; keep it above 45°F (7°C).",
   Phoenix: "Comfortable at 60–80°F (15–27°C); keep it above 50°F (10°C).",
   Livistona: "Comfortable at 60–80°F (15–27°C); keep it above 50°F (10°C).",
+  Ravenea: "Comfortable at 65–85°F (18–29°C); keep it above 50°F (10°C).",
+  Cycas: "Comfortable at 60–85°F (15–29°C); keep it above 50°F (10°C).",
 
   // Trailers and climbers
   Hoya: "Comfortable at 65–85°F (18–29°C); keep it above 55°F (13°C).",

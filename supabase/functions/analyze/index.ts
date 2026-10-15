@@ -16,6 +16,8 @@ import Anthropic from "npm:@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "npm:@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "npm:zod";
 import { callCost } from "../_shared/ai-cost.ts";
+import { aiFailure } from "../_shared/ai-failure.ts";
+import { aiOutcome } from "../_shared/ai-outcome.ts";
 import { boundedText, claimAiCall, claimPhotoCall, refundAiCall, refundPhotoCall, today } from "../_shared/cap.ts";
 
 // Model and effort can be overridden by function secrets without a
@@ -301,25 +303,18 @@ Deno.serve(async (req: Request) => {
     if (!response.parsed_output) return json({ error: "No usable answer came back — try another photo." }, 502);
     return json({ verdict: response.parsed_output, remaining: claim.remaining, photos_left: photos.left, model: answeredBy, effort: EFFORT, usage: { input_tokens, output_tokens }, cost_usd });
   } catch (err) {
-    // Give the slot back only when the model cannot have run. An auth
-    // failure, a rate limit or a connection that never opened cost nothing,
-    // so the keeper keeps their allowance. Anything else -- a validation
-    // error on a response that did arrive, a timeout while reading it --
-    // was billed by Anthropic whether or not we could use it, and handing
-    // the allowance back there is how a failing loop gets to spend money
-    // forever without ever running out of allowance.
-    const neverRan =
-      err instanceof Anthropic.AuthenticationError ||
-      err instanceof Anthropic.RateLimitError ||
-      err instanceof Anthropic.APIConnectionError;
-    if (neverRan) {
+    // Give the slot back only when the model cannot have run -- a refusal
+    // before it started, or a connection that never got there. Anything
+    // else may have been billed, so it stays spent. See _shared/ai-failure.ts.
+    const failure = aiFailure(aiOutcome(err), "The photo check didn't go through.");
+    const error = err instanceof Error ? err.message : String(err);
+    if (failure.neverRan) {
       await refundAiCall(admin, user.id, day);
       await refundPhotoCall(admin, user.id);
-    } else {
-      console.error(JSON.stringify({ fn: "analyze", billed_but_unrecorded: true, error: err instanceof Error ? err.message : String(err) }));
+      console.error(JSON.stringify({ fn: "analyze", refused: true, error }));
+      return json({ error: `${failure.message} It didn't use one of your photo checks.` }, failure.status);
     }
-    if (err instanceof Anthropic.AuthenticationError) return json({ error: "The AI key for this project isn't valid." }, 503);
-    if (err instanceof Anthropic.RateLimitError) return json({ error: "The AI is busy — try again in a minute." }, 503);
-    return json({ error: err instanceof Error ? err.message : "Analysis failed." }, 502);
+    console.error(JSON.stringify({ fn: "analyze", billed_but_unrecorded: true, error }));
+    return json({ error: failure.message }, failure.status);
   }
 });

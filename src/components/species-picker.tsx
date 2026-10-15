@@ -5,6 +5,7 @@ import { Button, Chips, Heading } from "@/components/ui";
 import {
   SPECIES,
   SPECIES_GROUPS,
+  findSpecies,
   scientificName,
   searchSpecies,
   type SpeciesEntry,
@@ -16,15 +17,24 @@ const CULTIVARS = "__cultivars__";
 /**
  * Browse the catalogue instead of typing: a sheet with a search box, the
  * groups as chips, and the list. Tapping a plant hands the entry back.
+ *
+ * The catalogue will always be missing somebody's plant, so a search ends
+ * with a way to keep the name as typed. Without it a near-miss was a dead
+ * end: a keeper with a Monstera 'Burle Marx Flame' searched "burle marx",
+ * was shown only the variegated philodendron, and had no way out of the
+ * sheet but Close (15 Oct 2026).
  */
 export function SpeciesPicker({
   visible,
   onClose,
   onPick,
+  onUseTyped,
 }: {
   visible: boolean;
   onClose: () => void;
   onPick: (entry: SpeciesEntry) => void;
+  /** Keep the search text as the species, for a plant the list doesn't have. */
+  onUseTyped?: (name: string) => void;
 }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -39,6 +49,16 @@ export function SpeciesPicker({
 
   const pick = (entry: SpeciesEntry) => {
     onPick(entry);
+    setQuery("");
+    onClose();
+  };
+
+  // Offered once there is something to keep, and not when what was typed is
+  // already a name the list knows -- then the row above it is the answer.
+  const typed = query.trim().replace(/\s+/g, " ");
+  const offerTyped = onUseTyped !== undefined && typed.length >= 2 && findSpecies(typed) === null;
+  const useTyped = () => {
+    onUseTyped?.(typed);
     setQuery("");
     onClose();
   };
@@ -77,7 +97,25 @@ export function SpeciesPicker({
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: insets.bottom + space.xl }}
           ListEmptyComponent={
-            <Text style={[styles.empty, { color: t.muted }]}>Nothing by that name — type it in the field instead.</Text>
+            <Text style={[styles.empty, { color: t.muted }]}>
+              {offerTyped ? "Nothing by that name in the list." : "Nothing by that name — type it in the field instead."}
+            </Text>
+          }
+          ListFooterComponent={
+            offerTyped ? (
+              <Pressable
+                onPress={useTyped}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.row, { borderTopColor: t.border, opacity: pressed ? 0.6 : 1 }]}
+              >
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={[styles.name, { color: t.text }]}>Not here? Use “{typed}”</Text>
+                  <Text style={[styles.sci, { color: t.muted }]}>
+                    Saved as you typed it. Reminders start at water every 7 days; change them on the plant's Edit page.
+                  </Text>
+                </View>
+              </Pressable>
+            ) : null
           }
           renderItem={({ item }) => (
             <Pressable

@@ -52,6 +52,7 @@ const SPECIES_SYNONYMS = {
   "Anthurium scherzerianum": ["Anthurium scherzeranum"], // the ASPCA's spelling
   "Cordyline fruticosa": ["Cordyline terminalis"], // old name
   "Crassula ovata": ["Crassula argentea"], // old name
+  "Pilea cadierei": ["Pilea cadieri"], // the ASPCA's spelling
 };
 
 const unescape = (s) =>
@@ -89,9 +90,16 @@ const names = (row) => row.sci.split(/[,;]/).map(norm);
  */
 function lookup(rows, genus, species) {
   const g = SYNONYMS[genus] ?? genus;
-  const wants = [norm(`${g} ${species}`), ...(SPECIES_SYNONYMS[`${genus} ${species}`] ?? []).map(norm)];
-  const bySpecies = rows.filter((r) => names(r).some((n) => wants.some((w) => n === w || n.startsWith(`${w} `))));
-  if (bySpecies.length) return { level: "species", rows: bySpecies };
+  // A hybrid sold by cultivar name alone (Peperomia 'Ginny') has no species
+  // to look up. Searched as "Peperomia" it used to match every Peperomia
+  // entry and call that a species match -- so a hybrid was called non-toxic
+  // on the strength of whichever relative came first (15 Oct 2026). It can
+  // only borrow a whole-genus entry, like any other plant.
+  if (species) {
+    const wants = [norm(`${g} ${species}`), ...(SPECIES_SYNONYMS[`${genus} ${species}`] ?? []).map(norm)];
+    const bySpecies = rows.filter((r) => names(r).some((n) => wants.some((w) => n === w || n.startsWith(`${w} `))));
+    if (bySpecies.length) return { level: "species", rows: bySpecies };
+  }
   const byGenus = rows.filter((r) => names(r).some((n) => n.split(" ")[0] === g.toLowerCase()));
   if (!byGenus.length) return null;
   // "Calathea spp." speaks for every calathea; "Pilea cadieri" speaks only

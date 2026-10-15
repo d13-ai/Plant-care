@@ -86,6 +86,20 @@ describe("cultivars and variegations", () => {
     expect(searchSpecies("marble queen")[0].species).toBe("aureum");
     expect(searchSpecies("pink princess")[0].cultivar).toBe("Pink Princess");
   });
+  it("knows both Burle Marx plants, not only the variegated one", () => {
+    // A keeper with a Monstera 'Burle Marx Flame' searched "burle marx" and
+    // was offered only Philodendron 'Burle Marx Variegata' (15 Oct 2026).
+    const found = searchSpecies("burle marx", 40).map(scientificName);
+    expect(found).toEqual(
+      expect.arrayContaining([
+        "Monstera 'Burle Marx Flame'",
+        "Philodendron 'Burle Marx'",
+        "Philodendron 'Burle Marx Variegata'",
+      ]),
+    );
+    expect(scientificName(findSpecies("Burle Marx")!)).toBe("Philodendron 'Burle Marx'");
+    expect(findSpecies("Burle Marx Flame")?.genus).toBe("Monstera");
+  });
   it("writes the cultivar the way a label does, and reads it back", () => {
     const thai = findSpecies("Thai Constellation")!;
     expect(scientificName(thai)).toBe("Monstera deliciosa 'Thai Constellation'");

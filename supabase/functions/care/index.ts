@@ -18,6 +18,8 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { zodOutputFormat } from "npm:@anthropic-ai/sdk/helpers/zod";
 import { z } from "npm:zod";
+import { aiFailure } from "../_shared/ai-failure.ts";
+import { aiOutcome } from "../_shared/ai-outcome.ts";
 import { claimAiCall, refundAiCall, today } from "../_shared/cap.ts";
 import { careKey, carePlan, cultivarNote, plausiblePlantName } from "../_shared/care-names.ts";
 import { SPECIES_NAMES } from "../_shared/species-names.ts";
@@ -166,18 +168,17 @@ Deno.serve(async (req: Request) => {
     const note = plan.generate.via === "species" ? cultivarNote(species, written) : undefined;
     return json({ card: present(card, MODEL, note), species: written, cached: false, cost_usd });
   } catch (err) {
-    // The slot goes back only when the model cannot have run -- see the note
-    // in ../analyze/index.ts. A response that arrived and then failed to
-    // validate was billed, and refunding it lets a failing loop spend
-    // without limit.
-    const neverRan =
-      err instanceof Anthropic.AuthenticationError ||
-      err instanceof Anthropic.RateLimitError ||
-      err instanceof Anthropic.APIConnectionError;
-    if (neverRan) await refundAiCall(admin, user.id, day);
-    else console.error(JSON.stringify({ fn: "care", billed_but_unrecorded: true, error: err instanceof Error ? err.message : String(err) }));
-    if (err instanceof Anthropic.AuthenticationError) return json({ error: "The AI key for this project isn't valid." }, 503);
-    if (err instanceof Anthropic.RateLimitError) return json({ error: "The AI is busy — try again in a minute." }, 503);
-    return json({ error: err instanceof Error ? err.message : "Couldn't write a care guide." }, 502);
+    // The slot goes back only when the model cannot have run. A response
+    // that arrived and then failed to validate was billed, and refunding it
+    // lets a failing loop spend without limit. See _shared/ai-failure.ts.
+    const failure = aiFailure(aiOutcome(err), "The care guide didn't come through.");
+    const error = err instanceof Error ? err.message : String(err);
+    if (failure.neverRan) {
+      await refundAiCall(admin, user.id, day);
+      console.error(JSON.stringify({ fn: "care", refused: true, error }));
+    } else {
+      console.error(JSON.stringify({ fn: "care", billed_but_unrecorded: true, error }));
+    }
+    return json({ error: failure.message }, failure.status);
   }
 });
