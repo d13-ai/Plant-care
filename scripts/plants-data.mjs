@@ -1280,6 +1280,304 @@ export const GENUS = {
       ["Spider mites", "Dry indoor air.", "Raise humidity and treat weekly."],
     ],
   },
+  // ----------------------------------- Added in the October 2026 expansion
+  // Trees
+  Araucaria: {
+    light: "Bright light, with some direct sun",
+    lightLong:
+      "Bright light, and some direct sun if you have it. A Norfolk Island pine in a dim room drops its lower branches one tier at a time, and they never grow back.",
+    humidity: "Above 50%; dry winter heat browns the needles",
+    soil: "Free-draining compost with grit or perlite",
+    soilLong:
+      "Ordinary peat-free compost cut with a third grit or perlite. It wants steady moisture, but the roots rot in a mix that stays wet.",
+    feed: "A balanced feed at half strength monthly in spring and summer",
+    repotNote: "Every three or four years, in spring. It grows slowly in a pot and is happy a little tight.",
+    toxicity: "Non-toxic to cats and dogs.",
+    propagation:
+      "Not practical at home. Cuttings from the side branches root but grow sideways for ever; only the leading shoot makes a tree.",
+    waterHow:
+      "Water when the top few centimetres are dry, thoroughly, and empty the saucer. Less in winter, but never let the pot dry right out.",
+    problems: [
+      ["Lower branches turning brown and dropping", "Not enough light, or the compost dried out.", "Move it into the brightest spot you have and keep the watering steady. Lost branches don't regrow, so it is worth catching early."],
+      ["Needles browning at the tips", "Dry air, usually from heating.", "Raise the humidity and keep it away from radiators."],
+      ["Leaning toward the window", "It grows toward the light.", "Turn the pot a quarter turn every week."],
+    ],
+  },
+  Olea: {
+    light: "Full sun — the brightest window in the house",
+    lightLong:
+      "Full sun, as much as you can give it. An olive is a Mediterranean tree: indoors it needs a south-facing window or a summer outside, and in a dim room it drops its leaves.",
+    humidity: "Indifferent; dry air suits it",
+    soil: "Gritty, free-draining, loam-based compost",
+    soilLong:
+      "A loam-based compost with plenty of grit, in a pot that drains well. Olives put up with poor soil and drought, never with wet roots.",
+    feed: "A balanced feed monthly from spring to late summer",
+    repotNote: "Every two or three years in spring, into a heavy pot — an olive in a light pot topples once it has a canopy.",
+    toxicity: UNLISTED,
+    propagation: "Semi-ripe cuttings taken in summer root slowly under a bag. Most people buy another.",
+    waterHow:
+      "Water thoroughly when the top half of the pot is dry. Olives would much rather be dry than wet, and need far less in winter.",
+    problems: [
+      ["Leaves dropping in winter", "Too little light, especially in a warm room.", "Give it the brightest window — and a cooler spot in winter if you can, which is when it rests."],
+      ["Leaves yellowing in a wet pot", "Overwatering.", "Let it dry out well between waterings and check the pot drains."],
+      ["Never flowers or fruits indoors", "It needs a cold winter rest to set flowers.", "A few weeks below about 10 °C in winter — an unheated porch, say — is what most indoor olives are missing."],
+    ],
+  },
+  Persea: {
+    light: "Bright light with several hours of direct sun",
+    lightLong:
+      "Bright light and as much direct sun as you can give it. An avocado grown from a stone stretches into a tall, bare single stem in anything less.",
+    humidity: "Above 50%; the leaf tips brown in dry air",
+    soil: "Free-draining, loam-based compost",
+    soilLong:
+      "A loam-based compost with grit or perlite. Avocados want moisture but are very prone to root rot in a wet, airless mix.",
+    feed: "A balanced feed monthly in spring and summer",
+    repotNote: "Every spring while it is young, one size up.",
+    toxicity:
+      "Toxic to cats and dogs, and more seriously to pet birds: the leaves, stone and skin contain persin, which causes vomiting and diarrhoea. Keep birds well away from it.",
+    propagation:
+      "From the stone: suspend it pointed end up in water on three cocktail sticks, or plant it half-buried in compost. Roots and a shoot follow in four to eight weeks.",
+    waterHow: "Water thoroughly when the top few centimetres are dry, and empty the saucer.",
+    problems: [
+      ["Brown, crispy leaf tips", "Salts from tap water and fertiliser, or dry air.", "Flush the pot through with rainwater every few months and raise the humidity."],
+      ["One tall stem with few leaves", "Too little light, and no pruning.", "Pinch out the top when it reaches about 30 cm, and again later; it branches from below the cut."],
+      ["Leaves drooping in a wet pot", "Root rot.", "Let it dry out further and make sure the pot drains; avocados drown easily."],
+    ],
+  },
+  // Palms
+  Caryota: {
+    inherit: "Chamaedorea",
+    toxicity: `${UNLISTED} Its fruit, rarely seen indoors, carries oxalate crystals that burn the mouth.`,
+    light: "Bright indirect light",
+    lightLong: "Bright indirect light. Fishtail palms want more light than a parlour palm and thin out in a dim room.",
+    waterHow: "Keep the compost evenly damp; the ragged leaflets brown quickly if it dries out.",
+    propagation: "It forms a clump: in spring, divide off a sucker with its own roots and pot it up.",
+  },
+  // Vines and trailers
+  Callisia: {
+    inherit: "Tradescantia",
+    lightLong: "Bright indirect light. Turtle vine forms a dense mat of tiny leaves that thins and stretches in a dim spot.",
+    propagation: "Any piece of stem roots where it touches damp compost; pinch some off and press them in.",
+  },
+  Plectranthus: {
+    light: "Bright indirect light",
+    lightLong: "Bright indirect light, with a little morning sun. Swedish ivy stretches and drops its lower leaves in a dim spot.",
+    humidity: "Room humidity is fine",
+    soil: "Standard compost with perlite",
+    soilLong: "Ordinary potting compost with some perlite. It is a fast, forgiving plant.",
+    feed: "A balanced feed at half strength monthly in spring and summer",
+    repotNote: "Every spring, or restart it from cuttings once it gets leggy.",
+    toxicity: "Non-toxic to cats and dogs.",
+    propagation: "Stem cuttings root in water within a week or two.",
+    waterHow: "Keep the compost lightly damp, letting the top centimetre or two dry between waterings.",
+    problems: [
+      ["Long bare stems", "Not enough light, and no pinching.", "Pinch the tips regularly to make it branch, and move it brighter."],
+      ["Wilting and dropping leaves", "It dried out — or it sits wet.", "Check the compost: water if it is dry, let it drain if it is soggy."],
+      ["White cottony blobs in the leaf joints", "Mealybugs.", "Dab them with alcohol on a cotton bud every few days for a month."],
+    ],
+  },
+  Coleus: {
+    inherit: "Plectranthus",
+    light: "Bright light; some direct sun for the strongest colour",
+    lightLong: "Bright light with an hour or two of sun. The colours fade to a muddy green in shade, and scorch in hot midday sun.",
+    toxicity: "Toxic to cats and dogs — the essential oils cause vomiting and diarrhoea, and can irritate skin.",
+    waterHow: "Keep evenly damp. Coleus wilts dramatically when dry and recovers, but each wilt costs it lower leaves.",
+    repotNote: "Best treated as short-lived: take cuttings in late summer and start again. Pinch out the flower spikes, which end its season.",
+  },
+  Dischidia: {
+    inherit: "Hoya",
+    toxicity: UNLISTED,
+    light: "Bright indirect light",
+    lightLong: "Bright indirect light. Like hoyas, dischidias grow on tree bark in the wild, and direct sun scorches the small leaves.",
+    humidity: "Above 50%",
+    waterHow: "Water when the mix is almost dry, thoroughly, and let it drain. The leaves are succulent, and it rots far faster than it dries out.",
+    propagation: "Stem cuttings root readily in damp sphagnum moss.",
+    problems: [
+      ["Shrivelled leaves", "Under-watering — or roots that have rotted and can't drink.", "Check the roots: water if they are firm, cut away the soft ones if not."],
+      ["Leaves yellowing and dropping", "Overwatering, or cold.", "Let the mix dry further between waterings and keep it above 15 °C."],
+    ],
+  },
+  // Ferns
+  Microsorum: {
+    inherit: "Nephrolepis",
+    toxicity: UNLISTED,
+    light: "Medium to bright indirect light",
+    waterHow: "Keep the compost damp but not wet, and water around the crown rather than into it.",
+    propagation: "Divide the rhizome in spring.",
+    problems: [
+      ["Fronds browning at the tips and edges", "Dry air, or the compost dried out.", "Raise the humidity and keep the compost evenly damp."],
+      ["Yellowing fronds in a wet pot", "It is sitting in water rather than damp compost.", "Damp, not waterlogged — make sure the pot drains."],
+      ["Brown dots in rows under the fronds", "Spores. Completely normal.", "Nothing to do; it means the fern is mature."],
+    ],
+  },
+  Pteris: { inherit: "Nephrolepis", toxicity: "Non-toxic to cats and dogs.", light: "Medium to bright indirect light" },
+  Cyrtomium: {
+    inherit: "Nephrolepis",
+    toxicity: "Non-toxic to cats and dogs.",
+    light: "Medium to low indirect light",
+    humidity: "Room humidity is tolerated; it is one of the toughest ferns",
+  },
+  Pellaea: {
+    inherit: "Nephrolepis",
+    toxicity: "Non-toxic to cats and dogs.",
+    light: "Medium to bright indirect light",
+    humidity: "Moderate; it copes with drier air than most ferns",
+    waterHow: "Let the top of the compost dry slightly between waterings. Unusually for a fern, button fern rots if it is kept constantly wet.",
+    problems: [
+      ["Fronds yellowing and the crown going soft", "Kept too wet.", "Let the top of the compost dry between waterings, in a shallow pot that drains well."],
+      ["Crisp, brown fronds", "It dried right out, or sits in hot sun.", "Water before it dries completely, and keep it out of direct sun."],
+      ["Brown dots in rows under the leaflets", "Spores. Completely normal.", "Nothing to do."],
+    ],
+  },
+  // Gesneriads
+  Aeschynanthus: {
+    inherit: "Saintpaulia",
+    light: "Bright indirect light; a little morning sun helps it flower",
+    soil: "A light, airy mix — compost with orchid bark and perlite",
+    soilLong: "Compost lightened with orchid bark and perlite. In the wild it grows on trees, and its roots want air.",
+    toxicity: "Non-toxic to cats and dogs.",
+    propagation: "Stem cuttings of about 10 cm root easily in water or damp compost.",
+    waterHow: "Let the top few centimetres dry, then water thoroughly. It is an epiphyte and hates soggy roots.",
+    repotNote: "Every two or three years; it flowers best a little potbound.",
+    problems: [
+      ["No flowers", "Too little light, or a pot that is too big.", "Move it brighter and keep it snug in its pot; it flowers on new growth in spring and summer."],
+      ["Leaves dropping", "Cold, a draught, or a sudden dry spell.", "Keep it above 15 °C, away from cold glass, and water more steadily."],
+      ["Long bare stems", "Normal with age.", "Cut the stems back by a third after flowering; it branches from below the cut."],
+    ],
+  },
+  Nematanthus: { inherit: "Aeschynanthus", toxicity: UNLISTED },
+  Sinningia: {
+    inherit: "Saintpaulia",
+    repotNote:
+      "After flowering it dies back to its tuber. Water less as the leaves wither, keep the tuber dry and cool for two or three months, then repot in fresh compost and start watering again.",
+    waterHow: "Water from below or around the edge with tepid water, keeping it off the velvety leaves, and let the top dry slightly between waterings.",
+    propagation: "Leaf cuttings root in damp compost; or divide a large tuber while it is dormant.",
+  },
+  // Succulents and cacti
+  Graptopetalum: {
+    inherit: "Echeveria",
+    toxicity: "Non-toxic to cats and dogs.",
+    light: "Bright light with direct sun",
+    propagation: "The leaves drop at a touch and root where they land; pot them up.",
+  },
+  Aeonium: {
+    inherit: "Echeveria",
+    toxicity: UNLISTED,
+    light: "Bright light, with sun through the cooler months",
+    lightLong:
+      "Bright light, with direct sun from autumn to spring. Aeoniums grow in winter and rest in the summer heat, when the rosettes close up and drop leaves — that is normal, not dying.",
+    waterHow:
+      "Water when the top half of the pot is dry while it is growing, from autumn to spring. During its summer rest, water lightly and only now and then.",
+    propagation: "Cut a rosette with a few centimetres of stem, let it callus for a few days, and root it in gritty compost.",
+  },
+  Portulacaria: {
+    inherit: "Echeveria",
+    toxicity: UNLISTED,
+    light: "Bright light with several hours of sun",
+    waterHow: "Water thoroughly when the pot has dried out. It takes more water in summer than most succulents, and very little in winter.",
+    propagation: "Stem cuttings root easily once the cut end has callused.",
+  },
+  Haworthia: { inherit: "Haworthiopsis", toxicity: "Non-toxic to cats and dogs." },
+  Gymnocalycium: {
+    inherit: "Opuntia",
+    toxicity: `${UNLISTED} The spines are a hazard in their own right.`,
+    light: "Bright light, shaded from hot midday sun",
+    lightLong:
+      "Bright light, filtered at midday. The coloured top of a moon cactus has no chlorophyll and burns easily; it lives off the green cactus it is grafted onto.",
+    propagation:
+      "The coloured offsets can be grafted onto a new rootstock, but it is a nursery job. Grafted moon cacti live a few years; the green stock often outlives the top.",
+  },
+  Echinocactus: {
+    inherit: "Opuntia",
+    toxicity: `${UNLISTED} The spines are a hazard in their own right.`,
+    repotNote: "Every three or four years. Handle it with a folded band of newspaper or thick gloves — the spines are stiff and very sharp.",
+  },
+  // Flowering
+  Zantedeschia: {
+    light: "Bright indirect light, with some direct morning sun",
+    lightLong: "Bright light, with some direct sun in the morning. In too little light the stems flop and it stops flowering.",
+    humidity: "Room humidity is fine",
+    soil: "Rich, moisture-retentive compost",
+    soilLong:
+      "A rich, peat-free compost that holds moisture. The white arum lily grows in marshes in the wild; the coloured hybrids want slightly better drainage.",
+    feed: "A balanced liquid feed every two weeks while it is in leaf and flower",
+    repotNote:
+      "After it dies back. Calla lilies grow from rhizomes that rest for two or three months a year: let the leaves yellow, keep the pot dry and cool, then repot in fresh compost and start watering again.",
+    toxicity: OXALATE,
+    propagation: "Divide the rhizomes while dormant; each piece with a growing point makes a new plant.",
+    waterHow:
+      "Keep the compost damp while it is in leaf — it is thirsty. When the leaves start to yellow after flowering, cut the watering right back and let it rest.",
+    problems: [
+      ["Leaves yellowing after flowering", "The start of its yearly rest.", "Water less, let the leaves die back, and keep the rhizome dry for a couple of months."],
+      ["No flowers", "Too little light, or no rest.", "Give it a bright spot and a proper dry rest each year."],
+      ["Soft, rotting stems at the base", "Wet while dormant, or cold and wet together.", "Keep it dry while it rests, and make sure the pot drains."],
+    ],
+  },
+  Oncidium: {
+    inherit: "Phalaenopsis",
+    light: "Bright indirect light, with a little morning sun",
+    waterHow: "Water thoroughly when the bark is nearly dry, and more often while new growths are developing; the pseudobulbs should stay plump.",
+  },
+  Paphiopedilum: {
+    inherit: "Phalaenopsis",
+    toxicity: UNLISTED,
+    light: "Medium indirect light — less than most orchids want",
+    soil: "A fine orchid bark mix that holds a little more moisture",
+    waterHow: "Keep the mix lightly moist. Slipper orchids have no pseudobulbs to store water, so they shouldn't dry out completely.",
+    problems: [
+      ["No new flowers", "Too little light, or no new growth to flower from — each growth flowers once.", "Give it bright indirect light; a plant that is growing well will flower."],
+      ["Rot in the centre of a growth", "Water left sitting in the crown.", "Water the mix, not the leaves, and tip out any water that collects in the fan."],
+      ["Brown leaf tips", "Salts from fertiliser or hard water.", "Flush the pot through with rainwater monthly, and feed weakly."],
+    ],
+  },
+  // Bromeliads
+  Vriesea: { inherit: "Guzmania", toxicity: UNLISTED },
+  Neoregelia: { inherit: "Guzmania", light: "Bright light; some direct sun brings out the red centre" },
+  Cryptanthus: {
+    inherit: "Guzmania",
+    light: "Bright indirect light; strong light deepens the colours",
+    soil: "A light, free-draining compost",
+    soilLong: "A light compost with bark and perlite. Unlike most bromeliads it grows on the ground rather than on trees, and roots into the mix.",
+    waterHow: "Water the compost when the top few centimetres are dry. It has no central cup to fill.",
+    problems: [
+      ["Brown, crisp leaf edges", "Dry air.", "Raise the humidity; it does well in a terrarium."],
+      ["Rot at the base", "The compost was kept too wet.", "Let the top dry between waterings and make sure the pot drains."],
+      ["The parent rosette fading after flowering", "Normal: bromeliads flower once, then finish.", "Pot up the pups that form around it once they are a third of its size."],
+    ],
+  },
+  Ananas: {
+    inherit: "Guzmania",
+    toxicity: UNLISTED,
+    light: "Full sun — the brightest window you have",
+    humidity: "Room humidity is fine",
+    soil: "Gritty, free-draining compost",
+    propagation:
+      "Twist the leafy top off a shop pineapple, strip the lowest leaves, let it dry for a few days, then root it in water or gritty compost.",
+    waterHow: "Water the compost when the top few centimetres are dry. It stores water in its leaves and tolerates drying out.",
+    problems: [
+      ["Leaves browning from the tips", "Too little light, or dry, stuffy air.", "Move it into full sun; it is a field crop, not a forest plant."],
+      ["Rot at the base", "The compost stayed wet.", "Let it dry between waterings and use a gritty mix."],
+      ["No fruit", "It takes two or three years, and plenty of light.", "Patience, and the sunniest spot you have. Each plant fruits once and then makes pups."],
+    ],
+  },
+  // Herbs
+  Thymus: { inherit: "Rosmarinus", toxicity: "Non-toxic to cats and dogs; edible.", light: "Full sun, as much as you have" },
+  Petroselinum: {
+    inherit: "Ocimum",
+    light: "Bright light; a few hours of sun",
+    toxicity:
+      "Toxic to cats and dogs in quantity: the ASPCA lists parsley for furanocoumarins, which can make skin sensitive to sunlight. Edible for people.",
+    waterHow: "Keep the compost damp. Parsley has a long taproot and sulks if it dries out.",
+  },
+  Allium: {
+    inherit: "Ocimum",
+    light: "Full sun",
+    toxicity:
+      "Toxic to cats and dogs. Like onions and garlic, chives damage red blood cells, and cats are especially sensitive — keep them well out of reach. Edible for people.",
+    waterHow: "Keep the compost evenly damp.",
+    propagation: "Divide the clump in spring, or sow seed.",
+    repotNote: "Divide and repot every spring, and cut a tired pot back to a few centimetres to make it regrow.",
+  },
 };
 
 /**
@@ -1292,7 +1590,8 @@ export const GENUS = {
  * origin, how hard it is) or an override of a genus field.
  *
  * `problems` and `faq` here are appended to the genus's; every other key
- * replaces it.
+ * replaces it. `ownProblems: true` makes the plant's `problems` replace the
+ * genus's instead, for a plant its genus's problems don't describe.
  */
 export const PLANTS = {
   // ---------------------------------------------------------------- Aroids
@@ -2771,6 +3070,743 @@ export const PLANTS = {
       ["Can lucky bamboo live in water forever?", "Yes, and most do. It will stay smaller and needs a drop of weak feed every couple of months, since pebbles hold nothing for it to eat. Moving it to compost makes it grow faster and larger, and it will not go back happily once it has rooted in soil."],
       ["Why are the leaves turning yellow?", "Usually the water. Fluoride, chlorine and salts build up in a vase that is topped up rather than emptied, and this plant is more sensitive to them than most. Empty and refill rather than topping up, and use filtered or stood water. Yellow that starts at the stem base instead is rot, and that part will not recover — cut above it and re-root the green section."],
       ["Is lucky bamboo poisonous to cats?", "Yes. Like other dracaenas it contains saponins, which cause vomiting, drooling and dilated pupils in cats. It is not usually dangerous beyond that, but a cat that chews it will be unwell. True bamboo, which this is often mistaken for, is not toxic."],
+    ],
+  },
+
+  // ------------------------------------- October 2026 expansion: aroids
+  "monstera-dubia": {
+    blurb:
+      "A shingling monstera: young plants press small, silvery-green, heart-shaped leaves flat against a board or tree trunk as they climb, overlapping like roof tiles. Given something tall enough, it eventually changes completely — the leaves stand away from the support, grow large and split like a deliciosa's. Most people keep it at the shingling stage on a plank of bark.",
+    size: "Climbs a board to 1–2 m; shingling leaves 5–10 cm",
+    origin: "Central and South America",
+    difficulty: "Needs attention",
+    humidity: "Above 60%; the shingles brown at the edges in dry air",
+    repotNote:
+      "Every second spring. Give it a flat board or a slab of bark rather than a round pole — the leaves need a flat surface to shingle against.",
+  },
+  "monstera-epipremnoides": {
+    blurb:
+      "Sold as Monstera 'Esqueleto', the skeleton monstera, for leaves that are more hole than leaf on a mature plant: large, pale-green blades riddled with long oval perforations. It is a fast, big climber, and the holes come only with size, so a small plant on a short pole looks far plainer than the photographs.",
+    size: "Climbs to 2–3 m; mature leaves 50 cm and more",
+    origin: "Costa Rica",
+    difficulty: "Needs attention",
+    humidity: "Above 60%",
+  },
+  "philodendron-verrucosum": {
+    blurb:
+      "A climber with velvet, heart-shaped leaves veined in lime and bronze, and stems covered in red bristles. It comes from cloud forest and is one of the more humidity-hungry philodendrons: new leaves open crumpled or scarred in dry air.",
+    size: "Leaves 25–50 cm on a climbing plant",
+    origin: "Central America to Ecuador and Peru",
+    difficulty: "Fussy",
+    humidity: "Above 70%",
+  },
+  "philodendron-squamiferum": {
+    blurb:
+      "A climbing philodendron with five-lobed leaves on stalks covered in soft red bristles — the hairy stems are what it is grown for. It is vigorous on a pole and easier than its collector's looks suggest.",
+    size: "2 m on a pole; leaves 25–40 cm",
+    origin: "The Guianas and northern Brazil",
+    difficulty: "Straightforward",
+  },
+  "philodendron-pedatum": {
+    blurb:
+      "The oak-leaf philodendron: a climber whose leaves are cut into lobes like an oak's, more deeply as the plant matures. Fast and easy, and much better on a pole than trailing.",
+    size: "2 m or more on a pole; leaves 20–40 cm",
+    origin: "Northern South America",
+    difficulty: "Easy",
+  },
+  "philodendron-hastatum": {
+    blurb:
+      "Silver sword: long, arrow-shaped leaves with a metallic silver-blue sheen that turns greener as the plant matures. A climber that wants a pole, and one of the easier silver aroids — the sheen holds best in bright, indirect light.",
+    size: "2 m or more on a pole; leaves 25–40 cm",
+    origin: "Southeastern Brazil",
+    difficulty: "Easy",
+  },
+  "philodendron-brandtianum": {
+    blurb:
+      "A small trailing or climbing philodendron with olive-green, heart-shaped leaves heavily marked with silver between the veins. Slower than a heartleaf and just as easy; it looks best trailing from a shelf or climbing a small pole.",
+    size: "Vines to 1–2 m; leaves 8–15 cm",
+    origin: "Bolivia and Brazil",
+    difficulty: "Easy",
+  },
+  "philodendron-bipennifolium": {
+    blurb:
+      "Horsehead philodendron: a climber whose leaves are pinched in at the middle into a shape like a violin, or a horse's head. Vigorous and tolerant, it grows into a big plant on a pole.",
+    size: "2 m or more on a pole; leaves 30–45 cm",
+    origin: "South America",
+    difficulty: "Easy",
+  },
+  "philodendron-mamei": {
+    blurb:
+      "A crawler, like gloriosum: large heart-shaped leaves splashed with silver, rising one at a time from a rhizome that runs along the surface of the compost. It wants a long, wide, shallow pot, with the rhizome sitting on top rather than buried.",
+    size: "Leaves 30–50 cm on a slowly creeping rhizome",
+    origin: "Ecuador",
+    difficulty: "Needs attention",
+    repotNote:
+      "Into a long, shallow, wide pot — the rhizome creeps forward. Lay it on the surface and cover only the roots beneath it, never the rhizome itself.",
+  },
+  "philodendron-tortum": {
+    blurb:
+      "A climber whose leaves are cut into a few long, narrow, almost thread-like segments, so the plant reads more like a fern or a palm than a philodendron. Fast on a pole, and undemanding for a collector's plant.",
+    size: "1.5–2 m on a pole",
+    origin: "Brazil",
+    difficulty: "Straightforward",
+  },
+  "rhaphidophora-hayi": {
+    blurb:
+      "The shingle plant: small, round, dark-green leaves pressed flat against a board or bark as it climbs, overlapping like scales. It is grown entirely for that habit and usually sold mounted on a plank; without a flat surface to climb it trails and loses the look.",
+    size: "Climbs a board to 1 m or more; leaves 3–6 cm",
+    origin: "New Guinea and the Solomon Islands",
+    difficulty: "Needs attention",
+    humidity: "Above 60%",
+    repotNote:
+      "Rarely — it usually lives on its mount. Keep the board or bark it climbs damp, and give it a taller one when it reaches the top.",
+  },
+  "anthurium-veitchii": {
+    blurb:
+      "The king anthurium: long, hanging leaves with deep, corrugated ribs running across them, which can pass a metre on a mature plant. Like the queen anthurium it comes from wet Colombian forest and wants high, steady humidity.",
+    size: "Leaves 60 cm to over 1 m on a mature plant",
+    origin: "Colombia",
+    difficulty: "Fussy",
+    humidity: "Above 70%, steadily",
+  },
+  "anthurium-magnificum": {
+    blurb:
+      "A velvet anthurium with large, dark, heart-shaped leaves and silver-white veins, on square-edged, winged stalks that tell it apart from the similar crystallinum. It grows big and slowly, and scars if the air is dry while a leaf is opening.",
+    size: "Leaves 40–60 cm; plant to 1 m",
+    origin: "Colombia",
+    difficulty: "Fussy",
+    humidity: "Above 70%",
+  },
+  "alocasia-wentii": {
+    blurb:
+      "A sturdy alocasia with glossy, arrow-shaped leaves, green on top and purple-bronze underneath. One of the toughest in the genus: tolerant of cooler rooms and ordinary humidity, and less inclined to sudden dormancy.",
+    size: "60–100 cm tall",
+    origin: "New Guinea",
+    difficulty: "Straightforward",
+  },
+  "alocasia-sanderiana": {
+    blurb:
+      "The kris plant: long, narrow arrowhead leaves with deeply scalloped edges and bold white veins on near-black green, named for the wavy blade of a kris dagger. A parent of the Polly hybrid, and just as prone to dormancy and spider mites.",
+    size: "40–60 cm tall",
+    origin: "The Philippines",
+    difficulty: "Fussy",
+  },
+  "alocasia-odora": {
+    blurb:
+      "The upright elephant ear: big, wavy, light-green leaves held upward on thick stalks from a trunk-like base. Faster and thirstier than the jewel alocasias — and its flowers smell sweet at night, which is where the name comes from.",
+    size: "1–1.5 m indoors",
+    origin: "East and Southeast Asia",
+    difficulty: "Straightforward",
+  },
+  "syngonium-wendlandii": {
+    blurb:
+      "A small arrowhead vine with dark-green, velvety leaves split into three lobes and marked with a silver-white central vein. Slower and more compact than the common arrowhead plant, and happiest climbing a small pole.",
+    size: "Vines to 1 m; leaves 8–15 cm",
+    origin: "Costa Rica",
+    difficulty: "Straightforward",
+  },
+  "philodendron-congo-rojo": {
+    blurb:
+      "A self-heading hybrid — it grows as a rosette rather than climbing — with big, glossy leaves that open deep burgundy and slowly turn dark green, on red stalks. Compact, fast and very tolerant.",
+    size: "60–90 cm tall and wide",
+    origin: "A cultivated hybrid",
+    difficulty: "Easy",
+  },
+  "philodendron-imperial-red": {
+    blurb:
+      "A self-heading hybrid with large, glossy, oval leaves in deep burgundy that hold their colour as they age. Compact and tough — one of the most forgiving of the self-heading philodendrons.",
+    size: "60–90 cm tall and wide",
+    origin: "A cultivated hybrid",
+    difficulty: "Easy",
+  },
+  "philodendron-imperial-green": {
+    blurb:
+      "The green counterpart of Imperial Red: a self-heading hybrid with big, glossy, bright-green oval leaves in a dense rosette. Compact, slow to outgrow its spot, and very tolerant of a less-than-ideal room.",
+    size: "60–90 cm tall and wide",
+    origin: "A cultivated hybrid",
+    difficulty: "Easy",
+  },
+  "philodendron-painted-lady": {
+    blurb:
+      "A climbing hybrid whose leaves come out bright yellow-green, speckled and marbled with darker green, on pink-red stalks. The colour holds best in bright, indirect light.",
+    size: "1.5–2 m on a pole; leaves 20–30 cm",
+    origin: "A cultivated hybrid",
+    difficulty: "Straightforward",
+  },
+  "philodendron-splendid": {
+    blurb:
+      "A cross of verrucosum and melanochrysum, with large, dark, velvety leaves etched with pale veins. It inherits both parents' taste for humidity, though it is generally reckoned a little more forgiving than either.",
+    size: "Leaves 30–60 cm on a climbing plant",
+    origin: "A cultivated hybrid of verrucosum and melanochrysum",
+    difficulty: "Fussy",
+    humidity: "Above 65%",
+  },
+  "alocasia-portodora": {
+    blurb:
+      "A big, upright hybrid elephant ear with wavy-edged leaves held high on tall, dark-flecked stalks. A cross of odora and portei, it is vigorous and thirsty and needs room — one of the easier large alocasias.",
+    size: "1.5–2 m indoors",
+    origin: "A cultivated hybrid of odora and portei",
+    difficulty: "Straightforward",
+  },
+  "aglaonema-lady-valentine": {
+    blurb:
+      "A Chinese evergreen hybrid with leaves flushed almost entirely pink, with only a green rim and flecks. Like the other pink hybrids it needs brighter light than the green ones to keep its colour, but it stays easy.",
+    size: "30–50 cm tall",
+    origin: "A cultivated hybrid",
+    difficulty: "Easy",
+  },
+
+  // --------------------------------------- October 2026 expansion: trees
+  "ficus-altissima": {
+    blurb:
+      "The council tree: big, leathery, oval leaves, often sold variegated in yellow and lime as 'Yellow Gem'. A banyan-type fig like the Audrey, and an easier, faster alternative to a fiddle-leaf for a bright corner.",
+    size: "1.5–2.5 m indoors",
+    origin: "Southeast Asia",
+    difficulty: "Easy",
+  },
+  "ficus-umbellata": {
+    blurb:
+      "A fig with huge, thin, heart-shaped leaves in bright green, lighter and softer-looking than a fiddle-leaf's. A fast grower that wants bright light and steady watering, and drops leaves when either changes.",
+    size: "1.5–2.5 m indoors; leaves 25–30 cm",
+    origin: "West and Central Africa",
+    difficulty: "Needs attention",
+  },
+  "ficus-binnendijkii-alii": {
+    blurb:
+      "Ficus 'Alii': a fig with long, narrow, willow-like leaves that droop gracefully from the branches. It is far less prone to dropping its leaves when moved than a weeping fig, which makes it one of the better figs for a room.",
+    size: "1.5–2.5 m indoors",
+    origin: "A cultivated form; the species comes from Southeast Asia",
+    difficulty: "Easy",
+  },
+  "polyscias-scutellaria": {
+    blurb:
+      "The shield aralia, often sold as 'Fabian': round, glossy, dark-green leaves, purple underneath, on thick upright stems. A much easier aralia than the Ming, though it still drops leaves when it is moved or chilled.",
+    size: "60 cm–1.5 m indoors",
+    origin: "The western Pacific",
+    difficulty: "Straightforward",
+  },
+  "araucaria-heterophylla": {
+    blurb:
+      "The Norfolk Island pine: not a true pine but a conifer from a small Pacific island, with soft, tiered branches of short needles. Sold everywhere as a living Christmas tree, it will grow for decades indoors in a bright, cool room — but it loses lower branches in the dark, and they never grow back.",
+    size: "1–2 m indoors over many years",
+    origin: "Norfolk Island, in the South Pacific",
+    difficulty: "Needs attention",
+  },
+  "olea-europaea": {
+    blurb:
+      "The olive tree: narrow grey-green leaves on twisting branches, now sold everywhere as an indoor tree. It is a sun plant that needs the brightest window you have and dry roots — and indoors it rarely fruits without a cold winter rest.",
+    size: "1–2 m in a pot",
+    origin: "The Mediterranean",
+    difficulty: "Needs attention",
+  },
+
+  // --------------------------------------- October 2026 expansion: palms
+  "chamaedorea-seifrizii": {
+    toxicity: RELATIVES,
+    blurb:
+      "The bamboo palm: clusters of slim, bamboo-like canes carrying feathery fronds, filling out into a dense clump. A close relative of the parlour palm and, like it, unusually tolerant of shade.",
+    size: "1–2 m indoors",
+    origin: "Mexico and Central America",
+    difficulty: "Easy",
+  },
+  "chamaedorea-cataractarum": {
+    toxicity: RELATIVES,
+    blurb:
+      "The cat palm: a stemless, clumping palm with arching, deep-green fronds rising straight from the base. It grows beside streams in the wild and is thirstier than most palms.",
+    size: "1–1.5 m tall and wide",
+    origin: "Southern Mexico and Central America",
+    difficulty: "Straightforward",
+    waterHow: "Keep the compost evenly damp — this is a streamside palm — but never standing in water.",
+  },
+  "caryota-mitis": {
+    blurb:
+      "The fishtail palm: fronds divided into ragged, triangular leaflets shaped like a fish's tail fin, on a clump of several stems. Each stem flowers once and then dies, but the clump carries on.",
+    size: "1.5–2.5 m indoors",
+    origin: "Southeast Asia",
+    difficulty: "Needs attention",
+  },
+
+  // ------------------------------ October 2026 expansion: vines & trailers
+  "hoya-krohniana": {
+    toxicity: RELATIVES,
+    blurb:
+      "A small-leaved hoya with heart-shaped leaves, often heavily splashed with silver — the forms sold as 'Eskimo' and 'Super Eskimo' are almost entirely silver. Compact and fairly quick, and it flowers readily with small, fragrant pink-and-white clusters.",
+    size: "Vines to 1–1.5 m; leaves 3–5 cm",
+    origin: "The Philippines",
+    difficulty: "Easy",
+  },
+  "hoya-curtisii": {
+    toxicity: RELATIVES,
+    blurb:
+      "A miniature hoya with tiny, spade-shaped, silver-speckled leaves on thin trailing stems, forming a dense mat. It wants a little more humidity than the leathery hoyas and does well in a small hanging pot or a terrarium.",
+    size: "Strands to 60 cm; leaves 1–2 cm",
+    origin: "Southeast Asia",
+    difficulty: "Straightforward",
+  },
+  "hoya-bella": {
+    toxicity: RELATIVES,
+    blurb:
+      "The miniature wax plant: small, soft, pointed leaves on drooping stems, and clusters of white star-shaped flowers with purple centres. Less drought-tolerant than the thick-leaved hoyas; it prefers its mix lightly damp.",
+    size: "Trailing stems to 60 cm",
+    origin: "Southeast Asia",
+    difficulty: "Needs attention",
+    waterHow: "Water when the top of the mix has just dried. Its thin leaves store less water than other hoyas', and it doesn't like drying out completely.",
+  },
+  "hoya-polyneura": {
+    toxicity: RELATIVES,
+    blurb:
+      "The fishtail hoya: thin, flat leaves with a fine fishbone pattern of dark veins, on trailing stems. It likes more humidity and more regular water than the waxy hoyas, and less direct sun.",
+    size: "Trailing stems to 1 m",
+    origin: "The Himalayas and southern China",
+    difficulty: "Needs attention",
+  },
+  "hoya-macrophylla": {
+    toxicity: RELATIVES,
+    blurb:
+      "One of the big-leaved hoyas: long, oval, thick leaves, often variegated with cream or yellow edges or centres. It climbs vigorously and flowers with clusters of pale, fuzzy, vanilla-scented stars.",
+    size: "Vines to 2–3 m; leaves 10–20 cm",
+    origin: "Southeast Asia",
+    difficulty: "Easy",
+  },
+  "dischidia-ruscifolia": {
+    blurb:
+      "Million hearts: thin, trailing stems lined with pairs of tiny, fleshy, heart-shaped leaves. An epiphyte related to the hoyas, it wants the same treatment — an airy mix, bright indirect light, and drying out between waterings.",
+    size: "Trailing stems to 1 m",
+    origin: "The Philippines",
+    difficulty: "Straightforward",
+  },
+  "tradescantia-fluminensis": {
+    blurb:
+      "Small-leaf spiderwort: glossy, small green leaves on trailing stems, often sold variegated in cream or pink. Very fast and very easy indoors — and outdoors in warm climates a notorious weed, so don't throw the cuttings on the garden.",
+    size: "Trails to 60 cm",
+    origin: "Southeastern South America",
+    difficulty: "Easy",
+  },
+  "tradescantia-spathacea": {
+    ownProblems: true,
+    blurb:
+      "Moses-in-the-cradle, or oyster plant: stiff rosettes of sword-shaped leaves, green or striped on top and purple underneath, with small white flowers tucked into boat-shaped bracts at the base — the 'cradle'. Unlike its trailing relatives it grows upright, in clumps.",
+    size: "30–40 cm tall",
+    origin: "Mexico and Central America",
+    difficulty: "Easy",
+    repotNote: "Every year or two in spring, once the clump has filled the pot. Divide it then.",
+    propagation: "Separate the offsets that form around the base and pot them up.",
+    waterHow:
+      "Let the top few centimetres dry between waterings. The thick leaves store water, and it copes with drying out better than the trailing tradescantias.",
+    problems: [
+      ["Stripes fading to green", "Not enough light.", "Move it brighter; it takes a little direct sun."],
+      ["Rot at the base", "The compost stayed wet.", "Let it dry between waterings, and make sure the pot drains."],
+      ["Brown leaf tips", "Dry air, or salts from tap water.", "Raise the humidity and flush the pot through now and then."],
+    ],
+  },
+  "callisia-repens": {
+    blurb:
+      "Turtle vine: tiny, fleshy, oval leaves, often purple underneath, on stems that trail and creep into a dense mat. Fast and easy, and good spilling from a shelf or as ground cover in a large pot.",
+    size: "Trails to 30–60 cm",
+    origin: "Mexico to South America",
+    difficulty: "Easy",
+  },
+  "plectranthus-verticillatus": {
+    blurb:
+      "Swedish ivy — neither Swedish nor an ivy, but a fast, trailing relative of mint with round, scalloped, glossy leaves and spikes of small white flowers. An old-fashioned and very easy hanging-basket plant.",
+    size: "Trails to 60–90 cm",
+    origin: "Southern Africa",
+    difficulty: "Easy",
+  },
+  "pilea-involucrata": {
+    blurb:
+      "The friendship plant: low mounds of deeply quilted, bronze-brown and green leaves — 'Moon Valley' is the best-known form. It wants humidity and steady moisture, and is a classic terrarium plant.",
+    size: "15–30 cm tall",
+    origin: "Central and South America",
+    difficulty: "Needs attention",
+    humidity: "Above 60%",
+    waterHow: "Keep the compost evenly damp; it collapses quickly when it dries out.",
+  },
+  "pilea-glauca": {
+    toxicity: RELATIVES,
+    blurb:
+      "Silver sparkle pilea: tiny, round, blue-grey leaves on thin red stems, trailing into a soft mat that glints silver in the light. Good in a hanging pot or a terrarium, and easy as long as it never dries out completely.",
+    size: "Trails to 30 cm",
+    origin: "Not settled — long in cultivation",
+    difficulty: "Straightforward",
+    waterHow: "Keep the compost lightly damp; the tiny leaves shrivel fast if it dries out.",
+  },
+  "peperomia-rotundifolia": {
+    blurb:
+      "Trailing jade: tiny, round, thick, bright-green leaves on thin trailing stems. A compact, slow and very easy trailer for a small hanging pot.",
+    size: "Trails to 30 cm",
+    origin: "Tropical Central and South America",
+    difficulty: "Easy",
+  },
+  "peperomia-scandens": {
+    toxicity: RELATIVES,
+    blurb:
+      "Cupid peperomia: glossy, heart-shaped leaves on trailing stems, usually sold variegated with a cream edge. It looks like a pothos at a glance but stays small, and wants the same easy care as other peperomias.",
+    size: "Trails to 1 m",
+    origin: "Central and South America",
+    difficulty: "Easy",
+  },
+  "peperomia-puteolata": {
+    toxicity: RELATIVES,
+    blurb:
+      "Parallel peperomia: narrow, dark-green leaves with pale stripes running their length, in whorls of four on red stems that grow upright and then trail. Compact and easy.",
+    size: "20–40 cm",
+    origin: "South America",
+    difficulty: "Easy",
+  },
+
+  // -------------------------------- October 2026 expansion: prayer plants
+  "goeppertia-warscewiczii": {
+    blurb:
+      "Calathea 'Jungle Velvet': long, velvety, dark-green leaves with a feathered pattern in lighter green, and deep purple undersides. One of the most beautiful calatheas, and one of the most demanding about humidity.",
+    size: "60–90 cm tall",
+    origin: "Central America",
+    difficulty: "Fussy",
+    humidity: "Above 65%",
+  },
+  "goeppertia-crocata": {
+    blurb:
+      "The eternal flame calathea: dark, ruffled leaves with purple undersides, and — its whole point — bright orange flower bracts that rise above the foliage and last for weeks. It needs good humidity and bright indirect light to flower.",
+    size: "30–45 cm tall",
+    origin: "Brazil",
+    difficulty: "Fussy",
+  },
+  "goeppertia-musaica": {
+    blurb:
+      "Calathea 'Network': bright-green leaves covered in a fine mosaic of pale lines, like a net. Noticeably tougher than most calatheas, and better at coping with ordinary room humidity.",
+    size: "40–60 cm tall",
+    origin: "Brazil",
+    difficulty: "Needs attention",
+  },
+  "goeppertia-concinna-freddie": {
+    blurb:
+      "Calathea 'Freddie': narrow, pale-green leaves with dark-green feathered stripes on a compact, upright plant. One of the easier calatheas, and a good first one to try.",
+    size: "40–60 cm tall",
+    origin: "A cultivated form; the species comes from Brazil",
+    difficulty: "Needs attention",
+  },
+
+  // ---------------------------------------- October 2026 expansion: ferns
+  "microsorum-musifolium": {
+    blurb:
+      "The crocodile fern: long, undivided, bright-green fronds with a raised, netted pattern like crocodile skin. Unusually for a fern it has no leaflets at all. It wants humidity and steady moisture, and dislikes direct sun.",
+    size: "60–90 cm tall",
+    origin: "Southeast Asia",
+    difficulty: "Needs attention",
+  },
+  "pteris-cretica": {
+    blurb:
+      "The ribbon fern: narrow, strap-like fronds in a loose clump, often sold with a white central stripe. One of the easier ferns indoors, though like all of them it wants its compost kept damp.",
+    size: "30–60 cm",
+    origin: "Warm regions of Europe, Africa and Asia",
+    difficulty: "Straightforward",
+  },
+  "cyrtomium-falcatum": {
+    blurb:
+      "Japanese holly fern: leathery, glossy fronds with holly-like leaflets. One of the toughest ferns you can grow indoors — it tolerates lower light, drier air and cooler rooms than most.",
+    size: "40–60 cm tall and wide",
+    origin: "East Asia",
+    difficulty: "Easy",
+  },
+  "pellaea-rotundifolia": {
+    blurb:
+      "The button fern: low, arching fronds of small, round, dark-green leaflets like buttons on a string. It comes from New Zealand and, unusually for a fern, wants to dry slightly between waterings — it rots if kept wet.",
+    size: "15–30 cm tall",
+    origin: "New Zealand",
+    difficulty: "Needs attention",
+  },
+
+  // ------------------------- October 2026 expansion: begonias & gesneriads
+  "begonia-masoniana": {
+    blurb:
+      "The iron cross begonia: puckered, bristly, apple-green leaves marked with a bold dark-brown cross. A rhizomatous begonia grown for its leaves, it wants humidity and dislikes wet foliage.",
+    size: "30–45 cm tall and wide",
+    origin: "Southern China and Vietnam",
+    difficulty: "Needs attention",
+  },
+  "begonia-angel-wing": {
+    blurb:
+      "Angel wing begonias: cane begonias with long, wing-shaped leaves, usually spotted with silver, on bamboo-like stems, and hanging clusters of pink, red or white flowers. Easy, in flower for months, and leggy — pinch and prune to keep them bushy.",
+    size: "60 cm–1.5 m",
+    origin: "Cultivated hybrids of Brazilian cane begonias",
+    difficulty: "Easy",
+  },
+  "aeschynanthus-radicans": {
+    toxicity: RELATIVES,
+    blurb:
+      "The lipstick plant: trailing stems of glossy, dark leaves ending in clusters of red, tubular flowers that push out of dark calyces like lipstick from its tube. A gesneriad, related to African violets, that grows on trees in the wild.",
+    size: "Trailing stems to 60–90 cm",
+    origin: "Southeast Asia",
+    difficulty: "Straightforward",
+  },
+  "nematanthus-gregarius": {
+    blurb:
+      "The goldfish plant: small, glossy, dark leaves and pouched orange flowers shaped like tiny goldfish. A compact trailing gesneriad that flowers for much of the year in bright, indirect light.",
+    size: "Trailing stems to 30–60 cm",
+    origin: "Brazil",
+    difficulty: "Straightforward",
+  },
+  "sinningia-speciosa": {
+    blurb:
+      "The gloxinia: big, velvety leaves and large, bell-shaped flowers in purple, red, pink or white, often ruffled or spotted. It grows from a tuber and rests after flowering — it isn't dead, and comes back if you let it rest.",
+    size: "20–30 cm tall",
+    origin: "Brazil",
+    difficulty: "Needs attention",
+  },
+
+  // ------------------------------ October 2026 expansion: succulents & cacti
+  "graptopetalum-paraguayense": {
+    blurb:
+      "The ghost plant: rosettes of thick, pale grey-lavender leaves on stems that lengthen and trail with age. Very easy, and it propagates itself — the leaves drop at a touch and root where they land.",
+    size: "Rosettes 5–10 cm; trailing stems to 30 cm",
+    origin: "Mexico",
+    difficulty: "Easy",
+  },
+  "crassula-perforata": {
+    blurb:
+      "String of buttons: pairs of triangular, grey-green leaves stacked along upright stems as if threaded on a string, edged in red in strong light. Easy and slow-growing.",
+    size: "20–45 cm tall",
+    origin: "South Africa",
+    difficulty: "Easy",
+  },
+  "portulacaria-afra": {
+    blurb:
+      "The elephant bush: small, round, fleshy leaves on red-brown stems, forming a little tree — it is often grown as a bonsai. It looks like a jade plant but is unrelated, and is more forgiving of water in summer.",
+    size: "30–90 cm in a pot",
+    origin: "South Africa",
+    difficulty: "Easy",
+  },
+  "aeonium-arboreum": {
+    blurb:
+      "The tree aeonium: glossy rosettes of leaves on the ends of bare, branching stems, often sold in the near-black form 'Zwartkop'. It grows in the cool months and rests in summer, when the rosettes close up tight.",
+    size: "30–90 cm",
+    origin: "The Canary Islands",
+    difficulty: "Straightforward",
+  },
+  "haworthia-cooperi": {
+    blurb:
+      "Window haworthia: small rosettes of plump, translucent leaves with clear 'windows' at the tips that let light into the leaf. It grows half-buried in shade in the wild, so it wants bright, indirect light rather than hot sun.",
+    size: "Rosettes 5–8 cm, clumping",
+    origin: "South Africa",
+    difficulty: "Easy",
+  },
+  "aloe-aristata": {
+    blurb:
+      "Lace aloe: small, stemless rosettes of dark-green leaves covered in raised white spots, with soft white bristles at the tips. A compact, easy aloe that makes offsets freely.",
+    size: "10–20 cm across",
+    origin: "South Africa and Lesotho",
+    difficulty: "Easy",
+  },
+  "kalanchoe-daigremontiana": {
+    blurb:
+      "Mother of thousands: long, blue-green leaves edged with rows of tiny plantlets that drop off and root wherever they land. Easy to the point of being a nuisance — and, like every kalanchoe, toxic to pets.",
+    size: "30–90 cm tall",
+    origin: "Madagascar",
+    difficulty: "Easy",
+    propagation: "Not needed: the plantlets along the leaf edges fall and root on their own. Pot up the ones you want.",
+  },
+  "kalanchoe-luciae": {
+    blurb:
+      "The flapjack or paddle plant: flat, round, grey-green leaves stacked in pairs, turning red at the edges in strong sun. It is grown for those leaves; after it flowers, the flowering rosette dies and leaves offsets behind.",
+    size: "30–60 cm",
+    origin: "Southern Africa",
+    difficulty: "Easy",
+  },
+  "sedum-rubrotinctum": {
+    toxicity: RELATIVES,
+    blurb:
+      "The jelly bean plant: plump, glossy, bean-shaped leaves that turn from green to bright red at the tips in strong sun. Easy, and every fallen leaf roots.",
+    size: "15–20 cm tall",
+    origin: "Mexico",
+    difficulty: "Easy",
+  },
+  "schlumbergera-gaertneri": {
+    toxicity: RELATIVES,
+    blurb:
+      "The Easter cactus: a forest cactus like its Christmas relative, with flat, segmented stems, but flowering in spring with open, star-shaped flowers in red, pink or orange. It needs a cool, drier rest in late winter to set buds.",
+    size: "20–30 cm tall and wide",
+    origin: "Southeastern Brazil",
+    difficulty: "Needs attention",
+  },
+  "echinocactus-grusonii": {
+    blurb:
+      "The golden barrel cactus: a near-perfect green sphere ribbed with rows of stiff golden spines. Extremely slow and long-lived; it wants as much sun as you can give it and almost no water in winter.",
+    size: "20–40 cm across in a pot, over many years",
+    origin: "Central Mexico",
+    difficulty: "Easy",
+  },
+  "gymnocalycium-mihanovichii": {
+    blurb:
+      "The moon cactus: a brightly coloured red, orange or yellow ball grafted onto a green cactus stem. The coloured top has no chlorophyll and cannot feed itself; it lives off the green stock beneath, so treat the green part as the plant.",
+    size: "10–20 cm tall",
+    origin: "Paraguay; the coloured forms are bred in cultivation",
+    difficulty: "Straightforward",
+  },
+  "epiphyllum-anguliger": {
+    blurb:
+      "The fishbone cactus: long, flat, zigzag stems cut into deep lobes like a fishbone, trailing from a hanging pot. A forest cactus, not a desert one — it wants bright indirect light and more water than a cactus, and may flower at night with large, fragrant white blooms.",
+    size: "Trailing stems to 1 m",
+    origin: "Mexico",
+    difficulty: "Easy",
+  },
+  "echeveria-black-prince": {
+    blurb:
+      "A hybrid echeveria with rosettes of pointed, near-black leaves, darkest in strong sun, and red flowers in autumn. The same care as any echeveria: full sun and a gritty mix, or it stretches and turns green.",
+    size: "Rosettes 8–15 cm",
+    origin: "A cultivated hybrid",
+    difficulty: "Easy",
+  },
+
+  // -------------------------------------- October 2026 expansion: flowering
+  "oncidium-sharry-baby": {
+    toxicity: RELATIVES,
+    blurb:
+      "The chocolate orchid: a hybrid that sends up long, branching sprays of small red-brown and white flowers that smell of chocolate or vanilla. Easier than it looks, and it flowers from each new pseudobulb.",
+    size: "Flower spikes to 60–90 cm",
+    origin: "A cultivated hybrid",
+    difficulty: "Straightforward",
+  },
+  "paphiopedilum-maudiae": {
+    blurb:
+      "Maudiae-type slipper orchids: mottled green leaves and a single waxy flower with a pouch-shaped lip, in green and white or deep red-purple, lasting for weeks. Slipper orchids want less light than a moth orchid and should never dry out completely.",
+    size: "Leaves 15–25 cm; flower stem to 30 cm",
+    origin: "A cultivated hybrid",
+    difficulty: "Needs attention",
+  },
+  "euphorbia-pulcherrima": {
+    ownProblems: true,
+    blurb:
+      "The poinsettia: the red, pink or cream 'flowers' are bracts — coloured leaves around tiny true flowers. It is sold by the million each December and usually thrown out in January, but it can be kept as a houseplant. Its reputation as a deadly poison is overstated: it is mildly toxic.",
+    size: "30–60 cm as sold",
+    origin: "Mexico",
+    difficulty: "Needs attention",
+    light: "Bright indirect light, with a little direct sun",
+    lightLong: "Bright light, with some direct sun in winter. Keep it away from cold windows and draughts while it is in colour.",
+    humidity: "Room humidity is fine, away from heaters",
+    soil: "Standard free-draining compost",
+    soilLong: "Ordinary peat-free compost with some perlite. It is a shrub, not a succulent, whatever its genus.",
+    feed: "A balanced feed monthly from spring to autumn; none while it is in colour",
+    repotNote:
+      "In spring, after cutting it back by about half. To colour again it needs about fourteen hours of complete darkness every night for eight weeks from early autumn.",
+    toxicity:
+      "Mildly toxic to cats and dogs: the milky sap irritates the mouth and stomach and can cause drooling or vomiting. Its danger is often overstated, but keep it out of reach.",
+    propagation: "Stem cuttings in early summer, rooted in damp compost under a bag. Dip the cut end in water first to stop the sap.",
+    waterHow:
+      "Water when the top of the compost is dry to the touch, thoroughly, and empty the saucer. It wilts and drops leaves if left dry, and rots if it stands in water.",
+    problems: [
+      ["Leaves dropping soon after you bring it home", "Cold — on the way home or from a draughty window — or a sudden change.", "Keep it warm, above 15 °C, out of draughts and away from cold glass."],
+      ["Yellowing leaves and wilting in a wet pot", "Overwatering, often in a foil sleeve that holds the water.", "Take it out of the sleeve, or make holes in it, and let it drain."],
+      ["The bracts don't colour again the next year", "Its colour is triggered by long nights.", "From early autumn give it about fourteen hours of total darkness every night for eight weeks — even a streetlight can stop it."],
+    ],
+    faq: [
+      ["Are poinsettias poisonous to cats and dogs?", "Mildly. The ASPCA lists poinsettia as toxic to cats and dogs, but the effect is irritation of the mouth and stomach — drooling, sometimes vomiting — and its toxicity is generally over-rated. Keep it out of reach anyway, and call a vet if a pet has eaten a lot of it."],
+    ],
+  },
+  "zantedeschia-aethiopica": {
+    blurb:
+      "The calla or arum lily: glossy, arrow-shaped leaves and elegant white, funnel-shaped spathes; the coloured callas sold as pot plants are hybrids of related species. It is not a true lily and does not carry the kidney danger true lilies pose to cats — but it is toxic, like the other arums.",
+    size: "40–90 cm tall",
+    origin: "Southern Africa",
+    difficulty: "Straightforward",
+    faq: [
+      ["Is a calla lily a real lily?", "No. Despite the name it is an arum, related to peace lilies and philodendrons, not a true lily (Lilium). The difference matters with cats: a small amount of a true lily, even its pollen, can cause kidney failure in a cat. A calla lily causes mouth and throat irritation instead — still toxic, and still worth keeping away from pets."],
+    ],
+  },
+
+  // ------------------------------------- October 2026 expansion: bromeliads
+  "vriesea-splendens": {
+    blurb:
+      "The flaming sword: a rosette of dark-green leaves banded in purple-black, with a flat, sword-shaped red flower spike that lasts for months. Like other bromeliads it flowers once, then raises pups to replace itself.",
+    size: "40–60 cm tall in flower",
+    origin: "Northern South America and Trinidad",
+    difficulty: "Easy",
+  },
+  "neoregelia-carolinae": {
+    blurb:
+      "The blushing bromeliad: a flat, spreading rosette of glossy leaves whose centre turns brilliant red when the plant is about to flower — the small flowers themselves sit hidden in the water of the cup. The red lasts for months.",
+    size: "30–40 cm across",
+    origin: "Brazil",
+    difficulty: "Easy",
+  },
+  "cryptanthus-bivittatus": {
+    blurb:
+      "The earth star: small, flat, star-shaped rosettes of wavy, striped leaves in pink, green and cream. Unlike most bromeliads it grows on the ground, so it roots into its compost and has no cup to fill — a good terrarium plant.",
+    size: "10–15 cm across",
+    origin: "Brazil",
+    difficulty: "Easy",
+  },
+  "ananas-comosus": {
+    blurb:
+      "The pineapple: a rosette of stiff, spiny-edged leaves that, after two or three years and plenty of sun, sends up a single small pineapple. Many are grown from the top of a shop-bought fruit.",
+    size: "60–90 cm across",
+    origin: "South America",
+    difficulty: "Straightforward",
+  },
+  "tillandsia-cyanea": {
+    ownProblems: true,
+    blurb:
+      "The pink quill: a grassy rosette with a flat, paddle-shaped pink bract from which small violet flowers emerge one or two at a time over several weeks. Unlike the air plants, it is sold and grown in a pot of bark.",
+    size: "25–30 cm tall in flower",
+    origin: "Ecuador",
+    difficulty: "Easy",
+    soil: "A coarse orchid-bark mix",
+    soilLong: "A coarse, fast-draining orchid bark mix in a small pot. It uses its roots for anchoring more than for feeding, and rots in heavy compost.",
+    waterHow: "Water the bark lightly when it is nearly dry, and mist the leaves now and then. Don't leave water standing in the base of the rosette.",
+    repotNote: "Rarely. After flowering the parent slowly fades; pot up the pups once they are a third of its size.",
+    propagation: "Separate the pups that form at the base once they are a third of the parent's size, with some roots attached.",
+    problems: [
+      ["The parent fading after flowering", "Normal: it flowers once, then finishes.", "Keep the pups growing; they are the next plants."],
+      ["Brown, crisp leaf tips", "Dry air.", "Mist it, or raise the humidity."],
+      ["Rot at the base", "The bark stayed wet.", "Water less often, and use a coarser mix."],
+    ],
+  },
+
+  // -------------------------------- October 2026 expansion: herbs & edibles
+  "thymus-vulgaris": {
+    blurb:
+      "Common thyme: a small, woody herb with tiny, fragrant grey-green leaves. On a windowsill it needs full sun and dry roots — like rosemary, it is far more often killed by watering than by neglect.",
+    size: "15–30 cm",
+    origin: "Southern Europe",
+    difficulty: "Straightforward",
+  },
+  "petroselinum-crispum": {
+    blurb:
+      "Parsley, curly or flat-leaved: a biennial herb usually grown for a season and replaced. Supermarket pots are crowded with seedlings; split the clump into a few smaller pots and it lasts far longer.",
+    size: "20–30 cm",
+    origin: "The Mediterranean",
+    difficulty: "Straightforward",
+  },
+  "allium-schoenoprasum": {
+    blurb:
+      "Chives: clumps of thin, hollow, onion-flavoured leaves, with round purple flowers in summer. One of the easiest herbs on a sunny windowsill — and, like all onions, toxic to cats and dogs.",
+    size: "20–30 cm",
+    origin: "Europe and Asia",
+    difficulty: "Easy",
+  },
+  "citrus-microcarpa": {
+    blurb:
+      "The calamondin: a small citrus tree with glossy leaves, fragrant white flowers and small, sour orange fruit, often carrying flowers and fruit at once. It is the easiest citrus to grow indoors.",
+    size: "60 cm–1.2 m in a pot",
+    origin: "The Philippines and Southeast Asia; probably a mandarin and kumquat hybrid",
+    difficulty: "Straightforward",
+  },
+  "persea-americana": {
+    blurb:
+      "The avocado, as most people grow it: from a stone, sprouted in a glass of water. It makes a fast, leafy tree indoors but almost never fruits there. Its leaves, stone and skin are toxic to pets — and particularly to birds.",
+    size: "1–2 m indoors, if pruned",
+    origin: "Mexico and Central America",
+    difficulty: "Straightforward",
+  },
+
+  // ----------------------------------------- October 2026 expansion: other
+  "coleus-scutellarioides": {
+    blurb:
+      "Coleus: soft, toothed leaves in almost any combination of lime, red, burgundy, pink and near-black. A fast, short-lived plant grown entirely for its colour — pinch it often, take cuttings in late summer, and start again.",
+    size: "30–60 cm",
+    origin: "Southeast Asia",
+    difficulty: "Easy",
+    problems: [
+      ["Colours fading to green", "Not enough light.", "Move it brighter; new leaves will colour up, old ones won't."],
     ],
   },
 };

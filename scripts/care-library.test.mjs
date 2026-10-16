@@ -32,6 +32,17 @@ describe("the library as care guides", () => {
     }
   });
 
+  test("a plant its genus's problems don't describe carries only its own", () => {
+    // Poinsettia is a Euphorbia, filed with the succulents; Moses-in-the-cradle
+    // a Tradescantia, filed with the trailers. Neither may inherit their advice.
+    const problems = (key) => rows.find((r) => r.key === key).card.common_problems.map((p) => p.problem);
+    expect(problems("euphorbia pulcherrima")).not.toContain("Stretched, pale, spaced-out leaves");
+    expect(problems("euphorbia pulcherrima")).toContain("Leaves dropping soon after you bring it home");
+    expect(problems("tradescantia spathacea")).not.toContain("Bare leggy stems with leaves only at the ends");
+    // Without the flag, a genus's problems still come along.
+    expect(problems("tradescantia zebrina")).toContain("Bare leggy stems with leaves only at the ends");
+  });
+
   test("filed under the keys the care function looks up, once each", () => {
     const keys = rows.map((r) => r.key);
     expect(new Set(keys).size).toBe(keys.length);
