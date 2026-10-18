@@ -52,8 +52,9 @@ const DEFAULT_MODEL = MODELS.find((m) => m === Deno.env.get("AI_MODEL")) ?? "cla
  * was filed under the wrong species -- which Haiku did not. Sonnet 5 stays on
  * the list so AI_HEALTH_MODEL can put it back without a redeploy.
  *
- * Overridable with AI_HEALTH_MODEL, and an explicit `model` in the request
- * still wins over both, so the two can be compared on the same photo.
+ * Overridable with AI_HEALTH_MODEL. A request can't choose: until 18 Oct
+ * 2026 an explicit `model` won over both, and any caller could put every
+ * health check on the dearest model on the list.
  */
 const HEALTH_MODEL = MODELS.find((m) => m === Deno.env.get("AI_HEALTH_MODEL")) ?? "claude-sonnet-5-5";
 /**
@@ -151,7 +152,7 @@ Deno.serve(async (req: Request) => {
 
   let body: {
     image?: string; media_type?: string; images?: unknown;
-    mode?: string; species_hint?: unknown; care_brief?: unknown; model?: string; known?: unknown;
+    mode?: string; species_hint?: unknown; care_brief?: unknown; known?: unknown;
   };
   try { body = await req.json(); } catch { return json({ error: "Expected JSON." }, 400); }
   const { mode = "both" } = body;
@@ -194,10 +195,9 @@ Deno.serve(async (req: Request) => {
   const known = Array.isArray(body.known)
     ? body.known.filter((k): k is string => typeof k === "string" && k.length <= 60).slice(0, 200)
     : [];
-  // A request may pick a model from the allow-list — for comparing answers on
-  // the same photo. The daily cap bounds what that can cost.
-  const MODEL = MODELS.find((m) => m === body.model)
-    ?? (mode === "health" ? HEALTH_MODEL : DEFAULT_MODEL);
+  // The server chooses the model, never the request: the daily cap is sized
+  // on these two, and a caller picking the dearest would quadruple it.
+  const MODEL = mode === "health" ? HEALTH_MODEL : DEFAULT_MODEL;
 
   // Daily cap, claimed before the call so a burst can't slip past it. One
   // locked statement checks and increments, and a claim that can't be

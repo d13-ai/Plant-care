@@ -6,7 +6,7 @@ import { Body, Button, Card, Field, Row, Title } from "@/components/ui";
 import { confirm } from "@/lib/confirm";
 import { getHandle } from "@/lib/conservatory";
 import { handleFrom, sameHandle } from "@/domain/handle";
-import { leaveCard, lookUpKeeper, myRounds, takeCardBack, type Round } from "@/lib/rounds";
+import { leaveCard, lookUpKeeper, myRounds, takeCardBack, visitRound, type Round } from "@/lib/rounds";
 import { space, useTheme } from "@/theme";
 
 /**
@@ -151,9 +151,16 @@ export default function Rounds() {
       ) : (
         <View style={styles.list}>
           {rounds.map((r) => (
-            <ConservatoryCard key={r.handle} round={r} onLongPress={() => remove(r)} />
+            <ConservatoryCard
+              key={r.handle}
+              round={r}
+              onLongPress={() => remove(r)}
+              onVisit={() => visitRound(r.handle).then(refresh).catch(() => {})}
+            />
           ))}
-          <Body small muted>Press and hold a conservatory to take your card back.</Body>
+          <Body small muted>
+            Most recently changed first. Press and hold a conservatory to take your card back.
+          </Body>
         </View>
       )}
 

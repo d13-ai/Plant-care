@@ -5,7 +5,9 @@ import { PlantPhoto } from "@/components/plant-photo";
 import { Body, Button, Card, Row, Title } from "@/components/ui";
 import { coverPhoto, listPlants } from "@/db";
 import { useQuery } from "@/hooks/use-query";
+import { cardsLine } from "@/domain/calling-cards";
 import { conservatoryUrl, getListing, setListed } from "@/lib/conservatory";
+import { cardsLeftWithMe } from "@/lib/rounds";
 import { publishTag, unpublishTag } from "@/lib/tag";
 import { font, radius, space, useTheme } from "@/theme";
 import { useEffect } from "react";
@@ -27,10 +29,17 @@ export default function OnShow() {
   const [error, setError] = useState<string | null>(null);
   const [listing, setListing] = useState<{ handle: string; listed: boolean } | null>(null);
   const [listingBusy, setListingBusy] = useState(false);
+  const [cards, setCards] = useState<number | null>(null);
   const handle = listing?.handle ?? null;
 
   useEffect(() => {
-    getListing().then(setListing).catch(() => {});
+    getListing()
+      .then((found) => {
+        setListing(found);
+        // Cards are left at a handle, so without one there is nothing to count.
+        if (found) cardsLeftWithMe().then(setCards).catch(() => {});
+      })
+      .catch(() => {});
   }, []);
 
   const toggleListed = async (on: boolean) => {
@@ -78,6 +87,7 @@ export default function OnShow() {
             : `${onShow} of ${plants.length} ${plants.length === 1 ? "plant" : "plants"} in your conservatory. Everything else stays private.`}
         </Body>
         {handle ? <Body small muted>{conservatoryUrl(handle)}</Body> : null}
+        {cards !== null ? <Body small>{cardsLine(cards, "yours")}</Body> : null}
         {error ? <Body small style={{ color: t.critical.fg }}>{error}</Body> : null}
       </Card>
 

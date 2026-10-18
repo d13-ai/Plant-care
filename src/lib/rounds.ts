@@ -19,6 +19,10 @@ export interface Round {
   /** Up to three photo paths from their most recently published plants. */
   photos: string[];
   url: string;
+  /** Put on show since your last visit (rounds only; 0 elsewhere). */
+  newPlants: number;
+  /** New photos of plants that were already on show, since your last visit. */
+  newPhotos: number;
 }
 
 /** A row as rounds() and conservatory_directory() send it. */
@@ -28,6 +32,8 @@ export type RoundRow = {
   on_show: number;
   newest: string | null;
   photos: string[];
+  new_plants?: number;
+  new_photos?: number;
 };
 
 export function toRound(r: RoundRow): Round {
@@ -38,6 +44,8 @@ export function toRound(r: RoundRow): Round {
     newest: r.newest,
     photos: r.photos ?? [],
     url: conservatoryUrl(r.handle),
+    newPlants: Number(r.new_plants ?? 0),
+    newPhotos: Number(r.new_photos ?? 0),
   };
 }
 
@@ -96,4 +104,19 @@ export async function leaveCard(handle: string): Promise<void> {
 export async function takeCardBack(handle: string): Promise<void> {
   const { error } = await supabase.rpc("take_card_back", { handle: handle.replace(/^@/, "") });
   if (error) throw new Error(error.message);
+}
+
+/**
+ * You've looked: what's new at this conservatory starts again from now.
+ * Best effort — a visit that isn't recorded only means the badge stays.
+ */
+export async function visitRound(handle: string): Promise<void> {
+  await supabase.rpc("visit_round", { handle });
+}
+
+/** How many calling cards have been left at your own conservatory. */
+export async function cardsLeftWithMe(): Promise<number> {
+  const { data, error } = await supabase.rpc("cards_left_with_me");
+  if (error) throw new Error(error.message);
+  return Number(data ?? 0);
 }
