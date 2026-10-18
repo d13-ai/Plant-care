@@ -1,4 +1,5 @@
-import { conservatoryUrl, HANDLE_RULE } from "./conservatory";
+import { handleFrom } from "@/domain/handle";
+import { conservatoryUrl } from "./conservatory";
 import { supabase } from "./supabase";
 
 /**
@@ -20,7 +21,8 @@ export interface Round {
   url: string;
 }
 
-type RoundRow = {
+/** A row as rounds() and conservatory_directory() send it. */
+export type RoundRow = {
   handle: string;
   display_name: string;
   on_show: number;
@@ -28,17 +30,51 @@ type RoundRow = {
   photos: string[];
 };
 
-export async function myRounds(): Promise<Round[]> {
-  const { data, error } = await supabase.rpc("rounds");
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as RoundRow[]).map((r) => ({
+export function toRound(r: RoundRow): Round {
+  return {
     handle: r.handle,
     displayName: r.display_name,
     onShow: Number(r.on_show ?? 0),
     newest: r.newest,
     photos: r.photos ?? [],
     url: conservatoryUrl(r.handle),
-  }));
+  };
+}
+
+export async function myRounds(): Promise<Round[]> {
+  const { data, error } = await supabase.rpc("rounds");
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as RoundRow[]).map(toRound);
+}
+
+const NOT_A_HANDLE = "That isn't a handle — 3 to 20 letters, numbers or underscores.";
+
+/** What conservatory() answers: the same thing /@handle renders. */
+type ConservatoryPage = {
+  keeper: { handle: string; display_name: string; keeping_since: string | null };
+  plants: { photo: string | null }[];
+};
+
+/**
+ * One conservatory, by its exact handle or a pasted link to it, or null when
+ * nobody has that handle. It reads what /@handle shows a stranger and
+ * nothing else, so finding someone this way needs nothing from them but the
+ * name — and works whether or not they have listed themselves.
+ */
+export async function lookUpKeeper(input: string): Promise<Round | null> {
+  const handle = handleFrom(input);
+  if (!handle) throw new Error(NOT_A_HANDLE);
+  const { data, error } = await supabase.rpc("conservatory", { handle });
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const page = data as ConservatoryPage;
+  return toRound({
+    handle: page.keeper.handle,
+    display_name: page.keeper.display_name,
+    on_show: page.plants.length,
+    newest: null,
+    photos: page.plants.flatMap((p) => (p.photo ? [p.photo] : [])).slice(0, 3),
+  });
 }
 
 /** The three answers the function gives back, worded for a keeper. */
@@ -49,8 +85,8 @@ const REFUSALS: Record<string, string> = {
 };
 
 export async function leaveCard(handle: string): Promise<void> {
-  const wanted = handle.trim().replace(/^@/, "");
-  if (!HANDLE_RULE.test(wanted)) throw new Error("That isn't a handle — 3 to 20 letters, numbers or underscores.");
+  const wanted = handleFrom(handle);
+  if (!wanted) throw new Error(NOT_A_HANDLE);
   const { data, error } = await supabase.rpc("leave_card", { handle: wanted });
   if (error) throw new Error(error.message);
   const answer = data as { ok: boolean; reason?: string };

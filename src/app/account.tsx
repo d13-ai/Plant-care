@@ -306,10 +306,11 @@ export default function AccountScreen() {
         <Heading>Your rounds</Heading>
         <Body small muted>
           The conservatories whose calling cards you hold. Leave one at a plant friend's and what
-          they put on show turns up here.
+          they put on show turns up here. Find them by handle, or browse the ones keepers have listed.
         </Body>
         <Row>
           <Button title="Your rounds" variant="primary" small onPress={() => router.push("/rounds")} />
+          <Button title="Browse conservatories" small onPress={() => router.push("/conservatories")} />
         </Row>
       </Card>
 

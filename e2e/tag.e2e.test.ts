@@ -85,7 +85,6 @@ describe("publishing a tag to Supabase", () => {
   /** The account's greenhouse name on the server before this test renamed it,
    *  or null when the test's own sync is what created the keeper row. */
   let previousKeeperName: string | null = null;
-  let keeperRowExisted = false;
 
   beforeAll(async () => {
     expect(supabaseConfigured, "EXPO_PUBLIC_SUPABASE_URL / _KEY must be set").toBe(true);
@@ -103,7 +102,6 @@ describe("publishing a tag to Supabase", () => {
       .select("display_name")
       .eq("id", keeperId)
       .maybeSingle();
-    keeperRowExisted = !!keeper;
     previousKeeperName = keeper?.display_name ?? null;
     await setKeeperName(KEEPER_NAME);
 
@@ -141,13 +139,10 @@ describe("publishing a tag to Supabase", () => {
         }
         await supabase.from("plants").delete().in("id", ids);
       }
-      // The keeper row is the account's own profile. Delete it only when this
-      // test's sync is what created it; otherwise put the name back.
-      if (keeperRowExisted) {
-        await supabase.from("keepers").update({ display_name: previousKeeperName }).eq("id", keeperId);
-      } else {
-        await supabase.from("keepers").delete().eq("id", keeperId);
-      }
+      // The keeper row is the account's own profile: put the name back. When
+      // this test's sync is what created the row, it stays, nameless -- since
+      // 18 Oct 2026 a keeper can't delete their own, and it goes with the account.
+      await supabase.from("keepers").update({ display_name: previousKeeperName }).eq("id", keeperId);
       await supabase.auth.signOut();
     }
     local?.close();

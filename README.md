@@ -468,7 +468,7 @@ The handle's rules live in the database, not only in the app: a check
 constraint for the shape (`^[A-Za-z0-9_]{3,20}$`), another for the reserved
 names (`admin`, `tag`, `plantparlour`, the route names…), and a unique index
 on `lower(handle)` so `@Amanda` and `@amanda` can't be two people. `HANDLE` in
-`api/conservatory.ts` and `HANDLE_RULE` in `src/lib/conservatory.ts` are copies for the
+`api/conservatory.ts` and `HANDLE_RULE` in `src/domain/handle.ts` are copies for the
 app's benefit, and a test checks they agree with the constraint.
 
 ## Calling cards
@@ -494,6 +494,31 @@ Verified against the live project: with no session, `rounds()` is empty and
 conservatory is refused; an unknown handle is refused; and with a follower
 holding a card, every photo the rounds hand back belongs to a published plant
 (`photos_from_private_plants: 0`). The card that needed was deleted afterwards.
+
+**Finding someone.** Your rounds looks a keeper up by their exact handle, or a
+pasted conservatory link, through `conservatory()` — so the card comes after
+you've seen whose it is, and a typo lands on "nobody by that name" instead of
+in your rounds. A handle finds anyone; listing doesn't make a conservatory
+public, it already is.
+
+**The directory** (Account → Browse conservatories) is for browsing without a
+handle. Listing is a switch on What's on show, off by default: a handle
+claimed to send one friend a link is not a request to be browsed. A listed
+conservatory with nothing on show stays out. `conservatory_directory(q)` is
+an allow-list over the same `is_public` rule, for signed-in keepers only, and
+searches handle, display name, and the names and species of what's on show,
+with the `LIKE` wildcards escaped. `e2e/directory.e2e.test.ts` checks all of
+that against the live project.
+
+**The keepers row.** Adding `listed` turned up a hole (18 Oct 2026): the
+table-level grants let a keeper write every column of their own row,
+`ai_unlimited` and `photo_calls` included, or delete it to start the photo
+trial over. Writes are now column grants — `display_name`, `handle`,
+`listed`, `updated_at` (and `id`, which PostgREST's upsert repeats) — and
+there is no delete; the counters move only through the edge functions'
+`SECURITY DEFINER` calls. Nobody had used it: the one `ai_unlimited` row is
+the owners'. The same e2e file asks the API to make those writes, putting
+back the values already there, and expects 42501.
 
 ## Parlour Games
 

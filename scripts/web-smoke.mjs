@@ -375,28 +375,88 @@ try {
     // Publishing itself needs the server, which this run doesn't have; what is
     // checked here is that the screen is reachable and lists every plant with
     // its own control, which is the part that used to mean opening each plant.
+    // The keeper row is stubbed with a handle, so the listing switch shows.
+    const patches = [];
+    await page.route("**/rest/v1/keepers**", (r) => {
+      if (r.request().method() === "PATCH") {
+        patches.push(r.request().postDataJSON());
+        return r.fulfill({ status: 204, body: "" });
+      }
+      return r.fulfill(asJson([{ handle: "smoke_keeper", listed: false }]));
+    });
     await page.goto(base + "/on-show");
     await page.getByText("What's on show").first().waitFor({ timeout: 20000 });
     await page.getByText("Nothing is on show yet").waitFor();
     await page.getByText("Big Monstera").waitFor();
     const switches = await page.getByRole("switch").count();
-    if (switches < 1) throw new Error("no per-plant control on the on-show screen");
+    if (switches < 2) throw new Error("no per-plant control, or no listing switch, on the on-show screen");
+    await page.getByRole("switch", { name: "List my conservatory" }).click();
+    await page.getByText("It appears under Browse conservatories once something is on show").waitFor();
+    if (patches.length !== 1 || patches[0].listed !== true || Object.keys(patches[0]).some((k) => !["listed", "updated_at"].includes(k)))
+      throw new Error("listing wrote " + JSON.stringify(patches));
     await shot("03-on-show");
     await page.getByText("Done", { exact: true }).click();
     await page.getByText("All plants").waitFor({ timeout: 20000 });
+    await page.unroute("**/rest/v1/keepers**");
   });
-  await step("your rounds is reachable and empty before any card is left", async () => {
-    // The rounds themselves need the server; what's checked offline is that the
-    // screen stands up, says what it's for, and doesn't pretend to have data.
-    await page.route("**/rest/v1/rpc/rounds", (r) =>
-      r.fulfill({ status: 200, contentType: "application/json", body: "[]" }));
+  // One keeper for the rounds and directory steps to find. The server is
+  // stubbed: what's checked is what the screens do with its answers.
+  const fern = { handle: "fern_friend", display_name: "Fern Friend", on_show: 2, newest: null, photos: [] };
+  await step("your rounds finds a keeper by handle, and shows them before a card is left", async () => {
+    let carded = false;
+    await page.route("**/rest/v1/rpc/rounds", (r) => r.fulfill(asJson(carded ? [fern] : [])));
+    await page.route("**/rest/v1/rpc/conservatory", (r) => {
+      const { handle } = r.request().postDataJSON();
+      return r.fulfill(asJson(handle.toLowerCase() === fern.handle
+        ? { keeper: { handle: fern.handle, display_name: fern.display_name, keeping_since: null }, plants: [{ photo: null }, { photo: null }] }
+        : null));
+    });
+    await page.route("**/rest/v1/rpc/leave_card", (r) => { carded = true; return r.fulfill(asJson({ ok: true })); });
     await page.goto(base + "/rounds");
     await page.getByText("Your rounds").first().waitFor({ timeout: 20000 });
     await page.getByText("No cards left yet").waitFor();
-    await page.getByText("Leave a card", { exact: true }).waitFor();
+    const box = page.getByPlaceholder("@ogBondstera");
+    await box.fill("@nobody_here");
+    await page.getByText("Find", { exact: true }).click();
+    await page.getByText("No conservatory at @nobody_here").waitFor();
+    // A pasted link works as well as the handle, whatever its case.
+    await box.fill("https://plantparlour.org/@Fern_Friend");
+    await page.getByText("Find", { exact: true }).click();
+    await page.getByText("@fern_friend · 2 plants on show").waitFor();
+    if (carded) throw new Error("a card was left before the keeper chose to");
+    await page.getByText("Leave a card", { exact: true }).click();
+    await page.getByText("✓ In your rounds").waitFor();
+    if (await page.getByText("@fern_friend · 2 plants on show").count() !== 2)
+      throw new Error("the keeper didn't join the rounds below");
+    await shot("03b-rounds");
+    await page.getByText("Browse conservatories", { exact: true }).click();
+    await page.getByText("Keepers who've chosen to list").waitFor({ timeout: 20000 });
+    await page.unroute("**/rest/v1/rpc/rounds");
+    await page.unroute("**/rest/v1/rpc/conservatory");
+    await page.unroute("**/rest/v1/rpc/leave_card");
+  });
+  await step("conservatories lists who chose to be found, and searches them", async () => {
+    const searches = [];
+    await page.route("**/rest/v1/rpc/conservatory_directory", (r) => {
+      const q = r.request().postDataJSON()?.q ?? "";
+      searches.push(q);
+      return r.fulfill(asJson(q ? [] : [{ ...fern, carded: false, mine: false }]));
+    });
+    await page.route("**/rest/v1/rpc/leave_card", (r) => r.fulfill(asJson({ ok: true })));
+    await page.goto(base + "/conservatories");
+    await page.getByText("Fern Friend").waitFor({ timeout: 20000 });
+    await page.getByText("Want yours here?").waitFor();
+    await page.getByText("Leave a card", { exact: true }).click();
+    await page.getByText("✓ In your rounds").waitFor();
+    await page.getByPlaceholder("A name, a handle or a plant").fill("hoya");
+    await page.getByText("Nothing listed matches “hoya”").waitFor();
+    // Typing is one search per pause, not one per letter.
+    if (searches.filter((q) => q).length !== 1) throw new Error(`searched ${JSON.stringify(searches)}`);
+    await shot("03c-conservatories");
     await page.getByText("Done", { exact: true }).click();
     await page.getByText("All plants").waitFor({ timeout: 20000 });
-    await page.unroute("**/rest/v1/rpc/rounds");
+    await page.unroute("**/rest/v1/rpc/conservatory_directory");
+    await page.unroute("**/rest/v1/rpc/leave_card");
   });
   await step("a second tab says so instead of showing nothing", async () => {
     // The database lives in the browser's origin-private filesystem, which

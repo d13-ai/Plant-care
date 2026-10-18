@@ -5,7 +5,7 @@ import { PlantPhoto } from "@/components/plant-photo";
 import { Body, Button, Card, Row, Title } from "@/components/ui";
 import { coverPhoto, listPlants } from "@/db";
 import { useQuery } from "@/hooks/use-query";
-import { conservatoryUrl, getHandle } from "@/lib/conservatory";
+import { conservatoryUrl, getListing, setListed } from "@/lib/conservatory";
 import { publishTag, unpublishTag } from "@/lib/tag";
 import { font, radius, space, useTheme } from "@/theme";
 import { useEffect } from "react";
@@ -25,11 +25,27 @@ export default function OnShow() {
   const { data, refresh, db } = useQuery(listPlants);
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [handle, setHandle] = useState<string | null>(null);
+  const [listing, setListing] = useState<{ handle: string; listed: boolean } | null>(null);
+  const [listingBusy, setListingBusy] = useState(false);
+  const handle = listing?.handle ?? null;
 
   useEffect(() => {
-    getHandle().then(setHandle).catch(() => {});
+    getListing().then(setListing).catch(() => {});
   }, []);
+
+  const toggleListed = async (on: boolean) => {
+    if (!listing) return;
+    setListingBusy(true);
+    setError(null);
+    try {
+      await setListed(on);
+      setListing({ ...listing, listed: on });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setListingBusy(false);
+    }
+  };
 
   const toggle = useCallback(
     async (plantId: number, on: boolean) => {
@@ -64,6 +80,28 @@ export default function OnShow() {
         {handle ? <Body small muted>{conservatoryUrl(handle)}</Body> : null}
         {error ? <Body small style={{ color: t.critical.fg }}>{error}</Body> : null}
       </Card>
+
+      {listing ? (
+        <View style={[styles.row, { borderColor: t.hairline }]}>
+          <View style={styles.rowText}>
+            <Text style={[styles.name, { color: t.text }]}>List my conservatory</Text>
+            <Body small muted>
+              {!listing.listed
+                ? "Lets other keepers browse to it in the app. Off, it's still at your link; it just isn't listed. Either way it shows only what's on show."
+                : onShow > 0
+                  ? "Listed. Other keepers can find it under Browse conservatories."
+                  : "Listed. It appears under Browse conservatories once something is on show."}
+            </Body>
+          </View>
+          <Switch
+            value={listing.listed}
+            disabled={listingBusy}
+            onValueChange={toggleListed}
+            trackColor={{ true: t.gold, false: t.hairline }}
+            accessibilityLabel={listing.listed ? "Take my conservatory out of the list" : "List my conservatory"}
+          />
+        </View>
+      ) : null}
 
       {plants.length === 0 ? (
         <Body muted>No plants yet. Add one and it can go on show.</Body>
