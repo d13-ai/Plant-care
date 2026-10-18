@@ -38,6 +38,7 @@ Newest last. Each includes everything before it.
 | 16 Oct 2026 | `818e31f` | 03e16f90 | 108 more plants: 241 species, 151 cultivars. |
 | 18 Oct 2026 | `6ad2ebf` | 01a14d44 | Find a keeper by handle in Your rounds; Browse conservatories; "List my conservatory" switch on What's on show. |
 | 18 Oct 2026 | `dc396e7` | 01a14fc7 | What's new since your last visit in Your rounds; card counts; Needs me first / A–Z switch on the greenhouse list. |
+| 18 Oct 2026 | `4416168` | 01a1503f | Deleting an account says it needs a sign-in from the last 30 minutes (the server now requires it). |
 
 ## Release notes, version 8 (production)
 
