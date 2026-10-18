@@ -6,7 +6,7 @@
 // JavaScript would see an empty page. These are plain server-rendered HTML,
 // readable by anyone and anything, and they reuse the tag page's `page()` so
 // they cannot drift from the brand.
-import { LOGO, page } from "./tag";
+import { LOGO, page, pageHeaders } from "./tag";
 
 export const SITE = "https://plantparlour.org";
 /**
@@ -83,5 +83,6 @@ export function serve(
   const { status, html } = build();
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400");
+  for (const [name, value] of Object.entries(pageHeaders(html))) res.setHeader(name, value);
   res.status(status).send(html);
 }

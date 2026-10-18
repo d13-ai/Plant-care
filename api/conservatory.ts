@@ -13,7 +13,7 @@
 // invisible here as everywhere else.
 
 import { cardsLine } from "../src/domain/calling-cards";
-import { LOGO, page, photoImg, reportLink } from "./tag";
+import { LOGO, page, pageHeaders, photoImg, reportLink } from "./tag";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "https://ixagjvntbgyqemxxinqe.supabase.co";
 const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY || "sb_publishable__A5fA6nyI8nrSqJWfaaJBQ_vqEZdRn6";
@@ -136,7 +136,10 @@ export default async function handler(req: Req, res: Res): Promise<void> {
   const { status, html } = await conservatoryPage(handle);
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   // A conservatory changes when its keeper publishes something, so it can't be held
-  // for long; a minute at the edge still absorbs a link doing the rounds.
-  res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=600");
+  // for long; a minute at the edge still absorbs a link doing the rounds. The
+  // stale allowance was ten minutes until 18 Oct 2026, so a plant taken off
+  // show could linger for the first visitor after a quiet spell; one now.
+  res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=60");
+  for (const [name, value] of Object.entries(pageHeaders(html))) res.setHeader(name, value);
   res.status(status).send(html);
 }

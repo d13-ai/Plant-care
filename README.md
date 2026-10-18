@@ -222,9 +222,14 @@ bug reports are first copied, without the keeper, into `bug_reports_retired`. A 
 an upload that was in flight. The app then wipes its own copy
 (`wipeLocalData`) and the per-keeper AsyncStorage keys, and signs out
 locally — without that, the next account to sign in on the phone would be
-handed the deleted keeper's plants. Checked live by
-`e2e/delete-account.e2e.test.ts`, which makes its own account and deletes it.
-Project AI spend is now `ai_usage` plus `ai_usage_retired`.
+handed the deleted keeper's plants. It also needs a sign-in from the last
+30 minutes, read off the token's `amr` claim (`_shared/recent-sign-in.ts`):
+a phone's session lasts weeks, and an unlocked phone shouldn't be enough.
+Checked live by `e2e/delete-account.e2e.test.ts`, which makes its own account
+and deletes it -- while sign-ups confirm themselves; with "Confirm email" on
+(since 18 Oct 2026) it can't get an account and skips, saying why.
+Project AI spend is now `ai_usage` plus `ai_usage_retired`, and the day's AI
+cap counts both.
 
 Custom SMTP in Supabase is now only needed if "Confirm email" is ever turned
 on: Authentication → Emails → SMTP Settings, host `smtp.resend.com`, port

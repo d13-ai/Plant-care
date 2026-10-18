@@ -16,6 +16,8 @@ export const REPORT_NOTE_MAX = 1000;
 /** From one network address in an hour, and across everybody in a day. */
 export const REPORTS_PER_HOUR_PER_SOURCE = 5;
 export const REPORTS_PER_DAY = 100;
+/** Reports kept for one page in a day, from everybody; more add nothing a person reading them needs. */
+export const REPORTS_PER_PAGE_PER_DAY = 5;
 
 const SITE_HOSTS = ["plantparlour.org", "www.plantparlour.org"];
 const TOKEN = /^[a-f0-9]{32}$/;
@@ -41,7 +43,13 @@ export function reportedPage(input: unknown): { kind: ReportKind; page: string }
     return TOKEN.test(t) ? { kind: "tag", page: `/tag?t=${t}` } : null;
   }
   const at = /^\/@([^/]+)\/?$/.exec(url.pathname);
-  if (at && HANDLE.test(decodeURIComponent(at[1]))) return { kind: "conservatory", page: `/@${decodeURIComponent(at[1])}` };
+  let handle = "";
+  try {
+    handle = at ? decodeURIComponent(at[1]) : "";
+  } catch {
+    return null; // a malformed %-escape is no handle
+  }
+  if (HANDLE.test(handle)) return { kind: "conservatory", page: `/@${handle}` };
   return null;
 }
 
