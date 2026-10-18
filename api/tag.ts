@@ -7,6 +7,7 @@
 // key. Tokens are 32 random hex chars: links are unlisted, not browsable.
 // Anyone with the link can read it; that is the point of a tag.
 
+import { createHash } from "node:crypto";
 import { ANALYTICS_SNIPPET } from "../src/domain/analytics";
 import { savedSizePath, type SavedSize } from "../src/domain/photo-uri";
 
@@ -214,6 +215,40 @@ export async function tagPage(token: string): Promise<{ status: number; html: st
   return page(`${data.plant.nickname} · Plant Tag`, render(data), 200, "", true);
 }
 
+/**
+ * The headers every public page goes out with: the tag and conservatory
+ * pages, /privacy and /terms. They are outside the vercel.json rule that
+ * locks down the app (they render keepers' own words, and must load without
+ * the app's cross-origin isolation), and until 18 Oct 2026 they carried no
+ * policy of their own. Escaping already keeps keepers' text inert; this is
+ * the second lock: a script the page didn't ship can't run, and no other
+ * site can frame it.
+ *
+ * The inline scripts (analytics, the photo fallback) are allowed by hash,
+ * computed from the very HTML being sent, so the list can't fall out of step
+ * with the page.
+ */
+export function pageHeaders(html: string): Record<string, string> {
+  const hashes = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(
+    (m) => `'sha256-${createHash("sha256").update(m[1], "utf8").digest("base64")}'`,
+  );
+  return {
+    "Content-Security-Policy": [
+      "default-src 'none'",
+      `script-src 'self' ${hashes.join(" ")}`.trim(),
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src https://fonts.gstatic.com",
+      `img-src 'self' data: ${new URL(SUPABASE_URL).origin}`,
+      "connect-src 'self'",
+      "base-uri 'none'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+    ].join("; "),
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+  };
+}
+
 // Vercel's Node request/response, typed only as far as this handler uses them.
 type Req = { method?: string; query?: Record<string, string | string[] | undefined>; url?: string };
 type Res = { status(code: number): Res; setHeader(name: string, value: string): void; send(body: string): void };
@@ -232,5 +267,6 @@ export default async function handler(req: Req, res: Res): Promise<void> {
   // next load, and each render is one cheap RPC anyway.
   res.setHeader("Cache-Control", "private, no-store");
   res.setHeader("X-Tag-Renderer", "vercel-2");
+  for (const [name, value] of Object.entries(pageHeaders(html))) res.setHeader(name, value);
   res.status(status).send(html);
 }

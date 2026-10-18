@@ -19,8 +19,13 @@
 //      database refuses its row, but storage would keep the file.
 // See supabase/migrations/20261004100000_delete_account.sql and
 // 20261004110000_delete_account_fn.sql.
+//
+// It also needs a sign-in from the last half hour, read off the caller's own
+// token (see _shared/recent-sign-in.ts): a session on a phone lasts weeks,
+// and an unlocked phone shouldn't be enough to erase someone's greenhouse.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
+import { signedInRecently } from "../_shared/recent-sign-in.ts";
 
 const BUCKET = "plant-photos";
 
@@ -78,6 +83,15 @@ Deno.serve(async (req: Request) => {
   // The app asks for the word to be typed; asking again here means nothing
   // but a deliberate request can reach the delete.
   if (body.confirm !== "DELETE") return json({ error: "Type DELETE to confirm." }, 400);
+  // The token was verified by getUser above, so its claims can be read.
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (!signedInRecently(token, Date.now() / 1000)) {
+    log({ outcome: "reauth_needed" });
+    return json({
+      error: "For your safety, sign out and sign back in first, then delete your account. It needs a sign-in from the last 30 minutes.",
+      reason: "reauth",
+    }, 403);
+  }
 
   const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 

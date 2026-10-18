@@ -68,3 +68,22 @@ test("photos come from the copies saved at upload, with the resizer behind them"
   expect(html, "no inline handlers on the page").not.toContain("onerror=");
   expect(html, "never the original").not.toMatch(/object\/public\/plant-photos\/keeper\/plant\/photo\.jpg/);
 });
+
+test("a public page allows exactly the scripts it ships, and can't be framed", async () => {
+  const { createHash } = await import("node:crypto");
+  const { page, pageHeaders } = await import("../api/tag");
+  const { html } = page("A plant · Plant Tag", render(tag(null)));
+  const headers = pageHeaders(html);
+  const csp = headers["Content-Security-Policy"];
+  const inline = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  // Analytics and the photo fallback, at least; each one allowed by its hash.
+  expect(inline.length).toBeGreaterThanOrEqual(2);
+  for (const body of inline) {
+    expect(csp).toContain(`'sha256-${createHash("sha256").update(body, "utf8").digest("base64")}'`);
+  }
+  const scriptSrc = csp.split("; ").find((d) => d.startsWith("script-src"))!;
+  expect(scriptSrc).not.toContain("unsafe-inline");
+  expect(scriptSrc).toMatch(/^script-src 'self'( 'sha256-[^']+')+$/);
+  expect(csp).toContain("frame-ancestors 'none'");
+  expect(headers["X-Content-Type-Options"]).toBe("nosniff");
+});

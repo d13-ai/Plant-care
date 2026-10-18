@@ -23,6 +23,7 @@ describe("the page being reported", () => {
       "/@a",
       "/@has-dash",
       "javascript:alert(1)",
+      "/@%E0%A4%A", // a malformed escape: no handle, and no crash
       42,
       "x".repeat(400),
     ]) {

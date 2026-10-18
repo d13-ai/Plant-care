@@ -19,3 +19,21 @@ verify_jwt = false
 # checks the session itself (verify_jwt off so the CORS preflight isn't
 # blocked). Needs the ANTHROPIC_API_KEY secret.
 verify_jwt = false
+
+[functions.account-email]
+# Welcome and password-reset emails. A reset is asked for by someone who
+# can't sign in, so the gateway must let it through; the welcome checks the
+# session itself (getUser). Deployed this way since 4 Oct 2026; without this
+# entry a CLI redeploy would turn the check on and lock resets out.
+verify_jwt = false
+
+[functions.delete-account]
+# Deletes the caller's own account. Checks the session itself (getUser) and
+# that the sign-in is recent; verify_jwt off so the CORS preflight isn't blocked.
+verify_jwt = false
+
+[functions.report-content]
+# "Report this page" on public tags and conservatories, used by people with
+# no account. Takes only a page address and a reason; the page has to be
+# published, and the limits are counted per page and per source.
+verify_jwt = false

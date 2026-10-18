@@ -9,6 +9,13 @@
 // the worst a race can do here is let a sixth report through, and every one
 // is read by a person anyway. What they do stop is one source burying the
 // mailbox: 5 an hour from one network address, 100 a day in all.
+//
+// Since 18 Oct 2026 a report must also name a page that is published right
+// now, and one page is reported at most once a day by one source and five
+// times by everybody; past that the caller is thanked and nothing is stored
+// or sent. Until then any well-formed made-up address counted, so one script
+// could fill the day's 100 -- and the network address it is counted by is
+// the caller's own word for it, in X-Forwarded-For.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { FROM, REPLY_TO } from "../_shared/account-emails.ts";
@@ -19,6 +26,7 @@ import {
   reportEmail,
   REPORTS_PER_DAY,
   REPORTS_PER_HOUR_PER_SOURCE,
+  REPORTS_PER_PAGE_PER_DAY,
 } from "../_shared/content-report.ts";
 
 const cors = {
@@ -47,10 +55,33 @@ Deno.serve(async (req: Request) => {
   const note = typeof body.note === "string" ? body.note.trim().slice(0, REPORT_NOTE_MAX) || null : null;
 
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+  // Only a page that is published now: the same reads the pages themselves use.
+  const { data: live, error: lookupError } = target.kind === "tag"
+    ? await admin.rpc("passport", { token: target.page.slice("/tag?t=".length) })
+    : await admin.rpc("conservatory", { handle: target.page.slice("/@".length) });
+  if (lookupError) {
+    log({ outcome: "lookup_failed", error: lookupError.message });
+    return json({ error: "Couldn't send the report just now. Please try again, or email bondcreativestudios@gmail.com." }, 503);
+  }
+  if (!live) return json({ error: "That page isn't published any more, so there's nothing to report." }, 404);
+
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim();
   const ipHash = ip ? await sha256(`report-ip:${ip}`) : null;
 
   const since = (ms: number) => new Date(Date.now() - ms).toISOString();
+  const [{ count: forPage }, { count: forPageFromSource }] = await Promise.all([
+    admin.from("content_reports").select("id", { count: "exact", head: true }).eq("page", target.page).gte("created_at", since(86_400_000)),
+    ipHash
+      ? admin.from("content_reports").select("id", { count: "exact", head: true }).eq("page", target.page).eq("ip_hash", ipHash).gte("created_at", since(86_400_000))
+      : Promise.resolve({ count: 0 }),
+  ]);
+  if ((forPageFromSource ?? 0) > 0 || (forPage ?? 0) >= REPORTS_PER_PAGE_PER_DAY) {
+    // Already in hand: thank them, and keep the mailbox for pages not yet reported.
+    log({ outcome: "already_reported", kind: target.kind });
+    return json({ ok: true });
+  }
+
   const [{ count: today }, { count: fromSource }] = await Promise.all([
     admin.from("content_reports").select("id", { count: "exact", head: true }).gte("created_at", since(86_400_000)),
     ipHash

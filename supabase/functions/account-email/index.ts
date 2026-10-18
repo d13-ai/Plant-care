@@ -14,11 +14,15 @@
 //
 // A reset request answers the same whether or not the address has an
 // account, and whether or not a limit stopped it, so the form can't be used
-// to find out who uses PlantParlour. The one exception is Resend itself
-// failing, which says so: "we couldn't send it" is worth more to someone
-// locked out than a promise of an email that isn't coming.
+// to find out who uses PlantParlour. It also answers at once and does the
+// work afterwards (EdgeRuntime.waitUntil): until 18 Oct 2026 it waited for
+// the lookup, the link and Resend first, so an address with an account was
+// answered noticeably later than one without -- which said exactly what the
+// identical wording didn't. The cost is that a Resend failure on a reset is
+// no longer reported to the person waiting; it is logged, and the claim is
+// handed back so they can simply ask again.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import { boundedText, PHOTO_TRIAL } from "../_shared/cap.ts";
 import { type Email, FROM, LOGO_CONTENT_ID, LOGO_URL, REPLY_TO, resetEmail, welcomeEmail } from "../_shared/account-emails.ts";
 
@@ -91,57 +95,16 @@ async function send(key: string, to: string, kind: string, claimId: number, emai
   if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 300)}`);
 }
 
-Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+type Admin = SupabaseClient;
 
-  let body: { kind?: unknown; email?: unknown };
-  try { body = await req.json(); } catch { return json({ error: "Expected JSON." }, 400); }
-  const kind = body.kind;
-  if (kind !== "welcome" && kind !== "reset") return json({ error: "Unknown kind." }, 400);
+// Supabase's runtime keeps an instance alive for work handed to it here after
+// the response has gone.
+declare const EdgeRuntime: { waitUntil(work: Promise<unknown>): void };
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-
-  let claim: Claim;
-  if (kind === "welcome") {
-    // Only ever the caller's own address: the session says who, not the body.
-    const asCaller = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
-    });
-    const { data: { user } } = await asCaller.auth.getUser();
-    if (!user) return json({ error: "Sign in first." }, 401);
-    const { data, error } = await admin.rpc("claim_account_email", { p_kind: "welcome", p_user: user.id });
-    if (error || !data) {
-      log({ kind, outcome: "claim_failed", error: error?.message });
-      return json({ error: "Couldn't send just now." }, 503);
-    }
-    claim = data as Claim;
-    if (!claim.allowed) {
-      log({ kind, outcome: claim.reason });
-      return json({ sent: false, reason: claim.reason });
-    }
-  } else {
-    const address = boundedText(body.email, 254).trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return json({ error: "That doesn't look like an email address." }, 400);
-    const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim();
-    const { data, error } = await admin.rpc("claim_account_email", {
-      p_kind: "reset",
-      p_email: address,
-      p_ip_hash: ip ? await sha256(`ip:${ip}`) : null,
-    });
-    if (error || !data) {
-      log({ kind, outcome: "claim_failed", error: error?.message });
-      return json({ error: "Couldn't send the email just now. Try again in a few minutes." }, 503);
-    }
-    claim = data as Claim;
-    if (!claim.allowed) {
-      // Same answer as a sent email: see the note at the top.
-      log({ kind, outcome: claim.reason });
-      return json({ ok: true });
-    }
-  }
-
+/** Send a claimed email. On failure the claim is handed back -- nothing left,
+ *  so nothing is counted: the welcome can be tried again on the next visit,
+ *  and a failed reset doesn't use up one of the hour's three. */
+async function deliver(admin: Admin, kind: "welcome" | "reset", claim: Extract<Claim, { allowed: true }>): Promise<boolean> {
   const { data: key } = await admin.rpc("resend_api_key");
   try {
     if (typeof key !== "string" || !key) throw new Error("no Resend key in Vault");
@@ -160,12 +123,69 @@ Deno.serve(async (req: Request) => {
     }
     await send(key, claim.email, kind, claim.id, email, logoPng);
     log({ kind, outcome: "sent" });
-    return json(kind === "welcome" ? { sent: true } : { ok: true });
+    return true;
   } catch (err) {
-    // Nothing left, so nothing is counted: the welcome can be tried again on
-    // the next visit, and a failed reset doesn't use up one of the hour's three.
     await admin.rpc("release_account_email", { p_id: claim.id });
     log({ kind, outcome: "send_failed", error: err instanceof Error ? err.message : String(err) });
-    return json({ error: "Couldn't send the email just now. Try again in a few minutes." }, 502);
+    return false;
   }
+}
+
+/** Everything a reset does after the caller has had their answer. */
+async function reset(admin: Admin, address: string, ipHash: string | null): Promise<void> {
+  const { data, error } = await admin.rpc("claim_account_email", { p_kind: "reset", p_email: address, p_ip_hash: ipHash });
+  if (error || !data) {
+    log({ kind: "reset", outcome: "claim_failed", error: error?.message });
+    return;
+  }
+  const claim = data as Claim;
+  if (!claim.allowed) {
+    log({ kind: "reset", outcome: claim.reason });
+    return;
+  }
+  await deliver(admin, "reset", claim);
+}
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+
+  let body: { kind?: unknown; email?: unknown };
+  try { body = await req.json(); } catch { return json({ error: "Expected JSON." }, 400); }
+  const kind = body.kind;
+  if (kind !== "welcome" && kind !== "reset") return json({ error: "Unknown kind." }, 400);
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+  if (kind === "reset") {
+    const address = boundedText(body.email, 254).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return json({ error: "That doesn't look like an email address." }, 400);
+    const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim();
+    const ipHash = ip ? await sha256(`ip:${ip}`) : null;
+    // The same answer for every address, and straight away: see the note at the top.
+    EdgeRuntime.waitUntil(reset(admin, address, ipHash));
+    return json({ ok: true });
+  }
+
+  // A welcome: only ever the caller's own address -- the session says who,
+  // not the body.
+  const asCaller = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+  });
+  const { data: { user } } = await asCaller.auth.getUser();
+  if (!user) return json({ error: "Sign in first." }, 401);
+  const { data, error } = await admin.rpc("claim_account_email", { p_kind: "welcome", p_user: user.id });
+  if (error || !data) {
+    log({ kind, outcome: "claim_failed", error: error?.message });
+    return json({ error: "Couldn't send just now." }, 503);
+  }
+  const claim = data as Claim;
+  if (!claim.allowed) {
+    log({ kind, outcome: claim.reason });
+    return json({ sent: false, reason: claim.reason });
+  }
+  return (await deliver(admin, "welcome", claim))
+    ? json({ sent: true })
+    : json({ error: "Couldn't send the email just now. Try again in a few minutes." }, 502);
 });

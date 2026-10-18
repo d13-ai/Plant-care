@@ -359,6 +359,10 @@ export default function AccountScreen() {
               A cutting you gave someone stays theirs; it just stops pointing back to your plant. What the AI cost
               is kept as a daily total with nothing about you on it.
             </Body>
+            <Body small muted>
+              For your safety it needs a sign-in from the last 30 minutes. If it asks, sign out, sign back in, and
+              come back here.
+            </Body>
             <Field
               label={`Type ${DELETE_WORD} to confirm`}
               value={typed}
