@@ -45,10 +45,10 @@ security definer
 set search_path = ''
 as $$
 declare
-  owner uuid;
+  v_owner uuid;
 begin
-  select p.keeper_id into owner from public.plants p where p.id = new.plant_id;
-  if owner is null or split_part(new.path, '/', 1) <> owner::text or position('..' in new.path) > 0 then
+  select p.keeper_id into v_owner from public.plants p where p.id = new.plant_id;
+  if v_owner is null or split_part(new.path, '/', 1) <> v_owner::text or position('..' in new.path) > 0 then
     raise exception 'a photo must be in its own keeper''s folder' using errcode = '42501';
   end if;
   return new;
