@@ -1,5 +1,5 @@
 import { Stack, useRouter } from "expo-router";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DueRing } from "@/components/due-ring";
@@ -8,10 +8,12 @@ import { LogoMark, PersonIcon, PlusIcon } from "@/components/icons";
 import { GamesCard, GamesLink } from "@/components/parlour-games";
 import { PlantCard, summarize } from "@/components/plant-card";
 import { ReminderPrompt } from "@/components/reminders";
-import { Body, SectionLabel, Title } from "@/components/ui";
+import { Body, Chips, SectionLabel, Title } from "@/components/ui";
 import { UndoBar, useUndo } from "@/components/undo-bar";
 import { coverPhoto, deleteEvent, listPlants, logCare, type PlantWithHistory } from "@/db";
 import { useQuery } from "@/hooks/use-query";
+import { orderPlants, PLANT_ORDERS, type PlantOrder } from "@/domain/plant-order";
+import { getPlantOrder, setPlantOrder } from "@/lib/plant-order";
 import { okToLog } from "@/lib/care-log";
 import { font, radius, space, useTheme, type Tone } from "@/theme";
 
@@ -20,14 +22,23 @@ export default function Greenhouse() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data, refresh, db } = useQuery(listPlants);
-  // Plants that want something come first — the reason to open the app.
+  // Plants that want something come first — the reason to open the app —
+  // unless the keeper has switched this phone to A–Z.
+  const [order, setOrder] = useState<PlantOrder>("needs");
+  useEffect(() => {
+    getPlantOrder().then(setOrder);
+  }, []);
+  const chooseOrder = useCallback((next: PlantOrder) => {
+    setOrder(next);
+    setPlantOrder(next);
+  }, []);
   const items = useMemo(() => {
     if (!data) return [];
-    return data
-      .map((item) => ({ item, rank: summarize(item).rank }))
-      .sort((a, b) => a.rank - b.rank || a.item.plant.nickname.localeCompare(b.item.plant.nickname))
-      .map(({ item }) => item);
-  }, [data]);
+    return orderPlants(
+      data.map((item) => ({ item, rank: summarize(item).rank, name: item.plant.nickname })),
+      order,
+    );
+  }, [data, order]);
 
   const needsAttention = useMemo(
     () => (data ?? []).filter((item) => summarize(item).alerts.length > 0).length,
@@ -141,6 +152,7 @@ export default function Greenhouse() {
                     {needsAttention ? `${needsAttention} need${needsAttention === 1 ? "s" : ""} attention` : `${data.length} plant${data.length === 1 ? "" : "s"} · all good`}
                   </Body>
                 </View>
+                {data.length > 1 && <Chips options={PLANT_ORDERS} value={order} onChange={chooseOrder} />}
               </View>
             ) : null
           }

@@ -298,6 +298,19 @@ try {
       throw new Error("the games card showed while a plant needed attention");
   });
   await shot("05-list");
+  await step("the list can be switched to A–Z, and the phone remembers", async () => {
+    await page.getByText("Needs me first", { exact: true }).waitFor();
+    await page.getByText("A–Z", { exact: true }).click();
+    const stored = () => page.evaluate(() => window.localStorage.getItem("plantOrder"));
+    if ((await stored()) !== "az") throw new Error("the A–Z choice wasn't kept");
+    await page.reload();
+    await page.getByText("All plants").waitFor({ timeout: 20000 });
+    await page.getByText("Big Monstera").first().waitFor();
+    if ((await stored()) !== "az") throw new Error("the A–Z choice didn't survive a reload");
+    // Back as it was, for the steps after this one.
+    await page.getByText("Needs me first", { exact: true }).click();
+    if ((await stored()) !== "needs") throw new Error("couldn't switch back");
+  });
   await step("the card's drop logs water without leaving the greenhouse", async () => {
     await page.getByLabel("Log water for Cutting #1").click();
     await page.getByText("Watered Cutting #1").waitFor();
