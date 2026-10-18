@@ -44,8 +44,13 @@ export async function currentAccount(): Promise<Account | null> {
   return { userId: user.id, email: user.email ?? null, anonymous: Boolean(user.is_anonymous) || !user.email };
 }
 
-/** Whether the email was already an account. Only the wording differs. */
-export type EntryMode = "signin" | "signup";
+/**
+ * How the attempt ended: signed in to an existing account; signed in to a new
+ * one; a confirmation email just sent, for a new account; or the right
+ * password for an account made earlier and never confirmed, whose email may
+ * be long gone.
+ */
+export type EntryMode = "signin" | "signup" | "confirm" | "unconfirmed";
 
 /** Supabase's own minimum is 6; eight is little harder to pick and much harder to guess. */
 const MIN_PASSWORD = 8;
@@ -58,6 +63,13 @@ const MIN_PASSWORD = 8;
  * form to discover which addresses have accounts. Signing up second is what
  * separates them: it is refused for an email that already exists, and that
  * refusal means the password was simply wrong.
+ *
+ * Since 18 Oct 2026 the project has "Confirm email" on, which changes two
+ * answers. A new account comes back without a session, until the link in the
+ * email is tapped. And a sign-up for an address that already has an account
+ * is no longer refused: Supabase answers with a stand-in user, no session and
+ * no email, so the form can't be used to find out who has an account. The
+ * stand-in's tell is that it has no identities.
  */
 export async function signInOrUp(email: string, password: string): Promise<EntryMode> {
   const address = email.trim().toLowerCase();
@@ -71,20 +83,29 @@ export async function signInOrUp(email: string, password: string): Promise<Entry
 
   const { error: signInError } = await supabase.auth.signInWithPassword({ email: address, password });
   if (!signInError) return "signin";
+  // Supabase checks the password before this, so it's their account; it just
+  // hasn't been confirmed yet.
+  if (/email not confirmed/i.test(signInError.message)) return "unconfirmed";
   if (!/invalid login credentials/i.test(signInError.message)) throw new Error(friendly(signInError.message));
 
+  const wrongPassword = "That password doesn't match this email. Try again, or continue with Google.";
   const { data, error: signUpError } = await supabase.auth.signUp({ email: address, password });
   if (signUpError) {
-    if (/already registered|already exists|user already/i.test(signUpError.message)) {
-      throw new Error("That password doesn't match this email. Try again, or continue with Google.");
-    }
+    if (/already registered|already exists|user already/i.test(signUpError.message)) throw new Error(wrongPassword);
     throw new Error(friendly(signUpError.message));
   }
-  if (!data.session) {
-    // Only reachable if email confirmation gets turned on for the project.
-    throw new Error("Check your email to confirm the address, then sign in.");
-  }
-  return "signup";
+  if (data.session) return "signup";
+  if (data.user?.identities?.length === 0) throw new Error(wrongPassword);
+  return "confirm";
+}
+
+/**
+ * Send the confirmation email again. A new link replaces the last one, so
+ * only the newest works.
+ */
+export async function resendConfirmation(email: string): Promise<void> {
+  const { error } = await supabase.auth.resend({ type: "signup", email: email.trim().toLowerCase() });
+  if (error) throw new Error(friendly(error.message));
 }
 
 /**
@@ -203,6 +224,10 @@ function friendly(message: string): string {
   if (/rate limit/i.test(message)) {
     return "We can't set up new accounts just now — too many attempts in the last hour. Continue with Google, or try again later.";
   }
+  // One email per address a minute: "For security purposes, you can only
+  // request this after 42 seconds."
+  const wait = /only request this after (\d+) seconds?/i.exec(message);
+  if (wait) return `We've only just sent one. Give it ${wait[1]} seconds, then try again.`;
   return message;
 }
 
