@@ -2,6 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImageManipulator from "expo-image-manipulator";
 import { afterScanLine, PHOTO_TRIAL, type Allowance } from "@/domain/allowance";
 import { KNOWN_CULTIVARS } from "@/domain/species";
+import { ACCOUNT_SETTINGS } from "@/domain/greenhouse";
+import { settingKey } from "./greenhouse";
 import { ensureSession, supabase, supabaseConfigured } from "./supabase";
 
 /** Bump when the prompt changes, so a remembered answer from the old one isn't reused. */
@@ -88,11 +90,10 @@ export interface LastScan {
   photos: string[];
   answer: Answer;
 }
-const LAST_SCAN_KEY = "ai:lastScan";
-
 export async function loadLastScan(): Promise<LastScan | null> {
   try {
-    const raw = await AsyncStorage.getItem(LAST_SCAN_KEY);
+    const key = await settingKey(ACCOUNT_SETTINGS.lastScan);
+    const raw = key ? await AsyncStorage.getItem(key) : null;
     const last = raw ? (JSON.parse(raw) as LastScan) : null;
     return last?.answer?.verdict && last.photos?.length ? last : null;
   } catch {
@@ -101,7 +102,8 @@ export async function loadLastScan(): Promise<LastScan | null> {
 }
 
 export async function clearLastScan(): Promise<void> {
-  await AsyncStorage.removeItem(LAST_SCAN_KEY).catch(() => {});
+  const key = await settingKey(ACCOUNT_SETTINGS.lastScan).catch(() => null);
+  if (key) await AsyncStorage.removeItem(key).catch(() => {});
 }
 
 /**
@@ -254,6 +256,8 @@ export async function analyzePhoto(
     photos: images.map((b64) => `data:image/jpeg;base64,${b64}`),
     answer,
   };
-  AsyncStorage.setItem(LAST_SCAN_KEY, JSON.stringify(last)).catch(() => {});
+  settingKey(ACCOUNT_SETTINGS.lastScan)
+    .then((key) => (key ? AsyncStorage.setItem(key, JSON.stringify(last)) : undefined))
+    .catch(() => {});
   return answer;
 }

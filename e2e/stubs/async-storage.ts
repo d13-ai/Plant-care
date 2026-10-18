@@ -20,6 +20,18 @@ const AsyncStorage = {
   async clear(): Promise<void> {
     store.clear();
   },
+  async getAllKeys(): Promise<string[]> {
+    return [...store.keys()];
+  },
+  async multiGet(keys: string[]): Promise<[string, string | null][]> {
+    return keys.map((key) => [key, store.get(key) ?? null]);
+  },
+  async multiSet(pairs: [string, string][]): Promise<void> {
+    for (const [key, value] of pairs) store.set(key, value);
+  },
+  async multiRemove(keys: string[]): Promise<void> {
+    for (const key of keys) store.delete(key);
+  },
 };
 
 export default AsyncStorage;

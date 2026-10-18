@@ -6,6 +6,7 @@ import {
   applyRemoteEvent,
   applyRemotePhoto,
   applyRemotePlant,
+  claimGreenhouse,
   clearDirty,
   clearTombstones,
   deletePlantByUuid,
@@ -15,16 +16,16 @@ import {
   getSyncMeta,
   linkMotherByUuid,
   listTombstones,
-  markAllDirty,
   markPhotoUploaded,
-  regenerateIdentities,
   setSyncMeta,
+  GREENHOUSE_KEEPER,
   type Applied,
   type RemoteEvent,
   type RemotePhoto,
   type RemotePlant,
 } from "@/db";
-import { getKeeperName } from "./keeper";
+import { ORIGINAL_FILE, SOMEONE_ELSE } from "@/domain/greenhouse";
+import { keeperNameSynced, unsentKeeperName } from "./keeper";
 import { savedSizes } from "./photo-sizes";
 import { BUCKET, SUPABASE_URL, supabase, supabaseConfigured } from "./supabase";
 
@@ -83,7 +84,23 @@ const PAGE = 500;
 const MAX_PAGES = 200;
 
 const LAST_SYNCED = "last_synced_at";
-const KEEPER = "keeper_id";
+
+/**
+ * Plants the server already holds under a different account: this file was
+ * adopted by the wrong one. Only possible for a device's original file whose
+ * keeper was cleared -- signing out did that before 19 Oct 2026.
+ */
+class SomeoneElsesGreenhouse extends Error {}
+
+const elsewhere = new Set<() => void>();
+
+/** Told when the open greenhouse turns out to be another account's. */
+export function onGreenhouseElsewhere(listener: () => void): () => void {
+  elsewhere.add(listener);
+  return () => {
+    elsewhere.delete(listener);
+  };
+}
 
 
 let status: SyncStatus = { state: "idle", lastSyncedAt: null, error: null, version: 0 };
@@ -289,13 +306,26 @@ async function putPhoto(path: string, uri: string): Promise<void> {
  */
 export async function pushAll(db: SQLiteDatabase, session: Session): Promise<number> {
   const keeperId = session.user.id;
+  // Never one account's plants under another's name. (A file nobody has
+  // claimed yet is this account's, as it is when it opens.)
+  if ((await claimGreenhouse(db, keeperId)) !== keeperId) throw new Error("This greenhouse belongs to another account.");
   const now = new Date().toISOString();
   let pushed = 0;
 
-  const { error: keeperError } = await supabase
+  // The name goes up only when it was changed here; otherwise this device
+  // takes the server's, which is how a second phone learns it.
+  const name = await unsentKeeperName(keeperId);
+  const { data: keeper, error: keeperError } = await supabase
     .from("keepers")
-    .upsert({ id: keeperId, display_name: (await getKeeperName()) || null, updated_at: now });
+    .upsert(
+      name === undefined
+        ? { id: keeperId, updated_at: now }
+        : { id: keeperId, display_name: name || null, updated_at: now },
+    )
+    .select("display_name")
+    .maybeSingle();
   if (keeperError) throw new Error(`Keeper: ${keeperError.message}`);
+  await keeperNameSynced(keeperId, name, keeper?.display_name ?? null).catch(() => {});
 
   // Deletions first: a row that came back dirty after a delete shouldn't resurrect.
   //
@@ -338,20 +368,17 @@ export async function pushAll(db: SQLiteDatabase, session: Session): Promise<num
   }
 
   // Plants, mothers before cuttings (a cutting's id is always higher).
-  let plants = await dirtyPlants(db);
+  const plants = await dirtyPlants(db);
   if (plants.length) {
-    let { error } = await upsertPlants(keeperId, plants);
+    const { error } = await upsertPlants(keeperId, plants);
     if (error && isSomeoneElsesRow(error)) {
-      // These ids already exist on the server under another keeper: this
-      // phone synced as a different account before. Rather than fail
-      // forever, this account gets its own copy — fresh identities for
-      // everything, then push again. (Only when the session itself is
-      // good; an expired one fails the same policy for a different reason.)
+      // These ids already exist on the server under another keeper. Until 19
+      // Oct 2026 this account then took a copy of them all, which is how one
+      // keeper's plants ended up in another's account. They are not this
+      // account's to copy. (Only when the session itself is good; an expired
+      // one fails the same policy for a different reason.)
       const { error: who } = await supabase.auth.getUser();
-      if (who) throw new Error(`Plants: ${error.message}`);
-      await regenerateIdentities(db);
-      plants = await dirtyPlants(db);
-      ({ error } = await upsertPlants(keeperId, plants));
+      if (!who) throw new SomeoneElsesGreenhouse(error.message);
     }
     if (error) throw new Error(`Plants: ${error.message}`);
     await clearDirty(db, "plants", plants.map((p) => ({ uuid: p.uuid, updatedAt: p.updatedAt })));
@@ -444,7 +471,9 @@ function isSomeoneElsesRow(error: { message: string }): boolean {
 // ---------------------------------------------------------------------------
 
 let running: Promise<void> | null = null;
-let queued = false;
+/** The greenhouse to sync again once the running sync is done -- the latest
+ *  asked for, which after an account switch is a different file. */
+let queued: SQLiteDatabase | null = null;
 
 /**
  * Pull then push, once, for the signed-in account. Overlapping calls fold
@@ -454,15 +483,17 @@ let queued = false;
  */
 export async function syncNow(db: SQLiteDatabase): Promise<void> {
   if (running) {
-    queued = true;
+    queued = db;
     return running;
   }
   running = (async () => {
     try {
-      do {
-        queued = false;
-        await runOnce(db);
-      } while (queued);
+      let next: SQLiteDatabase | null = db;
+      while (next) {
+        queued = null;
+        await runOnce(next);
+        next = queued;
+      }
     } finally {
       running = null;
     }
@@ -476,16 +507,14 @@ async function runOnce(db: SQLiteDatabase): Promise<void> {
   const session = data.session;
   if (!sessionHasAccount(session)) return;
 
+  // This file is one account's (src/domain/greenhouse.ts). Signed in as
+  // another -- an account switch the screens haven't caught up with yet --
+  // there is nothing to do here: the right file is about to open.
+  const keeperId = session!.user.id;
+  if ((await claimGreenhouse(db, keeperId)) !== keeperId) return;
+
   setStatus({ state: "syncing", error: null });
   try {
-    // A different account than last time (first sign-in, or a switch):
-    // whatever is on this phone now belongs to it, and its greenhouse is
-    // pulled from the start.
-    const keeperId = session!.user.id;
-    if ((await getSyncMeta(db, KEEPER)) !== keeperId) {
-      await markAllDirty(db);
-      await setSyncMeta(db, KEEPER, keeperId);
-    }
     const changed = await pull(db);
     await pushAll(db, session!);
     const finished = new Date().toISOString();
@@ -497,6 +526,14 @@ async function runOnce(db: SQLiteDatabase): Promise<void> {
       version: changed ? status.version + 1 : status.version,
     });
   } catch (err) {
+    if (err instanceof SomeoneElsesGreenhouse && db.databasePath?.endsWith(ORIGINAL_FILE)) {
+      // Leave the plants where they are, for the account they belong to,
+      // and let the screens open this account's own greenhouse.
+      await setSyncMeta(db, GREENHOUSE_KEEPER, SOMEONE_ELSE);
+      setStatus({ state: "idle", error: null });
+      for (const listener of elsewhere) listener();
+      return;
+    }
     const message = err instanceof Error ? err.message : String(err);
     setStatus({ state: "error", error: message });
     throw err;
@@ -517,8 +554,9 @@ export function requestSync(db: SQLiteDatabase, delayMs = 1500): void {
   }, delayMs);
 }
 
-/** Read the last sync time into the status on startup. */
+/** Read the last sync time into the status as a greenhouse opens -- this
+ *  one's, not the last account's. */
 export async function loadSyncStatus(db: SQLiteDatabase): Promise<void> {
   const last = await getSyncMeta(db, LAST_SYNCED);
-  if (last && !status.lastSyncedAt) setStatus({ lastSyncedAt: last });
+  setStatus({ lastSyncedAt: last, error: null, ...(status.state === "error" ? { state: "idle" as const } : {}) });
 }

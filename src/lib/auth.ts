@@ -2,11 +2,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
-import { Directory, Paths } from "expo-file-system";
+import { File } from "expo-file-system";
 import * as WebBrowser from "expo-web-browser";
-import { markAllDirty, wipeLocalData } from "@/db";
+import { wipeLocalData } from "@/db";
+import { loadDraft } from "./draft";
+import { forgetAccountSettings } from "./greenhouse";
 import { stopReminders } from "./reminders";
-import { OPT_OUT_KEY } from "@/domain/analytics";
 import { NATIVE_REDIRECT, readOAuthReturn } from "@/domain/oauth";
 import { supabase } from "./supabase";
 
@@ -275,13 +276,12 @@ export async function signInWithGoogle(): Promise<void> {
 export const DELETE_WORD = "DELETE";
 
 /**
- * Delete this account and everything in it, for good, then leave this device
- * as if nobody had ever signed in: no plants, no photos, no remembered name.
+ * Delete this account and everything in it, for good, then leave nothing of
+ * it on this device: no plants, no photos, no remembered name. Another
+ * account's greenhouse on the same device is its own, and stays.
  *
  * The server goes first. If it fails, nothing here is touched -- the account
- * still exists and the keeper can try again. Only once it has gone are the
- * plants on this phone wiped, because a phone that kept them would hand them
- * to whoever signs in next (see markAllDirty).
+ * still exists and the keeper can try again.
  *
  * Other phones the keeper used still hold their copy until they next open;
  * they then find no account and land on the welcome screen. Their plants stay
@@ -301,22 +301,35 @@ export async function deleteAccount(db: SQLiteDatabase, typed: string): Promise<
     throw new Error(message ?? "Couldn't delete your account just now. Try again in a few minutes.");
   }
 
+  const { data: signedIn } = await supabase.auth.getSession();
+  const userId = signedIn.session?.user.id;
+  // This account's photo files -- the ones its rows and its unsaved Add plant
+  // name. Web photos live in the rows themselves.
+  const files =
+    Platform.OS === "web"
+      ? []
+      : [
+          ...(await db.getAllAsync<{ uri: string }>("SELECT uri FROM photos")).map((r) => r.uri),
+          ...((await loadDraft())?.photoUris ?? []),
+        ].filter((uri) => uri.startsWith("file:"));
   await wipeLocalData(db);
   await stopReminders();
-  if (Platform.OS !== "web") {
+  for (const uri of files) {
     try {
-      const dir = new Directory(Paths.document, "photos");
-      if (dir.exists) dir.delete();
+      const file = new File(uri);
+      if (file.exists) file.delete();
     } catch {
       /* the rows are gone; an orphaned file can't reach anyone */
     }
   }
-  // Everything this app keeps per keeper -- the name, the half-filled new
-  // plant, the last scan, "keep watering as is" answers. Not the analytics
-  // opt-out, which is about the device's owner, not the account.
+  // Everything this app keeps for the account -- the name, the half-filled
+  // new plant, the last scan, "keep watering as is" answers -- and the cached
+  // AI answers, which are about its photos. Not the analytics opt-out, which
+  // is about the device's owner, nor another account's settings.
   try {
+    if (userId) await forgetAccountSettings(userId);
     const keys = await AsyncStorage.getAllKeys();
-    await AsyncStorage.multiRemove(keys.filter((k) => k !== OPT_OUT_KEY && !k.startsWith("sb-")));
+    await AsyncStorage.multiRemove(keys.filter((k) => k.startsWith("ai:") && !k.includes("@")));
   } catch {
     /* nothing here identifies anyone once the account is gone */
   }
@@ -325,12 +338,15 @@ export async function deleteAccount(db: SQLiteDatabase, typed: string): Promise<
   await supabase.auth.signOut({ scope: "local" });
 }
 
-/** Sign out. The plants stay on this device; they just stop syncing. */
-export async function signOut(db: SQLiteDatabase): Promise<void> {
+/**
+ * Sign out. The greenhouse stays on this device, for this account: signing
+ * back in finds it as it was, changes not yet synced included, and another
+ * account signing in here gets its own.
+ */
+export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
   // The greenhouse stops showing; so do its reminders.
   await stopReminders();
-  await markAllDirty(db);
 }
 
 /** The current account, kept fresh as the session changes. */

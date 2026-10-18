@@ -21,19 +21,24 @@ import {
   deleteEvent,
   deletePlant,
   getPlant,
+  greenhouseKeeper,
+  GREENHOUSE_KEEPER,
   listPlants,
   logCare,
+  markAllDirty,
   migrate,
   pendingChanges,
   propagate,
+  setSyncMeta,
   setCoverPhoto,
   updatePlant,
   type Plant,
 } from "@/db";
+import { ORIGINAL_FILE, SOMEONE_ELSE } from "@/domain/greenhouse";
 import { savedSizePath } from "@/domain/photo-uri";
 import { SUPABASE_URL, supabase, supabaseConfigured } from "@/lib/supabase";
 import { signInTestAccount as signInFixture } from "./test-account";
-import { getSyncStatus, syncNow } from "@/lib/sync";
+import { getSyncStatus, onGreenhouseElsewhere, syncNow } from "@/lib/sync";
 import { openTestDatabase, type TestDatabase } from "./node-sqlite";
 
 const PHOTO_DATA_URL =
@@ -60,9 +65,7 @@ async function signIn(email: string, password: string): Promise<string> {
  *
  * The cleanup used to be `delete().eq("keeper_id", ...)`, which takes the whole
  * account with it. PASSPORT_E2E_EMAIL can point at an account that holds a real
- * greenhouse, so the test deletes the ids it created and nothing else. An
- * identity regeneration mints fresh ids for the same plants, so this is added
- * to rather than replaced.
+ * greenhouse, so the test deletes the ids it created and nothing else.
  */
 const createdPlantIds = new Set<string>();
 
@@ -97,6 +100,19 @@ async function removeTestData(signedInAs: string): Promise<void> {
 async function signInTestAccount(): Promise<string> {
   const account = await signInFixture("sync");
   return account.id;
+}
+
+/**
+ * A second account: PASSPORT_E2E_EMAIL_2 when it is set, otherwise the tag
+ * test's fixture -- a different account whenever the first one is a fixture
+ * too. Null when there is no second account to be had.
+ */
+async function signInSecondAccount(): Promise<string | null> {
+  const email = process.env.PASSPORT_E2E_EMAIL_2;
+  const password = process.env.PASSPORT_E2E_PASSWORD_2;
+  if (email && password) return signIn(email, password);
+  if (process.env.PASSPORT_E2E_EMAIL) return null;
+  return (await signInFixture("tag")).id;
 }
 
 /** updatePlant wants the whole editable record; patch one field of it. */
@@ -156,8 +172,8 @@ describe("syncing a greenhouse between two devices", () => {
     // then the first account too.
     const { data } = await supabase.auth.getSession();
     if (data.session) await removeTestData(data.session.user.id);
-    if (secondKeeperId && process.env.PASSPORT_E2E_EMAIL && process.env.PASSPORT_E2E_PASSWORD) {
-      await signIn(process.env.PASSPORT_E2E_EMAIL, process.env.PASSPORT_E2E_PASSWORD);
+    if (secondKeeperId) {
+      await signInTestAccount();
       await removeTestData(keeperId);
     }
     await supabase.auth.signOut();
@@ -322,37 +338,81 @@ describe("syncing a greenhouse between two devices", () => {
     }
   });
 
-  test("signing a phone into a different account gives that account its own copy", async () => {
-    const email = process.env.PASSPORT_E2E_EMAIL_2;
-    const password = process.env.PASSPORT_E2E_PASSWORD_2;
-    if (!email || !password) {
-      console.warn("PASSPORT_E2E_EMAIL_2 / _PASSWORD_2 not set — skipping the account-switch check");
+  test("another account signed in on this phone never takes its plants", async () => {
+    // Until 19 Oct 2026 it did: a second account signing in on a phone took a
+    // copy of every plant already there. Now each account has its own file
+    // (src/domain/greenhouse.ts), and this one stays the first account's.
+    const before = (await listPlants(a.db)).map((p) => p.plant.uuid).sort();
+    secondKeeperId = await signInSecondAccount();
+    if (!secondKeeperId) {
+      console.warn("No second account (set PASSPORT_E2E_EMAIL_2 / _PASSWORD_2) — skipping the account-switch checks");
       return;
     }
-    // Phone A's plants live on the server under the first account. A second
-    // account signs in on A; the server won't let it overwrite those rows,
-    // so A must give the second account its own copy and carry on.
-    const before = await listPlants(a.db);
-    const oldUuids = before.map((p) => p.plant.uuid);
-    secondKeeperId = await signIn(email, password);
     await clearLeftovers(secondKeeperId);
 
     await syncNow(a.db);
     expect(getSyncStatus().state).toBe("idle");
+    expect(await greenhouseKeeper(a.db)).toBe(keeperId);
+    expect((await listPlants(a.db)).map((p) => p.plant.uuid).sort()).toEqual(before);
+    const { data: theirs } = await supabase
+      .from("plants")
+      .select("id")
+      .eq("keeper_id", secondKeeperId)
+      .in("nickname", TEST_NICKNAMES);
+    expect(theirs, "nothing went up under the second account").toEqual([]);
 
-    // The regenerated ids belong to this test too, and to a second account.
-    await trackPlants(a.db);
+    // The second account's own greenhouse on this phone has only its plants.
+    const c = openTestDatabase();
+    try {
+      await migrate(c.db);
+      await syncNow(c.db);
+      expect(await greenhouseKeeper(c.db)).toBe(secondKeeperId);
+      expect(await byName(c.db, "Sync Monstera")).toBeNull();
+    } finally {
+      c.close();
+    }
+  });
 
-    const after = await listPlants(a.db);
-    expect(after.map((p) => p.plant.nickname).sort()).toEqual(before.map((p) => p.plant.nickname).sort());
-    for (const p of after) expect(oldUuids, "every plant got a fresh identity").not.toContain(p.plant.uuid);
+  test("an original greenhouse that lost its keeper is left for its owner, not copied", async () => {
+    if (!secondKeeperId) return;
+    // A phone's original file, holding the first account's plants -- and
+    // then signed out the way the app did before 19 Oct 2026, which forgot
+    // whose they were.
+    const d = openTestDatabase(ORIGINAL_FILE);
+    try {
+      await migrate(d.db);
+      await signInTestAccount();
+      await syncNow(d.db);
+      expect((await listPlants(d.db)).some((p) => p.plant.uuid === motherUuid)).toBe(true);
+      await markAllDirty(d.db);
+      await setSyncMeta(d.db, GREENHOUSE_KEEPER, null);
 
-    const { data: mine } = await supabase.from("plants").select("id").eq("keeper_id", secondKeeperId).is("deleted_at", null);
-    expect(mine!.map((r) => r.id).sort()).toEqual(after.map((p) => p.plant.uuid).sort());
+      // The second account signs in and adopts it; its first push finds the
+      // plants are the first account's on the server.
+      await signInSecondAccount();
+      let told = 0;
+      const stop = onGreenhouseElsewhere(() => told++);
+      try {
+        await syncNow(d.db);
+      } finally {
+        stop();
+      }
+      expect(told, "the screens are told to open the account's own").toBe(1);
+      expect(await greenhouseKeeper(d.db)).toBe(SOMEONE_ELSE);
+      expect(getSyncStatus().state).toBe("idle");
+      const { data: theirs } = await supabase
+        .from("plants")
+        .select("id")
+        .eq("keeper_id", secondKeeperId)
+        .in("nickname", TEST_NICKNAMES);
+      expect(theirs, "no copy under the second account").toEqual([]);
 
-    const photo = (await getPlant(a.db, motherId))!.photos[0];
-    expect(photo.remotePath?.startsWith(`${secondKeeperId}/`), "photo re-uploaded under the new account").toBe(true);
-    expect(await pendingChanges(a.db)).toBe(0);
+      // And it stays out of the way: syncing it again does nothing.
+      await syncNow(d.db);
+      expect(await greenhouseKeeper(d.db)).toBe(SOMEONE_ELSE);
+    } finally {
+      d.close();
+    }
   });
 
 });

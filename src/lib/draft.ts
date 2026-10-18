@@ -1,4 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ACCOUNT_SETTINGS } from "@/domain/greenhouse";
+import { settingKey } from "./greenhouse";
 import type { Verdict } from "./ai";
 
 /**
@@ -24,7 +26,6 @@ export interface NewPlantDraft {
   savedAt: string;
 }
 
-const KEY = "newPlantDraft";
 
 export function draftHasContent(d: Omit<NewPlantDraft, "savedAt">): boolean {
   return Boolean(d.photoUris?.length || d.photoUri || d.nickname.trim() || d.species.trim() || d.location.trim() || d.acquiredFrom.trim() || d.verdict);
@@ -32,7 +33,9 @@ export function draftHasContent(d: Omit<NewPlantDraft, "savedAt">): boolean {
 
 export async function loadDraft(): Promise<NewPlantDraft | null> {
   try {
-    const raw = await AsyncStorage.getItem(KEY);
+    // The signed-in account's own: an unsaved plant is nobody else's business.
+    const key = await settingKey(ACCOUNT_SETTINGS.draft);
+    const raw = key ? await AsyncStorage.getItem(key) : null;
     if (!raw) return null;
     const d = JSON.parse(raw) as NewPlantDraft;
     if (!d.photoUris) d.photoUris = d.photoUri ? [d.photoUri] : [];
@@ -50,12 +53,15 @@ export function saveDraftSoon(d: Omit<NewPlantDraft, "savedAt">): void {
   timer = setTimeout(() => {
     timer = null;
     const draft: NewPlantDraft = { ...d, savedAt: new Date().toISOString() };
-    AsyncStorage.setItem(KEY, JSON.stringify(draft)).catch(() => {});
+    settingKey(ACCOUNT_SETTINGS.draft)
+      .then((key) => (key ? AsyncStorage.setItem(key, JSON.stringify(draft)) : undefined))
+      .catch(() => {});
   }, 400);
 }
 
 export async function clearDraft(): Promise<void> {
   if (timer) clearTimeout(timer);
   timer = null;
-  await AsyncStorage.removeItem(KEY).catch(() => {});
+  const key = await settingKey(ACCOUNT_SETTINGS.draft).catch(() => null);
+  if (key) await AsyncStorage.removeItem(key).catch(() => {});
 }
