@@ -510,6 +510,16 @@ searches handle, display name, and the names and species of what's on show,
 with the `LIKE` wildcards escaped. `e2e/directory.e2e.test.ts` checks all of
 that against the live project.
 
+**What a card is for.** A card remembers when you last visited
+(`calling_cards.seen_at`, set by `visit_round(handle)` when you tap Visit),
+and `rounds()` counts what has gone on show since -- plants put on show, and
+new photos of plants that were already there -- and sorts by the latest
+change. The keeper sees how many cards their conservatory holds
+(`cards_left_with_me()`, on What's on show), and so does its public page
+(`conservatory()` returns `cards`). A number only: who holds whose card stays
+private. Timestamps that decide "new" can't be set in the future
+(`plants_published_not_future`, `photos_created_not_future`).
+
 **The keepers row.** Adding `listed` turned up a hole (18 Oct 2026): the
 table-level grants let a keeper write every column of their own row,
 `ai_unlimited` and `photo_calls` included, or delete it to start the photo

@@ -298,6 +298,19 @@ try {
       throw new Error("the games card showed while a plant needed attention");
   });
   await shot("05-list");
+  await step("the list can be switched to A–Z, and the phone remembers", async () => {
+    await page.getByText("Needs me first", { exact: true }).waitFor();
+    await page.getByText("A–Z", { exact: true }).click();
+    const stored = () => page.evaluate(() => window.localStorage.getItem("plantOrder"));
+    if ((await stored()) !== "az") throw new Error("the A–Z choice wasn't kept");
+    await page.reload();
+    await page.getByText("All plants").waitFor({ timeout: 20000 });
+    await page.getByText("Big Monstera").first().waitFor();
+    if ((await stored()) !== "az") throw new Error("the A–Z choice didn't survive a reload");
+    // Back as it was, for the steps after this one.
+    await page.getByText("Needs me first", { exact: true }).click();
+    if ((await stored()) !== "needs") throw new Error("couldn't switch back");
+  });
   await step("the card's drop logs water without leaving the greenhouse", async () => {
     await page.getByLabel("Log water for Cutting #1").click();
     await page.getByText("Watered Cutting #1").waitFor();
@@ -384,6 +397,7 @@ try {
       }
       return r.fulfill(asJson([{ handle: "smoke_keeper", listed: false }]));
     });
+    await page.route("**/rest/v1/rpc/cards_left_with_me", (r) => r.fulfill(asJson(3)));
     await page.goto(base + "/on-show");
     await page.getByText("What's on show").first().waitFor({ timeout: 20000 });
     await page.getByText("Nothing is on show yet").waitFor();
@@ -392,19 +406,22 @@ try {
     if (switches < 2) throw new Error("no per-plant control, or no listing switch, on the on-show screen");
     await page.getByRole("switch", { name: "List my conservatory" }).click();
     await page.getByText("It appears under Browse conservatories once something is on show").waitFor();
+    await page.getByText("3 keepers have left their card at your conservatory.").waitFor();
     if (patches.length !== 1 || patches[0].listed !== true || Object.keys(patches[0]).some((k) => !["listed", "updated_at"].includes(k)))
       throw new Error("listing wrote " + JSON.stringify(patches));
     await shot("03-on-show");
     await page.getByText("Done", { exact: true }).click();
     await page.getByText("All plants").waitFor({ timeout: 20000 });
     await page.unroute("**/rest/v1/keepers**");
+    await page.unroute("**/rest/v1/rpc/cards_left_with_me");
   });
   // One keeper for the rounds and directory steps to find. The server is
   // stubbed: what's checked is what the screens do with its answers.
   const fern = { handle: "fern_friend", display_name: "Fern Friend", on_show: 2, newest: null, photos: [] };
   await step("your rounds finds a keeper by handle, and shows them before a card is left", async () => {
     let carded = false;
-    await page.route("**/rest/v1/rpc/rounds", (r) => r.fulfill(asJson(carded ? [fern] : [])));
+    // Once the card is left, the rounds report two plants new since then.
+    await page.route("**/rest/v1/rpc/rounds", (r) => r.fulfill(asJson(carded ? [{ ...fern, new_plants: 2, new_photos: 1 }] : [])));
     await page.route("**/rest/v1/rpc/conservatory", (r) => {
       const { handle } = r.request().postDataJSON();
       return r.fulfill(asJson(handle.toLowerCase() === fern.handle
@@ -428,6 +445,7 @@ try {
     await page.getByText("✓ In your rounds").waitFor();
     if (await page.getByText("@fern_friend · 2 plants on show").count() !== 2)
       throw new Error("the keeper didn't join the rounds below");
+    await page.getByText("2 new plants · 1 new photo since your last visit").waitFor();
     await shot("03b-rounds");
     await page.getByText("Browse conservatories", { exact: true }).click();
     await page.getByText("Keepers who've chosen to list").waitFor({ timeout: 20000 });

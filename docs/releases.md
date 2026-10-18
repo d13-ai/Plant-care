@@ -36,6 +36,7 @@ Newest last. Each includes everything before it.
 | 14 Oct 2026 | `62a5025` | a65be7fa | Add plant opens on the photo; Identify with AI in the bottom bar. |
 | 15 Oct 2026 | `47dfae9` | 01a13d4d | 31 more plants, both Burle Marx among them; the species picker keeps a name as typed. |
 | 16 Oct 2026 | `818e31f` | 03e16f90 | 108 more plants: 241 species, 151 cultivars. |
+| 18 Oct 2026 | `6ad2ebf` | 01a14d44 | Find a keeper by handle in Your rounds; Browse conservatories; "List my conservatory" switch on What's on show. |
 
 ## Release notes, version 8 (production)
 

@@ -32,6 +32,12 @@ const fixture: Conservatory = {
   ],
 };
 
+test("it says how many cards have been left, and only when there are some", () => {
+  expect(renderConservatory({ ...fixture, cards: 3 })).toContain("3 keepers have left their card here.");
+  expect(renderConservatory({ ...fixture, cards: 0 })).not.toContain("left their card");
+  expect(renderConservatory(fixture)).not.toContain("left their card");
+});
+
 test("it shows the keeper and every plant they have on show", () => {
   const html = renderConservatory(fixture);
   expect(html).toContain("Amanda");

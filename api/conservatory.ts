@@ -12,6 +12,7 @@
 // is_public — the same set the tag links expose — so a private plant is as
 // invisible here as everywhere else.
 
+import { cardsLine } from "../src/domain/calling-cards";
 import { LOGO, page, photoImg, reportLink } from "./tag";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "https://ixagjvntbgyqemxxinqe.supabase.co";
@@ -32,6 +33,8 @@ type Plant = {
 };
 export type Conservatory = {
   keeper: { handle: string; display_name: string; keeping_since: string };
+  /** How many calling cards have been left here. A number only, never who. */
+  cards?: number;
   plants: Plant[];
 };
 
@@ -72,6 +75,7 @@ export function renderConservatory(data: Conservatory): string {
 <header>
   <h1>${esc(keeper.display_name)}</h1>
   <div class="sub">@${esc(keeper.handle)} · keeping plants here since ${esc(since)}</div>
+  ${data.cards ? `<div class="sub">${esc(cardsLine(Number(data.cards), "theirs"))}</div>` : ""}
 </header>
 
 ${

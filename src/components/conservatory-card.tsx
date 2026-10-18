@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { BucketImage } from "@/components/bucket-image";
-import { Body, Button, Row } from "@/components/ui";
+import { Badge, Body, Button, Row } from "@/components/ui";
+import { whatsNew } from "@/domain/calling-cards";
 import { PHOTO_SIZES } from "@/domain/photo-uri";
 import type { Round } from "@/lib/rounds";
 import { photoUrl } from "@/lib/sync";
@@ -19,15 +20,22 @@ import { font, radius, space, useTheme } from "@/theme";
 export function ConservatoryCard({
   round,
   onLongPress,
+  onVisit,
   footer,
 }: {
   round: Round;
   onLongPress?: () => void;
+  /** Told when Visit is tapped, so the rounds can start "what's new" again. */
+  onVisit?: () => void;
   /** Under the photos: leaving a card, or saying why there's no need to. */
   footer?: ReactNode;
 }) {
   const t = useTheme();
-  const visit = () => Linking.openURL(round.url).catch(() => {});
+  const news = whatsNew(round.newPlants, round.newPhotos);
+  const visit = () => {
+    onVisit?.();
+    Linking.openURL(round.url).catch(() => {});
+  };
   return (
     <Pressable
       onPress={visit}
@@ -48,6 +56,11 @@ export function ConservatoryCard({
         </View>
         <Button title="Visit" small onPress={visit} />
       </View>
+      {news ? (
+        <View style={styles.news}>
+          <Badge label={`${news} since your last visit`} tone="success" />
+        </View>
+      ) : null}
       {round.photos.length > 0 ? (
         <View style={styles.strip}>
           {round.photos.map((path) => (
@@ -90,6 +103,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: "row", alignItems: "center", gap: space.md },
   text: { flex: 1, gap: 2 },
   name: { fontFamily: font.serif, fontSize: 18 },
+  news: { flexDirection: "row" },
   strip: { flexDirection: "row", gap: space.sm },
   shot: { flex: 1, aspectRatio: 1, borderRadius: radius.md },
 });
