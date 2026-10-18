@@ -1,3 +1,4 @@
+import { HANDLE_RULE } from "@/domain/handle";
 import { SITE_URL, supabase } from "./supabase";
 
 /**
@@ -5,13 +6,8 @@ import { SITE_URL, supabase } from "./supabase";
  * thing about them that is globally unique rather than private to their
  * account. It is stored on the server for that reason — a name only this
  * device knew could be taken by somebody else tomorrow.
- *
- * Same rule as the database's own check constraint on `keepers.handle`, which
- * is the one that actually holds; this copy exists so the app can say no
- * before a round trip, and the two are checked against each other in
- * `e2e/conservatory-render.e2e.test.ts`.
  */
-export const HANDLE_RULE = /^[A-Za-z0-9_]{3,20}$/;
+export { HANDLE_RULE };
 
 export function conservatoryUrl(handle: string): string {
   return `${SITE_URL}/@${handle}`;
@@ -27,6 +23,36 @@ export async function getHandle(): Promise<string | null> {
     .eq("id", data.session.user.id)
     .maybeSingle();
   return (row?.handle as string | null) ?? null;
+}
+
+/**
+ * Their handle and whether the conservatory is listed in the directory, or
+ * null while they have no handle (an unclaimed conservatory can't be listed).
+ */
+export async function getListing(): Promise<{ handle: string; listed: boolean } | null> {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) return null;
+  const { data: row, error } = await supabase
+    .from("keepers")
+    .select("handle, listed")
+    .eq("id", data.session.user.id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return row?.handle ? { handle: row.handle as string, listed: Boolean(row.listed) } : null;
+}
+
+/**
+ * List the conservatory among the ones other keepers can browse, or take it
+ * out. It publishes nothing: the directory shows what /@handle already does.
+ */
+export async function setListed(listed: boolean): Promise<void> {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) throw new Error("Sign in first.");
+  const { error } = await supabase
+    .from("keepers")
+    .update({ listed, updated_at: new Date().toISOString() })
+    .eq("id", data.session.user.id);
+  if (error) throw new Error(error.message);
 }
 
 /**

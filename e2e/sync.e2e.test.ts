@@ -80,9 +80,6 @@ async function clearLeftovers(id: string): Promise<void> {
   await supabase.from("plants").delete().eq("keeper_id", id).in("nickname", TEST_NICKNAMES);
 }
 
-/** Set when the test signs an account up itself, rather than being given one. */
-let throwawayKeeperId: string | null = null;
-
 /** Take the test's rows and uploaded objects back out, and nothing else. RLS
  *  keeps each delete to the signed-in account, so the same id list serves both
  *  accounts the run may have touched. */
@@ -93,16 +90,12 @@ async function removeTestData(signedInAs: string): Promise<void> {
     if (photos?.length) await supabase.storage.from("plant-photos").remove(photos.flatMap((p) => withSavedSizes(p.path)));
     await supabase.from("plants").delete().in("id", ids);
   }
-  // The keeper row is the account's own profile. It is the test's to remove
-  // only when the test created the account.
-  if (throwawayKeeperId && throwawayKeeperId === signedInAs) {
-    await supabase.from("keepers").delete().eq("id", signedInAs);
-  }
+  // The keeper row stays: since 18 Oct 2026 a keeper can't delete their own
+  // (doing so reset the photo trial), and it goes with the account.
 }
 
 async function signInTestAccount(): Promise<string> {
   const account = await signInFixture("sync");
-  if (account.disposable) throwawayKeeperId = account.id;
   return account.id;
 }
 

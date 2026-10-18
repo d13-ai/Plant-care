@@ -6,6 +6,7 @@
 import { expect, test } from "vitest";
 import { HANDLE, conservatoryPage, renderConservatory, type Conservatory } from "../api/conservatory";
 import { page } from "../api/tag";
+import { HANDLE_RULE } from "../src/domain/handle";
 
 const fixture: Conservatory = {
   keeper: { handle: "amanda", display_name: "Amanda", keeping_since: "2026-01-04T00:00:00.000Z" },
@@ -90,6 +91,8 @@ test("the handle rule matches the database's own constraint", () => {
   expect(HANDLE.test("a".repeat(21))).toBe(false);
   expect(HANDLE.test("has space")).toBe(false);
   expect(HANDLE.test("dot.dot")).toBe(false);
+  // The app's copy says no before a round trip; it must say no to the same.
+  expect(HANDLE_RULE.source).toBe(HANDLE.source);
 });
 
 test("anyone can report the conservatory from the page itself", () => {

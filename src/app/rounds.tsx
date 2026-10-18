@@ -1,27 +1,34 @@
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { BucketImage } from "@/components/bucket-image";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { ConservatoryCard, LeaveCardFooter } from "@/components/conservatory-card";
 import { Body, Button, Card, Field, Row, Title } from "@/components/ui";
 import { confirm } from "@/lib/confirm";
-import { PHOTO_SIZES } from "@/domain/photo-uri";
-import { leaveCard, myRounds, takeCardBack, type Round } from "@/lib/rounds";
-import { photoUrl } from "@/lib/sync";
-import { font, radius, space, useTheme } from "@/theme";
+import { getHandle } from "@/lib/conservatory";
+import { handleFrom, sameHandle } from "@/domain/handle";
+import { leaveCard, lookUpKeeper, myRounds, takeCardBack, type Round } from "@/lib/rounds";
+import { space, useTheme } from "@/theme";
 
 /**
  * The rounds: the conservatories whose cards you hold.
  *
- * Tapping one opens their conservatory, which is a real page on the web rather
- * than a screen in here — it is the same thing a stranger sees, and the same
- * thing you would send someone. There is no in-app copy of it to drift.
+ * Someone new is found by their exact handle (or their link, pasted) and
+ * shown before a card is left, so a typo lands on "nobody by that name" or
+ * on a stranger's face rather than silently in your rounds. The directory is
+ * one button away for keepers who'd rather browse; a handle finds anyone,
+ * listed or not, since the conservatory itself is public either way.
  */
 export default function Rounds() {
   const t = useTheme();
   const router = useRouter();
   const [rounds, setRounds] = useState<Round[] | null>(null);
-  const [handle, setHandle] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [mine, setMine] = useState<string | null>(null);
+  const [typed, setTyped] = useState("");
+  // What the last lookup found: a conservatory, nobody (with the handle that
+  // was looked for), or nothing asked yet.
+  const [found, setFound] = useState<{ round: Round | null; asked: string } | null>(null);
+  const [finding, setFinding] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -34,19 +41,33 @@ export default function Rounds() {
 
   useEffect(() => {
     refresh();
+    getHandle().then(setMine).catch(() => {});
   }, [refresh]);
 
-  const add = async () => {
-    setBusy(true);
+  const find = async () => {
+    setFinding(true);
+    setError(null);
+    setFound(null);
+    try {
+      const asked = handleFrom(typed) ?? typed.trim();
+      setFound({ round: await lookUpKeeper(typed), asked });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setFinding(false);
+    }
+  };
+
+  const leave = async (round: Round) => {
+    setLeaving(true);
     setError(null);
     try {
-      await leaveCard(handle);
-      setHandle("");
+      await leaveCard(round.handle);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setBusy(false);
+      setLeaving(false);
     }
   };
 
@@ -65,8 +86,10 @@ export default function Rounds() {
     }
   };
 
+  const carded = (handle: string) => !!rounds?.some((r) => sameHandle(r.handle, handle));
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: "Your rounds" }} />
 
       <Card>
@@ -76,65 +99,59 @@ export default function Rounds() {
           they've put on show — nothing private, the same as anyone with their link.
         </Body>
         <Field
-          label="Leave a card at"
-          value={handle}
-          onChangeText={setHandle}
-          placeholder="ogBondstera"
+          label="Find a keeper"
+          value={typed}
+          onChangeText={(text) => {
+            setTyped(text);
+            setFound(null);
+          }}
+          onSubmitEditing={() => handleFrom(typed) && find()}
+          placeholder="@ogBondstera"
+          hint="Their handle exactly, or paste their conservatory link."
           autoCapitalize="none"
           autoCorrect={false}
-          maxLength={21}
+          returnKeyType="search"
+          maxLength={80}
         />
         <Row>
           <Button
-            title={busy ? "Leaving…" : "Leave a card"}
+            title={finding ? "Finding…" : "Find"}
             variant="primary"
             small
-            disabled={busy || handle.trim().length < 3}
-            onPress={add}
+            disabled={finding || !handleFrom(typed)}
+            onPress={find}
           />
+          <Button title="Browse conservatories" small onPress={() => router.push("/conservatories")} />
         </Row>
         {error ? <Body small style={{ color: t.critical.fg }}>{error}</Body> : null}
+        {found?.round ? (
+          <ConservatoryCard
+            round={found.round}
+            footer={
+              <LeaveCardFooter
+                mine={sameHandle(found.round.handle, mine)}
+                carded={carded(found.round.handle)}
+                busy={leaving}
+                onLeave={() => leave(found.round!)}
+              />
+            }
+          />
+        ) : found ? (
+          <Body small muted>
+            No conservatory at @{found.asked}. Handles are exact — check the spelling with them.
+          </Body>
+        ) : null}
       </Card>
 
       {rounds === null ? null : rounds.length === 0 ? (
         <Body muted>
           No cards left yet. Ask a plant friend for their handle — it's the name at the end of their
-          conservatory link.
+          conservatory link — or browse the conservatories keepers have listed.
         </Body>
       ) : (
         <View style={styles.list}>
           {rounds.map((r) => (
-            <Pressable
-              key={r.handle}
-              onPress={() => Linking.openURL(r.url).catch(() => {})}
-              onLongPress={() => remove(r)}
-              accessibilityRole="link"
-              accessibilityLabel={`Visit ${r.displayName}'s conservatory`}
-              style={({ pressed }) => [styles.round, { borderColor: t.hairline, opacity: pressed ? 0.7 : 1 }]}
-            >
-              <View style={styles.roundHead}>
-                <View style={styles.roundText}>
-                  <Text style={[styles.name, { color: t.text }]} numberOfLines={1}>{r.displayName}</Text>
-                  <Body small muted>
-                    @{r.handle} · {r.onShow} {r.onShow === 1 ? "plant" : "plants"} on show
-                  </Body>
-                </View>
-                <Button title="Visit" small onPress={() => Linking.openURL(r.url).catch(() => {})} />
-              </View>
-              {r.photos.length > 0 ? (
-                <View style={styles.strip}>
-                  {r.photos.map((path) => (
-                    <BucketImage
-                      key={path}
-                      uri={photoUrl(path)}
-                      size={PHOTO_SIZES.thumb}
-                      style={styles.shot}
-                      contentFit="cover"
-                    />
-                  ))}
-                </View>
-              ) : null}
-            </Pressable>
+            <ConservatoryCard key={r.handle} round={r} onLongPress={() => remove(r)} />
           ))}
           <Body small muted>Press and hold a conservatory to take your card back.</Body>
         </View>
@@ -154,10 +171,4 @@ export default function Rounds() {
 const styles = StyleSheet.create({
   container: { padding: space.lg, gap: space.md, paddingBottom: space.xl * 2 },
   list: { gap: space.md },
-  round: { borderWidth: 1, borderRadius: radius.lg, padding: space.md, gap: space.sm },
-  roundHead: { flexDirection: "row", alignItems: "center", gap: space.md },
-  roundText: { flex: 1, gap: 2 },
-  name: { fontFamily: font.serif, fontSize: 18 },
-  strip: { flexDirection: "row", gap: space.sm },
-  shot: { flex: 1, aspectRatio: 1, borderRadius: radius.md },
 });
