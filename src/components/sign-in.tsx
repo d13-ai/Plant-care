@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { GoogleIcon } from "@/components/icons";
 import { Body, Button, Field, Row, Title } from "@/components/ui";
-import { requestPasswordReset, signInOrUp, signInWithGoogle } from "@/lib/auth";
+import { requestPasswordReset, resendConfirmation, signInOrUp, signInWithGoogle } from "@/lib/auth";
 import { cardTheme, font, radius, space, useTheme } from "@/theme";
 
 /**
@@ -26,18 +26,35 @@ export function SignIn({ heading }: { heading?: string }) {
   // screen of their own: the email typed above carries straight over.
   const [forgot, setForgot] = useState(false);
   const [linkSentTo, setLinkSentTo] = useState<string | null>(null);
+  // An account waiting on the link in its confirmation email: the address,
+  // and whether an email went to it just now or some time ago. The password
+  // stays in state, so "I've confirmed it" can sign in without asking for it
+  // again -- in the Android app the link opens the browser, so this is how
+  // the app itself gets in.
+  const [confirming, setConfirming] = useState<{ address: string; justSent: boolean } | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  // Google can bounce back with an error in the URL instead of a session.
+  // Google, or a confirmation link, can bounce back with an error in the URL
+  // instead of a session.
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const description = params.get("error_description");
-    if (description) setError(description.replace(/\+/g, " "));
+    if (params.get("error_code") === "otp_expired") {
+      // Supabase's words are "Email link is invalid or has expired"; it says
+      // the same for a link that has already been used.
+      setError(
+        "That link has run out, or it's been used already. Sign in below with your email and password — if the address still needs confirming, you can ask for a new link.",
+      );
+    } else if (description) {
+      setError(description.replace(/\+/g, " "));
+    }
   }, []);
 
   const run = async (work: () => Promise<void>) => {
     setBusy(true);
     setError(null);
+    setNotice(null);
     try {
       await work();
     } catch (err) {
@@ -48,7 +65,28 @@ export function SignIn({ heading }: { heading?: string }) {
   };
 
   const ready = /\S+@\S+\.\S+/.test(email.trim()) && password.length >= 8;
-  const enter = () => run(async () => { await signInOrUp(email, password); });
+  const enter = () =>
+    run(async () => {
+      const mode = await signInOrUp(email, password);
+      if (mode !== "confirm" && mode !== "unconfirmed") return;
+      const address = email.trim().toLowerCase();
+      if (confirming?.address === address) {
+        throw new Error("Not confirmed yet. Tap Confirm my email in the email first, then come back here.");
+      }
+      setConfirming({ address, justSent: mode === "confirm" });
+    });
+  const resend = () =>
+    run(async () => {
+      if (!confirming) return;
+      await resendConfirmation(confirming.address);
+      setConfirming({ ...confirming, justSent: true });
+      setNotice(`Sent to ${confirming.address}. Use the newest email: its link replaces any before it.`);
+    });
+  const leaveConfirming = () => {
+    setConfirming(null);
+    setError(null);
+    setNotice(null);
+  };
   const emailOk = /\S+@\S+\.\S+/.test(email.trim());
   const askForLink = () =>
     run(async () => {
@@ -60,6 +98,42 @@ export function SignIn({ heading }: { heading?: string }) {
     setLinkSentTo(null);
     setError(null);
   };
+
+  if (confirming) {
+    return (
+      <>
+        {confirming.justSent ? (
+          <>
+            <Title>Check your inbox</Title>
+            <Body>
+              We've emailed a link to {confirming.address}. Tap Confirm my email in it, and your parlour is ready.
+            </Body>
+            <Body small muted>
+              It comes from PlantParlour, hello@plantparlour.org. Nothing after a minute or two? Look in spam or
+              Promotions, or send it again.
+            </Body>
+          </>
+        ) : (
+          <>
+            <Title>Confirm your email first</Title>
+            <Body>
+              {confirming.address} still needs confirming. Tap Confirm my email in the email we sent when you
+              signed up. Can't find it, or has it run out? Send a new one.
+            </Body>
+          </>
+        )}
+        <Row>
+          <Button title={busy ? "One moment…" : "I've confirmed it"} variant="primary" disabled={busy} onPress={enter} />
+          <Button title={confirming.justSent ? "Send it again" : "Send a new link"} disabled={busy} onPress={resend} />
+        </Row>
+        <Pressable onPress={leaveConfirming} accessibilityRole="button">
+          <Text style={[styles.forgot, { color: cardTheme.plum }]}>Use a different email</Text>
+        </Pressable>
+        {notice ? <Body small muted>{notice}</Body> : null}
+        {error ? <Body small style={{ color: cardTheme.critical.fg } as never}>{error}</Body> : null}
+      </>
+    );
+  }
 
   if (forgot) {
     return (

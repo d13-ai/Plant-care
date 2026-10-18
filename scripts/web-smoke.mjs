@@ -67,6 +67,11 @@ const session = {
   user,
 };
 const asJson = (body) => ({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+// Offline means offline, whether or not this machine can reach Supabase:
+// anything not stubbed below fails as it would with no network. (Routes
+// registered later win, so this one goes first.) With the network open, the
+// smoke's made-up session reached the real project and came back 401.
+await context.route(`${SUPABASE_URL}/**`, (route) => route.abort());
 await context.route("**/auth/v1/user**", (route) => route.fulfill(asJson(user)));
 await context.route("**/auth/v1/token**", (route) => route.fulfill(asJson(session)));
 await context.addInitScript(
@@ -739,6 +744,84 @@ try {
       }
       if (updated.length !== 1 || updated[0].password !== "NewPassword9") throw new Error(`unexpected update: ${JSON.stringify(updated)}`);
       if (visitor.url().includes("reset=")) throw new Error(`the token stayed in the address bar: ${visitor.url()}`);
+    } finally {
+      await stranger.close();
+    }
+  });
+  await step("an account waiting on its confirmation email says so, and can send the link again", async () => {
+    // "Confirm email" is on for the project: a new account has no session
+    // until its link is tapped, and Supabase answers a sign-up for an address
+    // that already has an account with a stand-in user instead of an error.
+    const authError = (code, msg) => ({ status: 400, contentType: "application/json", body: JSON.stringify({ code: 400, error_code: code, msg }) });
+    const stranger = await browser.newContext({ viewport: { width: 420, height: 860 } });
+    try {
+      let state = "none"; // what the server knows of the address
+      const signups = [];
+      const resent = [];
+      await stranger.route("**/functions/v1/account-email", (route) => route.fulfill(asJson({ sent: true })));
+      await stranger.route("**/auth/v1/user**", (route) => route.fulfill(asJson(user)));
+      await stranger.route("**/auth/v1/token**", (route) => {
+        if (state === "confirmed") return route.fulfill(asJson(session));
+        if (state === "unconfirmed") return route.fulfill(authError("email_not_confirmed", "Email not confirmed"));
+        return route.fulfill(authError("invalid_credentials", "Invalid login credentials"));
+      });
+      await stranger.route("**/auth/v1/signup**", (route) => {
+        signups.push(route.request().postDataJSON());
+        if (state === "taken") return route.fulfill(asJson({ ...user, id: crypto.randomUUID(), identities: [] }));
+        state = "unconfirmed";
+        return route.fulfill(asJson({ ...user, email: "new@example.com", identities: [{ provider: "email" }] }));
+      });
+      await stranger.route("**/auth/v1/resend**", (route) => {
+        resent.push(route.request().postDataJSON());
+        return route.fulfill(asJson({}));
+      });
+      const visitor = await stranger.newPage();
+      const signIn = async (email, password) => {
+        await visitor.goto(base + "/", { waitUntil: "domcontentloaded" });
+        await visitor.getByText("Start your parlour").waitFor({ timeout: 15000 });
+        await visitor.getByPlaceholder("you@example.com").fill(email);
+        await visitor.getByPlaceholder("At least 8 characters").fill(password);
+        await visitor.getByText("Continue", { exact: true }).click();
+      };
+
+      // A new account: told where the email went, not shown an error.
+      await signIn("New@Example.com", "Password9");
+      await visitor.getByText("Check your inbox").waitFor({ timeout: 10000 });
+      await visitor.getByText("We've emailed a link to new@example.com").waitFor();
+      if (shots) await visitor.screenshot({ path: path.join(shots, "28b-check-inbox.png"), fullPage: true });
+      // Tapped too soon: still waiting, and it says so.
+      await visitor.getByText("I've confirmed it", { exact: true }).click();
+      await visitor.getByText(/Not confirmed yet/).waitFor({ timeout: 10000 });
+      await visitor.getByText("Send it again", { exact: true }).click();
+      await visitor.getByText(/Sent to new@example.com/).waitFor({ timeout: 10000 });
+      if (resent.length !== 1 || resent[0].type !== "signup" || resent[0].email !== "new@example.com") {
+        throw new Error(`unexpected resend: ${JSON.stringify(resent)}`);
+      }
+      // Confirmed (in the browser, say): the same button signs this one in.
+      state = "confirmed";
+      await visitor.getByText("I've confirmed it", { exact: true }).click();
+      await visitor.getByText("Start with one plant").waitFor({ timeout: 20000 });
+      if (signups.length !== 1) throw new Error(`signed up ${signups.length} times`);
+      await visitor.evaluate(() => localStorage.clear());
+
+      // Back later with the right password, never confirmed: a way to a new link.
+      state = "unconfirmed";
+      await signIn("new@example.com", "Password9");
+      await visitor.getByText("Confirm your email first").waitFor({ timeout: 10000 });
+      await visitor.getByText("Send a new link", { exact: true }).waitFor();
+      if (signups.length !== 1) throw new Error("an unconfirmed account was signed up again");
+
+      // A wrong password for an account that exists is still a wrong password.
+      state = "taken";
+      await signIn("keeper@example.com", "WrongPassword9");
+      await visitor.getByText(/That password doesn't match this email/).waitFor({ timeout: 10000 });
+      if (await visitor.getByText("Check your inbox").count()) throw new Error("a wrong password was told to check their inbox");
+
+      // A link that has run out lands on the sign-in page with a way forward.
+      // A page of its own: on this one, a change of fragment alone isn't a load.
+      const fromLink = await stranger.newPage();
+      await fromLink.goto(base + "/#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired", { waitUntil: "domcontentloaded" });
+      await fromLink.getByText(/That link has run out, or it's been used already/).waitFor({ timeout: 15000 });
     } finally {
       await stranger.close();
     }
