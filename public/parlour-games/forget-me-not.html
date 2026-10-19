@@ -294,7 +294,7 @@ body.learn .sizes,body.learn #new,body.daily .sizes,body.daily #new{display:none
   background:radial-gradient(rgba(201,162,75,.14) 1.2px, transparent 1.4px) 0 0/10px 10px, var(--card);
   border:1px solid var(--edge);
 }
-.card .back svg{width:42%;height:auto}
+.card .back img{width:48%;height:auto;pointer-events:none;-webkit-user-select:none;user-select:none}
 .card .face{
   transform:rotateY(180deg);background:var(--face);color:var(--face-ink);
   border:3px solid transparent;padding:4% 4% 6%;
@@ -524,16 +524,10 @@ window.va('beforeSend', function (event) {
   var modes = P.mode();
   var LEARN = modes.learn, DAILY = modes.daily, EMBED = modes.embed;
 
-  /* The back of every card: a forget-me-not, in gold. */
-  var BACK = (function () {
-    var petals = "";
-    for (var i = 0; i < 5; i++) {
-      var a = (i * 72 - 90) * Math.PI / 180;
-      petals += '<circle cx="' + (20 + 7 * Math.cos(a)).toFixed(2) + '" cy="' + (20 + 7 * Math.sin(a)).toFixed(2) + '" r="5.2"/>';
-    }
-    return '<svg viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="#C9A24B" stroke-width="1.6">' + petals +
-      '</g><circle cx="20" cy="20" r="2.6" fill="#C9A24B"/></svg>';
-  })();
+  /* The back of every card is the PlantParlour leaf, the same file the foot
+     of the page shows -- one copy of the logo, already loaded, rather than a
+     second drawn here to drift from it. */
+  var BACK = '<img src="/logo.svg" alt="" width="40" height="45" draggable="false">';
 
   var size = R.sizeOf(P.read(KEY.size, "bunch"));
   var BOARD = null, st = null, nudged = false, done = false, hint = null;

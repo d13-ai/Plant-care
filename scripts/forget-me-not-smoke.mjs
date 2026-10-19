@@ -21,6 +21,8 @@ const FILES = {
   "/parlour-games/harness.js": readFileSync("public/parlour-games/harness.js", "utf8"),
 };
 const PAGE = readFileSync("public/parlour-games/forget-me-not.html", "utf8");
+// The back of every card is the site's logo.
+const LOGO = readFileSync("public/logo.svg", "utf8");
 const HUB = readFileSync("public/parlour-games/index.html", "utf8");
 const server = createServer((req, res) => {
   const path = new URL(req.url, "http://x").pathname;
@@ -28,6 +30,11 @@ const server = createServer((req, res) => {
   if (js) {
     res.setHeader("Content-Type", "text/javascript; charset=utf-8");
     res.end(js);
+    return;
+  }
+  if (path === "/logo.svg") {
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.end(LOGO);
     return;
   }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -69,6 +76,9 @@ try {
     const label = await card(page, 0).getAttribute("aria-label");
     if (label !== "card 1 of 16, face down") throw new Error("unexpected label: " + label);
     await page.getByText("Turn over two cards to find a pair.").waitFor({ timeout: 3000 });
+    // Every back shows the logo, and it loaded.
+    const backs = await page.evaluate(() => [...document.querySelectorAll("#table .card .back img")].map((i) => i.complete && i.naturalWidth > 0));
+    if (backs.length !== 16 || backs.some((ok) => !ok)) throw new Error("a card back is missing its logo");
     if (shots) await page.screenshot({ path: `${shots}/fmn-01-table.png`, fullPage: true });
     await ctx.close();
   });
