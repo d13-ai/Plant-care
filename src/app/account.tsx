@@ -190,7 +190,7 @@ export default function AccountScreen() {
     setBusy(true);
     setError(null);
     try {
-      await signOut(db);
+      await signOut();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {

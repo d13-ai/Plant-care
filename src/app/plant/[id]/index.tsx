@@ -23,6 +23,8 @@ import {
 import { useQuery } from "@/hooks/use-query";
 import { daysAgoIso } from "@/lib/dates";
 import { getKeeperName, publishTag, setKeeperName, unpublishTag } from "@/lib/tag";
+import { settingKey } from "@/lib/greenhouse";
+import { ACCOUNT_SETTINGS } from "@/domain/greenhouse";
 import { careBrief } from "@/domain/care-brief";
 import { findingLine, isProblem, issueNote, problemsIn, scanSummary } from "@/domain/scan";
 import { MAX_SCAN_PHOTOS, analyzePhoto, describeScan, photoAllowance, type Verdict } from "@/lib/ai";
@@ -135,14 +137,19 @@ export default function PlantDetail() {
    * "Keep every 7 days", remembered on this device against the evidence it
    * answered: a new watering is new evidence, and the question may come back.
    */
-  const keepKey = `pp:keep-water:${plantId}`;
+  const [keepKey, setKeepKey] = useState<string | null>(null);
   const [keptBasis, setKeptBasis] = useState<string | null>(null);
   useEffect(() => {
-    AsyncStorage.getItem(keepKey).then(setKeptBasis).catch(() => {});
+    // Kept for the account signed in: plant ids are only unique within one
+    // account's greenhouse.
+    settingKey(`${ACCOUNT_SETTINGS.keepWater}${plantId}`).then(setKeepKey).catch(() => {});
+  }, [plantId]);
+  useEffect(() => {
+    if (keepKey) AsyncStorage.getItem(keepKey).then(setKeptBasis).catch(() => {});
   }, [keepKey]);
   const keepCadence = (basis: string) => {
     setKeptBasis(basis);
-    AsyncStorage.setItem(keepKey, basis).catch(() => {});
+    if (keepKey) AsyncStorage.setItem(keepKey, basis).catch(() => {});
   };
 
   /**

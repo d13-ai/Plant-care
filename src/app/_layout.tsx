@@ -3,18 +3,20 @@ import { SourceSans3_400Regular, SourceSans3_600SemiBold, SourceSans3_700Bold } 
 import { useFonts } from "expo-font";
 import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { SQLiteProvider } from "expo-sqlite";
+import { SQLiteProvider, type SQLiteDatabase } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
 import { Platform, View } from "react-native";
-import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
+import { useCallback, useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from "react";
 import { Body, Button, Row, Title } from "@/components/ui";
 import { ReminderKeeper } from "@/components/reminders";
 import { ResetPassword } from "@/components/reset-password";
 import { Threshold } from "@/components/threshold";
 import { Welcome } from "@/components/welcome";
-import { migrate } from "@/db";
+import { claimGreenhouse, migrate } from "@/db";
 import { leaveResetPage, resetTokenInUrl, useAccount, welcomeOnce } from "@/lib/auth";
-import { loadSyncStatus, requestSync } from "@/lib/sync";
+import { greenhouseFileFor, originalBelongsElsewhere } from "@/lib/greenhouse";
+import { stopReminders } from "@/lib/reminders";
+import { loadSyncStatus, onGreenhouseElsewhere, requestSync } from "@/lib/sync";
 import { sendBugReport, watchForTrouble } from "@/lib/bug-report";
 import { leave } from "@/domain/trail";
 import { font, space, useTheme } from "@/theme";
@@ -173,44 +175,34 @@ export default function RootLayout() {
 
   if (!fontsLoaded) return null;
 
-  // The database file keeps its original name: renaming it would orphan every
-  // existing keeper's plants.
-  const parlour = dbError ? (
-    <DatabaseUnavailable locked={locked} detail={dbError.message} onRetry={retry} />
-  ) : (
-    <SQLiteProvider
-      key={mount}
-      databaseName="plant-passport.db"
-      onError={openFailed}
-      onInit={async (db) => {
-        await migrate(db, { wal: Platform.OS !== "web" });
-        await loadSyncStatus(db);
-        requestSync(db, 0);
-      }}
-    >
-      <NavigationTrail />
-      <ReminderKeeper />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: t.background },
-          headerTintColor: t.text,
-          headerTitleStyle: { fontFamily: font.serif, fontSize: 17, fontWeight: "600", color: t.text },
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: t.background },
-        }}
-      >
-        <Stack.Screen name="index" options={{ title: "The Parlour", headerShown: false }} />
-        <Stack.Screen name="plant/new" options={{ title: "Add plant", presentation: "modal" }} />
-        <Stack.Screen name="plant/[id]/index" options={{ title: "" }} />
-        <Stack.Screen name="plant/[id]/edit" options={{ title: "Edit plant", presentation: "modal" }} />
-        <Stack.Screen name="account" options={{ title: "Account", presentation: "modal" }} />
-        <Stack.Screen name="on-show" options={{ title: "What's on show", presentation: "modal" }} />
-        <Stack.Screen name="rounds" options={{ title: "Your rounds", presentation: "modal" }} />
-        <Stack.Screen name="conservatories" options={{ title: "Conservatories", presentation: "modal" }} />
-        <Stack.Screen name="report" options={{ title: "Report a bug", presentation: "modal" }} />
-      </Stack>
-    </SQLiteProvider>
-  );
+  const parlour = (userId: string) =>
+    dbError ? (
+      <DatabaseUnavailable locked={locked} detail={dbError.message} onRetry={retry} />
+    ) : (
+      <Greenhouse userId={userId} mount={mount} onError={openFailed}>
+        <NavigationTrail />
+        <ReminderKeeper />
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: t.background },
+            headerTintColor: t.text,
+            headerTitleStyle: { fontFamily: font.serif, fontSize: 17, fontWeight: "600", color: t.text },
+            headerShadowVisible: false,
+            contentStyle: { backgroundColor: t.background },
+          }}
+        >
+          <Stack.Screen name="index" options={{ title: "The Parlour", headerShown: false }} />
+          <Stack.Screen name="plant/new" options={{ title: "Add plant", presentation: "modal" }} />
+          <Stack.Screen name="plant/[id]/index" options={{ title: "" }} />
+          <Stack.Screen name="plant/[id]/edit" options={{ title: "Edit plant", presentation: "modal" }} />
+          <Stack.Screen name="account" options={{ title: "Account", presentation: "modal" }} />
+          <Stack.Screen name="on-show" options={{ title: "What's on show", presentation: "modal" }} />
+          <Stack.Screen name="rounds" options={{ title: "Your rounds", presentation: "modal" }} />
+          <Stack.Screen name="conservatories" options={{ title: "Conservatories", presentation: "modal" }} />
+          <Stack.Screen name="report" options={{ title: "Report a bug", presentation: "modal" }} />
+        </Stack>
+      </Greenhouse>
+    );
 
   return (
     <>
@@ -225,6 +217,73 @@ export default function RootLayout() {
 }
 
 /**
+ * The signed-in account's greenhouse: its own database file on this device
+ * (src/domain/greenhouse.ts), opened once there is an account to open it for,
+ * and swapped for another account's when a different one signs in -- which a
+ * link from an email can do without anyone signing out first.
+ */
+function Greenhouse({
+  userId,
+  mount,
+  onError,
+  children,
+}: PropsWithChildren<{ userId: string; mount: number; onError: (error: Error) => void }>) {
+  const [file, setFile] = useState<{ userId: string; name: string } | null>(null);
+  const [lookAgain, setLookAgain] = useState(0);
+  const lastUser = useRef<string | null>(null);
+
+  useEffect(() => {
+    // The last account's reminders, scheduled or showing, aren't this one's.
+    if (lastUser.current && lastUser.current !== userId) stopReminders();
+    lastUser.current = userId;
+    let live = true;
+    greenhouseFileFor(userId)
+      .then((name) => {
+        if (live) setFile({ userId, name });
+      })
+      .catch((err) => {
+        if (live) onError(err instanceof Error ? err : new Error(String(err)));
+      });
+    return () => {
+      live = false;
+    };
+  }, [userId, lookAgain, onError]);
+
+  // The original file turned out to hold another account's plants: leave
+  // them be, and open this account's own.
+  useEffect(
+    () =>
+      onGreenhouseElsewhere(() => {
+        originalBelongsElsewhere()
+          .then(() => setLookAgain((n) => n + 1))
+          .catch(() => {});
+      }),
+    [],
+  );
+
+  // The same function every render: SQLiteProvider opens the database again
+  // whenever onInit changes, and two opens at once lock each other out on
+  // the web.
+  const init = useCallback(
+    async (db: SQLiteDatabase) => {
+      await migrate(db, { wal: Platform.OS !== "web" });
+      await claimGreenhouse(db, userId);
+      await loadSyncStatus(db);
+      requestSync(db, 0);
+    },
+    [userId],
+  );
+
+  // Nothing of the last account's while this one's is found.
+  if (!file || file.userId !== userId) return null;
+  return (
+    <SQLiteProvider key={`${file.name}:${mount}`} databaseName={file.name} onError={onError} onInit={init}>
+      {children}
+    </SQLiteProvider>
+  );
+}
+
+/**
  * The parlour belongs to an account. Anyone without one gets the welcome
  * screen and nothing else — including on a deep link to a plant, which is
  * waiting for them once they are in.
@@ -234,7 +293,7 @@ export default function RootLayout() {
  * it was inside, a database that would not open took the login page down with
  * it. The database opens once there is an account to open it for.
  */
-function RequireAccount({ children }: PropsWithChildren) {
+function RequireAccount({ children }: { children: (userId: string) => ReactNode }) {
   const { account, loading } = useAccount();
   // A reset link (plantparlour.org/?reset=...) comes before everything,
   // because it is for the person who can't get past this gate.
@@ -261,5 +320,5 @@ function RequireAccount({ children }: PropsWithChildren) {
   }
   // An account means an email. A leftover anonymous session from before those
   // were turned off is not one, so it gets the welcome screen like anyone else.
-  return account && !account.anonymous ? <>{children}</> : <Welcome />;
+  return account && !account.anonymous ? <>{children(account.userId)}</> : <Welcome />;
 }

@@ -769,46 +769,51 @@ export async function pendingChanges(db: SQLiteDatabase): Promise<number> {
   return row?.n ?? 0;
 }
 
-/**
- * Give every local row a fresh identity. Used when this phone's plants are
- * becoming a new account's copy: their rows on the server belong to another
- * keeper, which the server (rightly) won't let this one overwrite. Uploads
- * and tag tokens belonged to the old copy too, so everything pushes again
- * from scratch under the new account.
- */
-export async function regenerateIdentities(db: SQLiteDatabase): Promise<void> {
-  await db.withTransactionAsync(async () => {
-    for (const table of ["plants", "care_events", "photos"] as const) {
-      const rows = await db.getAllAsync<{ id: number }>(`SELECT id FROM ${table}`);
-      for (const row of rows) {
-        await db.runAsync(`UPDATE ${table} SET uuid = ?, dirty = 1 WHERE id = ?`, [uuid(), row.id]);
-      }
-    }
-    await db.execAsync(
-      "UPDATE photos SET remote_path = NULL; UPDATE plants SET passport_token = NULL, published_at = NULL; DELETE FROM sync_tombstones; DELETE FROM sync_meta WHERE key = 'cursor';",
-    );
-  });
-}
-
-/** Flag every row for the next push — when a different account signs in on
- *  this device, its greenhouse should follow. */
+/** Flag every row for the next push -- when a file nobody has synced is
+ *  adopted by the account that opens it. */
 export async function markAllDirty(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(
-    "UPDATE plants SET dirty = 1; UPDATE care_events SET dirty = 1; UPDATE photos SET dirty = 1; DELETE FROM sync_meta;",
+    "UPDATE plants SET dirty = 1; UPDATE care_events SET dirty = 1; UPDATE photos SET dirty = 1; DELETE FROM sync_meta WHERE key <> 'keeper_id';",
   );
 }
 
 /**
- * Forget every plant on this device, after the account they belonged to has
- * been deleted. Without this the next account to sign in here would get them:
- * markAllDirty() exists precisely so a phone's greenhouse follows whoever
- * signs in next. The care-guide cache stays -- it is about species, not about
- * anybody. Photo files are the caller's to remove (native keeps them as files).
+ * Forget every plant in this greenhouse, after the account it belonged to has
+ * been deleted. The file stays that account's (see retireGreenhouse), so no
+ * other account is handed it. The care-guide cache stays -- it is about
+ * species, not about anybody. Photo files are the caller's to remove (native
+ * keeps them as files).
  */
 export async function wipeLocalData(db: SQLiteDatabase): Promise<void> {
+  const keeper = await greenhouseKeeper(db);
   await db.execAsync(
     "DELETE FROM photos; DELETE FROM care_events; DELETE FROM plants; DELETE FROM sync_tombstones; DELETE FROM sync_meta;",
   );
+  if (keeper) await setSyncMeta(db, GREENHOUSE_KEEPER, keeper);
+}
+
+/**
+ * Whose greenhouse a file holds: the account it was opened for, written into
+ * the file itself. Sync works only for that account -- see src/domain/greenhouse.ts.
+ */
+export const GREENHOUSE_KEEPER = "keeper_id";
+
+export function greenhouseKeeper(db: SQLiteDatabase): Promise<string | null> {
+  return getSyncMeta(db, GREENHOUSE_KEEPER);
+}
+
+/**
+ * Bind a file to the account opening it, if it isn't bound yet. A file with
+ * no keeper is new, or holds plants added before accounts were needed: those
+ * are this account's now, so every row goes up on the next sync. A file that
+ * already has a keeper is left alone, whoever is asking.
+ */
+export async function claimGreenhouse(db: SQLiteDatabase, userId: string): Promise<string> {
+  const keeper = await greenhouseKeeper(db);
+  if (keeper) return keeper;
+  await markAllDirty(db);
+  await setSyncMeta(db, GREENHOUSE_KEEPER, userId);
+  return userId;
 }
 
 export type TombstoneKind = "plant" | "event" | "photo";

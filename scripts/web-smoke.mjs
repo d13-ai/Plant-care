@@ -77,6 +77,8 @@ await context.route("**/auth/v1/token**", (route) => route.fulfill(asJson(sessio
 await context.addInitScript(
   ([key, value]) => {
     try {
+      // A step that signs in as someone else says so, and keeps its session.
+      if (window.localStorage.getItem("smoke:own-session")) return;
       window.localStorage.setItem(key, value);
     } catch {
       /* private mode: the first step will fail loudly enough */
@@ -517,7 +519,8 @@ try {
       notes: "",
     };
     const draft = { photoUris: [], nickname: "Zigzag", species: "Disocactus anguliger", pickedName: null, location: "", acquiredFrom: "", acquiredAt: "", motherId: "", verdict, savedAt: new Date().toISOString() };
-    await page.evaluate((d) => localStorage.setItem("newPlantDraft", JSON.stringify(d)), draft);
+    // Kept for the account signed in (src/domain/greenhouse.ts).
+    await page.evaluate(([key, d]) => localStorage.setItem(key, JSON.stringify(d)), [`newPlantDraft@${user.id}`, draft]);
     await page.goto(base + "/plant/new");
     await page.getByText("2 problems will be logged as issues").waitFor({ timeout: 20000 });
     // Only the two problems get a button: good news and photo limits never do.
@@ -540,7 +543,7 @@ try {
   await step("after identifying, the likeliest plant is chosen and named, and Add plant says what it will do", async () => {
     // 10 Oct 2026: the first outside keeper on an iPhone identified a plant
     // and left: nothing chosen, no name, "Add plant" greyed out off-screen.
-    await page.evaluate(() => { localStorage.removeItem("newPlantDraft"); localStorage.removeItem("ai:lastScan"); });
+    await page.evaluate((id) => { localStorage.removeItem(`newPlantDraft@${id}`); localStorage.removeItem(`ai:lastScan@${id}`); }, user.id);
     const verdict = {
       is_plant: true,
       species: [
@@ -932,6 +935,59 @@ try {
     }
   });
   // Last, because it empties this browser's greenhouse.
+  await step("another account signed in on this browser gets its own greenhouse, and never this one's plants", async () => {
+    // Until 19 Oct 2026 the plants already in a browser went up under
+    // whichever account signed in next -- which is how a confirmation link
+    // opened in a signed-in tab copied one keeper's greenhouse into another's.
+    const other = { ...user, id: "00000000-0000-4000-8000-000000000002", email: "other@plantparlour.test" };
+    const otherSession = { ...session, access_token: "smoke-access-token-other", refresh_token: "smoke-refresh-other", user: other };
+    const writes = [];
+    let pulled = 0;
+    await page.route("**/auth/v1/user**", (route) =>
+      route.fulfill(asJson(/smoke-access-token-other/.test(route.request().headers().authorization ?? "") ? other : user)),
+    );
+    await page.route(`${SUPABASE_URL}/rest/v1/**`, (route) => {
+      const req = route.request();
+      if (req.method() === "GET") {
+        if (/\/rest\/v1\/plants\?/.test(req.url())) pulled++;
+        return route.fulfill(asJson([]));
+      }
+      writes.push({ method: req.method(), url: req.url(), body: req.postData() ?? "" });
+      return route.fulfill({ status: 201, contentType: "application/json", body: "[]" });
+    });
+    await page.route(`${SUPABASE_URL}/storage/v1/**`, (route) => {
+      writes.push({ method: route.request().method(), url: route.request().url(), body: "" });
+      return route.fulfill(asJson({}));
+    });
+
+    // The other account signs in here (a link from an email, say).
+    await page.goto(base + "/account", { waitUntil: "domcontentloaded" });
+    await page.evaluate(
+      ([key, value]) => {
+        localStorage.setItem("smoke:own-session", "1");
+        localStorage.setItem(key, value);
+      },
+      [`sb-${ref}-auth-token`, JSON.stringify(otherSession)],
+    );
+    await page.goto(base + "/", { waitUntil: "domcontentloaded" });
+    await page.getByText("Start with one plant").waitFor({ timeout: 20000 });
+    if (await page.getByText("Big Monstera").count()) throw new Error("the other account was shown this greenhouse's plants");
+    // Its sync ran -- it pulled its own greenhouse -- and sent up none of these plants.
+    const deadline = Date.now() + 15000;
+    while (!pulled && Date.now() < deadline) await page.waitForTimeout(250);
+    if (!pulled) throw new Error("the other account's greenhouse never synced");
+    await page.waitForTimeout(1500);
+    const carried = writes.filter((w) => /\/rest\/v1\/(plants|care_events|photos)|\/storage\/v1\/object/.test(w.url) || /Big Monstera/.test(w.body));
+    if (carried.length) throw new Error(`plants went up under the other account: ${JSON.stringify(carried).slice(0, 300)}`);
+
+    // Back to the first account: its greenhouse is as it was.
+    await page.evaluate(() => localStorage.removeItem("smoke:own-session"));
+    await page.goto(base + "/", { waitUntil: "domcontentloaded" });
+    await page.getByText("Big Monstera").first().waitFor({ timeout: 20000 });
+    await page.unroute("**/auth/v1/user**");
+    await page.unroute(`${SUPABASE_URL}/rest/v1/**`);
+    await page.unroute(`${SUPABASE_URL}/storage/v1/**`);
+  });
   await step("deleting the account asks for the word, keeps everything if the server fails, and wipes this phone when it succeeds", async () => {
     const asked = [];
     let fail = true;

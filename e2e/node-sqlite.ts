@@ -16,10 +16,13 @@ export interface TestDatabase {
   close: () => void;
 }
 
-export function openTestDatabase(): TestDatabase {
+/** Always in memory; `databasePath` is only the name the app sees, which
+ *  matters where a device's original file is treated differently. */
+export function openTestDatabase(databasePath = "test.db"): TestDatabase {
   const sqlite = new DatabaseSync(":memory:");
 
   const adapter = {
+    databasePath,
     async execAsync(source: string): Promise<void> {
       sqlite.exec(source);
     },
