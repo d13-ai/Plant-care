@@ -66,9 +66,10 @@ A small puzzle corner at https://plantparlour.org/parlour-games. House rules: no
 - **Trickle** — https://plantparlour.org/parlour-games/trickle — rotate the pipes until the water reaches every plant. Free boards in three sizes, a practice board, a daily board that is the same for everyone, and an embeddable version for any site.
 - **Windowsill** — https://plantparlour.org/parlour-games/windowsill — arrange the plants on a stepped shelf so every one of them gets the light it wants. Three shelf sizes, practice, a daily board and an embed.
 - **Elbow Room** — https://plantparlour.org/parlour-games/elbow-room — plant one in every bed, one in every row and column, and give every plant room to grow: no two may touch, not even corner to corner. The plant-themed take on Queens.
+- **Forget-Me-Not** — https://plantparlour.org/parlour-games/forget-me-not — the card game Pairs, with seventeen houseplants: turn two cards at a time and find every pair. A pair that doesn't match waits until you tap again rather than on a timer, and each pair found comes with one line of real plant care. Three table sizes, practice, a daily table and an embed.
 - **One streak across the whole corner**, not one per game: playing any of them today keeps it alive.
 
-All three are free, need no account, work on any phone or computer with a browser, and have no ads.
+All four are free, need no account, work on any phone or computer with a browser, and have no ads.
 
 ## Key URLs
 
@@ -82,6 +83,7 @@ All three are free, need no account, work on any phone or computer with a browse
 - Trickle: https://plantparlour.org/parlour-games/trickle
 - Windowsill: https://plantparlour.org/parlour-games/windowsill
 - Elbow Room: https://plantparlour.org/parlour-games/elbow-room
+- Forget-Me-Not: https://plantparlour.org/parlour-games/forget-me-not
 - The Android app on Google Play: https://play.google.com/store/apps/details?id=org.plantparlour.app
 - A keeper's public greenhouse: https://plantparlour.org/@{handle}
 - Privacy: https://plantparlour.org/privacy

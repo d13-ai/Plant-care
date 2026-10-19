@@ -23,6 +23,7 @@ export const HAND_WRITTEN = [
   "parlour-games/trickle.html",
   "parlour-games/windowsill.html",
   "parlour-games/elbow-room.html",
+  "parlour-games/forget-me-not.html",
   "count-me-out.html",
 ];
 

@@ -113,6 +113,7 @@ const CARDS = [
   { file: "og-trickle.png", title: "Trickle", line: "Turn the pipes until the water reaches every plant.", accent: LEAF },
   { file: "og-windowsill.png", title: "Windowsill", line: "Give every plant the light it actually wants.", accent: "#E6C46B" },
   { file: "og-elbow-room.png", title: "Elbow Room", line: "Give every plant room to grow.", accent: "#8FC79E" },
+  { file: "og-forget-me-not.png", title: "Forget-Me-Not", line: "Every plant here has a twin. Find them all.", accent: "#6FA8DC" },
 ];
 
 for (const c of CARDS) {
