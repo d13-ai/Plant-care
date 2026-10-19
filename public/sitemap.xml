@@ -1736,7 +1736,7 @@
   </url>
   <url>
     <loc>https://plantparlour.org/parlour-games</loc>
-    <lastmod>2026-10-07</lastmod>
+    <lastmod>2026-10-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -1755,6 +1755,12 @@
   <url>
     <loc>https://plantparlour.org/parlour-games/elbow-room</loc>
     <lastmod>2026-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://plantparlour.org/parlour-games/forget-me-not</loc>
+    <lastmod>2026-10-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>

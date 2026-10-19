@@ -18,6 +18,7 @@ back.
 | **Trickle** | `/parlour-games/trickle` — rotate the pipes until the water reaches every plant. Free boards, a daily board everyone shares, a practice mode, and an embeddable build at `/parlour-games/trickle/embed`. |
 | **Elbow Room** | `/parlour-games/elbow-room` — one plant per bed, row and column, none touching — the plain rules of Queens and Meowdoku, with plants. Three plot sizes, a nudge that explains the next deduction, a practice board that walks every step, a daily board with a share line, and an embed. |
 | **Windowsill** | `/parlour-games/windowsill` — arrange the plants on a stepped shelf so every one of them gets the light it wants. Three shelf sizes, boards dealt to a measured difficulty, practice, a daily board and an embed, all on the same routes Trickle uses. |
+| **Forget-Me-Not** | `/parlour-games/forget-me-not` — Pairs, the memory game, with seventeen houseplants: turn two cards at a time and find every pair. Three table sizes (Posy, Bunch, Bouquet), a practice table with a coach, a daily table with a share line, and an embed, on the same routes as the others. |
 | **The streak** | One run across the whole corner, shown on the hub: playing any of these today keeps it alive. |
 | **The way in** | A card on the greenhouse shown only when nothing needs attention, plus a permanent link at the foot of the plant list. Both point at the hub, not at a game. In the Android app they open a browser sheet over the greenhouse (`openInApp`, with `?from=app`); the games then point their PlantParlour links at `plantparlour://`, so the way back lands in the app rather than in a signed-out web app. |
 
@@ -101,6 +102,28 @@ they already knew, and found the bent rules read as the game breaking its own,
 so they came out in October 2026. Random beds almost never give one answer,
 so the generator repairs them; every board has exactly one answer and needs no
 guessing. Spec in `docs/elbow-room-spec.md`.
+
+### Forget-Me-Not — *built*
+
+Pairs: every plant on the table is there twice, face down; turn two cards at
+a time and find every pair. The first game here that is not a logic puzzle,
+which is the point of it -- memory rather than deduction, quick to learn, and
+playable by children.
+
+The house rules decided three things. **A miss waits for the player**: two
+cards that don't match stay face up until the next tap, never on a timer,
+because a flip-back timer is a clock you have to memorise against. **The
+nudge is a reminder, not a peek**: it only ever points at cards already seen
+(both halves of a pair, or the twin of the card showing), never at one
+nobody has turned. And **the only number is turns taken**, shown when the
+table is clear and on the daily share line -- the same role guesses play in
+Wordle's -- never counted down while playing.
+
+It is also the one game that teaches as it goes: each pair found comes with
+one true line of care and, for all but the forget-me-not itself, a link to
+that plant's page in the care library. The seventeen plants are drawn in
+`forget-me-not-rules.js` so the tests can hold every one to being distinct,
+named and linked to a page that exists.
 
 ### Thicket — *later*
 
