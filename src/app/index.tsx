@@ -1,20 +1,23 @@
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DueRing } from "@/components/due-ring";
 import { FirstPlant } from "@/components/first-plant";
 import { LogoMark, PersonIcon, PlusIcon } from "@/components/icons";
 import { GamesCard, GamesLink } from "@/components/parlour-games";
 import { PlantCard, summarize } from "@/components/plant-card";
+import { RateCard } from "@/components/rate-card";
 import { ReminderPrompt } from "@/components/reminders";
 import { Body, Chips, SectionLabel, Title } from "@/components/ui";
 import { UndoBar, useUndo } from "@/components/undo-bar";
 import { coverPhoto, deleteEvent, listPlants, logCare, type PlantWithHistory } from "@/db";
 import { useQuery } from "@/hooks/use-query";
 import { orderPlants, PLANT_ORDERS, type PlantOrder } from "@/domain/plant-order";
+import { careDays, shouldAskForRating } from "@/domain/rating";
 import { getPlantOrder, setPlantOrder } from "@/lib/plant-order";
 import { okToLog } from "@/lib/care-log";
+import { ratingAnswered } from "@/lib/rating";
 import { font, radius, space, useTheme, type Tone } from "@/theme";
 
 export default function Greenhouse() {
@@ -43,6 +46,25 @@ export default function Greenhouse() {
   const needsAttention = useMemo(
     () => (data ?? []).filter((item) => summarize(item).alerts.length > 0).length,
     [data],
+  );
+
+  // The one rating ask takes the games card's place, on a day nothing is
+  // due, once care has been logged on enough days. Not shown until this
+  // phone's answer has been read, so it never flashes up for someone who
+  // already gave one.
+  const [rated, setRated] = useState<boolean | null>(null);
+  useEffect(() => {
+    ratingAnswered().then(setRated);
+  }, []);
+  const askForRating = useMemo(
+    () =>
+      rated === false &&
+      shouldAskForRating({
+        androidApp: Platform.OS === "android",
+        answered: rated,
+        careDays: careDays((data ?? []).flatMap((item) => item.events)),
+      }),
+    [data, rated],
   );
 
   // The water-due strip: every plant with a watering reminder, soonest first.
@@ -145,7 +167,8 @@ export default function Greenhouse() {
                     </ScrollView>
                   </View>
                 )}
-                {needsAttention === 0 && <GamesCard />}
+                {needsAttention === 0 &&
+                  (askForRating ? <RateCard onAnswered={() => setRated(true)} /> : <GamesCard />)}
                 <View style={styles.listTitle}>
                   <SectionLabel>All plants</SectionLabel>
                   <Body small muted>

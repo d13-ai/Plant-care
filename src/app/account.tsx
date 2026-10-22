@@ -2,6 +2,7 @@ import { Stack, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { Platform, ScrollView, Share, StyleSheet, Switch, View } from "react-native";
+import { RateLink } from "@/components/rate-card";
 import { ReminderSettings } from "@/components/reminders";
 import { Badge, Body, Button, Card, Field, Heading, Row, SectionLabel } from "@/components/ui";
 import { pendingChanges } from "@/db";
@@ -332,6 +333,9 @@ export default function AccountScreen() {
         </Body>
         <Button title="Report a bug" small onPress={() => router.push("/report")} />
       </Card>
+
+      {/* Only the Android app has a listing to rate. */}
+      {Platform.OS === "android" && <RateLink />}
 
       <Row>
         <Button
