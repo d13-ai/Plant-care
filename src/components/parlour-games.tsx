@@ -6,8 +6,7 @@ import { font, radius, space, useTheme } from "@/theme";
 /**
  * The way into Parlour Games from inside the app.
  *
- * It points at the hub rather than straight at Trickle. There is one game
- * today and a hub with one item costs a tap, but the link is going in the
+ * It points at the hub rather than at any one game. The link is in the
  * greenhouse — the screen every keeper opens — and repointing it later
  * means a released build with a stale destination in it. The hub is the
  * address that stays right as games are added.
@@ -39,7 +38,8 @@ export function GamesCard() {
       <View style={styles.words}>
         <Text style={[styles.heading, { color: t.goldText }]}>Parlour Games</Text>
         <Text style={[styles.body, { color: t.onPlum }]}>
-          Nothing needs you today. Sit down with a quiet puzzle for a minute.
+          Nothing needs you today. While your plants do their growing, have you tried our games? Four quiet
+          puzzles, Forget-Me-Not the newest.
         </Text>
       </View>
       <Text style={[styles.go, { color: t.goldText }]}>→</Text>
