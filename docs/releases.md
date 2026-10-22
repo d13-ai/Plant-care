@@ -41,6 +41,7 @@ Newest last. Each includes everything before it.
 | 18 Oct 2026 | `4416168` | 01a1503f | Deleting an account says it needs a sign-in from the last 30 minutes (the server now requires it). |
 | 18 Oct 2026 | `d0ea487` | 54c73e02 | After sign-up, a Check your inbox card with Send it again and I've confirmed it; an unconfirmed account gets a way to a new link; a wrong password is still called one. |
 | 19 Oct 2026 | `ae03674` | 69e8d611 | One greenhouse per account on each device: another account signing in no longer takes the plants already there; the tag name, draft and scan follow the account. |
+| 22 Oct 2026 | `107c6b1` | 7483b371 | A one-time note from David and Amanda asking for a Google Play rating, after care logged on five days; the same in Account. The games card names the four games. |
 
 ## Release notes, version 8 (production)
 
